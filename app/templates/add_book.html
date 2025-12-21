@@ -2068,7 +2068,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Submit via fetch to detect duplicates
             try {
                 const formData = new FormData(form);
-                const response = await fetch(form.action || window.location.pathname, {
+                const formAction = form.action || window.location.pathname;
+                console.log('📤 [FORM_SUBMIT] Submitting form to:', formAction);
+                console.log('📋 [FORM_SUBMIT] Form data keys:', Array.from(formData.keys()));
+                
+                const response = await fetch(formAction, {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',
@@ -2077,13 +2081,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: formData
                 });
                 
+                console.log('📥 [FORM_SUBMIT] Response status:', response.status, response.statusText);
+                console.log('📥 [FORM_SUBMIT] Response headers:', Object.fromEntries(response.headers.entries()));
+                
                 // Check if response is JSON
                 const contentType = response.headers.get('content-type');
+                console.log('📥 [FORM_SUBMIT] Content-Type:', contentType);
+                
                 if (contentType && contentType.includes('application/json')) {
                     const result = await response.json();
+                    console.log('📥 [FORM_SUBMIT] Response JSON:', result);
                     
                     if (result.duplicate && result.book_id) {
                         // Duplicate detected - show modal
+                        console.log('⚠️ [FORM_SUBMIT] Duplicate book detected');
                         buttons.forEach(button => {
                             button.disabled = false;
                             if (button.dataset.originalHtml) {
@@ -2093,9 +2104,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         showDuplicateModal(result);
                     } else if (result.success) {
                         // Success - redirect
+                        console.log('✅ [FORM_SUBMIT] Book added successfully, redirecting to:', result.redirect_url);
                         window.location.href = result.redirect_url || '{{ url_for("main.library") }}';
                     } else {
                         // Error
+                        console.error('❌ [FORM_SUBMIT] Error response:', result);
                         alert('Error: ' + (result.message || 'Failed to add book'));
                         buttons.forEach(button => {
                             button.disabled = false;
@@ -2106,10 +2119,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 } else {
                     // HTML response - submit normally (fallback for non-AJAX responses)
+                    console.warn('⚠️ [FORM_SUBMIT] Received HTML response instead of JSON, status:', response.status);
                     const html = await response.text();
-                    document.open();
-                    document.write(html);
-                    document.close();
+                    console.log('📄 [FORM_SUBMIT] HTML response length:', html.length);
+                    // Don't overwrite the page, show error instead
+                    alert('Server returned HTML instead of JSON. Status: ' + response.status + '. Please check server logs.');
+                    buttons.forEach(button => {
+                        button.disabled = false;
+                        if (button.dataset.originalHtml) {
+                            button.innerHTML = button.dataset.originalHtml;
+                        }
+                    });
                 }
             } catch (error) {
                 console.error('Error submitting form:', error);
