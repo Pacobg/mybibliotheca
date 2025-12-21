@@ -760,16 +760,20 @@ def search_books_by_title(title: str, max_results: int = 10, author: Optional[st
     title = title.strip()
     author_arg = author.strip() if isinstance(author, str) else None
 
+    # Check if this is a Cyrillic search - if so, bypass cache to ensure Biblioman is included
+    from app.utils.text_utils import is_cyrillic
+    has_cyrillic = is_cyrillic(title) or (author_arg and is_cyrillic(author_arg))
+    
     cache_key = (title.lower(), (author_arg or '').lower(), int(max_results))
-    cached = _search_cache_get(cache_key)
-    if cached is not None:
-        print(f"💾 [BOOK_SEARCH] Cache hit for '{title}' - returning cached results (may not include Biblioman if cached before Biblioman integration)")
-        print(f"💾 [BOOK_SEARCH] Cached results count: {len(cached) if isinstance(cached, list) else 'N/A'}")
-        # For debugging: clear cache to force fresh search with Biblioman
-        # Uncomment the next line to bypass cache during testing:
-        # cached = None
+    cached = None
+    if not has_cyrillic:
+        # Only use cache for non-Cyrillic searches (to avoid stale results without Biblioman)
+        cached = _search_cache_get(cache_key)
         if cached is not None:
+            print(f"💾 [BOOK_SEARCH] Cache hit for '{title}'")
             return cached
+    else:
+        print(f"🔤 [BOOK_SEARCH] Cyrillic detected - bypassing cache to ensure Biblioman results are included")
 
     start_time = time.perf_counter()
     
