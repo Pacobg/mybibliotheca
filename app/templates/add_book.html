@@ -982,7 +982,24 @@ function displayTitleSearchResults(results) {
     
     results.forEach((book, index) => {
     const fullData = book.full_data || book; // Fallback to book if full_data is missing
-    let coverUrl = fullData.cover_url || FALLBACK_COVER_URL;
+    
+    // Try multiple sources for cover URL
+    let coverUrl = book.cover_url || fullData.cover_url;
+    
+    // If no cover_url, try cover_candidates
+    if (!coverUrl && book.cover_candidates && book.cover_candidates.length > 0) {
+        coverUrl = book.cover_candidates[0].url || book.cover_candidates[0];
+    }
+    
+    // If still no cover, try cover_candidate
+    if (!coverUrl && book.cover_candidate) {
+        coverUrl = book.cover_candidate.url || book.cover_candidate;
+    }
+    
+    // Fallback to default if still no cover
+    if (!coverUrl) {
+        coverUrl = FALLBACK_COVER_URL;
+    }
     
     // Normalize Google Books cover URLs - ensure HTTPS and proper parameters
     if (coverUrl && coverUrl !== FALLBACK_COVER_URL && coverUrl.includes('books.google')) {
