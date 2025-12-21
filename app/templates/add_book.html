@@ -1580,6 +1580,14 @@ function populateFormWithBookData(bookData) {
             setTimeout(() => fetchAndShowCoverCandidates({isbn, title, authors}), 250);
         }
     } catch (_) {}
+    
+    // Final verification logging
+    console.log('✅ [POPULATE_FORM] Form population completed');
+    console.log('📝 [POPULATE_FORM] Title field:', document.getElementById('title')?.value);
+    console.log('📝 [POPULATE_FORM] ISBN field:', document.getElementById('isbn')?.value);
+    console.log('📝 [POPULATE_FORM] Biblioman ID:', document.getElementById('biblioman_id')?.value);
+    console.log('📝 [POPULATE_FORM] Chitanka ID:', document.getElementById('chitanka_id')?.value);
+    console.log('📝 [POPULATE_FORM] Chitanka URL:', document.getElementById('chitanka_url')?.value);
 }
 
 // Advanced file upload handler with OCR and AI processing
