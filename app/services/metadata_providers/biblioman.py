@@ -302,6 +302,7 @@ class BibliomanProvider:
         
         # Get cover field from database (might be filename or URL)
         cover_field = book.get('cover')
+        logger.debug(f"Biblioman cover field for book {book.get('id')}: {cover_field}, chitanka_id: {chitanka_id}")
         
         if chitanka_id:
             chitanka_url = f"https://chitanka.info/text/{chitanka_id}"
@@ -313,10 +314,12 @@ class BibliomanProvider:
                 # Check if it's already a full URL
                 if cover_field.startswith('http://') or cover_field.startswith('https://'):
                     cover_url = cover_field
+                    logger.debug(f"Biblioman: Using existing full URL: {cover_url}")
                 else:
                     # It's just a filename, generate full URL
                     # Format: {chitanka_id}-{hash}.jpg -> convert to full URL
                     cover_filename = cover_field.strip()
+                    logger.debug(f"Biblioman: Generating URL from filename: {cover_filename}")
                     if '-' in cover_filename and '.' in cover_filename:
                         # Extract chitanka_id from filename (format: {chitanka_id}-{hash}.jpg)
                         # For chitanka_id=16516, last 4 digits are 6516 -> path: 6/5/1/6
@@ -328,35 +331,63 @@ class BibliomanProvider:
                             # Use the filename from database, but ensure .1000.jpg extension
                             base_filename = cover_filename.replace('.jpg', '').replace('.jpeg', '')
                             cover_url = f"https://biblioman.chitanka.info/thumb/covers/{digits_path}/{base_filename}.1000.jpg"
+                            logger.debug(f"Biblioman: Generated cover URL: {cover_url}")
                         else:
                             # Fallback: use simple format
                             cover_url = f"https://biblioman.chitanka.info/books/{chitanka_id}/cover"
+                            logger.debug(f"Biblioman: Using fallback cover URL (chitanka_id too short): {cover_url}")
                     else:
                         # Fallback: use simple format
                         cover_url = f"https://biblioman.chitanka.info/books/{chitanka_id}/cover"
+                        logger.debug(f"Biblioman: Using fallback cover URL (invalid filename format): {cover_url}")
             else:
                 # No cover field, try to generate from chitanka_id
                 cover_url = f"https://biblioman.chitanka.info/books/{chitanka_id}/cover"
+                logger.debug(f"Biblioman: No cover field, using fallback: {cover_url}")
         
         # Extract categories/genres from Biblioman
         categories = []
-        category_id = book.get('category_id')
-        if category_id and self.db:
+        book_id = book.get('id')
+        
+        if book_id and self.db:
             try:
                 cursor = self.db.cursor(dictionary=True)
-                # Query category name from label table (Biblioman uses 'label' table for categories)
+                # Try to get categories from book_category table (many-to-many relationship)
+                # Biblioman uses book_category table to link books to labels (categories)
                 sql = """
-                    SELECT name FROM label 
-                    WHERE id = %s
-                    LIMIT 1
+                    SELECT l.name 
+                    FROM book_category bc
+                    JOIN label l ON bc.label_id = l.id
+                    WHERE bc.book_id = %s
                 """
-                cursor.execute(sql, (category_id,))
-                result = cursor.fetchone()
+                cursor.execute(sql, (book_id,))
+                results = cursor.fetchall()
+                for result in results:
+                    if result and result.get('name'):
+                        categories.append(result['name'])
                 cursor.close()
-                if result and result.get('name'):
-                    categories.append(result['name'])
+                logger.debug(f"Biblioman: Found {len(categories)} categories from book_category table for book {book_id}")
             except Exception as e:
-                logger.debug(f"Could not fetch category for book {book.get('id')}: {e}")
+                logger.debug(f"Biblioman: Could not fetch categories from book_category table for book {book_id}: {e}")
+                # Fallback: try category_id field
+                try:
+                    category_id = book.get('category_id')
+                    if category_id:
+                        cursor = self.db.cursor(dictionary=True)
+                        # Query category name from label table (Biblioman uses 'label' table for categories)
+                        sql = """
+                            SELECT name FROM label 
+                            WHERE id = %s
+                            LIMIT 1
+                        """
+                        cursor.execute(sql, (category_id,))
+                        result = cursor.fetchone()
+                        cursor.close()
+                        if result and result.get('name'):
+                            categories.append(result['name'])
+                            logger.debug(f"Biblioman: Found category from category_id: {result['name']}")
+                except Exception as e2:
+                    logger.debug(f"Biblioman: Could not fetch category from category_id for book {book.get('id')}: {e2}")
         
         # Also check theme/genre fields directly
         theme = book.get('theme') or book.get('genre')
@@ -365,8 +396,10 @@ class BibliomanProvider:
             if isinstance(theme, str):
                 theme_categories = [t.strip() for t in theme.split(',') if t.strip()]
                 categories.extend(theme_categories)
+                logger.debug(f"Biblioman: Added {len(theme_categories)} categories from theme/genre field")
             elif isinstance(theme, list):
                 categories.extend([str(t).strip() for t in theme if t])
+                logger.debug(f"Biblioman: Added {len(theme)} categories from theme/genre list")
         
         # Remove duplicates while preserving order
         seen = set()
@@ -376,6 +409,8 @@ class BibliomanProvider:
             if cat_lower not in seen:
                 seen.add(cat_lower)
                 unique_categories.append(cat)
+        
+        logger.debug(f"Biblioman: Final categories for book {book.get('id')}: {unique_categories}")
         
         return {
             'title': book.get('title') or '',
