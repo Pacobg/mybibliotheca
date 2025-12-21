@@ -1529,7 +1529,10 @@ function populateFormWithBookData(bookData) {
     const returnedIsbn = bookData.isbn_13 || bookData.isbn_10 || '';
     document.getElementById('isbn').value = returnedIsbn || typedIsbnRaw || '';
     document.getElementById('description').value = htmlDescriptionToText(bookData.description || '');
-    document.getElementById('cover_url').value = bookData.cover_url || bookData.cover || '';
+    // Prioritize chitanka_cover_url for Biblioman books, then cover_url, then cover
+    const coverUrl = bookData.chitanka_cover_url || bookData.cover_url || bookData.cover || '';
+    document.getElementById('cover_url').value = coverUrl;
+    console.log('📝 [POPULATE_FORM] Cover URL set to:', coverUrl);
     document.getElementById('publisher').value = bookData.publisher || '';
     document.getElementById('language').value = bookData.language || 'en';
     // Series (if provided by unified metadata)
