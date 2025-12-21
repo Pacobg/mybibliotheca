@@ -1297,9 +1297,11 @@ function selectBookFromSearch(bookIndex) {
                 
                 // Populate form with the intelligently merged data
                 try {
+                    console.log('📝 [SELECT_BOOK] Populating form with merged data...');
                     populateFormWithBookData(mergedData);
+                    console.log('✅ [SELECT_BOOK] Form populated successfully');
                 } catch (populateError) {
-                    console.error('Error populating form:', populateError);
+                    console.error('❌ [SELECT_BOOK] Error populating form:', populateError);
                     // Try with just basic data if full populate fails
                     document.getElementById('title').value = mergedData.title || fullData.title || '';
                     document.getElementById('isbn').value = isbn || '';
@@ -1311,17 +1313,32 @@ function selectBookFromSearch(bookIndex) {
                         showIsbnMismatchWarning(apiResp.warnings);
                     }
                 } else {
+                    console.log('✅ [SELECT_BOOK] Showing success message');
                     showMessage(`Selected "${mergedData.title || fullData.title}" - Form populated with enhanced book details!`, 'success');
                 }
+                
+                // Verify form was populated
+                setTimeout(() => {
+                    const titleField = document.getElementById('title');
+                    const isbnField = document.getElementById('isbn');
+                    const addBookBtn = document.getElementById('addBookBtn');
+                    console.log('📝 [SELECT_BOOK] Final form state - title:', titleField?.value, 'isbn:', isbnField?.value);
+                    console.log('📝 [SELECT_BOOK] Add Book button exists:', !!addBookBtn);
+                    if (addBookBtn) {
+                        console.log('📝 [SELECT_BOOK] Add Book button disabled:', addBookBtn.disabled);
+                    }
+                }, 500);
             })
             .catch(error => {
-                console.warn('⚠️ ISBN lookup failed, using search data only:', error);
+                console.warn('⚠️ [SELECT_BOOK] ISBN lookup failed, using search data only:', error);
                 // Fall back to using just the search result data
                 try {
+                    console.log('📝 [SELECT_BOOK] Populating form with search data (no ISBN lookup)...');
                     populateFormWithBookData(fullData);
+                    console.log('✅ [SELECT_BOOK] Form populated with search data');
                     showMessage(`Selected "${fullData.title}" - Form populated with available details!`, 'success');
                 } catch (populateError) {
-                    console.error('Error populating form with search data:', populateError);
+                    console.error('❌ [SELECT_BOOK] Error populating form with search data:', populateError);
                     // Last resort: just set title and ISBN
                     document.getElementById('title').value = fullData.title || '';
                     document.getElementById('isbn').value = isbn || '';
@@ -1330,9 +1347,24 @@ function selectBookFromSearch(bookIndex) {
             });
     } else {
         // No ISBN available, use the search data directly
+        console.log('📝 [SELECT_BOOK] No ISBN, populating form with search data directly...');
         populateFormWithBookData(fullData);
+        console.log('✅ [SELECT_BOOK] Form populated (no ISBN)');
         showMessage(`Selected "${fullData.title}" - Form populated with available details!`, 'success');
     }
+    
+    // Final verification after a delay
+    setTimeout(() => {
+        const titleField = document.getElementById('title');
+        const isbnField = document.getElementById('isbn');
+        const addBookBtn = document.getElementById('addBookBtn');
+        console.log('📝 [SELECT_BOOK] Final form state - title:', titleField?.value, 'isbn:', isbnField?.value);
+        console.log('📝 [SELECT_BOOK] Add Book button exists:', !!addBookBtn);
+        if (addBookBtn) {
+            console.log('📝 [SELECT_BOOK] Add Book button disabled:', addBookBtn.disabled);
+            console.log('📝 [SELECT_BOOK] Add Book button visible:', addBookBtn.offsetParent !== null);
+        }
+    }, 1000);
 }
 
 function mergeBookData(searchData, isbnData) {
