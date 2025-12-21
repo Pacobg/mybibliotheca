@@ -748,6 +748,31 @@ body:not(.modal-open) .modal-backdrop {
     z-index: 1055 !important;
     position: relative;
 }
+
+/* CRITICAL: Prevent modal-open from blocking clicks - allow pointer events */
+body.modal-open {
+    pointer-events: auto !important;
+}
+
+/* Ensure backdrop doesn't block clicks on modal content */
+.modal-backdrop {
+    pointer-events: none !important;
+}
+
+.modal-backdrop.show {
+    pointer-events: none !important;
+}
+
+/* But allow clicks on backdrop itself to close modal */
+.modal-backdrop.show::before {
+    pointer-events: auto;
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
 </style>
 
 <script>
