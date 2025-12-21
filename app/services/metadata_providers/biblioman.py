@@ -329,6 +329,9 @@ class BibliomanProvider:
         # Get cover field from database (might be filename or URL)
         cover_field = book.get('cover')
         book_id = book.get('id')
+        import builtins
+        builtins.print(f"🔍 [BIBLIOMAN][FORMAT] Book ID: {book_id}, chitanka_id: {chitanka_id}, cover field: {cover_field}")
+        builtins.print(f"🔍 [BIBLIOMAN][FORMAT] All book keys: {list(book.keys())}")
         logger.info(f"🔍 [BIBLIOMAN] Book ID: {book_id}, chitanka_id: {chitanka_id}, cover field: {cover_field}")
         
         if chitanka_id:
@@ -381,10 +384,11 @@ class BibliomanProvider:
                 cursor = self.db.cursor(dictionary=True)
                 # Try to get categories from book_category table (many-to-many relationship)
                 # Biblioman uses book_category table to link books to labels (categories)
+                # Try both label_id and category_id (Biblioman schema might vary)
                 sql = """
                     SELECT l.name 
                     FROM book_category bc
-                    JOIN label l ON bc.label_id = l.id
+                    JOIN label l ON bc.category_id = l.id
                     WHERE bc.book_id = %s
                 """
                 cursor.execute(sql, (book_id,))
@@ -393,6 +397,7 @@ class BibliomanProvider:
                     if result and result.get('name'):
                         categories.append(result['name'])
                 cursor.close()
+                builtins.print(f"📚 [BIBLIOMAN][FORMAT] Found {len(categories)} categories from book_category table for book {book_id}: {categories}")
                 logger.debug(f"Biblioman: Found {len(categories)} categories from book_category table for book {book_id}")
             except Exception as e:
                 logger.debug(f"Biblioman: Could not fetch categories from book_category table for book {book_id}: {e}")
