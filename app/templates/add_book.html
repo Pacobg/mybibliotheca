@@ -982,7 +982,22 @@ function displayTitleSearchResults(results) {
     
     results.forEach((book, index) => {
     const fullData = book.full_data || book; // Fallback to book if full_data is missing
-    const coverUrl = fullData.cover_url || FALLBACK_COVER_URL;
+    let coverUrl = fullData.cover_url || FALLBACK_COVER_URL;
+    
+    // Normalize Google Books cover URLs - ensure HTTPS and proper parameters
+    if (coverUrl && coverUrl !== FALLBACK_COVER_URL && coverUrl.includes('books.google')) {
+        // Ensure HTTPS
+        if (coverUrl.startsWith('http://')) {
+            coverUrl = coverUrl.replace('http://', 'https://');
+        }
+        // Ensure proper parameters for Google Books covers
+        if (!coverUrl.includes('printsec=')) {
+            coverUrl += (coverUrl.includes('?') ? '&' : '?') + 'printsec=frontcover';
+        }
+        if (!coverUrl.includes('img=')) {
+            coverUrl += '&img=1';
+        }
+    }
     const isbn = fullData.isbn_13 || fullData.isbn13 || fullData.isbn_10 || fullData.isbn10 || 'N/A';
         
         const resultCard = document.createElement('div');
