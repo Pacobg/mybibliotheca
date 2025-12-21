@@ -347,23 +347,38 @@ class SimplifiedBookService:
                     from pathlib import Path
                     import requests  # type: ignore
                     
-                    covers_dir = Path('/app/data/covers')
+                    # Try multiple paths to find the correct covers directory
+                    covers_dir = None
+                    possible_paths = [
+                        Path('/app/data/covers'),  # Docker path
+                        Path('./data/covers'),  # Relative path
+                    ]
                     
-                    # Fallback to local development path if Docker path doesn't exist
-                    if not covers_dir.exists():
-                        # Check for data directory from app config
-                        try:
-                            from flask import current_app
-                            data_dir = getattr(current_app.config, 'DATA_DIR', None)
-                            if data_dir:
-                                covers_dir = Path(data_dir) / 'covers'
-                            else:
-                                # Last resort - use relative path from app root
-                                base_dir = Path(__file__).parent.parent.parent
-                                covers_dir = base_dir / 'data' / 'covers'
-                        except:
-                            # If no Flask context available, use fallback
-                            covers_dir = Path('./data/covers')
+                    # Check for data directory from app config
+                    try:
+                        from flask import current_app
+                        data_dir = getattr(current_app.config, 'DATA_DIR', None)
+                        if data_dir:
+                            possible_paths.insert(0, Path(data_dir) / 'covers')
+                    except:
+                        pass
+                    
+                    # Last resort - use relative path from app root
+                    try:
+                        base_dir = Path(__file__).parent.parent.parent
+                        possible_paths.append(base_dir / 'data' / 'covers')
+                    except:
+                        pass
+                    
+                    # Find the first existing directory or use the first one
+                    for path in possible_paths:
+                        if path.exists():
+                            covers_dir = path
+                            break
+                    
+                    if not covers_dir:
+                        # Use the first path and create it
+                        covers_dir = possible_paths[0]
                     
                     covers_dir.mkdir(parents=True, exist_ok=True)
                     
