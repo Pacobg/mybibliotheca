@@ -34,7 +34,7 @@
             </h2>
             <div id="collapseBookDetails" class="accordion-collapse collapse show" data-bs-parent="#bookDetailsAccordion">
                 <div class="accordion-body">
-                    <form method="post" id="addBookForm" action="{{ url_for('book.add_book_manual') }}">
+                    <form method="post" id="addBookForm" action="{{ url_for('book.add_book_manual') }}" novalidate>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <input type="hidden" name="submit_action" id="submitActionField" value="save" />
                         
