@@ -1,0 +1,110 @@
+<div class="card shadow-sm">
+  <div class="card-header d-flex align-items-center gap-2">
+    <i class="bi bi-robot"></i>
+    <strong>AI Configuration</strong>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('auth.save_ai_settings') }}" id="aiConfigForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <input type="hidden" name="inline" value="1" />
+      <div class="mb-3">
+        <label class="form-label fw-bold">AI Provider</label>
+        <select class="form-select" name="ai_provider" id="ai_provider">
+          <option value="openai" {{ 'selected' if ai_config and ai_config.get('AI_PROVIDER') == 'openai' else '' }}>OpenAI</option>
+          <option value="ollama" {{ 'selected' if ai_config and ai_config.get('AI_PROVIDER') == 'ollama' else '' }}>Ollama (Local)</option>
+        </select>
+      </div>
+      <div id="openai-settings" class="provider-settings" style="display:none;">
+        <h6 class="fw-bold text-primary mb-3">OpenAI Configuration</h6>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">API Key</label>
+            <input type="password" class="form-control" id="openai_api_key" name="openai_api_key" value="{{ ai_config.get('OPENAI_API_KEY','') if ai_config else '' }}" placeholder="sk-..." />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Model</label>
+            <select class="form-select" name="openai_model" id="openai_model">
+              <option value="gpt-4o-mini" {{ 'selected' if ai_config and ai_config.get('OPENAI_MODEL') == 'gpt-4o-mini' else '' }}>GPT-4o Mini (Recommended)</option>
+              <option value="gpt-4o" {{ 'selected' if ai_config and ai_config.get('OPENAI_MODEL') == 'gpt-4o' else '' }}>GPT-4o</option>
+              <option value="gpt-4-turbo" {{ 'selected' if ai_config and ai_config.get('OPENAI_MODEL') == 'gpt-4-turbo' else '' }}>GPT-4 Turbo</option>
+              <option value="gpt-4" {{ 'selected' if ai_config and ai_config.get('OPENAI_MODEL') == 'gpt-4' else '' }}>GPT-4</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Base URL</label>
+            <input type="url" class="form-control" name="openai_base_url" value="{{ ai_config.get('OPENAI_BASE_URL','https://api.openai.com/v1') if ai_config else 'https://api.openai.com/v1' }}" />
+          </div>
+        </div>
+        <div class="mt-3">
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="aiTestBtn"><i class="bi bi-plug me-1"></i>Test AI Connection</button>
+          <div id="ai-test-results" class="mt-2 small"></div>
+        </div>
+      </div>
+      <div id="ollama-settings" class="provider-settings" style="display:none;">
+        <h6 class="fw-bold text-success mb-3">Ollama Configuration</h6>
+        <div class="row g-3">
+          <div class="col-md-8">
+            <label class="form-label">Base URL</label>
+            <div class="input-group">
+              <input type="url" class="form-control" id="ollama_base_url" name="ollama_base_url" value="{{ ai_config.get('OLLAMA_BASE_URL','http://localhost:11434/v1') if ai_config else 'http://localhost:11434/v1' }}" />
+              <button type="button" class="btn btn-outline-secondary" id="ollamaTestBtn"><i class="bi bi-wifi me-1"></i>Test & Load Models</button>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Model</label>
+            <select class="form-select" id="ollama_model" name="ollama_model">
+              <option value="">Select model after testing connection</option>
+              <option value="{{ ai_config.get('OLLAMA_MODEL','llama3.2-vision:11b') if ai_config else 'llama3.2-vision:11b' }}" selected>{{ ai_config.get('OLLAMA_MODEL','llama3.2-vision:11b') if ai_config else 'llama3.2-vision:11b' }}</option>
+            </select>
+            <small class="form-text text-muted">Vision-capable model name</small>
+            <div class="form-check mt-2">
+              <input class="form-check-input" type="checkbox" id="ollama_manual_model" />
+              <label class="form-check-label" for="ollama_manual_model">Enter model manually</label>
+            </div>
+            <input type="text" class="form-control mt-2" id="ollama_model_manual" name="ollama_model_manual" style="display:none;" placeholder="Enter model name manually" />
+          </div>
+        </div>
+        <div id="ollama-test-results" class="mt-3"></div>
+      </div>
+      <div class="mt-4">
+        <h6 class="fw-bold text-secondary mb-3">General Settings</h6>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Timeout (s)</label>
+            <input type="number" class="form-control" name="ai_timeout" id="ai_timeout" value="{{ ai_config.get('AI_TIMEOUT','30') if ai_config else '30' }}" min="10" max="120" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Max Tokens</label>
+            <input type="number" class="form-control" name="ai_max_tokens" id="ai_max_tokens" value="{{ ai_config.get('AI_MAX_TOKENS','1000') if ai_config else '1000' }}" min="100" max="128000" />
+            <small class="form-text text-muted">Values above 16k may be slower or rejected.</small>
+            <div id="ai-max-tokens-warning" class="form-text text-warning" style="display:none;">High token count may be slow.</div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Temperature</label>
+            <input type="number" class="form-control" name="ai_temperature" value="{{ ai_config.get('AI_TEMPERATURE','0.1') if ai_config else '0.1' }}" min="0" max="1" step="0.1" />
+          </div>
+        </div>
+      </div>
+      <div class="mt-4">
+        <h6 class="fw-bold text-info mb-3">Feature Settings</h6>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="ai_book_extraction_enabled" id="ai_book_extraction_enabled" {{ 'checked' if ai_config and ai_config.get('AI_BOOK_EXTRACTION_ENABLED')=='true' or (not ai_config) else '' }} />
+              <label class="form-check-label" for="ai_book_extraction_enabled">Enable AI Book Extraction</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="ai_book_extraction_auto_search" id="ai_book_extraction_auto_search" {{ 'checked' if ai_config and ai_config.get('AI_BOOK_EXTRACTION_AUTO_SEARCH')=='true' else '' }} />
+              <label class="form-check-label" for="ai_book_extraction_auto_search">Auto-search After Extraction</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="settings-save-bar mt-4">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Save AI Settings</button>
+      </div>
+    </form>
+  </div>
+</div>

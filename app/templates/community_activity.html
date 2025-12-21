@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Community Activity - MyBibliotheca{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2><i class="bi bi-people"></i> Community Reading Activity</h2>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-sm-6 mb-3">
+        <div class="card bg-primary text-white h-100 community-stat-card" 
+             onclick="loadCommunitySection('active_readers')" data-section="active_readers">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="card-title">{{ total_active_readers }}</h4>
+                        <p class="card-text mb-0">Active Readers</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-sm-6 mb-3">
+        <div class="card bg-success text-white h-100 community-stat-card" 
+             onclick="loadCommunitySection('books_this_month')" data-section="books_this_month">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="card-title">{{ total_books_this_month }}</h4>
+                        <p class="card-text mb-0">Books This Month</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-sm-6 mb-3">
+        <div class="card bg-info text-white h-100 community-stat-card" 
+             onclick="loadCommunitySection('currently_reading')" data-section="currently_reading">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="card-title">{{ currently_reading|length }}</h4>
+                        <p class="card-text mb-0">Currently Reading</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-sm-6 mb-3">
+        <div class="card bg-warning text-white h-100 community-stat-card" 
+             onclick="loadCommunitySection('recent_activity')" data-section="recent_activity">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="card-title">{{ recent_logs|length }}</h4>
+                        <p class="card-text mb-0">Recent Activity</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dynamic Content Area -->
+<div id="community-content">
+    <!-- Default content will be loaded here -->
+</div>
+
+<style>
+.community-stat-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.community-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.community-stat-card.active {
+    transform: scale(1.02);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    border: 2px solid rgba(255,255,255,0.3);
+}
+
+#community-content {
+    min-height: 400px;
+}
+
+.loading-spinner {
+    display: none;
+    text-align: center;
+    padding: 40px;
+}
+</style>
+
+<script>
+let currentSection = null;
+
+function loadCommunitySection(section) {
+    // Remove active class from all cards
+    document.querySelectorAll('.community-stat-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    
+    // Add active class to clicked card
+    document.querySelector(`[data-section="${section}"]`).classList.add('active');
+    
+    if (currentSection === section) {
+        // If clicking the same section, hide content
+        document.getElementById('community-content').innerHTML = '';
+        currentSection = null;
+        document.querySelectorAll('.community-stat-card').forEach(card => {
+            card.classList.remove('active');
+        });
+        return;
+    }
+    
+    currentSection = section;
+    
+    // Show loading spinner
+    document.getElementById('community-content').innerHTML = `
+        <div class="loading-spinner" style="display: block;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading...</p>
+        </div>
+    `;
+    
+    // Fetch content via AJAX
+    fetch(`/community_activity/${section}`)
+        .then(response => response.text())
+        .then(html => {
+            // Extract just the content area from the response
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const content = doc.querySelector('.row') || doc.querySelector('.card');
+            
+            if (content) {
+                document.getElementById('community-content').innerHTML = content.outerHTML;
+            } else {
+                document.getElementById('community-content').innerHTML = '<p class="text-center text-muted">No content available.</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading content:', error);
+            document.getElementById('community-content').innerHTML = '<p class="text-center text-danger">Error loading content. Please try again.</p>';
+        });
+}
+
+// Load default content on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadCommunitySection('currently_reading');
+});
+</script>
+
+{% if sharing_users %}
+<!-- Privacy Notice -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h6><small><strong>Privacy Notice:</strong></small></h6>
+            <p class="mb-0" style="font-size: 0.9em;">
+                Only activity from users who have enabled "Share Reading Activity" in their privacy settings is shown here. 
+                <a href="{{ url_for('auth.profile') }}" class="alert-link">Check your privacy settings</a> if you'd like to share or stop sharing your reading activity.
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,1493 @@
+{% extends "base.html" %}
+
+{% block title %}My Library - MyBibliotheca{% endblock %}
+{% block content %}
+<style>
+  :root {
+    --primary-brown: #8B4513;
+    --light-brown: #D2B48C;
+    --cream: #F5F5DC;
+    --warm-white: #FEFEFE;
+    --gold: #DAA520;
+    --shadow: rgba(0,0,0,0.1);
+    --hover-shadow: rgba(0,0,0,0.2);
+    --text-color: #333;
+    --header-text: white;
+    --card-bg: white;
+    --card-text: #333;
+  }
+
+  /* Dark mode overrides */
+  [data-theme="dark"] {
+    --primary-brown: #6b5b73;
+    --light-brown: #8a7ca8;
+    --cream: #2d2d2d;
+    --warm-white: #1e1e1e;
+    --gold: #f0c674;
+    --shadow: rgba(0,0,0,0.3);
+    --hover-shadow: rgba(0,0,0,0.5);
+    --text-color: #e0e0e0;
+    --header-text: #f0c674;
+    --card-bg: #2d2d2d;
+    --card-text: #e0e0e0;
+  }
+
+  .book-cover-wrapper {
+    height: 240px;
+    overflow: hidden;
+    position: relative;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+  }
+
+  .book-cover {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: transform 0.2s ease;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .book-card:hover .book-cover {
+    transform: scale(1.05);
+  }
+
+  .book-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: none;
+  }
+
+  .book-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+  }
+
+  /* Dark mode card styling */
+  [data-theme="dark"] .book-card {
+    background-color: var(--card-bg) !important;
+    color: var(--card-text) !important;
+    border-color: #404040 !important;
+  }
+
+  [data-theme="dark"] .book-card:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4) !important;
+  }
+
+  [data-theme="dark"] .card-body {
+    background-color: var(--card-bg) !important;
+    color: var(--card-text) !important;
+  }
+
+  [data-theme="dark"] .book-title {
+    color: var(--card-text) !important;
+  }
+
+  [data-theme="dark"] .text-muted {
+    color: #b0b0b0 !important;
+  }
+
+  [data-theme="dark"] .stats-row .card {
+    background-color: var(--card-bg) !important;
+    border-color: #404040 !important;
+  }
+
+  [data-theme="dark"] .stats-row .card-body {
+    color: var(--card-text) !important;
+  }
+
+  /* Dark mode filter button overrides */
+  [data-theme="dark"] .filter-btn.btn-warning {
+    background-color: rgba(255, 193, 7, 0.2) !important;
+    border-color: #ffc107 !important;
+    color: #ffd43b !important;
+  }
+
+  [data-theme="dark"] .filter-btn.btn-success {
+    background-color: rgba(25, 135, 84, 0.2) !important;
+    border-color: #198754 !important;
+    color: #51cf66 !important;
+  }
+
+  [data-theme="dark"] .filter-btn.btn-info {
+    background-color: rgba(13, 202, 240, 0.2) !important;
+    border-color: #0dcaf0 !important;
+    color: #74c0fc !important;
+  }
+
+  [data-theme="dark"] .filter-btn.btn-primary {
+    background-color: rgba(13, 110, 253, 0.2) !important;
+    border-color: #0d6efd !important;
+    color: #6ea8fe !important;
+  }
+
+  [data-theme="dark"] .filter-btn.btn-secondary {
+    background-color: rgba(108, 117, 125, 0.2) !important;
+    border-color: #6c757d !important;
+    color: #adb5bd !important;
+  }
+
+  [data-theme="dark"] .filter-btn.btn-dark {
+    background-color: rgba(33, 37, 41, 0.3) !important;
+    border-color: #495057 !important;
+    color: #f8f9fa !important;
+  }
+
+  /* Dark mode text and header styling */
+  [data-theme="dark"] .h4 {
+    color: var(--text-color) !important;
+  }
+
+  [data-theme="dark"] small.text-muted {
+    color: #b0b0b0 !important;
+  }
+
+  /* Ensure filter button text colors work in dark mode */
+  [data-theme="dark"] .text-warning {
+    color: #ffd43b !important;
+  }
+
+  [data-theme="dark"] .text-success {
+    color: #51cf66 !important;
+  }
+
+  [data-theme="dark"] .text-info {
+    color: #74c0fc !important;
+  }
+
+  [data-theme="dark"] .text-primary {
+    color: #6ea8fe !important;
+  }
+
+  [data-theme="dark"] .text-secondary {
+    color: #adb5bd !important;
+  }
+
+  .book-title {
+    font-size: 0.9rem;
+    line-height: 1.2;
+    height: 2.4em;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+    /* Reserve cover aspect ratio to reduce CLS */
+    .book-cover-wrapper::before {
+        content: "";
+        display: block;
+        padding-top: 150%; /* ~2:3 aspect */
+        pointer-events: none;
+    }
+    .book-cover-wrapper > img,
+    .book-cover-wrapper > div {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+    }
+
+  .filter-btn {
+    transition: all 0.2s ease;
+    border: 2px solid;
+  }
+
+  .filter-btn:hover {
+    transform: translateY(-2px);
+  }
+
+  /* Fix for selected filter button - very light styling */
+  .filter-btn.btn-warning {
+    background-color: rgba(255, 193, 7, 0.1) !important; /* Very light yellow */
+    border-color: #ffc107 !important;
+    color: #856404 !important; /* Dark yellow text */
+  }
+
+  .filter-btn.btn-success {
+    background-color: rgba(25, 135, 84, 0.1) !important; /* Very light green */
+    border-color: #198754 !important;
+    color: #0a3622 !important; /* Dark green text */
+  }
+
+  .filter-btn.btn-info {
+    background-color: rgba(13, 202, 240, 0.1) !important; /* Very light blue */
+    border-color: #0dcaf0 !important;
+    color: #055160 !important; /* Dark blue text */
+  }
+
+  .filter-btn.btn-primary {
+    background-color: rgba(13, 110, 253, 0.1) !important; /* Very light blue */
+    border-color: #0d6efd !important;
+    color: #052c65 !important; /* Dark blue text */
+  }
+
+  .filter-btn.btn-secondary {
+    background-color: rgba(108, 117, 125, 0.1) !important; /* Very light gray */
+    border-color: #6c757d !important;
+    color: #373a3c !important; /* Dark gray text */
+  }
+
+  .filter-btn.btn-dark {
+    background-color: rgba(33, 37, 41, 0.1) !important; /* Very light dark */
+    border-color: #212529 !important;
+    color: #212529 !important; /* Dark text */
+  }
+
+  .book-checkbox {
+    transform: scale(1.2);
+  }
+
+  /* Searchable dropdown styles */
+  .dropdown-search-wrapper {
+    position: relative;
+  }
+
+  .dropdown-search-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .dropdown-search-btn .selected-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    text-align: left;
+  }
+
+  .dropdown-search-menu {
+    max-height: 300px;
+    overflow-y: auto;
+    min-width: 100%;
+  }
+
+  .dropdown-search-input {
+    border: none;
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 0;
+    margin: 0;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+  }
+
+  .dropdown-search-input:focus {
+    box-shadow: none;
+    border-bottom-color: #0d6efd;
+  }
+
+  .dropdown-item {
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+  }
+
+  .dropdown-item:hover {
+    background-color: #f8f9fa;
+  }
+
+  .dropdown-item.active {
+    background-color: #0d6efd;
+    color: white;
+  }
+
+  /* Dark mode dropdown styles */
+  [data-theme="dark"] .dropdown-search-input {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    border-bottom-color: #6c757d;
+  }
+
+  [data-theme="dark"] .dropdown-search-input:focus {
+    border-bottom-color: #0d6efd;
+  }
+
+  [data-theme="dark"] .dropdown-menu {
+    background-color: #2d2d2d;
+    border-color: #6c757d;
+  }
+
+  [data-theme="dark"] .dropdown-item {
+    color: #e0e0e0;
+  }
+
+  [data-theme="dark"] .dropdown-item:hover {
+    background-color: #404040;
+  }
+
+  [data-theme="dark"] .dropdown-item.active {
+    background-color: #0d6efd;
+    color: white;
+  }
+
+  /* Standalone search box styles */
+  .library-search-box {
+    max-width: 400px;
+    flex: 1;
+  }
+
+  .library-search-box input {
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    border: 1px solid #dee2e6;
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    transition: all 0.2s ease;
+  }
+
+  .library-search-box input:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  }
+
+  [data-theme="dark"] .library-search-box input {
+    background-color: #2d2d2d;
+    border-color: #404040;
+    color: #e0e0e0;
+  }
+
+  [data-theme="dark"] .library-search-box input:focus {
+    border-color: #6b5b73;
+    box-shadow: 0 0 0 0.2rem rgba(107, 91, 115, 0.25);
+  }
+
+  @media (max-width: 768px) {
+    .library-search-box {
+      max-width: 100%;
+      margin-top: 1rem;
+    }
+  }
+</style>
+
+<div class="container-fluid px-4 py-4">
+    <!-- Page Header with Search -->
+    <div class="mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <h1 class="h2 mb-0">
+                <i class="bi bi-book me-2"></i>My Library
+            </h1>
+            <form method="GET" action="{{ url_for('main.library') }}" class="library-search-box">
+                <input type="hidden" name="status_filter" value="{{ current_status_filter or 'all' }}">
+                {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
+                {% if current_publisher %}<input type="hidden" name="publisher" value="{{ current_publisher }}">{% endif %}
+                {% if current_language %}<input type="hidden" name="language" value="{{ current_language }}">{% endif %}
+                {% if current_location %}<input type="hidden" name="location" value="{{ current_location }}">{% endif %}
+                {% if current_media_type %}<input type="hidden" name="media_type" value="{{ current_media_type }}">{% endif %}
+                {% if current_sort %}<input type="hidden" name="sort" value="{{ current_sort }}">{% endif %}
+                <input type="text" class="form-control" name="search" 
+                       value="{{ current_search }}" 
+                       placeholder="Search books by title, author, or description..."
+                       aria-label="Search library">
+            </form>
+            <div class="btn-group">
+                <a href="{{ url_for('stats.library_journey') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-diagram-3 me-1"></i>Journey Timeline
+                </a>
+                <a href="{{ url_for('stats.index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-graph-up me-1"></i>Full Stats
+                </a>
+            </div>
+        </div>
+    </div>
+    <!-- Library pagination meta (for JS) -->
+    <div id="lib-meta" data-page="{{ page or 1 }}" data-rows="{{ rows or 4 }}" data-total="{{ (total_books or stats.total_books) if stats else total_books }}" hidden></div>
+
+    <!-- Library Stats with Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    {% set stat_buttons = [
+                        {'filter': 'reading', 'outline': 'warning', 'text': 'warning', 'label': 'Currently Reading', 'value': stats.currently_reading},
+                        {'filter': 'read', 'outline': 'success', 'text': 'success', 'label': 'Books Read', 'value': stats.books_read},
+                        {'filter': 'plan_to_read', 'outline': 'info', 'text': 'info', 'label': 'Plan to Read', 'value': stats.want_to_read},
+                        {'filter': 'wishlist', 'outline': 'primary', 'text': 'primary', 'label': 'Wishlist', 'value': stats.wishlist},
+                        {'filter': 'on_hold', 'outline': 'secondary', 'text': 'secondary', 'label': 'On Hold', 'value': stats.on_hold},
+                        {'filter': 'all', 'outline': 'dark', 'text': 'dark', 'label': 'Total Books', 'value': stats.total_books}
+                    ] %}
+                    <div class="row align-items-center">
+                        <div class="col-lg-10 col-md-9">
+                            <div class="d-none d-md-block">
+                                <div class="row text-center">
+                                    {% for btn in stat_buttons %}
+                                        <div class="col-lg-2 col-md-4 mb-3 mb-lg-0">
+                                            <button class="btn btn-outline-{{ btn.outline }} w-100 filter-btn" data-filter="{{ btn.filter }}">
+                                                <div class="h4 mb-0 text-{{ btn.text }}">{{ btn.value }}</div>
+                                                <small class="text-muted">{{ btn.label }}</small>
+                                            </button>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="d-md-none">
+                                <button class="btn btn-outline-primary w-100 mb-3" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#mobileLibraryStats"
+                                        aria-expanded="false" aria-controls="mobileLibraryStats">
+                                    Library Stats<i class="bi bi-chevron-down ms-2"></i>
+                                </button>
+                                <div class="collapse" id="mobileLibraryStats">
+                                    <div class="row g-2 text-center">
+                                        {% for btn in stat_buttons %}
+                                            <div class="col-6">
+                                                <button class="btn btn-outline-{{ btn.outline }} w-100 filter-btn" data-filter="{{ btn.filter }}">
+                                                    <div class="h5 mb-0 text-{{ btn.text }}">{{ btn.value }}</div>
+                                                    <small class="text-muted d-block">{{ btn.label }}</small>
+                                                </button>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-3 text-center">
+                            <a href="{{ url_for('main.add_book') }}" class="btn btn-success btn-lg">
+                                <i class="bi bi-plus-circle me-1"></i>Add Books
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Filters (Collapsible) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" 
+                            data-bs-toggle="collapse" data-bs-target="#advancedFilters" 
+                            aria-expanded="false" aria-controls="advancedFilters">
+                        <i class="bi bi-funnel me-2"></i>Advanced Filters
+                        <i class="bi bi-chevron-down float-end"></i>
+                    </button>
+                </div>
+                <div id="advancedFilters" class="collapse">
+                    <div class="card-body">
+                        <form method="GET" id="filter-form">
+                            <input type="hidden" name="status_filter" id="status_filter" value="{{ current_status_filter or 'all' }}">
+                            {% if current_search %}<input type="hidden" name="search" value="{{ current_search }}">{% endif %}
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label for="category" class="form-label">{{ get_genre_term() }}</label>
+                                    <div class="dropdown-search-wrapper">
+                                        <input type="hidden" name="category" value="{{ current_category }}">
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start dropdown-search-btn" 
+                                                    type="button" data-bs-toggle="dropdown" data-field="category">
+                                                <span class="selected-text">{{ current_category if current_category else 'All ' + get_genre_term_plural() }}</span>
+                                            </button>
+                                            <ul class="dropdown-menu w-100 dropdown-search-menu" data-field="category">
+                                                <li><input type="text" class="form-control dropdown-search-input" placeholder="Search categories..."></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="#" data-value="">All Categories</a></li>
+                                                {% for category in categories %}
+                                                    <li><a class="dropdown-item" href="#" data-value="{{ category }}">{{ category }}</a></li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="publisher" class="form-label">Publisher</label>
+                                    <div class="dropdown-search-wrapper">
+                                        <input type="hidden" name="publisher" value="{{ current_publisher }}">
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start dropdown-search-btn" 
+                                                    type="button" data-bs-toggle="dropdown" data-field="publisher">
+                                                <span class="selected-text">{{ current_publisher if current_publisher else 'All Publishers' }}</span>
+                                            </button>
+                                            <ul class="dropdown-menu w-100 dropdown-search-menu" data-field="publisher">
+                                                <li><input type="text" class="form-control dropdown-search-input" placeholder="Search publishers..."></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="#" data-value="">All Publishers</a></li>
+                                                {% for publisher in publishers %}
+                                                    <li><a class="dropdown-item" href="#" data-value="{{ publisher }}">{{ publisher }}</a></li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="language" class="form-label">Language</label>
+                                    <div class="dropdown-search-wrapper">
+                                        <input type="hidden" name="language" value="{{ current_language }}">
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start dropdown-search-btn" 
+                                                    type="button" data-bs-toggle="dropdown" data-field="language">
+                                                <span class="selected-text">{{ current_language if current_language else 'All Languages' }}</span>
+                                            </button>
+                                            <ul class="dropdown-menu w-100 dropdown-search-menu" data-field="language">
+                                                <li><input type="text" class="form-control dropdown-search-input" placeholder="Search languages..."></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="#" data-value="">All Languages</a></li>
+                                                {% for language in languages %}
+                                                    <li><a class="dropdown-item" href="#" data-value="{{ language }}">{{ language }}</a></li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="media_type" class="form-label">Format</label>
+                                    <div class="dropdown-search-wrapper">
+                                        <input type="hidden" name="media_type" value="{{ current_media_type }}">
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start dropdown-search-btn" 
+                                                    type="button" data-bs-toggle="dropdown" data-field="media_type">
+                                                <span class="selected-text">
+                                                    {% if current_media_type %}
+                                                        {{ media_type_labels.get(current_media_type, current_media_type|replace('_', ' ')|title) }}
+                                                    {% else %}
+                                                        All Formats
+                                                    {% endif %}
+                                                </span>
+                                            </button>
+                                            <ul class="dropdown-menu w-100 dropdown-search-menu" data-field="media_type">
+                                                <li><input type="text" class="form-control dropdown-search-input" placeholder="Search formats..."></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="#" data-value="">All Formats</a></li>
+                                                {% for media in media_types %}
+                                                    <li><a class="dropdown-item" href="#" data-value="{{ media.value }}">{{ media.label }}</a></li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="location" class="form-label">Location</label>
+                                    <div class="dropdown-search-wrapper">
+                                        <input type="hidden" name="location" value="{{ current_location }}">
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start dropdown-search-btn" 
+                                                    type="button" data-bs-toggle="dropdown" data-field="location">
+                                                <span class="selected-text">{{ current_location if current_location else 'All Locations' }}</span>
+                                            </button>
+                                            <ul class="dropdown-menu w-100 dropdown-search-menu" data-field="location">
+                                                <li><input type="text" class="form-control dropdown-search-input" placeholder="Search locations..."></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="#" data-value="">All Locations</a></li>
+                                                {% for location in locations %}
+                                                    <li><a class="dropdown-item" href="#" data-value="{{ location }}">{{ location }}</a></li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="finished_after" class="form-label">Finished After</label>
+                                    <input type="date" class="form-control" id="finished_after" name="finished_after" value="{{ current_finished_after }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="finished_before" class="form-label">Finished Before</label>
+                                    <input type="date" class="form-control" id="finished_before" name="finished_before" value="{{ current_finished_before }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="sort" class="form-label">Sort By</label>
+                                    <select class="form-select" id="sort" name="sort">
+                                        <option value="title_asc" {% if current_sort == 'title_asc' or not current_sort %}selected{% endif %}>Title A-Z</option>
+                                        <option value="title_desc" {% if current_sort == 'title_desc' %}selected{% endif %}>Title Z-A</option>
+                                        <option value="author_first_asc" {% if current_sort == 'author_first_asc' %}selected{% endif %}>Author First, Last A-Z</option>
+                                        <option value="author_first_desc" {% if current_sort == 'author_first_desc' %}selected{% endif %}>Author First, Last Z-A</option>
+                                        <option value="author_last_asc" {% if current_sort == 'author_last_asc' %}selected{% endif %}>Author Last, First A-Z</option>
+                                        <option value="author_last_desc" {% if current_sort == 'author_last_desc' %}selected{% endif %}>Author Last, First Z-A</option>
+                                        <option value="date_added_desc" {% if current_sort == 'date_added_desc' %}selected{% endif %}>Date Added (Newest First)</option>
+                                        <option value="date_added_asc" {% if current_sort == 'date_added_asc' %}selected{% endif %}>Date Added (Oldest First)</option>
+                                        <option value="publication_date_desc" {% if current_sort == 'publication_date_desc' %}selected{% endif %}>Publication Date (Newest First)</option>
+                                        <option value="publication_date_asc" {% if current_sort == 'publication_date_asc' %}selected{% endif %}>Publication Date (Oldest First)</option>
+                                        <option value="finish_date_desc" {% if current_sort == 'finish_date_desc' %}selected{% endif %}>Finish Date (Newest First)</option>
+                                        <option value="finish_date_asc" {% if current_sort == 'finish_date_asc' %}selected{% endif %}>Finish Date (Oldest First)</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary me-2">
+                                        <i class="bi bi-funnel me-1"></i>Apply Filters
+                                    </button>
+                                    <a href="{{ url_for('main.library') }}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-x-circle me-1"></i>Clear All
+                                    </a>
+                                    <span class="ms-3 text-muted">Showing <span id="book-count">{{ books|length }}</span> book(s)</span>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Books Grid -->
+    <div class="row">
+        <div class="col-12">
+            {% if books %}
+                <!-- Pagination controls -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="text-muted small">
+            Page {{ page or 1 }} of {{ total_pages or 1 }} • Rows {{ rows or 1 }} • Per page {{ per_page or books|length }} • Total {{ (total_books or stats.total_books) if stats else total_books }}
+                    </div>
+                    <div class="btn-group">
+            <a id="prevPageBtn" class="btn btn-outline-secondary btn-sm {% if not has_prev %}disabled{% endif %}" href="#" aria-disabled="{{ 'true' if not has_prev else 'false' }}">&laquo; Prev</a>
+            <a id="nextPageBtn" class="btn btn-outline-secondary btn-sm {% if not has_next %}disabled{% endif %}" href="#" aria-disabled="{{ 'true' if not has_next else 'false' }}">Next &raquo;</a>
+                    </div>
+                </div>
+                <!-- Selection toolbar (hidden by default) -->
+                <div id="selection-toolbar" class="card bg-primary text-white mb-3" style="display: none;">
+                    <div class="card-body py-2">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <span id="selection-count">0</span> book(s) selected
+                            </div>
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <button type="button" class="btn btn-outline-light btn-sm" onclick="selectAll()">
+                                    Select All
+                                </button>
+                                <button type="button" class="btn btn-outline-light btn-sm" onclick="clearSelection()">
+                                    Clear Selection
+                                </button>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-outline-light btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Change Status
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end" id="bulk-status-menu">
+                                        {% for option in reading_status_options %}
+                                            <li>
+                                                <button type="button" class="dropdown-item" data-status="{{ option.value }}">{{ option.label }}</button>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-outline-light btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Change Location
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end" id="bulk-location-menu">
+                                        {% if location_options %}
+                                            {% for location in location_options %}
+                                                <li>
+                                                    <button type="button" class="dropdown-item" data-location="{{ location.id }}">
+                                                        {{ location.name }}{% if location.is_default %} (Default){% endif %}
+                                                    </button>
+                                                </li>
+                                            {% endfor %}
+                                            <li><hr class="dropdown-divider"></li>
+                                        {% endif %}
+                                        <li>
+                                            <button type="button" class="dropdown-item text-danger" data-location="clear">Clear Location</button>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <button type="button" class="btn btn-outline-light btn-sm" id="bulk-category-button">
+                                    Change Categories
+                                </button>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="deleteSelected()">
+                                    Delete Selected
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Books Grid -->
+                <div class="row g-4" id="books-container">
+                    {% for book in books %}
+                    <div class="col-lg-2 col-md-3 col-sm-4 col-6 book-item" 
+                             data-reading-status="{{ book.normalized_reading_status if book.normalized_reading_status is not none else (book.reading_status or '') }}"
+                        data-ownership-status="{{ book.normalized_ownership_status or book.ownership_status or 'owned' }}">
+                            <div class="card h-100 book-card shadow-sm position-relative" data-book-id="{{ book.uid or book.id }}">
+                                <!-- Selection checkbox -->
+                                <div class="position-absolute top-0 end-0 p-2" style="z-index: 10; pointer-events: none;">
+                                    <input type="checkbox" class="form-check-input book-checkbox" value="{{ book.uid or book.id }}" style="pointer-events: auto;">
+                                </div>
+
+                                <!-- Book Cover -->
+                                                                <!-- Book Cover -->
+                                                                                                <div class="book-cover-wrapper position-relative" style="cursor: pointer;">
+                                                                                                    {% from 'macros/cover_input.html' import render_cover_display %}
+                                                                                                    {{ render_cover_display(book, css_classes="card-img-top book-cover", style="", img_id="") }}
+                                                                                                    {% if book.media_type and book.media_type|lower == 'audiobook' %}
+                                                                                                        <span class="position-absolute bottom-0 end-0 m-2 badge rounded-pill bg-dark text-white opacity-75" title="Audiobook">
+                                                                                                            <i class="bi bi-soundwave"></i>
+                                                                                                        </span>
+                                                                                                    {% endif %}
+                                                                                                </div>
+
+                                <!-- Book Info -->
+                                <div class="card-body p-2" style="cursor: pointer;">
+                                    <h6 class="card-title mb-1 book-title">{{ book.title }}</h6>
+                                    
+                                    <!-- Author (simple display) -->
+                                    {% if book.author %}
+                                        <div class="mb-1 small text-muted">
+                                            {{ book.author }}
+                                        </div>
+                                    {% endif %}
+
+                                    <!-- Reading Status Badge -->
+                                    <div class="mb-2">
+                                        {% set display_status = book.normalized_reading_status if book.normalized_reading_status is not none else (book.reading_status or '') %}
+                                        {% if display_status in ['reading', 'currently_reading'] %}
+                                            <span class="badge bg-warning text-dark">📖 Reading</span>
+                                        {% elif display_status == 'read' %}
+                                            <span class="badge bg-success">✅ Read</span>
+                                        {% elif display_status == 'plan_to_read' %}
+                                            <span class="badge bg-info">📚 Plan to Read</span>
+                                        {% elif display_status == 'on_hold' %}
+                                            <span class="badge bg-secondary">⏸️ On Hold</span>
+                                        {% elif display_status == 'did_not_finish' %}
+                                            <span class="badge bg-danger">❌ DNF</span>
+                                        {% endif %}
+
+                                        {% set display_ownership = book.normalized_ownership_status if book.normalized_ownership_status else (book.ownership_status or '') %}
+                                        {% if display_ownership == 'wishlist' %}
+                                            <span class="badge bg-primary">⭐ Wishlist</span>
+                                        {% elif display_ownership == 'borrowed' %}
+                                            <span class="badge bg-warning">📚 Borrowed</span>
+                                        {% elif display_ownership == 'loaned' %}
+                                            <span class="badge bg-info">📤 Loaned</span>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Rating -->
+                                    {% if book.average_rating %}
+                                        <div class="text-warning small">
+                                            {% for i in range(5) %}
+                                                {% if i < book.average_rating %}⭐{% else %}☆{% endif %}
+                                            {% endfor %}
+                                            <span class="text-muted">{{ "%.2f"|format(book.average_rating) }}</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <a href="{{ url_for('book.view_book_enhanced', uid=(book.uid or book.id)) }}" class="stretched-link" aria-label="View book"></a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- No books message (hidden by default) -->
+                <div id="no-books-message" class="text-center py-5" style="display: none;">
+                    <div class="text-muted">
+                        <i class="bi bi-book display-1"></i>
+                        <p class="mt-3" id="no-books-text">No books found matching your current filter.</p>
+                        <button class="btn btn-outline-primary" onclick="clearStatusFilter()">
+                            Show All Books
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pagination controls (bottom) -->
+                <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+                    <div class="text-muted small">
+                        Page {{ page or 1 }} of {{ total_pages or 1 }} • Rows {{ rows or 1 }} • Per page {{ per_page or books|length }} • Total {{ (total_books or stats.total_books) if stats else total_books }}
+                    </div>
+                    <div class="btn-group">
+                        <a id="prevPageBtnBottom" class="btn btn-outline-secondary btn-sm {% if not has_prev %}disabled{% endif %}" href="#" aria-disabled="{{ 'true' if not has_prev else 'false' }}">&laquo; Prev</a>
+                        <a id="nextPageBtnBottom" class="btn btn-outline-secondary btn-sm {% if not has_next %}disabled{% endif %}" href="#" aria-disabled="{{ 'true' if not has_next else 'false' }}">Next &raquo;</a>
+                    </div>
+                </div>
+
+            {% else %}
+                <!-- Empty state with context-aware message -->
+                <div class="text-center py-5">
+                    <div class="text-muted">
+                        <i class="bi bi-book display-1"></i>
+                        {% if current_status_filter == 'reading' %}
+                            <h4 class="mt-3">You're not currently reading any books</h4>
+                            <p class="mb-4">Start a new book from your library or add some books to read!</p>
+                        {% elif current_status_filter == 'read' %}
+                            <h4 class="mt-3">You haven't finished any books yet</h4>
+                            <p class="mb-4">Complete some books and they'll appear here!</p>
+                        {% elif current_status_filter == 'plan_to_read' %}
+                            <h4 class="mt-3">You have no books planned to read</h4>
+                            <p class="mb-4">Add some books to your reading list!</p>
+                        {% elif current_status_filter == 'wishlist' %}
+                            <h4 class="mt-3">You have no books on your wishlist</h4>
+                            <p class="mb-4">Add books you want to acquire to your wishlist!</p>
+                        {% elif current_status_filter == 'on_hold' %}
+                            <h4 class="mt-3">You have no books on hold</h4>
+                            <p class="mb-4">Books you've paused will appear here!</p>
+                        {% else %}
+                            <h4 class="mt-3">No books found</h4>
+                            <p class="mb-4">Try adjusting your filters or add some books to your library!</p>
+                        {% endif %}
+                        <a href="{{ url_for('main.add_book') }}" class="btn btn-primary btn-lg">
+                            <i class="bi bi-plus-circle me-1"></i>Add Books
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Bulk action forms -->
+    <form id="bulk-delete-form" method="POST" action="{{ url_for('book.bulk_delete_books') }}" style="display: none;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" name="redirect_url" value="{{ request.url }}"/>
+        <div id="bulk-delete-ids"></div>
+    </form>
+
+    <form id="bulk-status-form" method="POST" action="{{ url_for('book.bulk_update_book_status') }}" style="display: none;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" name="reading_status" value=""/>
+        <input type="hidden" name="redirect_url" value="{{ request.url }}"/>
+        <div id="bulk-status-ids"></div>
+    </form>
+
+    <form id="bulk-location-form" method="POST" action="{{ url_for('book.bulk_update_book_location') }}" style="display: none;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" name="location_id" value=""/>
+        <input type="hidden" name="redirect_url" value="{{ request.url }}"/>
+        <div id="bulk-location-ids"></div>
+    </form>
+
+    <!-- Bulk Categories Modal -->
+    <div class="modal fade" id="bulkCategoryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form id="bulk-category-form" method="POST" action="{{ url_for('book.bulk_update_book_categories') }}">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bi bi-tags me-2"></i>Change Categories</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="redirect_url" value="{{ request.url }}"/>
+                        <div id="bulk-category-ids"></div>
+                        <div class="mb-3">
+                            <label for="bulk-category-select" class="form-label">Select existing categories</label>
+                            <select class="form-select" id="bulk-category-select" name="categories" multiple size="8">
+                                {% for category in category_options %}
+                                    <option value="{{ category.name }}">{{ category.label }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Hold Ctrl (Cmd on Mac) to select multiple categories.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bulk-additional-categories" class="form-label">Add new categories (comma or newline separated)</label>
+                            <textarea class="form-control" id="bulk-additional-categories" name="additional_categories" rows="2" placeholder="e.g., Cozy Mystery, Historical Fiction"></textarea>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="bulk-clear-categories" name="clear_categories" value="1">
+                            <label class="form-check-label" for="bulk-clear-categories">
+                                Clear existing categories before applying new ones
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Apply Categories</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize with the current filter from the URL, falling back to the hidden input default
+    const urlParams = new URLSearchParams(window.location.search);
+    const fallbackInput = document.getElementById('status_filter');
+    const fallbackFilter = fallbackInput ? (fallbackInput.value || 'all') : 'all';
+    const currentFilter = urlParams.get('status_filter') || fallbackFilter;
+    
+    // Set active filter button
+    updateActiveFilter(currentFilter);
+    
+    // Apply initial filter
+    applyStatusFilter(currentFilter);
+
+    // Filter button handlers -> submit form to server so filtering spans all pages
+    document.querySelectorAll('.filter-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.dataset.filter;
+            const statusInput = document.getElementById('status_filter');
+            if (statusInput) {
+                // Toggle to 'all' when clicking the same active filter
+                const current = statusInput.value || 'all';
+                statusInput.value = (current === filter) ? 'all' : filter;
+            }
+            <!-- Prefetch JS deferred to a separate static file in future to avoid template lint issues -->
+
+            const form = document.getElementById('filter-form');
+            if (form) form.submit();
+        });
+    });
+
+    // Selection functionality
+    const checkboxes = document.querySelectorAll('.book-checkbox');
+    const selectionToolbar = document.getElementById('selection-toolbar');
+    const selectionCount = document.getElementById('selection-count');
+    const bulkDeleteForm = document.getElementById('bulk-delete-form');
+    const bulkStatusForm = document.getElementById('bulk-status-form');
+    const bulkLocationForm = document.getElementById('bulk-location-form');
+    const bulkCategoryForm = document.getElementById('bulk-category-form');
+    const bulkStatusMenu = document.getElementById('bulk-status-menu');
+    const bulkLocationMenu = document.getElementById('bulk-location-menu');
+    const bulkCategoryButton = document.getElementById('bulk-category-button');
+    const bulkCategoryModalElement = document.getElementById('bulkCategoryModal');
+
+    const currentPageUrl = window.location.href;
+    [bulkDeleteForm, bulkStatusForm, bulkLocationForm, bulkCategoryForm].forEach(form => {
+        if (form) {
+            updateHiddenInput(form, 'redirect_url', currentPageUrl);
+        }
+    });
+
+    function getSelectedCheckboxes() {
+        return Array.from(document.querySelectorAll('.book-checkbox:checked'));
+    }
+
+    function populateBulkForm(form, containerId) {
+        if (!form) return [];
+        const container = document.getElementById(containerId);
+        if (!container) return [];
+        container.innerHTML = '';
+        updateHiddenInput(form, 'redirect_url', window.location.href);
+        const selectedCheckboxes = getSelectedCheckboxes();
+        selectedCheckboxes.forEach(checkbox => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'book_ids';
+            input.value = checkbox.value;
+            container.appendChild(input);
+        });
+        return selectedCheckboxes.map(cb => cb.value);
+    }
+
+    function updateHiddenInput(form, name, value) {
+        if (!form) return;
+        const input = form.querySelector(`input[name="${name}"]`);
+        if (input) {
+            input.value = value;
+        }
+    }
+
+    function handleBulkActionResponse(data) {
+        if (data && typeof data.redirect_url === 'string' && data.redirect_url.trim()) {
+            window.location.href = data.redirect_url;
+        } else {
+            window.location.reload();
+        }
+    }
+
+    function submitBulkAction(form, { onSuccess, onError } = {}) {
+        if (!form) {
+            return;
+        }
+
+        const formData = new FormData(form);
+        fetch(form.action, {
+            method: form.method || 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    const error = new Error(`Request failed with status ${response.status}`);
+                    error.status = response.status;
+                    throw error;
+                }
+                return response.json().catch(() => ({}));
+            })
+            .then(data => {
+                if (data && Object.prototype.hasOwnProperty.call(data, 'success') && data.success === false) {
+                    const error = new Error(data.message || 'Bulk action failed.');
+                    error.data = data;
+                    throw error;
+                }
+                if (typeof onSuccess === 'function') {
+                    onSuccess(data || {});
+                } else {
+                    handleBulkActionResponse(data || {});
+                }
+            })
+            .catch(error => {
+                console.error('Bulk action error:', error);
+                if (typeof onError === 'function') {
+                    onError(error);
+                } else {
+                    alert(error.message || 'Bulk action failed. Please try again.');
+                    form.submit();
+                }
+            });
+    }
+
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectionUI);
+    });
+
+    function updateSelectionUI() {
+        const selected = document.querySelectorAll('.book-checkbox:checked');
+        const count = selected.length;
+        
+        selectionCount.textContent = count;
+        selectionToolbar.style.display = count > 0 ? 'block' : 'none';
+    }
+
+    // Global functions for inline handlers
+    window.selectAll = function() {
+        const visibleCheckboxes = document.querySelectorAll('.book-item:not([style*="display: none"]) .book-checkbox');
+        visibleCheckboxes.forEach(cb => cb.checked = true);
+        updateSelectionUI();
+    };
+
+    window.clearSelection = function() {
+        checkboxes.forEach(cb => cb.checked = false);
+        updateSelectionUI();
+    };
+
+    // Sort dropdown change handler
+    const sortDropdown = document.getElementById('sort');
+    if (sortDropdown) {
+        sortDropdown.addEventListener('change', function() {
+            document.getElementById('filter-form').submit();
+        });
+    }
+
+    // Searchable dropdown functionality
+    initializeSearchableDropdowns();
+
+    // ---- Row-based pagination helpers ----
+    function measureColumns(){
+        const container = document.getElementById('books-container');
+        if(!container) return 0;
+        const first = container.querySelector('.book-item');
+        if(!first) return 0;
+        const rowWidth = container.clientWidth || container.getBoundingClientRect().width;
+        const itemWidth = first.getBoundingClientRect().width;
+        if(!rowWidth || !itemWidth) return 0;
+        return Math.max(1, Math.floor(rowWidth / itemWidth));
+    }
+    function goToPage(targetPage){
+        const url = new URL(window.location.href);
+        const cols = measureColumns();
+        const metaEl = document.getElementById('lib-meta');
+        const rows = parseInt((metaEl && metaEl.dataset.rows) ? metaEl.dataset.rows : '4', 10);
+        url.searchParams.set('page', String(targetPage));
+        url.searchParams.set('rows', String(rows));
+        url.searchParams.set('cols', String(cols || 1));
+        window.location.href = url.toString();
+    }
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+    const prevBtnBottom = document.getElementById('prevPageBtnBottom');
+    const nextBtnBottom = document.getElementById('nextPageBtnBottom');
+    const metaEl = document.getElementById('lib-meta');
+    const currentPage = parseInt((metaEl && metaEl.dataset.page) ? metaEl.dataset.page : '1', 10);
+    const totalPages = parseInt('{{ total_pages or 1 }}', 10);
+    function updatePagerState(page){
+        // Update top pagination buttons
+        if(prevBtn){
+            if(page <= 1){ prevBtn.classList.add('disabled'); prevBtn.setAttribute('aria-disabled','true'); }
+            else { prevBtn.classList.remove('disabled'); prevBtn.setAttribute('aria-disabled','false'); }
+        }
+        if(nextBtn){
+            if(page >= totalPages){ nextBtn.classList.add('disabled'); nextBtn.setAttribute('aria-disabled','true'); }
+            else { nextBtn.classList.remove('disabled'); nextBtn.setAttribute('aria-disabled','false'); }
+        }
+        // Update bottom pagination buttons
+        if(prevBtnBottom){
+            if(page <= 1){ prevBtnBottom.classList.add('disabled'); prevBtnBottom.setAttribute('aria-disabled','true'); }
+            else { prevBtnBottom.classList.remove('disabled'); prevBtnBottom.setAttribute('aria-disabled','false'); }
+        }
+        if(nextBtnBottom){
+            if(page >= totalPages){ nextBtnBottom.classList.add('disabled'); nextBtnBottom.setAttribute('aria-disabled','true'); }
+            else { nextBtnBottom.classList.remove('disabled'); nextBtnBottom.setAttribute('aria-disabled','false'); }
+        }
+    }
+    updatePagerState(currentPage);
+    // Attach event listeners to top pagination buttons
+    if(prevBtn){ prevBtn.addEventListener('click', function(e){ e.preventDefault(); const p = currentPage; if(p>1) goToPage(p-1); }); }
+    if(nextBtn){ nextBtn.addEventListener('click', function(e){ e.preventDefault(); const p = currentPage; if(p<totalPages) goToPage(p+1); }); }
+    // Attach event listeners to bottom pagination buttons
+    if(prevBtnBottom){ prevBtnBottom.addEventListener('click', function(e){ e.preventDefault(); const p = currentPage; if(p>1) goToPage(p-1); }); }
+    if(nextBtnBottom){ nextBtnBottom.addEventListener('click', function(e){ e.preventDefault(); const p = currentPage; if(p<totalPages) goToPage(p+1); }); }
+    (function ensureCols(){
+        const url = new URL(window.location.href);
+        const colsParam = parseInt(url.searchParams.get('cols')||'0', 10);
+        if(!colsParam || colsParam<=0){
+            const measured = measureColumns();
+            if(measured){
+                const metaEl = document.getElementById('lib-meta');
+                const p = parseInt((metaEl && metaEl.dataset.page) ? metaEl.dataset.page : '1', 10);
+                const rows = parseInt((metaEl && metaEl.dataset.rows) ? metaEl.dataset.rows : '4', 10);
+                url.searchParams.set('page', String(p));
+                url.searchParams.set('rows', String(rows));
+                url.searchParams.set('cols', String(measured));
+                window.location.replace(url.toString());
+            }
+        }
+    })();
+    let resizeTO;
+    window.addEventListener('resize', function(){
+        clearTimeout(resizeTO);
+        resizeTO = setTimeout(()=>{
+            const url = new URL(window.location.href);
+            const oldCols = parseInt(url.searchParams.get('cols')||'0', 10);
+            const newCols = measureColumns();
+            if(newCols && newCols !== oldCols){
+                const metaEl = document.getElementById('lib-meta');
+                const rows = parseInt((metaEl && metaEl.dataset.rows) ? metaEl.dataset.rows : '4', 10);
+                url.searchParams.set('page','1');
+                url.searchParams.set('rows', String(rows));
+                url.searchParams.set('cols', String(newCols));
+                window.location.replace(url.toString());
+            }
+        }, 250);
+    });
+
+    window.deleteSelected = function() {
+        if (!bulkDeleteForm) return;
+        const selectedIds = populateBulkForm(bulkDeleteForm, 'bulk-delete-ids');
+        if (selectedIds.length === 0) {
+            alert('Select at least one book to delete.');
+            return;
+        }
+
+        if (confirm(`Are you sure you want to delete ${selectedIds.length} book(s) from your library?`)) {
+            bulkDeleteForm.submit();
+        }
+    };
+
+    function handleStatusChange(statusValue) {
+        if (!statusValue || !bulkStatusForm) return;
+        const selectedIds = populateBulkForm(bulkStatusForm, 'bulk-status-ids');
+        if (selectedIds.length === 0) {
+            alert('Select at least one book to change status.');
+            return;
+        }
+        updateHiddenInput(bulkStatusForm, 'reading_status', statusValue);
+        if (bulkStatusMenu && bulkStatusMenu.previousElementSibling) {
+            const dropdown = bootstrap.Dropdown.getOrCreateInstance(bulkStatusMenu.previousElementSibling);
+            dropdown.hide();
+        }
+        submitBulkAction(bulkStatusForm, {
+            onSuccess: handleBulkActionResponse,
+        });
+    }
+
+    function handleLocationChange(locationValue) {
+        if (!bulkLocationForm) return;
+        const selectedIds = populateBulkForm(bulkLocationForm, 'bulk-location-ids');
+        if (selectedIds.length === 0) {
+            alert('Select at least one book to change location.');
+            return;
+        }
+        updateHiddenInput(bulkLocationForm, 'location_id', locationValue);
+        if (bulkLocationMenu && bulkLocationMenu.previousElementSibling) {
+            const dropdown = bootstrap.Dropdown.getOrCreateInstance(bulkLocationMenu.previousElementSibling);
+            dropdown.hide();
+        }
+        submitBulkAction(bulkLocationForm, {
+            onSuccess: handleBulkActionResponse,
+        });
+    }
+
+    function openBulkCategoryModal() {
+        if (!bulkCategoryForm) return;
+        const selectedIds = populateBulkForm(bulkCategoryForm, 'bulk-category-ids');
+        if (selectedIds.length === 0) {
+            alert('Select at least one book to change categories.');
+            return;
+        }
+
+        const categorySelect = document.getElementById('bulk-category-select');
+        if (categorySelect) {
+            Array.from(categorySelect.options).forEach(option => option.selected = false);
+        }
+        const additionalField = document.getElementById('bulk-additional-categories');
+        if (additionalField) {
+            additionalField.value = '';
+        }
+        const clearCheckbox = document.getElementById('bulk-clear-categories');
+        if (clearCheckbox) {
+            clearCheckbox.checked = false;
+        }
+
+        if (bulkCategoryModalElement) {
+            const modal = bootstrap.Modal.getOrCreateInstance(bulkCategoryModalElement);
+            modal.show();
+        }
+    }
+
+    if (bulkStatusMenu) {
+        bulkStatusMenu.querySelectorAll('button[data-status]').forEach(item => {
+            item.addEventListener('click', () => handleStatusChange(item.dataset.status));
+        });
+    }
+
+    if (bulkLocationMenu) {
+        bulkLocationMenu.querySelectorAll('button[data-location]').forEach(item => {
+            item.addEventListener('click', () => handleLocationChange(item.dataset.location));
+        });
+    }
+
+    if (bulkCategoryButton) {
+        bulkCategoryButton.addEventListener('click', openBulkCategoryModal);
+    }
+
+    if (bulkCategoryForm) {
+        bulkCategoryForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const selectedIds = populateBulkForm(bulkCategoryForm, 'bulk-category-ids');
+            if (selectedIds.length === 0) {
+                alert('Select at least one book to change categories.');
+                return;
+            }
+            submitBulkAction(bulkCategoryForm, {
+                onSuccess: data => {
+                    if (bulkCategoryModalElement) {
+                        const modal = bootstrap.Modal.getOrCreateInstance(bulkCategoryModalElement);
+                        modal.hide();
+                    }
+                    handleBulkActionResponse(data);
+                }
+            });
+        });
+    }
+
+    // Fallback delegated click handler so clicks on cards navigate even if inline handlers fail
+    const booksContainer = document.getElementById('books-container');
+    if (booksContainer) {
+        booksContainer.addEventListener('click', function(e) {
+            // Ignore clicks on selection checkbox or its container
+            if (e.target.closest('.book-checkbox') || e.target.closest('.position-absolute')) {
+                return;
+            }
+            const card = e.target.closest('.book-card');
+            if (!card) return;
+            const uid = card.getAttribute('data-book-id');
+            if (uid && typeof window.openBook === 'function') {
+                window.openBook(uid);
+            }
+        });
+    }
+
+    window.openBook = function(uid) {
+        if (!uid) {
+            console.error('No UID provided for book');
+            return;
+        }
+        console.log('Opening book with UID:', uid);
+        var baseUrl = "{{ url_for('main.view_book_enhanced', uid='PLACEHOLDER') }}";
+        var bookUrl = baseUrl.replace('PLACEHOLDER', uid);
+        console.log('Navigating to:', bookUrl);
+        window.location.href = bookUrl;
+    };
+
+    window.clearStatusFilter = function() {
+        applyStatusFilter('all');
+        updateActiveFilter('all');
+    };
+});
+
+function applyStatusFilter(filter) {
+    const books = document.querySelectorAll('.book-item');
+    const noBooks = document.getElementById('no-books-message');
+    const noBooksText = document.getElementById('no-books-text');
+    let visibleCount = 0;
+
+    books.forEach(book => {
+        const readingStatus = book.dataset.readingStatus;
+        const ownershipStatus = book.dataset.ownershipStatus;
+        let shouldShow = false;
+
+    switch(filter) {
+            case 'all':
+                shouldShow = true;
+                break;
+            case 'reading':
+        // Handle both legacy 'reading' and new 'currently_reading'
+        shouldShow = (readingStatus === 'reading' || readingStatus === 'currently_reading');
+                break;
+            case 'read':
+                shouldShow = readingStatus === 'read';
+                break;
+            case 'plan_to_read':
+                shouldShow = readingStatus === 'plan_to_read';
+                break;
+            case 'on_hold':
+                shouldShow = readingStatus === 'on_hold';
+                break;
+            case 'wishlist':
+                shouldShow = ownershipStatus === 'wishlist';
+                break;
+        }
+
+        if (shouldShow) {
+            book.style.display = '';
+            visibleCount++;
+        } else {
+            book.style.display = 'none';
+        }
+    });
+
+    // Update book count (if present)
+    const bookCountEl = document.getElementById('book-count');
+    if (bookCountEl) {
+        bookCountEl.textContent = visibleCount;
+    }
+    
+    // Update no books message based on filter
+    if (noBooksText && visibleCount === 0) {
+        let message = 'No books found matching your current filter.';
+        switch(filter) {
+            case 'reading':
+                message = "You're not currently reading any books.";
+                break;
+            case 'read':
+                message = "You haven't finished any books yet.";
+                break;
+            case 'plan_to_read':
+                message = "You have no books planned to read.";
+                break;
+            case 'on_hold':
+                message = "You have no books on hold.";
+                break;
+            case 'wishlist':
+                message = "You have no books on your wishlist.";
+                break;
+            case 'all':
+                message = "Your library is empty.";
+                break;
+        }
+        noBooksText.textContent = message;
+    }
+    
+    // Show/hide no books message (if present)
+    if (noBooks) {
+        noBooks.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+    
+    // Update hidden form field (if present)
+    const statusFilterInput = document.getElementById('status_filter');
+    if (statusFilterInput) {
+        statusFilterInput.value = filter;
+    }
+}
+
+function updateActiveFilter(filter) {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.filter === filter) {
+            btn.classList.remove('btn-outline-warning', 'btn-outline-success', 'btn-outline-info', 'btn-outline-primary', 'btn-outline-secondary', 'btn-outline-dark');
+            if (filter === 'reading') btn.classList.add('btn-warning');
+            else if (filter === 'read') btn.classList.add('btn-success');
+            else if (filter === 'plan_to_read') btn.classList.add('btn-info');
+            else if (filter === 'wishlist') btn.classList.add('btn-primary');
+            else if (filter === 'on_hold') btn.classList.add('btn-secondary');
+            else btn.classList.add('btn-dark');
+        } else {
+            btn.classList.remove('btn-warning', 'btn-success', 'btn-info', 'btn-primary', 'btn-secondary', 'btn-dark');
+            if (btn.dataset.filter === 'reading') btn.classList.add('btn-outline-warning');
+            else if (btn.dataset.filter === 'read') btn.classList.add('btn-outline-success');
+            else if (btn.dataset.filter === 'plan_to_read') btn.classList.add('btn-outline-info');
+            else if (btn.dataset.filter === 'wishlist') btn.classList.add('btn-outline-primary');
+            else if (btn.dataset.filter === 'on_hold') btn.classList.add('btn-outline-secondary');
+            else btn.classList.add('btn-outline-dark');
+        }
+    });
+}
+
+function initializeSearchableDropdowns() {
+    // Initialize all searchable dropdowns
+    document.querySelectorAll('.dropdown-search-menu').forEach(menu => {
+        const field = menu.dataset.field;
+        const button = document.querySelector(`[data-field="${field}"].dropdown-search-btn`);
+        const hiddenInput = document.querySelector(`input[name="${field}"]`);
+        const searchInput = menu.querySelector('.dropdown-search-input');
+        const allItems = menu.querySelectorAll('.dropdown-item');
+        
+        if (!button || !hiddenInput || !searchInput) return;
+        
+        // Handle search input
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            
+            allItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                const li = item.parentElement;
+                
+                if (text.includes(searchTerm) || item.dataset.value === '') {
+                    li.style.display = '';
+                } else {
+                    li.style.display = 'none';
+                }
+            });
+        });
+        
+        // Prevent dropdown from closing when clicking on search input
+        searchInput.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+        
+        // Handle item selection
+        allItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const value = this.dataset.value;
+                const text = this.textContent;
+                
+                // Update hidden input
+                hiddenInput.value = value;
+                
+                // Update button text
+                const selectedText = button.querySelector('.selected-text');
+                selectedText.textContent = text;
+                
+                // Close dropdown
+                const dropdown = new bootstrap.Dropdown(button);
+                dropdown.hide();
+                
+                // Clear search
+                searchInput.value = '';
+                allItems.forEach(item => {
+                    item.parentElement.style.display = '';
+                });
+                
+                // Mark as active
+                allItems.forEach(item => item.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // Set initial active item
+        const currentValue = hiddenInput.value;
+        allItems.forEach(item => {
+            if (item.dataset.value === currentValue) {
+                item.classList.add('active');
+            }
+        });
+        
+        // Clear search when dropdown is closed
+        button.addEventListener('hidden.bs.dropdown', function() {
+            searchInput.value = '';
+            allItems.forEach(item => {
+                item.parentElement.style.display = '';
+            });
+        });
+        
+        // Focus search input when dropdown opens
+        button.addEventListener('shown.bs.dropdown', function() {
+            searchInput.focus();
+        });
+    });
+}
+</script>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script defer src="{{ url_for('serve_static', filename='js/library_perf.js') }}"></script>
+{% endblock %}

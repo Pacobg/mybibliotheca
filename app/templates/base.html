@@ -1,0 +1,2644 @@
+<!doctype html>
+<html lang="en" data-theme="{{ current_theme }}">
+  <head>
+    {% if not self._TemplateReference__context.get('csrf_meta_injected') %}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    {% endif %}
+  <meta charset="utf-8">
+  <title>{% block title %}{{ site_name }}{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <!-- Bootstrap CSS (local) -->
+  <link href="{{ url_for('serve_static', filename='bootstrap.min.css') }}" rel="stylesheet">
+  <!-- Bootstrap Icons (local) -->
+  <link href="{{ url_for('serve_static', filename='bootstrap-icons/bootstrap-icons.min.css') }}" rel="stylesheet">
+  <!-- Purposeful 2025 typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Light theme variables */
+      --bg-color: #f5f5f5;
+      --bg-gradient: linear-gradient(to bottom, #f5f5f5, #e0e0e0);
+      --overlay-background: rgba(255, 255, 255, 0.15);
+      --container-background: rgba(255,255,255,0.95);
+      --navbar-background: rgba(255,255,255,0.95);
+      --text-color: #333;
+      --heading-color: #5a3e1b;
+      --link-color: #8d5524;
+      --link-hover-color: #c68642;
+      --border-color: #e0c9a6;
+      --bookshelf-bg: url("{{ url_for('serve_static', filename='bookshelf.png') }}");
+      --primary-brown: #8B4513;
+      --light-brown: #D2B48C;
+      --cream: #F5F5DC;
+      --warm-white: #FEFEFE;
+      --gold: #FFC107; /* Changed from #DAA520 for better contrast */
+      --shadow: rgba(0,0,0,0.1);
+      --hover-shadow: rgba(0,0,0,0.2);
+      
+      /* Dynamic background configuration */
+      {% if background_config.type == 'solid' %}
+        --custom-bg: {{ background_config.solid_color }};
+        --bg-gradient: {{ background_config.solid_color }};
+      {% elif background_config.type == 'gradient' %}
+        --custom-bg: linear-gradient({{ background_config.gradient_direction }}, {{ background_config.gradient_start }} 0%, {{ background_config.gradient_end }} 100%);
+        --bg-gradient: linear-gradient({{ background_config.gradient_direction }}, {{ background_config.gradient_start }} 0%, {{ background_config.gradient_end }} 100%);
+      {% elif background_config.type == 'image' and background_config.image_url %}
+        --custom-bg: url('{{ background_config.image_url }}');
+        --bg-gradient: url('{{ background_config.image_url }}');
+        {% if background_config.image_position == 'cover' %}
+          --bg-size: cover;
+          --bg-repeat: no-repeat;
+          --bg-position: center center;
+        {% elif background_config.image_position == 'contain' %}
+          --bg-size: contain;
+          --bg-repeat: no-repeat;
+          --bg-position: center center;
+        {% elif background_config.image_position == 'center' %}
+          --bg-size: auto;
+          --bg-repeat: no-repeat;
+          --bg-position: center center;
+        {% elif background_config.image_position == 'repeat' %}
+          --bg-size: auto;
+          --bg-repeat: repeat;
+          --bg-position: top left;
+        {% endif %}
+      {% else %}
+        /* Default onboarding-style gradient */
+        --custom-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      {% endif %}
+    }
+    
+    [data-theme="dark"] {
+      /* Dark theme variables */
+      --bg-color: #1a1a1a;
+      --bg-gradient: linear-gradient(to bottom, #1a1a1a, #0d0d0d);
+      --overlay-background: rgba(0, 0, 0, 0.25);
+      --container-background: rgba(30, 30, 30, 0.95);
+      --navbar-background: rgba(20, 20, 20, 0.95);
+      --text-color: #e0e0e0;
+      --heading-color: #d4af7a;
+      --link-color: #d4af7a;
+      --link-hover-color: #f0c674;
+      --border-color: #404040;
+      --bookshelf-bg: none;
+    }
+    
+    body {
+      {% if background_config.type == 'image' and background_config.image_url %}
+        background-image: var(--custom-bg);
+        background-size: var(--bg-size, cover);
+        background-repeat: var(--bg-repeat, no-repeat);
+        background-position: var(--bg-position, center center);
+        background-attachment: fixed;
+      {% else %}
+        background: var(--bg-gradient);
+      {% endif %}
+      min-height: 100vh;
+      font-family: 'Georgia', serif;
+      color: var(--text-color);
+      padding-top: 0; /* No padding needed for static navbar */
+    }
+    .overlay {
+      min-height: 100vh;
+      padding: 40px 0;
+    }
+    .container {
+      width: 100%;
+      max-width: none;
+      margin: 0 auto;
+      border-radius: clamp(8px, 2vw, 16px);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      background: var(--container-background);
+      padding: clamp(12px, 3vw, 40px);
+      color: var(--text-color);
+    }
+
+   /* ------------------------------------------------------
+     Series & Book Cover Aspect Ratio Helpers
+     Bootstrap ships preset ratios (1x1, 4x3, 16x9, 21x9) but not 2x3.
+     We define 2x3 (portrait) for book/series covers here.
+     --bs-aspect-ratio expects (height / width * 100%). For 2:3 (w:h), h/w = 1.5 => 150%.
+     ------------------------------------------------------ */
+   .ratio.ratio-2x3 { --bs-aspect-ratio: 150%; }
+   .ratio.ratio-2x3 img { width:100%; height:100%; object-fit:cover; }
+   /* Ensure flex centering wrapper doesn't collapse height before ratio applies */
+   .ratio.ratio-2x3.d-flex { display:block !important; position:relative; }
+   .ratio.ratio-2x3.d-flex > img { position:absolute; top:0; left:0; }
+    
+    /* Responsive design improvements */
+    @media (max-width: 768px) {
+      .container {
+        margin: clamp(5px, 2vw, 15px) auto;
+        padding: clamp(12px, 4vw, 20px);
+        border-radius: clamp(8px, 2vw, 12px);
+      }
+      
+      .overlay {
+        padding: clamp(15px, 4vw, 25px) 0;
+      }
+      
+      .navbar {
+        margin-bottom: clamp(15px, 4vw, 25px);
+      }
+      
+      .navbar-nav .btn {
+        margin-bottom: 8px;
+        width: 100%;
+        font-size: clamp(0.8rem, 3vw, 1rem);
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .navbar-nav {
+        text-align: center;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .container {
+        margin: clamp(2px, 1vw, 8px) auto;
+        padding: clamp(8px, 3vw, 16px);
+        border-radius: clamp(6px, 1.5vw, 10px);
+      }
+      
+      h1 {
+        font-size: clamp(1.2rem, 4vw, 1.8rem);
+      }
+      
+      h2 {
+        font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+      }
+      
+      h3 {
+        font-size: clamp(1rem, 3vw, 1.3rem);
+      }
+      
+      .navbar-brand {
+        font-size: clamp(1rem, 4vw, 1.3rem) !important;
+      }
+    }
+    h1, h2, h3 {
+      font-family: 'Georgia', serif;
+      color: var(--heading-color);
+    }
+    a {
+      color: var(--link-color);
+      text-decoration: none;
+    }
+    a:hover {
+      color: var(--link-hover-color);
+      text-decoration: underline;
+    }
+    .btn-link {
+      color: var(--link-color);
+      text-decoration: none;
+    }
+    .btn-link:hover {
+      color: var(--link-hover-color);
+      text-decoration: underline;
+    }
+    .book-cover {
+      max-height: 220px;
+      margin-bottom: 16px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    
+    /* Book thumbnail styles for community stats */
+    .book-thumb-cover {
+      height: 80px;
+      width: auto;
+    }
+    
+    .book-thumb-placeholder {
+      height: 80px;
+      width: 55px;
+    }
+    
+    .navbar {
+      background: var(--navbar-background);
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1rem;
+      position: static; /* Static positioning - navbar stays at top */
+      z-index: 1030;
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+    
+    /* Responsive navbar compensation and improvements */
+    @media (max-width: 991px) {
+      body {
+        padding-top: 0; /* No extra padding needed */
+      }
+      
+      .navbar-nav .nav-link {
+        padding: 0.5rem 1rem;
+        display: block;
+      }
+      
+      .navbar-nav {
+        margin-top: 0.5rem;
+      }
+      
+      .navbar-text {
+        font-size: clamp(0.8rem, 2.5vw, 1rem);
+        margin-bottom: 0.5rem;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      body {
+        padding-top: 0; /* No extra padding needed */
+      }
+    }
+    
+    /* Fully responsive typography */
+    .navbar-brand {
+      font-size: clamp(1rem, 2.5vw, 1.3rem); /* Reduced from 1.1rem - 1.8rem */
+      font-weight: bold;
+    }
+    
+    /* Navigation links - clean text style without boxes */
+    .navbar-nav .nav-link {
+      font-size: clamp(0.85rem, 2vw, 0.95rem);
+      padding: 0.4rem 0.8rem;
+      color: var(--link-color) !important;
+      text-decoration: none;
+      transition: color 0.2s ease;
+      border: none;
+      background: none;
+    }
+    
+    .navbar-nav .nav-link:hover {
+      color: var(--link-hover-color) !important;
+      background: none;
+    }
+    
+    [data-theme="dark"] .navbar-nav .nav-link {
+      color: var(--link-color) !important;
+    }
+    
+    [data-theme="dark"] .navbar-nav .nav-link:hover {
+      color: var(--link-hover-color) !important;
+    }
+    
+    /* Container fluid adjustments */
+    .container-fluid {
+      padding-left: clamp(8px, 2vw, 24px);
+      padding-right: clamp(8px, 2vw, 24px);
+    }
+    
+    /* Adaptive overlay background */
+    .overlay {
+      padding: clamp(20px, 5vw, 50px) clamp(8px, 2vw, 20px);
+    }
+    .social-icons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      align-items: center;
+    }
+    .social-icon {
+      width: 20px !important;
+      height: 20px !important;
+      font-size: 20px !important;
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+      vertical-align: middle;
+      padding: 0;
+      background: none;
+      border: none;
+    }
+    .social-icon:hover {
+      opacity: 1;
+    }
+    .social-icon img,
+    .social-icon svg {
+      width: 20px !important;
+      height: 20px !important;
+      display: block;
+    }
+    
+    /* Footer version text styling */
+    .footer-version-text {
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 4px;
+    }
+    
+    [data-theme="dark"] .footer-version-text {
+      color: #999;
+    }
+    
+    /* Dark mode specific styles */
+    [data-theme="dark"] .navbar-light .navbar-brand {
+      color: var(--text-color) !important;
+    }
+    
+    [data-theme="dark"] .navbar-light .navbar-nav .nav-link {
+      color: var(--text-color) !important;
+    }
+    
+    [data-theme="dark"] .navbar-light .navbar-toggler {
+      border-color: var(--border-color);
+    }
+    
+    [data-theme="dark"] .navbar-text {
+      color: var(--text-color) !important;
+    }
+    
+    [data-theme="dark"] .alert {
+      background-color: rgba(40, 40, 40, 0.9);
+      border-color: var(--border-color);
+      color: var(--text-color);
+    }
+    
+    /* Improved Library Status Box Styling - Fix for hover washout issue */
+    .filter-btn.btn-outline-warning:hover,
+    .filter-btn.btn-outline-success:hover,
+    .filter-btn.btn-outline-info:hover,
+    .filter-btn.btn-outline-primary:hover,
+    .filter-btn.btn-outline-secondary:hover,
+    .filter-btn.btn-outline-dark:hover {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+      border-width: 2px !important;
+    }
+    
+    /* Ensure text remains readable on hover for filter buttons */
+    .filter-btn.btn-outline-warning:hover .h4,
+    .filter-btn.btn-outline-warning:hover small {
+      color: #000 !important;
+    }
+    
+    .filter-btn.btn-outline-success:hover .h4,
+    .filter-btn.btn-outline-success:hover small {
+      color: #fff !important;
+    }
+    
+    .filter-btn.btn-outline-info:hover .h4,
+    .filter-btn.btn-outline-info:hover small {
+      color: #fff !important;
+    }
+    
+    .filter-btn.btn-outline-primary:hover .h4,
+    .filter-btn.btn-outline-primary:hover small {
+      color: #fff !important;
+    }
+    
+    .filter-btn.btn-outline-secondary:hover .h4,
+    .filter-btn.btn-outline-secondary:hover small {
+      color: #fff !important;
+    }
+    
+    .filter-btn.btn-outline-dark:hover .h4,
+    .filter-btn.btn-outline-dark:hover small {
+      color: #fff !important;
+    }
+    
+    /* Dark mode improvements for filter buttons */
+    [data-theme="dark"] .filter-btn.btn-outline-warning:hover .h4,
+    [data-theme="dark"] .filter-btn.btn-outline-warning:hover small {
+      color: #000 !important;
+    }
+    
+    [data-theme="dark"] .filter-btn.btn-outline-success:hover .h4,
+    [data-theme="dark"] .filter-btn.btn-outline-success:hover small {
+      color: #000 !important;
+    }
+    
+    [data-theme="dark"] .filter-btn.btn-outline-info:hover .h4,
+    [data-theme="dark"] .filter-btn.btn-outline-info:hover small {
+      color: #000 !important;
+    }
+    
+    [data-theme="dark"] .filter-btn.btn-outline-primary:hover .h4,
+    [data-theme="dark"] .filter-btn.btn-outline-primary:hover small {
+      color: #000 !important;
+    }
+    
+    [data-theme="dark"] .filter-btn.btn-outline-secondary:hover .h4,
+    [data-theme="dark"] .filter-btn.btn-outline-secondary:hover small {
+      color: #000 !important;
+    }
+    
+    [data-theme="dark"] .filter-btn.btn-outline-dark:hover .h4,
+    [data-theme="dark"] .filter-btn.btn-outline-dark:hover small {
+      color: #fff !important;
+    }
+    
+    [data-theme="dark"] .badge {
+      background-color: #495057 !important;
+      color: var(--text-color);
+    }
+    
+    [data-theme="dark"] .form-control {
+      background-color: #2d2d2d;
+      border-color: var(--border-color);
+      color: var(--text-color);
+    }
+    
+    [data-theme="dark"] .form-control:focus {
+      background-color: #2d2d2d;
+      border-color: #86b7fe;
+      color: var(--text-color);
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    [data-theme="dark"] .form-control::placeholder {
+      color: #999;
+    }
+    
+    [data-theme="dark"] .form-select {
+      background-color: #2d2d2d;
+      border-color: var(--border-color);
+      color: var(--text-color);
+    }
+    
+    [data-theme="dark"] .table {
+      color: var(--text-color);
+    }
+    
+    [data-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) > td {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    [data-theme="dark"] .card {
+      background-color: rgba(40, 40, 40, 0.8);
+      border-color: var(--border-color);
+      color: var(--text-color);
+    }
+    
+    [data-theme="dark"] .card-header {
+      background-color: rgba(60, 60, 60, 0.8);
+      border-bottom-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .stat-card,
+    [data-theme="dark"] .community-stat-card,
+    [data-theme="dark"] .reading-activity {
+        background: rgba(40, 40, 40, 0.8) !important;
+        border-color: var(--border-color) !important;
+    }
+
+    [data-theme="dark"] .stat-number {
+        color: var(--heading-color) !important;
+    }
+
+    [data-theme="dark"] .stat-label {
+        color: #aaa !important;
+    }
+
+    /* Add Book Page Dark Mode Styles */
+    [data-theme="dark"] .tab-content {
+      background: #2c2c2c;
+      border-color: #444;
+    }
+    [data-theme="dark"] .nav-tabs .nav-link {
+      color: #ccc;
+    }
+    [data-theme="dark"] .nav-tabs .nav-link.active {
+      color: #fff;
+    }
+    [data-theme="dark"] .card {
+      background-color: #333;
+    }
+    [data-theme="dark"] pre {
+      background-color: #222 !important;
+      color: #eee;
+    }
+    
+    /* Additional dark mode text styling */
+    [data-theme="dark"] p {
+      color: var(--text-color) !important;
+    }
+    
+    [data-theme="dark"] .lead {
+      color: var(--text-color) !important;
+    }
+    
+    [data-theme="dark"] div {
+      color: var(--text-color);
+    }
+    
+    [data-theme="dark"] span {
+      color: var(--text-color);
+    }
+    
+    /* Ensure heading colors are properly applied */
+    [data-theme="dark"] h1,
+    [data-theme="dark"] h2,
+    [data-theme="dark"] h3,
+    [data-theme="dark"] h4,
+    [data-theme="dark"] h5,
+    [data-theme="dark"] h6 {
+      color: var(--heading-color) !important;
+    }
+    
+    .btn-success {
+      background-color: var(--gold);
+      border-color: var(--gold);
+      color: #000; /* Changed from #333 for better contrast */
+    }
+
+    .btn-success:hover {
+      background-color: #FFA000; /* Darker gold for hover */
+      border-color: #FFA000;
+      color: #000;
+    }
+    
+    /* Compact Reading Streak Indicator - simplified for header */
+    .streak-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-weight: 700;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      border-radius: 999px !important; /* pill */
+      padding: 0.25rem 0.5rem !important;
+      min-width: 44px;
+      height: 36px;
+      justify-content: center;
+      background: transparent !important;
+      border: 1.5px solid rgba(0,0,0,0.08) !important;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .streak-indicator i,
+    .streak-indicator .streak-number {
+      line-height: 1;
+      vertical-align: middle;
+    }
+
+    /* Color levels - use colored border and text only for subtlety */
+    .streak-indicator.streak-level-0 { border-color: #28a745 !important; color: #28a745 !important; }
+    .streak-indicator.streak-level-1 { border-color: #ffc107 !important; color: #ffc107 !important; }
+    .streak-indicator.streak-level-2 { border-color: #fd7e14 !important; color: #fd7e14 !important; }
+    .streak-indicator.streak-level-3 { border-color: #dc3545 !important; color: #dc3545 !important; }
+    .streak-indicator.streak-level-4 { border-color: #e83e8c !important; color: #e83e8c !important; }
+
+    .streak-indicator:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
+
+    /* Mobile tweaks */
+    @media (max-width: 768px) {
+      .streak-indicator { padding: 0.2rem 0.4rem !important; height: 32px; min-width: 40px; }
+      .streak-indicator .streak-number { font-size: 0.95rem; }
+    }
+    /* --- Adaptive Custom Field Badges --- */
+    .cf-badge {
+      display:inline-block;
+      font-size:0.65rem;
+      font-weight:600;
+      letter-spacing:.5px;
+      text-transform:uppercase;
+      padding:0.25rem 0.5rem;
+      border:1px solid var(--border-color);
+      border-radius:0.4rem;
+      background:rgba(0,0,0,0.04);
+      color:var(--text-color);
+      line-height:1;
+      white-space:nowrap;
+    }
+    [data-theme="dark"] .cf-badge { background:rgba(255,255,255,0.08); }
+    .cf-badge.scope-global { background:var(--gold); border-color:var(--gold); color:#222; }
+    [data-theme="dark"] .cf-badge.scope-global { color:#222; }
+    .cf-badge.scope-personal { background:var(--light-brown); border-color:var(--light-brown); color:#222; }
+    [data-theme="dark"] .cf-badge.scope-personal { background:#444; border-color:#666; color:#eee; }
+  /* Type-specific badges (light mode) */
+  .cf-badge[class*="type-"] { letter-spacing:0; font-weight:500; }
+  .cf-badge.type-text, .cf-badge.type-textarea, .cf-badge.type-url, .cf-badge.type-email { background:#e8f0fe; border-color:#b6c8e8; color:#1b3d63; }
+  .cf-badge.type-number { background:#e7f8e8; border-color:#b9e2bb; color:#1f4a24; }
+  .cf-badge.type-boolean { background:#ffeacc; border-color:#f6c98a; color:#4a3300; }
+  .cf-badge.type-date { background:#f5e7ff; border-color:#dcc2f3; color:#3f1d64; }
+  .cf-badge.type-rating5, .cf-badge.type-rating10 { background:#fff7cc; border-color:#f2de7d; color:#574400; }
+  .cf-badge.type-list, .cf-badge.type-tags { background:#e3f7ff; border-color:#b3deec; color:#00465c; }
+  /* Dark mode overrides */
+  [data-theme="dark"] .cf-badge.type-text, [data-theme="dark"] .cf-badge.type-textarea, [data-theme="dark"] .cf-badge.type-url, [data-theme="dark"] .cf-badge.type-email { background:#2b3a4e; border-color:#3f536d; color:#d6e2f2; }
+  [data-theme="dark"] .cf-badge.type-number { background:#1e3a25; border-color:#315c3b; color:#cfe9d2; }
+  [data-theme="dark"] .cf-badge.type-boolean { background:#4a2f00; border-color:#6a490f; color:#ffe7c2; }
+  [data-theme="dark"] .cf-badge.type-date { background:#341d4d; border-color:#523077; color:#e6d6fa; }
+  [data-theme="dark"] .cf-badge.type-rating5, [data-theme="dark"] .cf-badge.type-rating10 { background:#4d3f00; border-color:#6b5910; color:#ffefb3; }
+  [data-theme="dark"] .cf-badge.type-list, [data-theme="dark"] .cf-badge.type-tags { background:#063542; border-color:#105666; color:#cfeaf2; }
+  /* Field types card readability */
+  .field-types-card small { color: var(--text-color) !important; }
+  [data-theme="dark"] .field-types-card strong { color: var(--heading-color); }
+  
+  /* ===== COMPREHENSIVE DARK MODE FIXES ===== */
+  
+  /* Bootstrap Utility Class Overrides for Dark Mode */
+  [data-theme="dark"] .bg-light {
+    background-color: #2d2d2d !important;
+    color: var(--text-color) !important;
+  }
+  
+  [data-theme="dark"] .bg-white {
+    background-color: #1f1f1f !important;
+    color: var(--text-color) !important;
+  }
+  
+  [data-theme="dark"] .text-dark {
+    color: var(--text-color) !important;
+  }
+  
+  [data-theme="dark"] .text-muted {
+    color: #999 !important;
+  }
+  
+  [data-theme="dark"] .text-black-50 {
+    color: rgba(255, 255, 255, 0.5) !important;
+  }
+  
+  /* List group items */
+  [data-theme="dark"] .list-group-item {
+    background-color: #2d2d2d;
+    border-color: var(--border-color);
+    color: var(--text-color);
+  }
+  
+  [data-theme="dark"] .list-group-item-action:hover {
+    background-color: #3d3d3d;
+    color: var(--text-color);
+  }
+  
+  /* Modal dark mode */
+  [data-theme="dark"] .modal-content {
+    background-color: #2d2d2d;
+    color: var(--text-color);
+  }
+  
+  [data-theme="dark"] .modal-header {
+    border-bottom-color: var(--border-color);
+  }
+  
+  [data-theme="dark"] .modal-footer {
+    border-top-color: var(--border-color);
+  }
+  
+  [data-theme="dark"] .modal-title {
+    color: var(--heading-color);
+  }
+  
+  [data-theme="dark"] .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+  }
+  
+  /* Dropdown menus */
+  [data-theme="dark"] .dropdown-menu {
+    background-color: #2d2d2d;
+    border-color: var(--border-color);
+  }
+  
+  [data-theme="dark"] .dropdown-item {
+    color: var(--text-color);
+  }
+  
+  [data-theme="dark"] .dropdown-item:hover,
+  [data-theme="dark"] .dropdown-item:focus {
+    background-color: #3d3d3d;
+    color: var(--text-color);
+  }
+  
+  [data-theme="dark"] .dropdown-divider {
+    border-top-color: var(--border-color);
+  }
+  
+  /* Pagination */
+  [data-theme="dark"] .page-link {
+    background-color: #2d2d2d;
+    border-color: var(--border-color);
+    color: var(--link-color);
+  }
+  
+  [data-theme="dark"] .page-link:hover {
+    background-color: #3d3d3d;
+    border-color: var(--border-color);
+    color: var(--link-hover-color);
+  }
+  
+  [data-theme="dark"] .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+  }
+  
+  [data-theme="dark"] .page-item.disabled .page-link {
+    background-color: #2d2d2d;
+    border-color: var(--border-color);
+    color: #666;
+  }
+  
+  /* Breadcrumb */
+  [data-theme="dark"] .breadcrumb {
+    background-color: transparent;
+  }
+  
+  [data-theme="dark"] .breadcrumb-item + .breadcrumb-item::before {
+    color: #999;
+  }
+  
+  /* Nav tabs and pills */
+  [data-theme="dark"] .nav-tabs {
+    border-bottom-color: var(--border-color);
+  }
+  
+  [data-theme="dark"] .nav-tabs .nav-link {
+    color: #ccc;
+  }
+  
+  [data-theme="dark"] .nav-tabs .nav-link:hover {
+    border-color: var(--border-color);
+    color: var(--text-color);
+  }
+  
+  [data-theme="dark"] .nav-tabs .nav-link.active {
+    background-color: #2d2d2d;
+    border-color: var(--border-color);
+    color: var(--text-color);
+  }
+  
+  /* Accordion */
+  [data-theme="dark"] .accordion-item {
+    background-color: #2d2d2d;
+    border-color: var(--border-color);
+  }
+  
+  [data-theme="dark"] .accordion-button {
+    background-color: #2d2d2d;
+    color: var(--text-color);
+  }
+  
+  [data-theme="dark"] .accordion-button:not(.collapsed) {
+    background-color: #3d3d3d;
+    color: var(--heading-color);
+  }
+  
+  [data-theme="dark"] .accordion-button::after {
+    filter: invert(1);
+  }
+  
+  [data-theme="dark"] .accordion-body {
+    background-color: #2d2d2d;
+    color: var(--text-color);
+  }
+  
+  /* Progress bars */
+  [data-theme="dark"] .progress {
+    background-color: #3d3d3d;
+  }
+  
+  /* Badges - Additional variants */
+  [data-theme="dark"] .badge.bg-light {
+    background-color: #495057 !important;
+    color: var(--text-color) !important;
+  }
+  
+  [data-theme="dark"] .badge.bg-secondary {
+    background-color: #6c757d !important;
+  }
+  
+  /* Alert variants */
+  [data-theme="dark"] .alert-info {
+    background-color: rgba(13, 110, 253, 0.2);
+    border-color: rgba(13, 110, 253, 0.4);
+    color: #9ec5fe;
+  }
+  
+  [data-theme="dark"] .alert-warning {
+    background-color: rgba(255, 193, 7, 0.2);
+    border-color: rgba(255, 193, 7, 0.4);
+    color: #ffe69c;
+  }
+  
+  [data-theme="dark"] .alert-danger {
+    background-color: rgba(220, 53, 69, 0.2);
+    border-color: rgba(220, 53, 69, 0.4);
+    color: #f1aeb5;
+  }
+  
+  [data-theme="dark"] .alert-success {
+    background-color: rgba(25, 135, 84, 0.2);
+    border-color: rgba(25, 135, 84, 0.4);
+    color: #a3cfbb;
+  }
+  
+  /* Input groups */
+  [data-theme="dark"] .input-group-text {
+    background-color: #3d3d3d;
+    border-color: var(--border-color);
+    color: var(--text-color);
+  }
+  
+  /* Form labels and help text */
+  [data-theme="dark"] .form-label {
+    color: var(--text-color);
+  }
+  
+  [data-theme="dark"] .form-text {
+    color: #999;
+  }
+  
+  /* Form check (checkboxes and radios) */
+  [data-theme="dark"] .form-check-input {
+    background-color: #2d2d2d;
+    border-color: var(--border-color);
+  }
+  
+  [data-theme="dark"] .form-check-label {
+    color: var(--text-color);
+  }
+  
+  /* Textarea */
+  [data-theme="dark"] textarea.form-control {
+    background-color: #2d2d2d;
+    color: var(--text-color);
+    border-color: var(--border-color);
+  }
+  
+  /* Select options */
+  [data-theme="dark"] select.form-control option,
+  [data-theme="dark"] select.form-select option {
+    background-color: #2d2d2d;
+    color: var(--text-color);
+  }
+  
+  /* Table enhancements */
+  [data-theme="dark"] .table th,
+  [data-theme="dark"] .table td {
+    border-color: var(--border-color);
+  }
+  
+  [data-theme="dark"] .table-bordered {
+    border-color: var(--border-color);
+  }
+  
+  [data-theme="dark"] .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.075);
+  }
+  
+  /* Border utilities */
+  [data-theme="dark"] .border {
+    border-color: var(--border-color) !important;
+  }
+  
+  [data-theme="dark"] .border-top,
+  [data-theme="dark"] .border-end,
+  [data-theme="dark"] .border-bottom,
+  [data-theme="dark"] .border-start {
+    border-color: var(--border-color) !important;
+  }
+  
+  /* HR */
+  [data-theme="dark"] hr {
+    border-color: var(--border-color);
+    opacity: 1;
+  }
+  
+  /* Small text */
+  [data-theme="dark"] small {
+    color: var(--text-color);
+  }
+  
+  /* Code blocks */
+  [data-theme="dark"] code {
+    background-color: #2d2d2d;
+    color: #f8f8f2;
+  }
+  
+  /* Blockquote */
+  [data-theme="dark"] blockquote {
+    border-left-color: var(--border-color);
+  }
+  
+  /* Button variants for dark mode */
+  [data-theme="dark"] .btn-light {
+    background-color: #495057;
+    border-color: #495057;
+    color: var(--text-color);
+  }
+  
+  [data-theme="dark"] .btn-light:hover {
+    background-color: #5a6268;
+    border-color: #5a6268;
+    color: var(--text-color);
+  }
+  
+  [data-theme="dark"] .btn-outline-light {
+    color: var(--text-color);
+    border-color: #495057;
+  }
+  
+  [data-theme="dark"] .btn-outline-light:hover {
+    background-color: #495057;
+    border-color: #495057;
+    color: var(--text-color);
+  }
+  
+  /* Navbar toggler */
+  [data-theme="dark"] .navbar-toggler-icon {
+    filter: invert(1);
+  }
+  
+  /* Fix for any remaining text elements */
+  [data-theme="dark"] label {
+    color: var(--text-color);
+  }
+  
+  [data-theme="dark"] legend {
+    color: var(--heading-color);
+  }
+  
+  /* Social icons in footer - Twitter/X needs light mode treatment */
+  [data-theme="dark"] .social-icon .bi-twitter-x {
+    color: #fff !important;
+  }
+  
+  /* Offcanvas (if used) */
+  [data-theme="dark"] .offcanvas {
+    background-color: #2d2d2d;
+    color: var(--text-color);
+  }
+  
+  [data-theme="dark"] .offcanvas-header {
+    border-bottom-color: var(--border-color);
+  }
+  
+  /* Toast notifications (if used) */
+  [data-theme="dark"] .toast {
+    background-color: #2d2d2d;
+    color: var(--text-color);
+    border-color: var(--border-color);
+  }
+  
+  [data-theme="dark"] .toast-header {
+    background-color: #3d3d3d;
+    border-bottom-color: var(--border-color);
+    color: var(--text-color);
+  }
+  
+  /* Spinner (if used) */
+  [data-theme="dark"] .spinner-border,
+  [data-theme="dark"] .spinner-grow {
+    color: var(--link-color);
+  }
+  
+  /* Fix card body text */
+  [data-theme="dark"] .card-body {
+    color: var(--text-color);
+  }
+  
+  [data-theme="dark"] .card-title {
+    color: var(--heading-color);
+  }
+  
+  [data-theme="dark"] .card-text {
+    color: var(--text-color);
+  }
+  
+  /* Fix card footer */
+  [data-theme="dark"] .card-footer {
+    background-color: rgba(60, 60, 60, 0.8);
+    border-top-color: var(--border-color);
+  }
+  
+  /* Ensure strong and em tags are visible */
+  [data-theme="dark"] strong,
+  [data-theme="dark"] b {
+    color: inherit;
+  }
+  
+  [data-theme="dark"] em,
+  [data-theme="dark"] i:not([class]) {
+    color: inherit;
+  }
+  
+  /* Fix for disabled inputs */
+  [data-theme="dark"] .form-control:disabled,
+  [data-theme="dark"] .form-select:disabled {
+    background-color: #1a1a1a;
+    color: #666;
+  }
+  
+  /* Fix for readonly inputs */
+  [data-theme="dark"] .form-control[readonly] {
+    background-color: #2d2d2d;
+    color: var(--text-color);
+  }
+
+  /* === Aurora 2025 Theme Overrides === */
+  :root {
+    --font-stack-sans: 'Sora', 'Helvetica Neue', sans-serif;
+    --font-stack-serif: 'Fraunces', 'Georgia', serif;
+    --layout-max-width: min(1280px, calc(100% - clamp(24px, 4vw, 80px)));
+    --page-bg: #edf2fb;
+    --page-gradient: radial-gradient(circle at 14% 20%, rgba(14,165,233,0.35), transparent 45%),
+                     radial-gradient(circle at 82% 0%, rgba(249,115,22,0.2), transparent 40%),
+                     linear-gradient(135deg, #eff5ff 0%, #f7fbff 48%, #fef8f3 100%);
+    --surface-primary: rgba(255,255,255,0.94);
+    --surface-secondary: rgba(255,255,255,0.7);
+    --surface-elevated: rgba(255,255,255,0.98);
+    --border-soft: rgba(15,23,42,0.08);
+    --border-strong: rgba(15,23,42,0.14);
+    --text-color: #0f172a;
+    --text-muted: #4b5563;
+    --heading-color: #0f172a;
+    --link-color: #0284c7;
+    --link-hover-color: #0ea5e9;
+    --accent: #0ea5e9;
+    --accent-strong: #0284c7;
+    --accent-soft: rgba(14,165,233,0.16);
+    --accent-warm: #f97316;
+    --accent-contrast: #f8fafc;
+    --shadow-soft: 0 20px 60px rgba(15,23,42,0.12);
+    --shadow-strong: 0 40px 120px rgba(15,23,42,0.18);
+    --glass-blur: blur(22px);
+    --radius-lg: clamp(18px, 2vw, 32px);
+    --transition-snappy: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --halo-cool: rgba(14,165,233,0.26);
+    --halo-warm: rgba(249,115,22,0.18);
+    --grid-tint: rgba(15,23,42,0.28);
+    --grid-opacity: 0.5;
+    --halo-blur: 80px;
+  }
+
+  [data-theme="dark"] {
+    --page-bg: #03060f;
+    --page-gradient: radial-gradient(circle at 12% 18%, rgba(14,165,233,0.32), transparent 45%),
+                     radial-gradient(circle at 88% 8%, rgba(249,115,22,0.32), transparent 40%),
+                     linear-gradient(145deg, #030712 0%, #050913 55%, #010208 100%);
+    --surface-primary: rgba(8,12,26,0.92);
+    --surface-secondary: rgba(9,13,25,0.75);
+    --surface-elevated: rgba(10,14,30,0.95);
+    --border-soft: rgba(148,163,184,0.24);
+    --border-strong: rgba(94,234,212,0.2);
+    --text-color: #e5e7eb;
+    --text-muted: #94a3b8;
+    --heading-color: #f8fafc;
+    --link-color: #38bdf8;
+    --link-hover-color: #bae6fd;
+    --accent: #38bdf8;
+    --accent-strong: #0ea5e9;
+    --accent-soft: rgba(56,189,248,0.18);
+    --accent-warm: #fb923c;
+    --accent-contrast: #020617;
+    --shadow-soft: 0 24px 70px rgba(0,0,0,0.55);
+    --shadow-strong: 0 50px 110px rgba(0,0,0,0.8);
+    --glass-blur: blur(26px);
+    --halo-cool: rgba(56,189,248,0.4);
+    --halo-warm: rgba(251,146,60,0.3);
+    --grid-tint: rgba(148,163,184,0.12);
+    --grid-opacity: 0.32;
+    --halo-blur: 120px;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    background: var(--page-bg);
+    background-image: var(--page-gradient);
+    font-family: var(--font-stack-sans);
+    color: var(--text-color);
+    min-height: 100vh;
+    padding: clamp(12px, 2vw, 32px);
+    margin: 0;
+    line-height: 1.55;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before,
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::before {
+    background:
+      radial-gradient(circle at 18% 28%, var(--halo-cool), transparent 55%),
+      radial-gradient(circle at 78% 4%, var(--halo-warm), transparent 50%);
+    filter: blur(var(--halo-blur));
+  }
+
+  body::after {
+    background-image:
+      url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-opacity='0.08'%3E%3Cpath d='M0 99h200v2H0zM99 0h2v200h-2z' fill='%230f172a'/%3E%3C/g%3E%3C/svg%3E");
+    mix-blend-mode: soft-light;
+    opacity: var(--grid-opacity);
+  }
+
+  .overlay {
+    position: relative;
+    z-index: 1;
+    min-height: calc(100vh - (clamp(12px, 2vw, 32px) * 2));
+    display: flex;
+    flex-direction: column;
+    gap: clamp(20px, 3vw, 32px);
+  }
+
+  .container {
+    width: var(--layout-max-width);
+    margin: 0 auto clamp(32px, 4vw, 56px);
+    background: var(--surface-primary);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    padding: clamp(24px, 4vw, 48px);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: var(--glass-blur);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-stack-serif);
+    color: var(--heading-color);
+    letter-spacing: -0.01em;
+  }
+
+  p, span, li {
+    color: var(--text-color);
+  }
+
+  a {
+    color: var(--link-color);
+    text-decoration: none;
+    transition: color 0.2s var(--transition-snappy);
+  }
+
+  a:hover {
+    color: var(--link-hover-color);
+  }
+
+  .navbar {
+    width: var(--layout-max-width);
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-soft);
+    background: linear-gradient(125deg, var(--surface-elevated), var(--surface-secondary));
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: var(--glass-blur);
+    position: sticky;
+    top: clamp(8px, 2vw, 20px);
+    z-index: 20;
+    transition: box-shadow 0.2s var(--transition-snappy), transform 0.2s var(--transition-snappy);
+  }
+
+  [data-theme="dark"] .navbar {
+    background: linear-gradient(120deg, rgba(8,13,27,0.96), rgba(6,12,24,0.82));
+  }
+
+  .navbar.scrolled {
+    box-shadow: var(--shadow-strong);
+    transform: translateY(-2px);
+  }
+
+  .navbar-brand {
+    font-family: var(--font-stack-serif);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--heading-color) !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .navbar-brand::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-warm));
+    box-shadow: 0 0 12px rgba(14,165,233,0.45);
+  }
+
+  .navbar-nav .nav-link {
+    font-weight: 600;
+    color: var(--text-muted) !important;
+    border-radius: 999px;
+    padding: 0.4rem 0.95rem;
+    transition: background 0.2s var(--transition-snappy), color 0.2s var(--transition-snappy), transform 0.2s var(--transition-snappy);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .nav-pill {
+    background: transparent;
+  }
+
+  .nav-pill:hover {
+    background: var(--accent-soft);
+    color: var(--accent-strong) !important;
+    transform: translateY(-1px);
+  }
+
+  .nav-pill-accent {
+    background: var(--accent-soft);
+    color: var(--accent-strong) !important;
+    border: 1px solid transparent;
+    box-shadow: 0 8px 20px rgba(14,165,233,0.15);
+  }
+
+  .nav-pill-accent:hover {
+    background: var(--accent-strong);
+    color: var(--accent-contrast) !important;
+    box-shadow: 0 12px 30px rgba(14,165,233,0.3);
+  }
+
+  .nav-ghost {
+    border: 1px solid transparent;
+  }
+
+  .nav-ghost:hover {
+    border-color: var(--border-soft);
+    background: rgba(15,23,42,0.05);
+  }
+
+  [data-theme="dark"] .nav-ghost {
+    border-color: rgba(148,163,184,0.22);
+  }
+
+  [data-theme="dark"] .nav-ghost:hover {
+    background: rgba(56,189,248,0.12);
+    color: #e0f2ff !important;
+  }
+
+  .nav-cta {
+    font-weight: 600;
+  }
+
+  .navbar-text {
+    font-weight: 500;
+    color: var(--text-muted);
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(15,23,42,0.05);
+    border: 1px solid var(--border-soft);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  [data-theme="dark"] .navbar-text {
+    background: rgba(15,23,42,0.35);
+  }
+
+  #theme-toggle {
+    border: 1px solid var(--border-soft);
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: 999px;
+    padding: 0.35rem 0.65rem;
+    transition: background 0.2s var(--transition-snappy), color 0.2s var(--transition-snappy);
+  }
+
+  #theme-toggle:hover {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+  }
+
+  [data-theme="dark"] #theme-toggle {
+    color: #c7d2fe;
+    border-color: rgba(148,163,184,0.25);
+    background: rgba(15,23,42,0.45);
+  }
+
+  [data-theme="dark"] #theme-toggle:hover {
+    background: rgba(56,189,248,0.18);
+    color: #f8fafc;
+  }
+
+  .streak-indicator {
+    border-radius: 999px;
+    border: 1px solid var(--border-soft);
+    padding: 0.3rem 0.85rem;
+    font-weight: 600;
+    color: var(--accent-warm);
+    box-shadow: inset 0 0 0 1px rgba(249,115,22,0.25);
+    background: rgba(249,115,22,0.08);
+  }
+
+  .streak-indicator:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(249,115,22,0.25);
+  }
+
+  [data-theme="dark"] .streak-indicator {
+    background: rgba(251,146,60,0.2);
+    border-color: rgba(251,146,60,0.45);
+    color: #ffedd5;
+    box-shadow: inset 0 0 0 1px rgba(251,146,60,0.35);
+  }
+
+  .alert {
+    border: 1px solid transparent;
+    border-radius: 18px;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 12px 30px rgba(15,23,42,0.08);
+    background: var(--surface-elevated);
+  }
+
+  [data-theme="dark"] .alert {
+    background: rgba(4,7,15,0.95);
+    border-color: rgba(148,163,184,0.22);
+    box-shadow: 0 35px 90px rgba(0,0,0,0.65);
+    color: #e2e8f0;
+  }
+
+  .social-icons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .social-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    border: 1px solid var(--border-soft);
+    background: var(--surface-elevated);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s var(--transition-snappy), border-color 0.2s var(--transition-snappy);
+    box-shadow: 0 8px 20px rgba(15,23,42,0.08);
+  }
+
+  .social-icon:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-strong);
+  }
+
+  .app-footer {
+    width: var(--layout-max-width);
+    margin: 0 auto clamp(24px, 3vw, 48px);
+    padding: clamp(16px, 3vw, 28px);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-soft);
+    background: linear-gradient(120deg, var(--surface-elevated), rgba(255,255,255,0.7));
+    box-shadow: var(--shadow-soft);
+    text-align: center;
+  }
+
+  .footer-social {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .footer-social .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.35em;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .footer-version-text {
+    margin-top: 12px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  [data-theme="dark"] .container {
+    background: rgba(4,7,15,0.92);
+    border-color: rgba(148,163,184,0.18);
+    box-shadow: 0 40px 120px rgba(0,0,0,0.65);
+  }
+
+  [data-theme="dark"] .navbar {
+    border-color: rgba(148,163,184,0.18);
+    box-shadow: 0 35px 90px rgba(0,0,0,0.65);
+    background: linear-gradient(130deg, rgba(6,11,24,0.95), rgba(3,7,15,0.82));
+  }
+
+  [data-theme="dark"] .navbar-nav .nav-link {
+    color: #d0d8f2 !important;
+  }
+
+  [data-theme="dark"] .nav-pill:hover {
+    background: rgba(56,189,248,0.18);
+    color: #e0f2ff !important;
+  }
+
+  [data-theme="dark"] .nav-pill-accent {
+    background: rgba(56,189,248,0.22);
+    color: #e0f2ff !important;
+    border-color: transparent;
+  }
+
+  [data-theme="dark"] .navbar-text {
+    background: rgba(15,23,42,0.55);
+    border-color: rgba(148,163,184,0.2);
+    color: #e2e8f0;
+  }
+
+  [data-theme="dark"] .app-footer {
+    background: linear-gradient(140deg, rgba(4,8,18,0.95), rgba(2,6,17,0.8));
+    border-color: rgba(148,163,184,0.2);
+    box-shadow: 0 35px 90px rgba(0,0,0,0.7);
+  }
+
+  [data-theme="dark"] .footer-social .eyebrow {
+    color: #94a3b8;
+  }
+
+  [data-theme="dark"] .social-icon {
+    background: rgba(5,9,20,0.95);
+    border-color: rgba(148,163,184,0.25);
+    box-shadow: 0 18px 35px rgba(0,0,0,0.65);
+  }
+
+  [data-theme="dark"] .social-icon:hover {
+    border-color: var(--accent-strong);
+  }
+
+  .card,
+  .list-group-item,
+  .modal-content {
+    background: var(--surface-primary);
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 12px 30px rgba(15,23,42,0.05);
+    border-radius: 18px;
+    color: var(--text-color);
+  }
+
+  [data-theme="dark"] .card,
+  [data-theme="dark"] .list-group-item,
+  [data-theme="dark"] .modal-content {
+    background: rgba(6,11,24,0.9);
+  }
+
+  .form-control,
+  .form-select,
+  textarea.form-control {
+    background: rgba(255,255,255,0.85);
+    border: 1px solid var(--border-soft);
+    color: var(--text-color);
+    border-radius: 14px;
+    padding: 0.65rem 0.85rem;
+    transition: border-color 0.2s var(--transition-snappy), box-shadow 0.2s var(--transition-snappy);
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: var(--accent-strong);
+    box-shadow: 0 0 0 2px rgba(14,165,233,0.2);
+  }
+
+  [data-theme="dark"] .form-control,
+  [data-theme="dark"] .form-select,
+  [data-theme="dark"] textarea.form-control {
+    background: rgba(9,14,28,0.9);
+  }
+
+  .btn-primary,
+  .btn-success {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+    color: var(--accent-contrast);
+    border-radius: 14px;
+    padding: 0.5rem 1.25rem;
+    box-shadow: 0 12px 30px rgba(14,165,233,0.25);
+    transition: transform 0.2s var(--transition-snappy), box-shadow 0.2s var(--transition-snappy);
+  }
+
+  .btn-primary:hover,
+  .btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 36px rgba(14,165,233,0.35);
+  }
+
+  .btn-outline-secondary,
+  .btn-secondary {
+    border-radius: 14px;
+  }
+
+  .dropdown-menu {
+    border-radius: 16px;
+    border: 1px solid var(--border-soft);
+    background: var(--surface-elevated);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .dropdown-item {
+    border-radius: 12px;
+    margin: 2px 4px;
+    color: var(--text-color);
+  }
+
+  .dropdown-item:hover {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+  }
+
+  [data-theme="dark"] .dropdown-menu {
+    background: rgba(4,8,18,0.95);
+    border-color: rgba(148,163,184,0.2);
+    box-shadow: 0 30px 70px rgba(0,0,0,0.75);
+  }
+
+  [data-theme="dark"] .dropdown-item {
+    color: #e2e8f0;
+  }
+
+  [data-theme="dark"] .dropdown-item:hover {
+    background: rgba(56,189,248,0.18);
+    color: #f8fafc;
+  }
+
+  .table {
+    color: var(--text-color);
+    border-color: var(--border-soft);
+  }
+
+  .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background: rgba(15,23,42,0.03);
+  }
+
+  [data-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background: rgba(255,255,255,0.03);
+  }
+
+  .filter-btn {
+    border-radius: 18px !important;
+    border-width: 1.5px !important;
+    transition: transform 0.2s var(--transition-snappy), box-shadow 0.2s var(--transition-snappy);
+  }
+
+  .filter-btn:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 18px 32px rgba(15,23,42,0.2) !important;
+  }
+
+  .ratio.ratio-2x3 {
+    --bs-aspect-ratio: 150%;
+    border-radius: 18px;
+    overflow: hidden;
+    background: rgba(15,23,42,0.05);
+  }
+
+  .ratio.ratio-2x3 img {
+    object-fit: cover;
+  }
+
+  @media (max-width: 991px) {
+    .navbar {
+      border-radius: 24px;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .navbar-nav .nav-link {
+      padding: 0.45rem 0.85rem;
+    }
+
+    .container,
+    .navbar,
+    .app-footer {
+      width: min(100%, calc(100% - 24px));
+    }
+  }
+
+  @media (max-width: 576px) {
+    body {
+      padding: 12px;
+    }
+
+    .container {
+      padding: 1.25rem;
+    }
+
+    .navbar-text {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .social-icons {
+      justify-content: center;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  </style>
+</head>
+<body>
+  <div class="overlay">
+    {% block navbar %}
+    <nav class="navbar navbar-expand-lg navbar-light">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="{{ url_for('main.library') }}">{{ site_name }}</a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <div class="navbar-nav me-auto">
+            {% if current_user.is_authenticated %}
+              <!-- Reading Streak Indicator (keep as special element) -->
+              {% if current_reading_streak >= 0 %}
+                <a href="{{ url_for('stats.reading_journey') }}"
+                   class="nav-pill streak-indicator me-2 streak-level-{{ streak_performance_level or 0 }}"
+                   title="🔥 {{ current_reading_streak }} day reading streak! Click to view your reading journey">
+                  <!-- compact display: icon + count -->
+                  <span aria-hidden="true">🔥</span>
+                  <span class="streak-number">{{ current_reading_streak }}</span>
+                  <span class="visually-hidden">{{ 'day' if current_reading_streak == 1 else 'days' }} reading streak</span>
+                </a>
+              {% endif %}
+
+              <a class="nav-link nav-pill" href="{{ url_for('main.library') }}">Library</a>
+              <a class="nav-link nav-pill" href="{{ url_for('main.people') }}">People</a>
+              <a class="nav-link nav-pill" href="{{ genre_url_for('index') }}">{{ get_genre_term_plural() }}</a>
+              <a class="nav-link nav-pill" href="{{ url_for('main.stats') }}">Stats</a>
+
+              <a class="nav-link nav-pill nav-pill-accent nav-cta" href="#" data-bs-toggle="modal" data-bs-target="#readingLogModal">
+                <i class="bi bi-journal-plus"></i> Reading Log
+              </a>
+
+              <div class="nav-item dropdown">
+                <a class="nav-link nav-pill nav-ghost dropdown-toggle" href="#" id="moreDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">More</a>
+                <ul class="dropdown-menu" aria-labelledby="moreDropdown">
+                  <li><a class="dropdown-item" href="{{ url_for('series.list_series') }}">Series</a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('locations.manage_locations') }}">Locations</a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('metadata.index') }}">Metadata</a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('auth.settings') }}">Settings</a></li>
+                </ul>
+              </div>
+            {% endif %}
+          </div>
+          
+          <div class="navbar-nav">
+            <!-- Dark mode toggle -->
+            <button id="theme-toggle" type="button" class="nav-link nav-pill nav-ghost" title="Toggle dark mode">
+              <i class="bi bi-moon-fill" id="theme-icon"></i>
+            </button>
+            
+            {% if current_user.is_authenticated %}
+              <span class="navbar-text me-3">
+                Welcome, {{ current_user.display_name if current_user.display_name else current_user.username }}
+                {% if current_user.is_admin %}
+                  <span class="badge bg-danger ms-1">Admin</span>
+                {% endif %}
+              </span>
+              <a class="nav-link nav-pill nav-ghost" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a>
+            {% else %}
+              <a class="nav-link nav-pill nav-ghost" href="{{ url_for('auth.login') }}">Login</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </nav>
+    {% endblock %}
+    <div class="container">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} mt-2">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      {% block content %}
+        <a href="{{ url_for('main.view_book_enhanced', uid=book.uid) }}"><strong>{{ book.title }}</strong></a>
+      {% endblock %}
+      {% block footer %}
+      {% endblock %}
+    </div>
+    <footer class="app-footer">
+      <div class="footer-social">
+        <span class="eyebrow">Stay connected</span>
+        <div class="social-icons">
+          <a href="https://github.com/pickles4evaaaa/mybibliotheca" target="_blank" rel="noopener" title="View on GitHub" class="social-icon">
+            <img src="{{ url_for('serve_static', filename='github-mark.png') }}" alt="GitHub">
+          </a>
+          <a href="https://discord.gg/Hc8C5eRm7Q" target="_blank" rel="noopener" title="Join our Discord" class="social-icon">
+            <i class="bi bi-discord" style="color: #5865F2;"></i>
+          </a>
+          <a href="https://x.com/my_bibliotheca" target="_blank" rel="noopener" title="Follow us on X (Twitter)" class="social-icon">
+            <i class="bi bi-twitter-x" style="color: #000;"></i>
+          </a>
+          <a href="https://bsky.app/profile/mybibliotheca.org" target="_blank" rel="noopener" title="Follow us on Bluesky" class="social-icon">
+            <svg viewBox="0 0 568 501" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M123.121 33.664C188.241 82.553 258.281 181.68 284 234.873c25.719-53.192 95.759-152.32 160.879-201.209C491.866-1.611 568-28.906 568 57.947c0 17.346-9.945 145.713-15.778 166.555-20.275 72.453-94.155 90.933-159.875 79.748C507.222 323.8 536.444 388.56 473.333 453.32c-119.86-120.404-209.185-135.713-209.185-135.713s-89.325 15.309-209.185 135.713C-8.056 388.56 21.167 323.8 135.631 304.25c-65.72 11.185-139.6-7.295-159.875-79.748C-9.945 203.66-20 75.293-20 57.947c0-86.853 76.134-59.558 123.121-24.283Z" fill="#1185fe"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+      <p class="footer-version-text">{{ site_name }} vbeta-latest · Remember to back up your database regularly.</p>
+    </footer>
+  </div>
+  <!-- Bootstrap JS (local file) -->
+  <script src="{{ url_for('serve_static', filename='bootstrap.bundle.min.js') }}"></script>
+  
+  <!-- Global CSRF utilities -->
+  <script>
+    // Make CSRF token globally available
+    window.csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    // Utility function to add CSRF token to forms
+    function addCSRFToForm(form) {
+      if (!form.querySelector('input[name="csrf_token"]')) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = window.csrfToken;
+        form.appendChild(csrfInput);
+      }
+    }
+    
+    // Utility function for CSRF-protected fetch requests
+    function csrfFetch(url, options = {}) {
+      options.headers = options.headers || {};
+      options.headers['X-CSRFToken'] = window.csrfToken;
+      return fetch(url, options);
+    }
+    
+    // Auto-add CSRF to all forms on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      const forms = document.querySelectorAll('form[method="post"], form[method="POST"]');
+      forms.forEach(addCSRFToForm);
+      
+      // Initialize theme toggle
+      initThemeToggle();
+    });
+    
+    // Theme toggle functionality
+    function initThemeToggle() {
+      const themeToggle = document.getElementById('theme-toggle');
+      const themeIcon = document.getElementById('theme-icon');
+      const htmlElement = document.documentElement;
+      
+      // Check if localStorage has a different theme than server-side
+      const serverTheme = htmlElement.getAttribute('data-theme') || 'light';
+      const localStorageTheme = localStorage.getItem('mybibliotheca_theme');
+      
+      // If localStorage has a different theme, use that and sync with server
+      if (localStorageTheme && localStorageTheme !== serverTheme) {
+        htmlElement.setAttribute('data-theme', localStorageTheme);
+        // Sync with server in background
+        csrfFetch('{{ url_for("main.toggle_theme") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            current_theme: serverTheme
+          })
+        }).catch(error => {
+          console.log('Failed to sync theme with server:', error);
+        });
+      }
+      
+      // Update icon based on current theme
+      function updateThemeIcon(theme) {
+        if (theme === 'dark') {
+          themeIcon.className = 'bi bi-sun-fill';
+        } else {
+          themeIcon.className = 'bi bi-moon-fill';
+        }
+      }
+      
+      // Initialize icon
+      const currentTheme = htmlElement.getAttribute('data-theme') || 'light';
+      updateThemeIcon(currentTheme);
+      
+      // Theme toggle click handler
+      themeToggle.addEventListener('click', function() {
+        const currentTheme = htmlElement.getAttribute('data-theme') || 'light';
+        
+        // Send theme toggle request
+        csrfFetch('{{ url_for("main.toggle_theme") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            current_theme: currentTheme
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Update theme immediately
+            htmlElement.setAttribute('data-theme', data.new_theme);
+            updateThemeIcon(data.new_theme);
+            
+            // Store theme preference in localStorage as backup
+            localStorage.setItem('mybibliotheca_theme', data.new_theme);
+          } else {
+            console.error('Failed to toggle theme:', data.error);
+          }
+        })
+        .catch(error => {
+          console.error('Error toggling theme:', error);
+          // If server request fails, toggle locally and store in localStorage
+          const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+          htmlElement.setAttribute('data-theme', newTheme);
+          updateThemeIcon(newTheme);
+          localStorage.setItem('mybibliotheca_theme', newTheme);
+        });
+      });
+    }
+    
+    // Navbar scroll behavior
+    let ticking = false;
+    
+    function updateNavbar() {
+      const navbar = document.querySelector('.navbar');
+      if (window.scrollY > 10) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
+      ticking = false;
+    }
+    
+    window.addEventListener('scroll', function() {
+      if (!ticking) {
+        requestAnimationFrame(updateNavbar);
+        ticking = true;
+      }
+    });
+  </script>
+
+  <!-- Reading Log Entry Modal -->
+  {% if current_user.is_authenticated %}
+  <div class="modal fade" id="readingLogModal" tabindex="-1" aria-labelledby="readingLogModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="readingLogModalLabel">
+            <i class="bi bi-journal-plus"></i> Reading Log
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="readingLogForm" method="POST" action="{{ url_for('reading_logs.create_reading_log_entry') }}">
+          <div class="modal-body">
+            <!-- Error Message Area -->
+            <div class="alert alert-danger" id="readingLogError" style="display: none;" role="alert">
+              <i class="bi bi-exclamation-triangle"></i>
+              <span id="readingLogErrorMessage"></span>
+            </div>
+            
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" id="selected_book_id" name="book_id" value="">
+            
+            <div class="mb-3">
+              <label for="book_search" class="form-label">Book *</label>
+              <div class="book-autocomplete">
+                <input type="text" class="form-control book-search" id="book_search" 
+                       placeholder="Start typing book title..." autocomplete="off">
+                <div class="autocomplete-dropdown" id="book_dropdown"></div>
+              </div>
+              <div class="selected-book mt-2" id="selected_book" style="display: none;">
+                <div class="selected-book-display">
+                  <span class="book-title"></span>
+                  <span class="book-authors"></span>
+                  <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="clearBookSelection()">
+                    <i class="bi bi-x"></i> Change
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="start_page" class="form-label">Start Page</label>
+                  <input type="number" class="form-control" id="start_page" name="start_page" min="1">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="end_page" class="form-label">End Page</label>
+                  <input type="number" class="form-control" id="end_page" name="end_page" min="1">
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="pages_read" class="form-label">Pages Read</label>
+                  <input type="number" class="form-control" id="pages_read" name="pages_read" min="1" readonly value="">
+                  <small class="form-text text-muted">Auto-calculated from start/end pages</small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="minutes_read" class="form-label">Minutes Read</label>
+                  <input type="number" class="form-control" id="minutes_read" name="minutes_read" min="1" value="">
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="notes" class="form-label">Notes (Optional)</label>
+              <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Any thoughts or notes about your reading session..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-journal-check"></i> Log Session
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Book search autocomplete styles */
+    .book-autocomplete {
+      position: relative;
+    }
+    
+    .book-autocomplete .autocomplete-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #ced4da;
+      border-top: none;
+      border-radius: 0 0 0.375rem 0.375rem;
+      max-height: 250px;
+      overflow-y: auto;
+      z-index: 1050;
+      display: none;
+    }
+    
+    .book-autocomplete .autocomplete-item {
+      padding: 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #f8f9fa;
+    }
+    
+    .book-autocomplete .autocomplete-item:hover {
+      background-color: #f8f9fa;
+    }
+    
+    .book-autocomplete .autocomplete-item:last-child {
+      border-bottom: none;
+    }
+    
+    .book-title-main {
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .book-authors-sub {
+      font-size: 0.9em;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .book-series-sub {
+      font-size: 0.85em;
+      color: #888;
+      margin-top: 2px;
+    }
+    
+    .selected-book-display {
+      padding: 10px;
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .selected-book-display .book-title {
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .selected-book-display .book-authors {
+      font-size: 0.9em;
+      color: #666;
+      margin-left: 8px;
+    }
+    
+    /* Dark mode support */
+    [data-theme="dark"] .book-autocomplete .autocomplete-dropdown {
+      background: #2d2d2d;
+      border-color: #404040;
+      color: #e0e0e0;
+    }
+    
+    [data-theme="dark"] .book-autocomplete .autocomplete-item {
+      border-bottom-color: #404040;
+    }
+    
+    [data-theme="dark"] .book-autocomplete .autocomplete-item:hover {
+      background-color: #404040;
+    }
+    
+    [data-theme="dark"] .book-title-main {
+      color: #e0e0e0;
+    }
+    
+    [data-theme="dark"] .book-authors-sub {
+      color: #b0b0b0;
+    }
+
+    [data-theme="dark"] .book-series-sub {
+      color: #9a9a9a;
+    }
+    
+    [data-theme="dark"] .selected-book-display {
+      background-color: #2d2d2d;
+      border-color: #404040;
+    }
+    
+    [data-theme="dark"] .selected-book-display .book-title {
+      color: #e0e0e0;
+    }
+    
+    [data-theme="dark"] .selected-book-display .book-authors {
+      color: #b0b0b0;
+    }
+
+    /* Aurora modal polish */
+    #readingLogModal .modal-content {
+      background: var(--surface-elevated);
+      border-color: var(--border-soft);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .book-autocomplete .autocomplete-dropdown {
+      background: var(--surface-elevated);
+      border-color: var(--border-soft);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .book-autocomplete .autocomplete-item {
+      border-bottom-color: var(--border-soft);
+    }
+
+    .book-autocomplete .autocomplete-item:hover {
+      background-color: var(--accent-soft);
+      color: var(--accent-strong);
+    }
+
+    .selected-book-display {
+      background-color: rgba(15,23,42,0.04);
+      border-color: var(--border-soft);
+    }
+
+    [data-theme="dark"] .selected-book-display {
+      background-color: rgba(8,12,24,0.8);
+    }
+  </style>
+
+  <script>
+    // Reading Log Modal JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+      const modal = document.getElementById('readingLogModal');
+      const bookSearchInput = document.getElementById('book_search');
+      const bookDropdown = document.getElementById('book_dropdown');
+      const selectedBookDiv = document.getElementById('selected_book');
+      const selectedBookIdInput = document.getElementById('selected_book_id');
+      const startPageInput = document.getElementById('start_page');
+      const endPageInput = document.getElementById('end_page');
+      const pagesReadInput = document.getElementById('pages_read');
+      
+  let userBooksData = [];
+  let searchTimeout = null;
+  const searchCache = new Map();
+  let activeSearchRequest = 0;
+  let lastSelectedBook = null;
+  let lastSelectionSource = null;
+    const PREFILL_STATE = window.__READING_LOG_PREFILL__ = window.__READING_LOG_PREFILL__ || {};
+      
+      // Capture server-rendered defaults as fallback constants
+  const STATIC_DEFAULTS = JSON.parse('{{ {"pages": (get_effective_reading_defaults(current_user.id)[0] if (current_user and current_user.is_authenticated) else None), "minutes": (get_effective_reading_defaults(current_user.id)[1] if (current_user and current_user.is_authenticated) else None)} | tojson | safe }}');
+
+      function resolveEffectiveDefaults() {
+        // 1) Prefer in-page personal settings values if present (reactive on save)
+        try {
+          const personal = document.getElementById('personalDynamicContainer');
+          if (personal) {
+            const dp = personal.querySelector('input[name="default_pages_per_log"]');
+            const dm = personal.querySelector('input[name="default_minutes_per_log"]');
+            const pVal = dp && dp.value !== '' ? parseInt(dp.value, 10) : null;
+            const mVal = dm && dm.value !== '' ? parseInt(dm.value, 10) : null;
+            if ((pVal !== null && !Number.isNaN(pVal)) || (mVal !== null && !Number.isNaN(mVal))) {
+              return { pages: (Number.isNaN(pVal) ? null : pVal), minutes: (Number.isNaN(mVal) ? null : mVal) };
+            }
+          }
+        } catch(_) { /* ignore */ }
+        // 2) If admin server config panel is open with new defaults, use those
+        try {
+          const server = document.getElementById('serverDynamicContainer');
+          if (server) {
+            const dp = server.querySelector('input[name="default_pages_per_log"]');
+            const dm = server.querySelector('input[name="default_minutes_per_log"]');
+            const pVal = dp && dp.value !== '' ? parseInt(dp.value, 10) : null;
+            const mVal = dm && dm.value !== '' ? parseInt(dm.value, 10) : null;
+            if ((pVal !== null && !Number.isNaN(pVal)) || (mVal !== null && !Number.isNaN(mVal))) {
+              return { pages: (Number.isNaN(pVal) ? null : pVal), minutes: (Number.isNaN(mVal) ? null : mVal) };
+            }
+          }
+        } catch(_) { /* ignore */ }
+        // 3) Fallback to server-rendered values from page load
+  return { pages: (STATIC_DEFAULTS && STATIC_DEFAULTS.pages !== undefined ? STATIC_DEFAULTS.pages : null), minutes: (STATIC_DEFAULTS && STATIC_DEFAULTS.minutes !== undefined ? STATIC_DEFAULTS.minutes : null) };
+      }
+
+      try {
+        const queuedSuccess = window.sessionStorage.getItem('readingLogSuccessMessage');
+        if (queuedSuccess) {
+          showAlert('success', queuedSuccess);
+          window.sessionStorage.removeItem('readingLogSuccessMessage');
+        }
+      } catch (storageErr) {
+        console.warn('Unable to access sessionStorage for reading log alerts', storageErr);
+      }
+
+      function normalizeBookPayload(raw) {
+        if (!raw || !raw.id || !raw.title) {
+          return null;
+        }
+        return {
+          id: raw.id,
+          title: raw.title,
+          authors: raw.authors || raw.author || '',
+          series: raw.series || ''
+        };
+      }
+
+      function storeGlobalPrefill(key, payload) {
+        const normalized = normalizeBookPayload(payload);
+        if (!normalized) {
+          delete PREFILL_STATE[key];
+          return null;
+        }
+        PREFILL_STATE[key] = normalized;
+        return normalized;
+      }
+
+      function getSuggestedPrefill() {
+        return PREFILL_STATE.suggestedInProgress || null;
+      }
+
+      function resolvePageContextPrefill() {
+        return PREFILL_STATE.currentBook || null;
+      }
+
+      function extractDatasetPrefill(element) {
+        if (!element) {
+          return null;
+        }
+        const target = element.closest('[data-prefill-book-id]') || element;
+        const dataset = target.dataset || {};
+        const id = dataset.prefillBookId;
+        const title = dataset.prefillBookTitle;
+        if (!id || !title) {
+          return null;
+        }
+        return normalizeBookPayload({
+          id,
+          title,
+          authors: dataset.prefillBookAuthors || dataset.prefillBookAuthor || '',
+          series: dataset.prefillBookSeries || ''
+        });
+      }
+
+      function attemptAutoSelect(payload, options = {}) {
+        const normalized = normalizeBookPayload(payload);
+        if (!normalized) {
+          return false;
+        }
+        const force = options.force === true;
+        const hasSelection = !!selectedBookIdInput.value;
+        const searchHasValue = !!(bookSearchInput.value && bookSearchInput.value.trim());
+        if (!force && (hasSelection || searchHasValue)) {
+          return false;
+        }
+        const source = options.source || 'prefill';
+        selectBook(normalized, source);
+        if (source === 'suggested') {
+          storeGlobalPrefill('suggestedInProgress', normalized);
+        }
+        return true;
+      }
+
+      // Prefill defaults and load user's books when modal is shown
+      modal.addEventListener('show.bs.modal', function(event) {
+        try {
+          const eff = resolveEffectiveDefaults();
+          if (eff.pages !== null && eff.pages !== undefined && pagesReadInput) {
+            pagesReadInput.value = String(eff.pages);
+            pagesReadInput.readOnly = false; // allow user to tweak
+          }
+          const minutesInput = document.getElementById('minutes_read');
+          if (eff.minutes !== null && eff.minutes !== undefined && minutesInput) {
+            minutesInput.value = String(eff.minutes);
+          }
+        } catch (e) { /* ignore */ }
+
+        let prefillApplied = false;
+        if (event && event.relatedTarget) {
+          const triggerPrefill = extractDatasetPrefill(event.relatedTarget);
+          if (triggerPrefill) {
+            prefillApplied = attemptAutoSelect(triggerPrefill, { force: true, source: 'trigger' });
+          }
+        }
+
+        if (!prefillApplied) {
+          const pagePrefill = resolvePageContextPrefill();
+          if (pagePrefill) {
+            prefillApplied = attemptAutoSelect(pagePrefill, { force: true, source: 'context' });
+          }
+        }
+
+        if (!prefillApplied) {
+          const suggested = getSuggestedPrefill();
+          if (suggested) {
+            prefillApplied = attemptAutoSelect(suggested, { source: 'suggested' });
+          }
+        }
+
+        if (userBooksData.length === 0) {
+          loadUserBooks();
+        }
+      });
+      
+      // Book search functionality
+      bookSearchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          if (query.length >= 1) {
+            searchBooks(query);
+          } else {
+            showRecentBooks();
+          }
+        }, 200);
+      });
+      
+      // Show recent books when field is focused
+      bookSearchInput.addEventListener('focus', function() {
+        if (!this.value.trim()) {
+          showRecentBooks();
+        }
+      });
+      
+      // Hide dropdown when clicking outside
+      document.addEventListener('click', function(event) {
+        if (!event.target.closest('.book-autocomplete')) {
+          hideBookDropdown();
+        }
+      });
+      
+      // Auto-calculate pages read
+      function calculatePagesRead() {
+        const startPage = parseInt(startPageInput.value) || 0;
+        const endPage = parseInt(endPageInput.value) || 0;
+        
+        if (startPage > 0 && endPage > 0 && endPage >= startPage) {
+          pagesReadInput.value = endPage - startPage + 1;
+        } else {
+          pagesReadInput.value = '';
+        }
+      }
+      
+      startPageInput.addEventListener('input', calculatePagesRead);
+      endPageInput.addEventListener('input', calculatePagesRead);
+      
+      // Allow manual override of pages read
+      pagesReadInput.addEventListener('focus', function() {
+        this.readOnly = false;
+      });
+      
+      pagesReadInput.addEventListener('blur', function() {
+        if (!this.value) {
+          this.readOnly = true;
+          calculatePagesRead();
+        }
+      });
+      
+      // Load user's books via AJAX
+      function loadUserBooks() {
+        fetch('/reading-logs/api/user/books?limit=60', {
+          headers: {
+            // GET usually doesn't require CSRF, but keep header harmlessly for consistency
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          }
+        })
+        .then(r => r.json())
+        .then(data => {
+          let booksPayload = [];
+          if (Array.isArray(data)) {
+            booksPayload = data;
+          } else if (data && Array.isArray(data.books)) {
+            booksPayload = data.books;
+          } else {
+            console.warn('Unexpected books payload', data);
+          }
+          userBooksData = booksPayload;
+
+          let suggestionHandled = false;
+          if (!Array.isArray(data) && data && data.suggested_book) {
+            const normalizedSuggestion = storeGlobalPrefill('suggestedInProgress', data.suggested_book);
+            if (normalizedSuggestion) {
+              suggestionHandled = attemptAutoSelect(normalizedSuggestion, { source: 'suggested' });
+            }
+          } else {
+            delete PREFILL_STATE.suggestedInProgress;
+            if (lastSelectionSource === 'suggested') {
+              clearBookSelection({ forget: true });
+            }
+          }
+
+          if (!suggestionHandled && bookSearchInput.style.display !== 'none' && !bookSearchInput.value.trim()) {
+            showRecentBooks();
+          }
+        })
+        .catch(error => {
+          console.error('Error loading books:', error);
+        });
+      }
+      
+    async function searchBooks(query) {
+        const trimmed = query.trim();
+        if (!trimmed) {
+          showRecentBooks();
+          return;
+        }
+
+        const normalized = trimmed.toLowerCase();
+        if (searchCache.has(normalized)) {
+          showBookDropdown(searchCache.get(normalized) || [], query);
+          return;
+        }
+
+        const requestId = ++activeSearchRequest;
+
+        try {
+          const response = await fetch(`/reading-logs/api/user/books?q=${encodeURIComponent(trimmed)}&limit=20`, {
+            headers: {
+              'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error(`Search request failed with status ${response.status}`);
+          }
+
+          const data = await response.json();
+          let books = [];
+          if (Array.isArray(data)) {
+            books = data;
+          } else if (data && Array.isArray(data.books)) {
+            books = data.books;
+          }
+
+          if (!Array.isArray(data) && data && data.suggested_book) {
+            storeGlobalPrefill('suggestedInProgress', data.suggested_book);
+          }
+
+          searchCache.set(normalized, books);
+
+          if (requestId === activeSearchRequest) {
+            showBookDropdown(books, query);
+          }
+        } catch (error) {
+          console.error('Error searching books:', error);
+          if (requestId !== activeSearchRequest) {
+            return;
+          }
+          if (userBooksData.length) {
+            const fallbackQuery = normalized;
+            const fallbackResults = userBooksData.filter(book => {
+              const authors = (book.authors || book.author || '');
+              const seriesName = (book.series || '');
+              const haystacks = [book.title || '', authors, seriesName].map(text => (text || '').toString().toLowerCase());
+              return haystacks.some(text => text.includes(fallbackQuery));
+            });
+            showBookDropdown(fallbackResults, query);
+          } else {
+            showBookDropdown([], query);
+          }
+        }
+      }
+      
+      function showRecentBooks() {
+        // Show recent books when no search query
+        if (userBooksData.length > 0) {
+          // Take the first 5 books (which should be prioritized by the API)
+          const recentBooks = userBooksData.slice(0, 5);
+          showBookDropdown(recentBooks, '');
+        }
+      }
+      
+      function showBookDropdown(books, query) {
+        bookDropdown.innerHTML = '';
+        
+        if (books.length === 0) {
+          const noResultsItem = document.createElement('div');
+          noResultsItem.className = 'autocomplete-item';
+          noResultsItem.innerHTML = '<em>No books found</em>';
+          bookDropdown.appendChild(noResultsItem);
+        } else {
+      books.slice(0, 10).forEach(book => { // Limit to 10 results
+            const item = document.createElement('div');
+            item.className = 'autocomplete-item';
+            item.innerHTML = `
+              <div class="book-title-main">${book.title}</div>
+        ${book.series ? `<div class="book-series-sub">${book.series}</div>` : ''}
+        ${book.authors ? `<div class="book-authors-sub">by ${book.authors}</div>` : (book.author ? `<div class=\"book-authors-sub\">by ${book.author}</div>` : '')}
+            `;
+            item.addEventListener('click', () => selectBook(book, 'manual'));
+            bookDropdown.appendChild(item);
+          });
+        }
+        
+        bookDropdown.style.display = 'block';
+      }
+      
+      function hideBookDropdown() {
+        bookDropdown.style.display = 'none';
+      }
+      
+            function selectBook(rawBook, source = 'manual') {
+              const book = normalizeBookPayload(rawBook);
+              if (!book) {
+                return;
+              }
+              selectedBookIdInput.value = book.id;
+              bookSearchInput.value = '';
+
+              // Show selected book
+              selectedBookDiv.querySelector('.book-title').textContent = book.title;
+              const authors = book.authors || (rawBook && rawBook.author) || '';
+              selectedBookDiv.querySelector('.book-authors').textContent = authors ? `by ${authors}` : '';
+              selectedBookDiv.style.display = 'block';
+              bookSearchInput.style.display = 'none';
+
+              lastSelectedBook = book;
+              lastSelectionSource = source;
+
+              hideBookDropdown();
+            }
+      
+      window.clearBookSelection = function(options = {}) {
+        selectedBookIdInput.value = '';
+        selectedBookDiv.style.display = 'none';
+        bookSearchInput.style.display = 'block';
+        bookSearchInput.value = '';
+        bookSearchInput.focus();
+        showRecentBooks();
+        lastSelectionSource = null;
+        if (options && options.forget) {
+          lastSelectedBook = null;
+          delete PREFILL_STATE.suggestedInProgress;
+        }
+      };
+      
+      // Helper functions for modal error handling
+      function showModalError(message) {
+        const errorDiv = document.getElementById('readingLogError');
+        const errorMessage = document.getElementById('readingLogErrorMessage');
+        errorMessage.textContent = message;
+        errorDiv.style.display = 'block';
+        // Scroll to top of modal to show error
+        document.querySelector('.modal-body').scrollTop = 0;
+      }
+      
+      function hideModalError() {
+        const errorDiv = document.getElementById('readingLogError');
+        errorDiv.style.display = 'none';
+      }
+      
+      // Hide error when modal is opened
+      modal.addEventListener('shown.bs.modal', function() {
+        hideModalError();
+      });
+      
+      // Handle form submission
+      document.getElementById('readingLogForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Hide any previous errors
+        hideModalError();
+        
+        // Validate book selection
+        if (!selectedBookIdInput.value) {
+          showModalError('Please select a book');
+          return;
+        }
+        
+        const formData = new FormData(this);
+        
+        fetch(this.action, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            // Close modal and show success message
+            const modalInstance = bootstrap.Modal.getInstance(modal);
+            modalInstance.hide();
+            
+            if (lastSelectedBook) {
+              const normalized = storeGlobalPrefill('suggestedInProgress', lastSelectedBook);
+              if (normalized) {
+                userBooksData = [normalized, ...userBooksData.filter(book => book.id !== normalized.id)];
+                lastSelectedBook = normalized;
+              }
+              searchCache.clear();
+            }
+
+            // Reset form
+            this.reset();
+            clearBookSelection();
+            pagesReadInput.readOnly = true;
+
+            try {
+              window.sessionStorage.setItem('readingLogSuccessMessage', 'Reading session logged successfully!');
+            } catch (storageErr) {
+              console.warn('Unable to persist reading log success message', storageErr);
+            }
+
+            setTimeout(() => {
+              window.location.reload();
+            }, 150);
+          } else {
+            // Show error in modal instead of page
+            showModalError(data.message || 'Error logging reading session');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          // Show error in modal instead of page
+          showModalError('Error logging reading session');
+        });
+      });
+      
+      // Reset form when modal is hidden
+      modal.addEventListener('hidden.bs.modal', function() {
+        document.getElementById('readingLogForm').reset();
+        clearBookSelection();
+        pagesReadInput.readOnly = true;
+        try {
+          const eff = resolveEffectiveDefaults();
+          if (eff.pages !== null && eff.pages !== undefined) { pagesReadInput.value = String(eff.pages); pagesReadInput.readOnly = false; }
+          const minutesInput = document.getElementById('minutes_read');
+          if (eff.minutes !== null && eff.minutes !== undefined && minutesInput) { minutesInput.value = String(eff.minutes); }
+        } catch(e) { /* ignore */ }
+      });
+      
+      function showAlert(type, message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show mt-2`;
+        alertDiv.innerHTML = `
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const container = document.querySelector('.container');
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          if (alertDiv.parentNode) {
+            alertDiv.remove();
+          }
+        }, 5000);
+      }
+    });
+  </script>
+  {% endif %}
+  {# Injection point for page-specific modal/dialog markup placed outside main container #}
+  {% block extra_modals %}{% endblock %}
+  {# Injection point for page-specific scripts that must run after global utilities #}
+  {% block scripts %}{% endblock %}
+</body>
+</html>

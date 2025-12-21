@@ -1,0 +1,406 @@
+{% extends "onboarding/base_onboarding.html" %}
+
+{% block title %}Data Options - MyBibliotheca{% endblock %}
+
+{% block progress_width %}60%{% endblock %}
+
+{% block step_info %}Step 3 of 5: Data Options{% endblock %}
+
+{% block extra_styles %}
+<style>
+.option-cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.option-card {
+    border: 3px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+    position: relative;
+    text-align: center;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+@media (max-width: 576px) {
+    .option-card {
+        padding: 1rem;
+        min-height: 120px;
+    }
+}
+
+.option-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+    transform: translateY(-2px);
+}
+
+.option-card.selected {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #f0f2ff 0%, #f8f9ff 100%);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+}
+
+.option-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.option-icon {
+    width: 48px;
+    height: 48px;
+    background: #667eea;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    transition: all 0.3s ease;
+}
+
+.option-card.selected .option-icon {
+    background: #764ba2;
+    transform: scale(1.1);
+}
+
+.option-icon i {
+    color: white;
+    font-size: 20px;
+}
+
+.option-title {
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+@media (max-width: 576px) {
+    .option-title {
+        font-size: 1rem;
+    }
+}
+
+.option-description {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin: 0;
+}
+
+@media (max-width: 576px) {
+    .option-description {
+        font-size: 0.85rem;
+    }
+}
+
+.additional-options {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+}
+
+@media (max-width: 576px) {
+    .additional-options {
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+}
+
+.section-title {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.database-option {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+@media (max-width: 576px) {
+    .database-option {
+        padding: 0.75rem;
+    }
+}
+
+.database-option:hover {
+    border-color: #667eea;
+}
+
+.database-option.selected {
+    border-color: #667eea;
+    background: #f0f2ff;
+}
+
+.database-path {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #666;
+    word-break: break-all;
+    margin-top: 0.25rem;
+}
+
+@media (max-width: 576px) {
+    .database-path {
+        font-size: 0.75rem;
+    }
+}
+
+.form-control.file-input {
+    cursor: pointer;
+}
+
+.badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    margin-left: 0.25rem;
+}
+
+/* Responsive grid - mobile first approach */
+@media (min-width: 576px) {
+    .option-cards {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .option-cards {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+    
+    .option-card {
+        min-height: 160px;
+    }
+}
+
+@media (min-width: 992px) {
+    .option-cards {
+        gap: 2rem;
+    }
+    
+    .option-card {
+        padding: 2rem;
+        min-height: 180px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-header">
+    <div class="icon-circle" style="background: linear-gradient(135deg, #ffc107, #ff8c00);">
+        <i class="bi bi-database-fill"></i>
+    </div>
+    <h2>Choose Your Data Option</h2>
+    <p>How would you like to set up your book collection?</p>
+</div>
+
+<!-- Backup settings moved to Step 2 -->
+
+<form method="POST" enctype="multipart/form-data">
+    <!-- CSRF Token -->
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    
+    <div class="option-cards">
+        <!-- Fresh Start Option -->
+    <div class="option-card" onclick="selectOption('fresh')" data-option="fresh" data-bs-toggle="tooltip" title="Start with an empty library. You can add or import books later.">
+            <input type="radio" name="data_option" value="fresh" id="option_fresh" 
+                   {% if not data_option or data_option == 'fresh' %}checked{% endif %}>
+            <div class="option-icon">
+                <i class="bi bi-plus-circle-fill"></i>
+            </div>
+            <h4 class="option-title">Fresh Start</h4>
+            <p class="option-description">Start with an empty library and add books manually</p>
+        </div>
+        
+        <!-- Migration Option -->
+    <div class="option-card" onclick="selectOption('migrate')" data-option="migrate" data-bs-toggle="tooltip" title="Upgrade from an older MyBibliotheca database on this machine.">
+            <input type="radio" name="data_option" value="migrate" id="option_migrate"
+                   {% if data_option == 'migrate' %}checked{% endif %}>
+            <div class="option-icon">
+                <i class="bi bi-arrow-up-circle-fill"></i>
+            </div>
+            <h4 class="option-title">Migrate Database</h4>
+            <p class="option-description">Upgrade from an existing MyBibliotheca database</p>
+        </div>
+        
+        <!-- Import Option -->
+    <div class="option-card" onclick="selectOption('import')" data-option="import" data-bs-toggle="tooltip" title="Bring books in from CSV (Goodreads, StoryGraph, custom).">
+            <input type="radio" name="data_option" value="import" id="option_import"
+                   {% if data_option == 'import' %}checked{% endif %}>
+            <div class="option-icon">
+                <i class="bi bi-file-earmark-arrow-up-fill"></i>
+            </div>
+            <h4 class="option-title">Import Books</h4>
+            <p class="option-description">Import from CSV, Goodreads, or other sources</p>
+        </div>
+    </div>
+    
+    <!-- Migration Options -->
+    <div id="migration_options" class="additional-options" style="display: none;">
+        <div class="section-title">
+            <i class="bi bi-database"></i>
+            Available Databases
+        </div>
+        
+        {% if databases %}
+            {% for db in databases %}
+            <div class="database-option" onclick="selectDatabase('{{ db.path }}')">
+                <input type="radio" name="migration_source" value="{{ db.path }}" id="db_{{ loop.index }}">
+                <div>
+                    <strong>{{ db.name }}</strong>
+                    {% if db.version %}
+                        {% if db.version == 'v1_single_user' %}
+                            <span class="badge bg-info">V1 Single User</span>
+                        {% elif db.version == 'v2_multi_user' %}
+                            <span class="badge bg-success">V2 Multi User</span>
+                        {% elif db.version == 'unknown' %}
+                            <span class="badge bg-warning">Unknown Version</span>
+                        {% else %}
+                            <span class="badge bg-info">{{ db.version }}</span>
+                        {% endif %}
+                    {% endif %}
+                    {% if db.analysis and db.analysis.book_count is defined %}
+                        <span class="badge bg-secondary">{{ db.analysis.book_count }} books</span>
+                    {% endif %}
+                    {% if db.analysis and db.analysis.user_count is defined and db.analysis.user_count > 0 %}
+                        <span class="badge bg-primary">{{ db.analysis.user_count }} users</span>
+                    {% endif %}
+                </div>
+                <div class="database-path">{{ db.path }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                No compatible databases found. You can browse for a database file manually.
+            </div>
+        {% endif %}
+        
+        <div class="form-group mt-3">
+            <label for="custom_db_path" class="form-label" data-bs-toggle="tooltip" title="Pick a .db/.sqlite file if it wasn't auto-detected.">
+                <i class="bi bi-folder2-open"></i>
+                Or browse for database file
+            </label>
+            <input type="file" 
+                   class="form-control file-input" 
+                   id="custom_db_path" 
+                   name="custom_db_path" 
+                   accept=".db,.sqlite,.sqlite3">
+            <div class="form-text">Select a MyBibliotheca database file (.db, .sqlite, .sqlite3)</div>
+        </div>
+    </div>
+    
+    <!-- Import Options -->
+    <div id="import_options" class="additional-options" style="display: none;">
+        <div class="section-title">
+            <i class="bi bi-file-earmark-spreadsheet"></i>
+            Import File
+        </div>
+        
+        <div class="form-group">
+            <label for="import_file" class="form-label" data-bs-toggle="tooltip" title="Upload a CSV to import your books.">
+                <i class="bi bi-upload"></i>
+                Choose file to import
+            </label>
+            <input type="file" 
+                   class="form-control file-input" 
+                   id="import_file" 
+                   name="import_file" 
+                   accept=".csv,.tsv,.txt">
+            <div class="form-text">
+                Supported formats: CSV files from Goodreads, StoryGraph, or custom book lists
+            </div>
+        </div>
+        
+        <div class="alert alert-info">
+            <i class="bi bi-lightbulb"></i>
+            <strong>Tip:</strong> For Goodreads exports, use the "library export" feature from your Goodreads account settings.
+        </div>
+    </div>
+    
+    <!-- Navigation Buttons -->
+    <div class="navigation-buttons">
+        <a href="{{ url_for('onboarding.step', step_num=2) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back
+        </a>
+        <button type="submit" class="btn btn-primary">
+            Continue<i class="bi bi-arrow-right ms-2"></i>
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function selectOption(option) {
+    // Remove selected class from all cards
+    document.querySelectorAll('.option-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked card
+    document.querySelector(`[data-option="${option}"]`).classList.add('selected');
+    
+    // Check the corresponding radio button
+    document.querySelector(`input[value="${option}"]`).checked = true;
+    
+    // Show/hide additional options
+    const migrationOptions = document.getElementById('migration_options');
+    const importOptions = document.getElementById('import_options');
+    
+    migrationOptions.style.display = 'none';
+    importOptions.style.display = 'none';
+    
+    if (option === 'migrate') {
+        migrationOptions.style.display = 'block';
+    } else if (option === 'import') {
+        importOptions.style.display = 'block';
+    }
+}
+
+function selectDatabase(path) {
+    // Remove selected class from all database options
+    document.querySelectorAll('.database-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked option
+    event.currentTarget.classList.add('selected');
+    
+    // Check the corresponding radio button
+    document.querySelector(`input[value="${path}"]`).checked = true;
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const checkedOption = document.querySelector('input[name="data_option"]:checked');
+    if (checkedOption) {
+        selectOption(checkedOption.value);
+    }
+});
+</script>
+{% endblock %}

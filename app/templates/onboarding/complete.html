@@ -1,0 +1,119 @@
+{% extends "onboarding/base_onboarding.html" %}
+
+{% block title %}Setup Complete - MyBibliotheca{% endblock %}
+
+{% block card_content %}
+<!-- Success Header -->
+<div class="progress-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+    <h1>
+        <i class="bi bi-check-circle-fill"></i>
+        Welcome to MyBibliotheca!
+    </h1>
+    <div style="margin-top: 1rem; font-size: 1.1rem; opacity: 0.9;">
+        Your personal library is ready to use
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="form-content">
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border-radius: 50%; margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-book-fill" style="color: white; font-size: 2rem;"></i>
+        </div>
+        <h2 style="color: #333; margin-bottom: 1rem;">Setup Complete!</h2>
+        <p style="color: #666; font-size: 1.1rem; line-height: 1.6;">
+            Your MyBibliotheca installation has been successfully configured. 
+            {% if import_summary %}
+                We've imported <strong>{{ import_summary.total_books }}</strong> books into your library.
+            {% endif %}
+        </p>
+    </div>
+    
+    {% if import_summary %}
+    <!-- Import Summary -->
+    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem;">
+        <h5 style="color: #166534; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="bi bi-graph-up"></i>
+            Import Summary
+        </h5>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+            <div style="text-align: center;">
+                <div style="font-size: 2rem; font-weight: bold; color: #166534;">{{ import_summary.total_books }}</div>
+                <div style="color: #166534; font-size: 0.9rem;">Books Imported</div>
+            </div>
+            {% if import_summary.authors %}
+            <div style="text-align: center;">
+                <div style="font-size: 2rem; font-weight: bold; color: #166534;">{{ import_summary.authors }}</div>
+                <div style="color: #166534; font-size: 0.9rem;">Authors</div>
+            </div>
+            {% endif %}
+            {% if import_summary.genres %}
+            <div style="text-align: center;">
+                <div style="font-size: 2rem; font-weight: bold; color: #166534;">{{ import_summary.genres }}</div>
+                <div style="color: #166534; font-size: 0.9rem;">{{ get_genre_term_plural() }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Action Buttons -->
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <a href="{{ url_for('main.library') }}" 
+           style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 12px; padding: 1rem 2rem; color: white; font-weight: 600; font-size: 1.1rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; margin-right: 1rem; margin-bottom: 1rem; transition: all 0.3s ease;">
+            <i class="bi bi-house"></i> Go to My Library
+        </a>
+        <a href="{{ url_for('main.library') }}#add-book" 
+           style="background: transparent; border: 2px solid #28a745; color: #28a745; border-radius: 12px; padding: 0.875rem 1.875rem; font-weight: 600; font-size: 1.1rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; transition: all 0.3s ease;">
+            <i class="bi bi-plus"></i> Add First Book
+        </a>
+    </div>
+    
+    <!-- Quick Tips -->
+    <div style="background: #f8f9fa; border-radius: 10px; padding: 1.5rem; border-left: 4px solid #667eea;">
+        <h5 style="color: #333; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="bi bi-lightbulb"></i>
+            Quick Tips
+        </h5>
+        <div>
+            <ul style="margin: 0; padding-left: 1.25rem; color: #666;">
+                <li style="margin-bottom: 0.5rem;">
+                    <i class="bi bi-search" style="color: #ffc107; margin-right: 0.5rem;"></i>
+                    Use the search feature to quickly find and add books
+                </li>
+                <li style="margin-bottom: 0.5rem;">
+                    <i class="bi bi-target" style="color: #ffc107; margin-right: 0.5rem;"></i>
+                    Set reading goals and track your progress
+                </li>
+                <li style="margin-bottom: 0.5rem;">
+                    <i class="bi bi-gear" style="color: #ffc107; margin-right: 0.5rem;"></i>
+                    Explore the admin panel to customize your experience
+                </li>
+                <li>
+                    <i class="bi bi-people" style="color: #ffc107; margin-right: 0.5rem;"></i>
+                    Share your library with friends and family
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Admin Info -->
+    <div style="text-align: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+        <small style="color: #6b7280; font-size: 0.875rem; display: flex; align-items: center; justify-content: center; gap: 0.25rem;">
+            <i class="bi bi-shield-check"></i>
+            You are logged in as <strong>{{ current_user.username }}</strong> (Administrator)
+        </small>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-redirect after a delay (optional)
+/*
+setTimeout(function() {
+    window.location.href = "{{ url_for('main.library') }}";
+}, 10000); // Redirect after 10 seconds
+*/
+</script>
+{% endblock %}

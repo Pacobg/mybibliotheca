@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - MyBibliotheca{% endblock %}
+
+{% block content %}
+<style>
+.icon-square {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    font-weight: bold;
+    color: white;
+    margin-right: 8px;
+    font-size: 14px;
+}
+.icon-square.dash { background-color: #6f42c1; }
+.icon-square.users { background-color: #0d6efd; }
+.icon-square.settings { background-color: #6c757d; }
+.icon-square.library { background-color: #20c997; }
+</style>
+
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Admin Dashboard</h2>
+            <div class="btn-group">
+                <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary">
+                    Manage Users
+                </a>
+                <a href="{{ url_for('admin.migration_management') }}" class="btn btn-outline-warning">
+                    Database Migration
+                </a>
+                <a href="{{ url_for('debug_admin.debug_dashboard') }}" class="btn btn-outline-info">
+                    <i class="bi bi-bug"></i> Debug System
+                </a>
+                <a href="{{ url_for('admin.settings') }}" class="btn btn-outline-secondary">
+                    Settings
+                </a>
+                <a href="{{ url_for('main.library') }}" class="btn btn-outline-secondary">
+                    Back to Library
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ stats.total_users }}</h4>
+                        <p class="card-text">Total Users</p>
+                    </div>
+                </div>
+                {% if stats.new_users_30d > 0 %}
+                <small class="text-light">+{{ stats.new_users_30d }} this month</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ stats.active_users }}</h4>
+                        <p class="card-text">Active Users</p>
+                    </div>
+                </div>
+                <small class="text-light">{{ stats.admin_users }} admin(s)</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ stats.total_books }}</h4>
+                        <p class="card-text">Total Books</p>
+                    </div>
+                </div>
+                {% if stats.new_books_30d > 0 %}
+                <small class="text-light">+{{ stats.new_books_30d }} this month</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ stats.total_books // stats.total_users if stats.total_users > 0 else 0 }}</h4>
+                        <p class="card-text">Avg Books/User</p>
+                    </div>
+                </div>
+                <small class="text-light">System average</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Health Section -->
+{% if stats.system %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">System Health</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Disk Usage</h6>
+                        {% if stats.system.disk_percent != 'N/A' %}
+                        <div class="progress mb-2">
+                            <div class="progress-bar {% if stats.system.disk_percent > 80 %}bg-danger{% elif stats.system.disk_percent > 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                                 role="progressbar" style="width: {{ stats.system.disk_percent }}%">
+                                {{ stats.system.disk_percent }}%
+                            </div>
+                        </div>
+                        <small class="text-muted">{{ stats.system.disk_free_gb }}GB free of {{ stats.system.disk_total_gb }}GB</small>
+                        {% else %}
+                        <p class="text-muted">Disk information not available</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Memory Usage</h6>
+                        {% if stats.system.memory_percent != 'N/A' %}
+                        <div class="progress mb-2">
+                            <div class="progress-bar {% if stats.system.memory_percent > 80 %}bg-danger{% elif stats.system.memory_percent > 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                                 role="progressbar" style="width: {{ stats.system.memory_percent }}%">
+                                {{ stats.system.memory_percent }}%
+                            </div>
+                        </div>
+                        <small class="text-muted">{{ stats.system.memory_available_gb }}GB available</small>
+                        {% else %}
+                        <p class="text-muted">Memory information not available</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Backup & Maintenance Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-shield-alt me-2"></i>Backup & Maintenance</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6>Backup Status</h6>
+                        <p class="mb-2">
+                            <span class="badge bg-success">Backups Available</span>
+                        </p>
+                        <small class="text-muted">Keep your data safe with regular backups</small>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Quick Actions</h6>
+                        <div class="btn-group-vertical btn-group-sm d-grid gap-1">
+                            <a href="{{ url_for('simple_backup.index') }}" class="btn btn-outline-success">
+                                <i class="bi bi-database me-1"></i>Backup & Restore
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>System Maintenance</h6>
+                        <div class="btn-group-vertical btn-group-sm d-grid gap-1">
+                            <button type="button" class="btn btn-outline-success" onclick="createQuickBackup()">
+                                <i class="bi bi-plus me-1"></i>Quick Backup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Top Users -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Most Active Users</h5>
+            </div>
+            <div class="card-body">
+                {% if stats.top_users %}
+                    <div class="list-group list-group-flush">
+                        {% for user in stats.top_users %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>{{ user.username }}</span>
+                            <span class="badge bg-primary rounded-pill">{{ user.book_count }} books</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No user activity data available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Users -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Recent Users</h5>
+                <small class="text-muted">Last 30 days</small>
+            </div>
+            <div class="card-body">
+                {% if recent_users %}
+                    <div class="list-group list-group-flush">
+                        {% for user in recent_users %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ user.username }}</strong>
+                                {% if user.is_admin %}
+                                    <span class="badge bg-danger ms-1">Admin</span>
+                                {% endif %}
+                                {% if not user.is_active %}
+                                    <span class="badge bg-secondary ms-1">Inactive</span>
+                                {% endif %}
+                                <br>
+                                <small class="text-muted">{{ user.email }}</small>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">
+                                    {{ user.created_at.strftime('%m/%d/%Y') }}
+                                </small>
+                                <br>
+                                <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">Manage</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if recent_users|length == 10 %}
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary">
+                                View All Users
+                            </a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted">No recent user registrations.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Books -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Recently Added Books</h5>
+                <small class="text-muted">Last 30 days</small>
+            </div>
+            <div class="card-body">
+                {% if recent_books %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Author</th>
+                                    <th>User</th>
+                                    <th>Added</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for book in recent_books %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('main.view_book_enhanced', uid=book.uid) }}" 
+                                           class="text-decoration-none">
+                                            {{ book.title }}
+                                        </a>
+                                    </td>
+                                    <td>{{ book.author }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin.user_detail', user_id=book.user.id) }}"
+                                           class="text-decoration-none">
+                                            {{ book.user.username }}
+                                        </a>
+                                    </td>
+                                    <td>{{ book.created_at.strftime('%m/%d/%Y') }}</td>
+                                    <td>
+                                        {% if book.finished %}
+                                            <span class="badge bg-success">Finished</span>
+                                        {% elif book.currently_reading %}
+                                            <span class="badge bg-primary">Reading</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">To Read</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No books added recently.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary">
+                        Manage Users
+                    </a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-success">
+                        Create New User
+                    </a>
+                    <a href="{{ url_for('main.import_books') }}" class="btn btn-outline-info">
+                        Import Books
+                    </a>
+                    <a href="{{ url_for('main.download_db') }}" class="btn btn-outline-warning">
+                        Backup Database
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-refresh stats every 5 minutes
+setInterval(function() {
+    fetch('{{ url_for("admin.api_stats") }}')
+        .then(response => response.json())
+        .then(data => {
+            // Update stats cards (basic implementation)
+            console.log('Stats updated:', data);
+        })
+        .catch(error => console.error('Error updating stats:', error));
+}, 300000); // 5 minutes
+
+// Quick backup function
+function createQuickBackup() {
+    if (confirm('Create a quick backup of your database? This will take just a moment.')) {
+        // Create a form to submit the backup request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("simple_backup.create_backup") }}';
+        
+        // Add custom name
+        const nameInput = document.createElement('input');
+        nameInput.type = 'hidden';
+        nameInput.name = 'name';
+        nameInput.value = 'quick-backup-' + new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        form.appendChild(nameInput);
+        
+        // Add description
+        const descInput = document.createElement('input');
+        descInput.type = 'hidden';
+        descInput.name = 'description';
+        descInput.value = 'Quick backup created from admin dashboard';
+        form.appendChild(descInput);
+        
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

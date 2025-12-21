@@ -1,0 +1,618 @@
+{% extends "base.html" %}
+{% block title %}Import Progress - MyBibliotheca{% endblock %}
+{% block content %}
+<style>
+/* Dark mode enhancements for Import Books Progress */
+[data-theme="dark"] .text-muted {
+    color: #b0b0b0 !important;
+}
+
+[data-theme="dark"] small.text-muted {
+    color: #c0c0c0 !important;
+}
+
+[data-theme="dark"] .card {
+    background-color: rgba(40, 40, 40, 0.8) !important;
+    border-color: #404040 !important;
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .card-header {
+    background-color: rgba(60, 60, 60, 0.8) !important;
+    border-bottom-color: #404040 !important;
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .card-body {
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .border {
+    border-color: #404040 !important;
+}
+
+[data-theme="dark"] .alert-info {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    border-color: rgba(13, 110, 253, 0.3) !important;
+    color: #6ea8fe !important;
+}
+
+[data-theme="dark"] .alert-success {
+    background-color: rgba(25, 135, 84, 0.1) !important;
+    border-color: rgba(25, 135, 84, 0.3) !important;
+    color: #51cf66 !important;
+}
+
+[data-theme="dark"] .alert-danger {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    border-color: rgba(220, 53, 69, 0.3) !important;
+    color: #ff6b6b !important;
+}
+
+[data-theme="dark"] .text-success {
+    color: #51cf66 !important;
+}
+
+[data-theme="dark"] .text-danger {
+    color: #ff6b6b !important;
+}
+
+[data-theme="dark"] .list-group-item {
+    background-color: rgba(50, 50, 50, 0.8) !important;
+    border-color: #404040 !important;
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] code {
+    background-color: #2d2d2d !important;
+    color: #e0e0e0 !important;
+}
+</style>
+<div class="container mt-4">
+    <h2>📊 Import Progress</h2>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Import Job: {{ task_id }}</h5>
+                    
+                    <div class="progress mb-3" style="height: 30px;">
+                        <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                            0%
+                        </div>
+                    </div>
+                    
+                    <div class="row text-center">
+                        <div class="col-md-2 status-tile" data-status="processed" role="button" tabindex="0">
+                            <div class="border rounded p-2 h-100">
+                                <div class="h4 mb-0" id="processedCount">0</div>
+                                <small class="text-muted">Processed</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 status-tile" data-status="success" role="button" tabindex="0">
+                            <div class="border rounded p-2 h-100">
+                                <div class="h4 mb-0" id="successCount">0</div>
+                                <small class="text-success">Success</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 status-tile" data-status="merged" role="button" tabindex="0">
+                            <div class="border rounded p-2 h-100">
+                                <div class="h4 mb-0" id="mergedCount">0</div>
+                                <small class="text-info">Merged</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 status-tile" data-status="errors" role="button" tabindex="0">
+                            <div class="border rounded p-2 h-100">
+                                <div class="h4 mb-0" id="errorCount">0</div>
+                                <small class="text-danger">Errors</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 status-tile" data-status="skipped" role="button" tabindex="0">
+                            <div class="border rounded p-2 h-100">
+                                <div class="h4 mb-0" id="skippedCount">0</div>
+                                <small class="text-warning">Skipped</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 status-tile" data-status="unmatched" role="button" tabindex="0">
+                            <div class="border rounded p-2 h-100">
+                                <div class="h4 mb-0" id="unmatchedCount">0</div>
+                                <small class="text-info">Unmatched</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="border rounded p-2 h-100">
+                                <div class="h4 mb-0" id="totalCount">{{ total_books }}</div>
+                                <small class="text-muted">Total</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3" id="statusDetails" style="display:none;">
+                        <h6 class="mb-2" id="statusDetailsTitle"></h6>
+                        <div class="list-group small" id="statusDetailsList" style="max-height:240px;overflow:auto;"></div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <div id="statusMessage" class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Import starting...
+                        </div>
+                        <div class="d-flex gap-2 align-items-center mt-2">
+                            <button id="cancelJobBtn" class="btn btn-outline-danger btn-sm d-none">
+                                <i class="bi bi-x-circle"></i> Cancel Job
+                            </button>
+                            <small id="cancelNote" class="text-muted d-none">Cancelling…</small>
+                        </div>
+                    </div>
+                    
+                    <div id="completionButtons" class="d-none">
+                        <hr>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('main.library') }}" class="btn btn-primary">
+                                <i class="fas fa-books"></i> View Library
+                            </a>
+                            <!-- Removed 'Import More Books' button (legacy simple import deprecated) -->
+                            <button id="downloadErrorsBtn" class="btn btn-outline-danger d-none">
+                                <i class="fas fa-download"></i> Download Error Report
+                            </button>
+                            <button id="downloadFailedIsbnsBtn" class="btn btn-outline-warning d-none">
+                                <i class="fas fa-barcode"></i> Download Failed ISBNs
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">📋 Import Details</h6>
+                    <ul class="list-unstyled small">
+                        <li><strong>Started:</strong> <span id="startTime">{{ start_time }}</span></li>
+                        <li><strong>Status:</strong> <span id="jobStatus" class="badge bg-primary">Running</span></li>
+                    </ul>
+                    
+                    <hr>
+                    
+                    <h6>📝 Recent Activity</h6>
+                    <div id="activityLog" class="small" style="max-height: 200px; overflow-y: auto;">
+                        <!-- Activity log will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let taskId = '{{ task_id }}';
+let totalBooks = parseInt(document.getElementById('totalCount').textContent, 10) || 0;
+let startTime = new Date('{{ start_time }}');
+// Cache books by status as they come in (lightweight - only titles)
+const statusBuckets = {success: [], merged: [], errors: [], skipped: [], unmatched: []};
+// Global label map (updated dynamically for reading history relabeling)
+let labelMap = {processed:'Processed', success:'Success', merged:'Merged', errors:'Errors', skipped:'Skipped', unmatched:'Unmatched'};
+
+function toggleStatusDetails(statusKey, label){
+    const container = document.getElementById('statusDetails');
+    if(container.dataset.active === statusKey){
+        container.style.display = 'none';
+        container.dataset.active = '';
+        return;
+    }
+    const listEl = document.getElementById('statusDetailsList');
+    listEl.innerHTML = (statusBuckets[statusKey]||[]).map(b => `<div class="list-group-item">${b}</div>`).join('') || '<div class="text-muted list-group-item">No entries</div>';
+    document.getElementById('statusDetailsTitle').textContent = label + ' Details';
+    container.style.display = 'block';
+    container.dataset.active = statusKey;
+}
+
+document.addEventListener('click', (e)=>{
+    const tile = e.target.closest('.status-tile');
+    if(!tile) return;
+    const status = tile.dataset.status;
+    // Use current (possibly relabeled) small text for merged/skipped when building title
+    if(status in {success:1, merged:1, errors:1, skipped:1, unmatched:1}){
+        toggleStatusDetails(status, labelMap[status] || status.charAt(0).toUpperCase()+status.slice(1));
+    }
+});
+
+function updateProgress() {
+    fetch(`/api/import/progress/${taskId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('statusMessage').innerHTML = 
+                    `<i class="fas fa-exclamation-triangle"></i> Error: ${data.error}`;
+                document.getElementById('statusMessage').className = 'alert alert-danger';
+                return;
+            }
+            
+            // Update progress bar - handle different total counts for different import types
+            let totalForProgress = totalBooks;
+            const isReadingHistory = data.import_type === 'reading_history' || window.location.pathname.includes('reading-history');
+            const jobType = (data.type || '').toLowerCase();
+            const isAbsListening = jobType.startsWith('abs_listen');
+            const isAbsImport = jobType === 'abs_test_sync' || jobType === 'abs_full_sync' || jobType === 'abs_user_composite';
+            if (isReadingHistory) {
+                // Prefer new distinct_books_total metric, fallback to legacy total
+                if (data.distinct_books_total) {
+                    totalForProgress = data.distinct_books_total;
+                } else if (data.total) {
+                    totalForProgress = data.total;
+                }
+                document.getElementById('totalCount').textContent = totalForProgress;
+            } else if (isAbsListening) {
+                // For listening-only jobs we usually don't have a meaningful total; keep 0 unless provided
+                totalForProgress = (typeof data.total === 'number') ? data.total : 0;
+                document.getElementById('totalCount').textContent = totalForProgress;
+            }
+            
+            // Derive counters with fallbacks for reading history payloads
+            const processedCount = (typeof data.processed === 'number') ? data.processed : (isReadingHistory ? (data.books_involved || data.success || 0) : 0);
+            const successCount = (typeof data.success === 'number') ? data.success : (isReadingHistory ? (data.reading_logs_created || 0) : 0);
+            const errorCount = (typeof data.errors === 'number') ? data.errors : (isReadingHistory ? (data.reading_log_errors || 0) : 0);
+
+            // For ABS imports, show progress against audiobooks synced if available
+            let progressPrimary = processedCount; // value used for the progress bar
+            if (isAbsImport) {
+                const booksProcessed = typeof data.processed === 'number' ? data.processed : 0;
+                if (typeof data.total === 'number' && data.total > 0) {
+                    totalForProgress = data.total;
+                }
+                if (typeof data.total_books === 'number' && data.total_books > 0) {
+                    totalForProgress = data.total_books;
+                }
+                // Reflect total in the Total tile for ABS imports
+                document.getElementById('totalCount').textContent = totalForProgress;
+                // Prefer audiobooks_synced counter if present
+                const audiobooksSynced = typeof data.audiobooks_synced === 'number' ? data.audiobooks_synced : booksProcessed;
+                document.getElementById('processedCount').textContent = audiobooksSynced;
+                document.querySelector('[data-status="processed"] small').textContent = 'Audiobooks';
+                progressPrimary = audiobooksSynced; // drive the progress bar from audiobooks synced
+                // Listening sessions (streamed) if present
+                const listening = typeof data.listening_sessions === 'number' ? data.listening_sessions : (data.listening_processed || 0);
+                document.getElementById('mergedCount').textContent = listening;
+                document.querySelector('[data-status="merged"] small').textContent = 'Sessions';
+                // Matched count goes to success tile for visibility
+                const matched = typeof data.listening_matched === 'number' ? data.listening_matched : (data.matched || 0);
+                document.getElementById('successCount').textContent = matched;
+                document.querySelector('[data-status="success"] small').textContent = 'Matched';
+            }
+
+            let percentage = totalForProgress > 0 ? Math.round((progressPrimary / totalForProgress) * 100) : 0;
+            if (percentage > 100) percentage = 100; // Cap to 100 to prevent visual overflow
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = percentage + '%';
+            progressBar.setAttribute('aria-valuenow', percentage);
+            progressBar.textContent = percentage + '%';
+
+            // If reading_history reports processed >= total but status hasn't flipped, treat as completed to avoid hanging UI
+            if (
+                isReadingHistory &&
+                totalForProgress > 0 &&
+                (data.status === 'processing' || data.status === 'running') &&
+                processedCount >= totalForProgress
+            ) {
+                const jobStatus = document.getElementById('jobStatus');
+                jobStatus.textContent = 'Completed';
+                jobStatus.className = 'badge bg-success';
+                progressBar.className = 'progress-bar bg-success';
+                    const readingLogsCreated = data.reading_logs_created || data.success || 0;
+                    const booksMatched = data.books_matched || 0;
+                    const booksCreated = data.books_created || 0;
+                    const booksInvolved = data.books_involved || (booksMatched + booksCreated) || 0;
+                    const readingLogErrors = data.reading_log_errors || 0;
+                    const successMessage = readingLogsCreated > 0 ?
+                        `${readingLogsCreated} reading log entries processed across ${booksInvolved} books (${booksMatched} matched / ${booksCreated} created)` :
+                        'No reading logs were created';
+                    let statusIcon = '<i class="fas fa-check-circle"></i>';
+                    let alertClass = 'alert alert-success';
+                    if (data.errors > 0 || readingLogErrors > 0) {
+                        statusIcon = '<i class="fas fa-exclamation-triangle"></i>';
+                        alertClass = 'alert alert-warning';
+                    }
+                    let errorMessage = '';
+                    if (readingLogErrors > 0) {
+                        errorMessage = ` ${readingLogErrors} reading log entries had errors.`;
+                    }
+                    document.getElementById('statusMessage').innerHTML = 
+                        `${statusIcon} Reading history import completed! ${successMessage}.${errorMessage}
+                             <div class=\"mt-2\">
+                                 <a href=\"{{ url_for('reading_logs.my_reading_logs') }}\" class=\"btn btn-primary btn-sm\">
+                                     <i class=\"fas fa-book-reader\"></i> View Reading Log
+                                 </a>
+                                 <a href=\"{{ url_for('main.library') }}\" class=\"btn btn-secondary btn-sm ms-2\">
+                                     <i class=\"fas fa-books\"></i> Back to Library
+                                 </a>
+                             </div>`;
+                    document.getElementById('statusMessage').className = alertClass;
+                    return; // Stop polling
+            }
+            
+            // Fill buckets from enriched arrays (override lightweight parsing)
+            if (Array.isArray(data.success_titles)) statusBuckets.success = data.success_titles.slice();
+            // For reading history, prefer detailed per-log strings if provided
+            if (isReadingHistory && Array.isArray(data.reading_log_success_details) && data.reading_log_success_details.length) {
+                statusBuckets.success = data.reading_log_success_details.slice(0,500);
+            }
+            if (Array.isArray(data.merged_titles)) statusBuckets.merged = data.merged_titles.slice();
+            if (Array.isArray(data.error_titles)) statusBuckets.errors = data.error_titles.slice();
+            if (Array.isArray(data.skipped_titles)) statusBuckets.skipped = data.skipped_titles.slice();
+            if (Array.isArray(data.unmatched_titles)) statusBuckets.unmatched = data.unmatched_titles.slice();
+
+            // If we have structured error details, prefer them for display: "Title — Reason"
+            if (Array.isArray(data.error_details) && data.error_details.length > 0) {
+                statusBuckets.errors = data.error_details.map(d => {
+                    const title = d.title || 'Unknown';
+                    let msg = d.message || '';
+                    if (msg.length > 160) msg = msg.slice(0,157) + '…';
+                    return msg ? `${title} — ${msg}` : title;
+                });
+            }
+
+            // Update counters
+            if (isReadingHistory) {
+                // Remap tiles to reading history semantics
+                const booksInvolved = data.books_involved || 0;
+                const logsCreated = data.reading_logs_created || 0;
+                // During needs_book_matching, reflect auto-matched count; otherwise prefer final books_matched
+                let booksMatched = data.books_matched || 0;
+                if ((data.status === 'needs_book_matching') && !booksMatched) {
+                    if (typeof data.auto_matched_count === 'number') {
+                        booksMatched = data.auto_matched_count;
+                    } else if (Array.isArray(data.books_for_matching)) {
+                        booksMatched = data.books_for_matching.filter(b => b && b.matched_book).length;
+                    }
+                }
+                const booksCreated = data.books_created || 0;
+                document.getElementById('processedCount').textContent = booksInvolved; // Books involved
+                document.querySelector('[data-status="processed"] small').textContent = 'Books';
+                document.getElementById('successCount').textContent = logsCreated; // Logs created
+                document.querySelector('[data-status="success"] small').textContent = 'Logs';
+                document.getElementById('mergedCount').textContent = booksMatched; // Matched existing books (auto-matched during review)
+                document.querySelector('[data-status="merged"] small').textContent = 'Matched';
+                document.getElementById('skippedCount').textContent = booksCreated; // Newly created books
+                document.querySelector('[data-status="skipped"] small').textContent = 'Created';
+                document.getElementById('errorCount').textContent = errorCount; // reading log entry errors
+                // Update global labelMap for toggles after relabel
+                labelMap.merged = 'Matched';
+                labelMap.skipped = 'Created';
+            } else if (isAbsListening) {
+                // Keep counters simple for listening syncs: show processed as the primary signal
+                document.getElementById('processedCount').textContent = processedCount;
+                document.querySelector('[data-status="processed"] small').textContent = 'Sessions';
+                document.getElementById('successCount').textContent = successCount;
+                document.querySelector('[data-status="success"] small').textContent = 'Success';
+                document.getElementById('mergedCount').textContent = data.matched || 0;
+                document.querySelector('[data-status="merged"] small').textContent = 'Matched';
+                document.getElementById('skippedCount').textContent = data.skipped || 0;
+                document.querySelector('[data-status="skipped"] small').textContent = 'Skipped';
+                document.getElementById('errorCount').textContent = errorCount;
+            } else {
+                document.getElementById('processedCount').textContent = processedCount;
+                document.getElementById('successCount').textContent = successCount;
+                document.getElementById('errorCount').textContent = errorCount;
+                document.getElementById('mergedCount').textContent = data.merged || 0;
+                document.getElementById('skippedCount').textContent = data.skipped || 0;
+            }
+            
+            // Update unmatched count - handle different data structures
+            let unmatchedCount = 0;
+            if (isReadingHistory) {
+                // For reading history imports, use the unmatched field or calculate from books_for_matching
+                if (data.unmatched !== undefined) {
+                    unmatchedCount = data.unmatched;
+                } else if (data.books_for_matching) {
+                    // Exclude bookless pseudo-entries from unmatched
+                    unmatchedCount = data.books_for_matching.filter(book => !book.matched_book && !book.is_bookless).length;
+                }
+            } else if (!isAbsListening) {
+                // For regular book imports
+                unmatchedCount = data.unmatched_books ? data.unmatched_books.length : 0;
+            }
+            document.getElementById('unmatchedCount').textContent = unmatchedCount;
+            
+            // Update status
+            const jobStatus = document.getElementById('jobStatus');
+            // Toggle cancel visibility depending on status
+            const cancelBtn = document.getElementById('cancelJobBtn');
+            const cancellable = ['running','started','processing','analyzing','pending','cancelling'].includes((data.status||'').toLowerCase());
+            if (cancellable) {
+                cancelBtn.classList.remove('d-none');
+            } else {
+                cancelBtn.classList.add('d-none');
+            }
+            if (data.status === 'completed' || data.status === 'completed_with_errors') {
+                jobStatus.textContent = 'Completed';
+                jobStatus.className = data.status === 'completed' ? 'badge bg-success' : 'badge bg-warning';
+                progressBar.className = data.status === 'completed' ? 'progress-bar bg-success' : 'progress-bar bg-warning';
+
+                if (isReadingHistory) {
+                    const readingLogsCreated = data.reading_logs_created || 0;
+                    const booksMatched = data.books_matched || 0;
+                    const booksCreated = data.books_created || 0;
+                    const booksInvolved = data.books_involved || (booksMatched + booksCreated) || 0;
+                    const readingLogErrors = data.reading_log_errors || 0;
+                    const successMessage = `${readingLogsCreated} reading log entries processed across ${booksInvolved} books (${booksMatched} matched / ${booksCreated} created)`;
+                    let statusIcon = '<i class="fas fa-check-circle"></i>';
+                    let alertClass = 'alert alert-success';
+                    if (data.errors > 0 || readingLogErrors > 0) {
+                        statusIcon = '<i class="fas fa-exclamation-triangle"></i>';
+                        alertClass = 'alert alert-warning';
+                    }
+                    let errorMessage = '';
+                    if (readingLogErrors > 0) {
+                        errorMessage = ` ${readingLogErrors} reading log entries had errors.`;
+                    }
+                    document.getElementById('statusMessage').innerHTML = 
+                        `${statusIcon} Reading history import completed! ${successMessage}.${errorMessage}
+                         <div class=\"mt-2\">\n                             <a href=\"{{ url_for('reading_logs.my_reading_logs') }}\" class=\"btn btn-primary btn-sm\">\n                                 <i class=\"fas fa-book-reader\"></i> View Reading Log\n                             </a>\n                             <a href=\"{{ url_for('main.library') }}\" class=\"btn btn-secondary btn-sm ms-2\">\n                                 <i class=\"fas fa-books\"></i> Back to Library\n                             </a>\n                         </div>`;
+                    document.getElementById('statusMessage').className = alertClass;
+                } else if (isAbsListening) {
+                    document.getElementById('statusMessage').innerHTML = 
+                        `<i class=\"fas fa-check-circle\"></i> Listening sync completed.`;
+                    document.getElementById('statusMessage').className = 'alert alert-success';
+                } else {
+                    document.getElementById('statusMessage').innerHTML = 
+                        `<i class="fas fa-check-circle"></i> Import completed! Successfully imported ${data.success} books.`;
+                    document.getElementById('statusMessage').className = 'alert alert-success';
+                    document.getElementById('completionButtons').classList.remove('d-none');
+                    const errorsBtn = document.getElementById('downloadErrorsBtn');
+                    if (errorsBtn) {
+                        if ((data.errors || 0) > 0) {
+                            errorsBtn.classList.remove('d-none');
+                        } else {
+                            errorsBtn.classList.add('d-none');
+                        }
+                    }
+                    const failedIsbnBtn = document.getElementById('downloadFailedIsbnsBtn');
+                    if (failedIsbnBtn) {
+                        const failedCount = data.failed_isbn_count || 0;
+                        if (failedCount > 0) {
+                            failedIsbnBtn.classList.remove('d-none');
+                            const label = `${failedCount} failed ISBN${failedCount === 1 ? '' : 's'}`;
+                            failedIsbnBtn.setAttribute('aria-label', label);
+                            failedIsbnBtn.setAttribute('title', label);
+                        } else {
+                            failedIsbnBtn.classList.add('d-none');
+                        }
+                    }
+                }
+                return; // Stop polling
+            } else if (data.status === 'needs_book_matching') {
+                jobStatus.textContent = 'Needs Book Matching';
+                jobStatus.className = 'badge bg-warning';
+                progressBar.className = 'progress-bar bg-warning';
+                
+                // Handle different data structures for different import types
+                let unmatchedCount = 0;
+                if (Array.isArray(data.books_for_matching)) {
+                    // Reading history import format: count only entries needing manual matching
+                    unmatchedCount = data.books_for_matching.filter(book => !book.matched_book && !book.is_bookless).length;
+                } else if (data.unmatched_books) {
+                    // Legacy format
+                    unmatchedCount = data.unmatched_books.length;
+                } else {
+                    unmatchedCount = data.skipped || 0;
+                }
+                
+                document.getElementById('statusMessage').innerHTML = 
+                    `<i class="fas fa-search"></i> Import paused: ${unmatchedCount} books need manual matching. 
+                     <a href="/import/reading-history/book-matching/${taskId}" class="btn btn-warning btn-sm ms-2">
+                         <i class="bi bi-search"></i> Match Books
+                     </a>`;
+                document.getElementById('statusMessage').className = 'alert alert-warning';
+                
+                return; // Stop polling
+            } else if (data.status === 'failed') {
+                jobStatus.textContent = 'Failed';
+                jobStatus.className = 'badge bg-danger';
+                progressBar.className = 'progress-bar bg-danger';
+                
+                document.getElementById('statusMessage').innerHTML = 
+                    `<i class="fas fa-exclamation-triangle"></i> Import failed: ${data.error || 'Unknown error'}`;
+                document.getElementById('statusMessage').className = 'alert alert-danger';
+                
+                return; // Stop polling
+            } else if (data.status === 'cancelled') {
+                jobStatus.textContent = 'Cancelled';
+                jobStatus.className = 'badge bg-secondary';
+                progressBar.className = 'progress-bar bg-secondary';
+                document.getElementById('statusMessage').innerHTML = 
+                    `<i class="bi bi-x-circle"></i> Job was cancelled.`;
+                document.getElementById('statusMessage').className = 'alert alert-secondary';
+                return; // Stop polling
+            } else {
+                // Handle different running statuses
+                if (data.status === 'analyzing') {
+                    jobStatus.textContent = 'Analyzing';
+                    jobStatus.className = 'badge bg-info';
+                    
+                    document.getElementById('statusMessage').innerHTML = 
+                        `<i class="fas fa-search fa-spin"></i> Analyzing CSV file and identifying distinct books...`;
+                } else if (data.status === 'processing') {
+                    jobStatus.textContent = 'Processing';
+                    jobStatus.className = 'badge bg-primary';
+                    document.getElementById('statusMessage').innerHTML = 
+                        `<i class="fas fa-cog fa-spin"></i> Processing reading logs...`;
+                } else {
+                    jobStatus.textContent = 'Running';
+                    jobStatus.className = 'badge bg-primary';
+                    
+                    // Default running copy, with special-case for listening jobs
+                    if (isAbsListening) {
+                        document.getElementById('statusMessage').innerHTML = 
+                            `<i class=\"fas fa-cog fa-spin\"></i> Processing listening sessions...`;
+            } else {
+                        document.getElementById('statusMessage').innerHTML = 
+                `<i class=\"fas fa-cog fa-spin\"></i> ${isAbsImport ? 'Syncing audiobooks from Audiobookshelf...' : 'Processing books...'} Current: ${data.current_book || 'Unknown'}`;
+                    }
+                }
+            }
+            
+            // Update activity log
+            if (data.recent_activity && data.recent_activity.length > 0) {
+                const activityLog = document.getElementById('activityLog');
+                activityLog.innerHTML = data.recent_activity
+                    .slice(-10) // Show last 10 activities
+                    .map(activity => `<div class="mb-1">${activity}</div>`)
+                    .join('');
+                activityLog.scrollTop = activityLog.scrollHeight;
+                // (No longer parsing activity lines for buckets; using enriched arrays.)
+            }
+            
+            // Continue polling if not completed
+            if (data.status === 'running' || data.status === 'pending' || data.status === 'analyzing' || data.status === 'processing') {
+                setTimeout(updateProgress, 2000); // Poll every 2 seconds
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching progress:', error);
+            document.getElementById('statusMessage').innerHTML = 
+                `<i class="fas fa-exclamation-triangle"></i> Error fetching progress: ${error.message}`;
+            document.getElementById('statusMessage').className = 'alert alert-warning';
+            
+            // Retry after 5 seconds
+            setTimeout(updateProgress, 5000);
+        });
+}
+
+// Start polling
+setTimeout(updateProgress, 1000);
+
+// Handle error report download
+document.getElementById('downloadErrorsBtn').addEventListener('click', function() {
+    window.location.href = `/api/import/errors/${taskId}`;
+});
+
+const failedIsbnBtn = document.getElementById('downloadFailedIsbnsBtn');
+if (failedIsbnBtn) {
+    failedIsbnBtn.addEventListener('click', function() {
+        window.location.href = `/api/import/failed-isbns/${taskId}`;
+    });
+}
+
+// Cancel button handler
+document.getElementById('cancelJobBtn').addEventListener('click', async function() {
+    const btn = this;
+    btn.disabled = true;
+    document.getElementById('cancelNote').classList.remove('d-none');
+    try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="csrf_token"]').value || '';
+        await fetch(`/api/import/cancel/${taskId}`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'X-CSRFToken': csrf }
+        });
+        // Next poll will reflect cancelling/cancelled
+        setTimeout(updateProgress, 250);
+    } catch (e) {
+        console.error('Cancel failed', e);
+        btn.disabled = false;
+        document.getElementById('cancelNote').classList.add('d-none');
+    }
+});
+</script>
+{% endblock %}

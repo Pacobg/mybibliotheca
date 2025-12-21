@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}{{ profile_user.username }}'s Profile - MyBibliotheca{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex align-items-center mb-4">
+            <a href="{{ url_for('main.community_activity') }}" class="btn btn-outline-secondary me-3">
+                <i class="bi bi-arrow-left"></i> Back to Community
+            </a>
+            <h2><i class="bi bi-person"></i> {{ profile_user.username }}'s Reading Profile</h2>
+        </div>
+    </div>
+</div>
+
+<!-- User Stats -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-sm-6 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_books }}</h4>
+                        <p class="card-text mb-0">Total Books</p>
+                    </div>
+                    <div>
+                        <i class="bi bi-books" style="font-size: 2rem; opacity: 0.7;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-sm-6 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ books_this_year }}</h4>
+                        <p class="card-text mb-0">Books This Year</p>
+                    </div>
+                    <div>
+                        <i class="bi bi-calendar-check" style="font-size: 2rem; opacity: 0.7;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-sm-6 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ books_this_month }}</h4>
+                        <p class="card-text mb-0">Books This Month</p>
+                    </div>
+                    <div>
+                        <i class="bi bi-calendar-month" style="font-size: 2rem; opacity: 0.7;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-sm-6 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ reading_logs_count }}</h4>
+                        <p class="card-text mb-0">Reading Logs</p>
+                    </div>
+                    <div>
+                        <i class="bi bi-activity" style="font-size: 2rem; opacity: 0.7;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Currently Reading -->
+    {% if currently_reading %}
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-book-half"></i> Currently Reading
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for book in currently_reading %}
+                    <div class="col-12 mb-3">
+                        <div class="d-flex">
+                            {% if book.cover_url %}
+                                <img src="{{ book.cover_url }}" alt="{{ book.title }}" 
+                                     style="height:80px;width:auto;margin-right:12px;border-radius:4px;">
+                            {% else %}
+                                <div style="height:80px;width:55px;background:#f8f9fa;border:1px solid #dee2e6;margin-right:12px;border-radius:4px;display:flex;align-items:center;justify-content:center;">
+                                    <i class="bi bi-book text-muted"></i>
+                                </div>
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ book.title }}</h6>
+                                <small class="text-muted">by {{ book.author }}</small><br>
+                                <small class="text-info">
+                                    Started: {{ book.start_date.strftime('%b %d') if book.start_date else 'Unknown' }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Recent Finished Books -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-check-circle"></i> Recently Finished
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_finished %}
+                    <div class="list-group list-group-flush">
+                        {% for book in recent_finished %}
+                        <div class="list-group-item border-0 px-0">
+                            <div class="d-flex">
+                                {% if book.cover_url %}
+                                    <img src="{{ book.cover_url }}" alt="{{ book.title }}" 
+                                         style="height:60px;width:auto;margin-right:12px;border-radius:4px;">
+                                {% else %}
+                                    <div style="height:60px;width:40px;background:#f8f9fa;border:1px solid #dee2e6;margin-right:12px;border-radius:4px;display:flex;align-items:center;justify-content:center;">
+                                        <i class="bi bi-book text-muted" style="font-size: 0.8rem;"></i>
+                                    </div>
+                                {% endif %}
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ book.title }}</h6>
+                                    <small class="text-muted">by {{ book.author }}</small><br>
+                                    <small class="text-success">
+                                        Finished: {{ book.finish_date.strftime('%b %d, %Y') }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No books finished yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Member Info -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle"></i> Member Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Member since:</strong> {{ profile_user.created_at.strftime('%B %d, %Y') }}</p>
+                        <p><strong>Status:</strong> 
+                            {% if profile_user.is_admin %}
+                                <span class="badge bg-danger">Administrator</span>
+                            {% else %}
+                                <span class="badge bg-primary">Reader</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Sharing Activity:</strong> 
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle"></i> Enabled
+                            </span>
+                        </p>
+                        {% if profile_user.share_current_reading %}
+                        <p><strong>Current Reading:</strong> 
+                            <span class="badge bg-info">
+                                <i class="bi bi-check-circle"></i> Shared
+                            </span>
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

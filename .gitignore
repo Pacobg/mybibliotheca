@@ -1,0 +1,345 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+.ruff_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+#   For a library or package, you might want to ignore these files since the code is
+#   intended to run in multiple environments; otherwise, check them in:
+# .python-version
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# UV
+#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+#uv.lock
+.uv/
+.uv-cache/
+
+# poetry
+#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
+#poetry.lock
+#poetry.toml
+
+# pdm
+#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
+#pdm.lock
+#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
+#   in version control.
+#   https://pdm.fming.dev/latest/usage/project/#working-with-version-control
+.pdm.toml
+.pdm-python
+.pdm-build/
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+test_files/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
+#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
+#  and can be added to the global gitignore or merged into this file.  For a more nuclear
+#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
+#.idea/
+
+# Abstra
+# Abstra is an AI-powered process automation framework.
+# Ignore directories containing user credentials, local state, and settings.
+# Learn more at https://abstra.io/docs
+.abstra/
+
+# Visual Studio Code
+#  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
+#  that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
+#  and can be added to the global gitignore or merged into this file. However, if you prefer, 
+#  you could uncomment the following to ignore the entire vscode folder
+# .vscode/
+
+# Ruff stuff:
+.ruff_cache/
+
+# PyPI configuration file
+.pypirc
+
+# Cursor
+#  Cursor is an AI-powered code editor. `.cursorignore` specifies files/directories to
+#  exclude from AI features like autocomplete and code analysis. Recommended for sensitive data
+#  refer to https://docs.cursor.com/context/ignore-files
+.cursorignore
+.cursorindexingignore
+
+# Local book database file
+books.db
+
+# Temporary files and project notes
+PR_NOTES.md
+TEMP_*.md
+temp_*.md
+*.tmp
+.notes/
+notes/
+project_plan.md
+project_summary.md
+MULTI_USER_PROJECT_PLAN.md
+PROJECT_SUMMARY.md
+temp_cookies.txt
+database_upgrade_planning.md
+
+# Sample import files and testing data
+sample_imports/
+
+# Database backups
+data/backups/
+documentation.md
+
+# Archive and backup files
+archive/
+*.bak
+*.backup
+*~
+
+# API testing and debug files
+api_test_results.json
+cookies.txt
+
+# Development and testing files
+test_*.py
+check_*.py
+tests/
+scripts/debug/
+
+# Planning and internal documentation
+*planning*.md
+*PLANNING*.md
+PROJECT_STRUCTURE.md
+SQLALCHEMY_CLEANUP.md
+
+# Runtime data and sensitive information
+data/
+migration_backups/
+flask_session/
+*.log
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Local development notes (not for GitHub)
+.local_notes/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+# KuzuDB files are stored in data/kuzu/ and should not be deployed
+# However, we need to allow empty data directory structure
+data/
+!data/.gitkeep
+# Specifically ignore kuzu database files but allow directory structure
+data/kuzu/
+!data/kuzu/.gitkeep
+
+# Temporary editor files
+.DS_Store
+*~
+.swp
+.swo
+dev_docs/
+
+# Cover images (user-generated content)
+app/static/covers/
+data/covers/
+
+# Debug and development scripts (not needed for production)
+debug_*.py
+check_*.py
+test_*.py
+verify_*.py
+*_test.py
+*_debug.py
+
+# Migration and development documentation  
+*MIGRATION*.md
+*SUMMARY*.md
+*FIXES*.md
+*GUIDE*.md
+*ANALYSIS*.md
+*PROGRESS*.md
+*IMPLEMENTATION*.md
+PHASE*.md
+DEV_*.md
+WEB_*.md
+KUZU_*.md
+REDIS_*.md
+ROUTES_*.md
+SERVICE_*.md
+USERS_*.md
+IMPORT_*.md
+ISBN_*.md
+COVER_*.md
+COROUTINE_*.md
+LOCALPROXY_*.md
+BATCH_*.md
+BOOK_DETAILS_*.md
+CLEAN_*.md
+COMPREHENSIVE_*.md
+CUSTOM_FIELD_*.md
+GENRE_MAPPING_*.md
+PROGRESS_BAR_*.md
+session_strategy.md
+DOCKER_TAGGING_STRATEGY.md
+
+# Temporary migration and example files
+app_factory_example.py
+batch_import_function.py
+kuzu_schema_redesign.py
+new_batch_import_function.py
+new_start_import_job.py
+persistence_before.json
+recalculate_category_counts.py
+remove_owns_relationships.py
+run_kuzu.py
+run_location_migration.py
+*_example.py
+*_temp.py
+
+# Development tools and scripts
+scripts/debug/
+scripts/migration/
+scripts/temp/
+dev_tools/
+
+# Local curl cookie jars (created by curl -b/-c during debugging)
+cookiejar
+*.cookiejar*.whl

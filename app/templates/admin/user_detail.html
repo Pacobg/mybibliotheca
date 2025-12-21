@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+
+{% block title %}User Details - MyBibliotheca{% endblock %}
+
+{% block content %}
+<style>
+.icon-square {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    font-weight: bold;
+    color: white;
+    margin-right: 6px;
+    font-size: 12px;
+}
+.icon-square.user { background-color: #0d6efd; }
+.icon-square.users { background-color: #6c757d; }
+.icon-square.dash { background-color: #6f42c1; }
+.icon-square.info { background-color: #20c997; }
+.icon-square.actions { background-color: #fd7e14; }
+.icon-square.admin { background-color: #dc3545; }
+.icon-square.active { background-color: #198754; }
+.icon-square.delete { background-color: #dc3545; }
+.icon-square.books { background-color: #0dcaf0; }
+.icon-square.activity { background-color: #ffc107; }
+</style>
+
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                User Details: {{ user.username }}
+            </h2>
+            <div class="btn-group">
+                <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+                    ← Back to Users
+                </a>
+                <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-primary">
+                    Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- User Information -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    User Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted">Username</label>
+                    <div class="fw-bold">{{ user.username }}</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted">Email</label>
+                    <div>{{ user.email }}</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted">Status</label>
+                    <div>
+                        {% if user.is_active %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                        
+                        {% if user.is_admin %}
+                            <span class="badge bg-danger ms-1">Admin</span>
+                        {% endif %}
+                        
+                        {% if user.id == current_user.id %}
+                            <span class="badge bg-primary ms-1">Current User</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted">Member Since</label>
+                    <div>{{ user.created_at.strftime('%B %d, %Y') if user.created_at else 'Unknown' }}</div>
+                    <small class="text-muted">{{ user.created_at.strftime('%I:%M %p') if user.created_at else '' }}</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted">User ID</label>
+                    <div><code>#{{ user.id }}</code></div>
+                </div>
+                
+                <!-- Security Status -->
+                {% if user.is_locked() %}
+                <div class="mb-3">
+                    <label class="form-label text-muted">Security Status</label>
+                    <div class="alert alert-danger">
+                        <i class="bi bi-lock"></i>
+                        <strong>Account Locked</strong><br>
+                        <small>{{ user.failed_login_attempts }} failed login attempts</small><br>
+                        {% if user.locked_until %}
+                        <small>Locked until: {{ user.locked_until.strftime('%B %d, %Y at %I:%M %p') if user.locked_until else 'Unknown' }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% elif user.failed_login_attempts > 0 %}
+                <div class="mb-3">
+                    <label class="form-label text-muted">Security Status</label>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>{{ user.failed_login_attempts }} failed login attempts</strong>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if user.last_login %}
+                <div class="mb-3">
+                    <label class="form-label text-muted">Last Login</label>
+                    <div>{{ user.last_login.strftime('%B %d, %Y at %I:%M %p') if user.last_login else 'Never' }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- User Actions -->
+        {% if user.id != current_user.id %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">User Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <!-- Reset Password -->
+                    <a href="{{ url_for('admin.reset_user_password', user_id=user.id) }}" 
+                       class="btn btn-outline-warning w-100">
+                        <i class="bi bi-key"></i> Reset Password
+                    </a>
+                    
+                    <!-- Unlock Account (if locked) -->
+                    {% if user.is_locked() %}
+                    <form method="POST" action="{{ url_for('admin.unlock_user_account', user_id=user.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn btn-outline-info w-100">
+                            <i class="bi bi-unlock"></i> Unlock Account
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    <!-- Admin Toggle -->
+                    <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=user.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" 
+                                class="btn btn-outline-{{ 'warning' if user.is_admin else 'success' }} w-100"
+                                onclick="return confirm('{{ 'Remove admin privileges from' if user.is_admin else 'Grant admin privileges to' }} {{ user.username }}?')">
+                            {% if user.is_admin %}
+                                Remove Admin
+                            {% else %}
+                                Make Admin
+                            {% endif %}
+                        </button>
+                    </form>
+                    
+                    <!-- Active Toggle -->
+                    <form method="POST" action="{{ url_for('admin.toggle_active', user_id=user.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" 
+                                class="btn btn-outline-{{ 'secondary' if user.is_active else 'success' }} w-100"
+                                onclick="return confirm('{{ 'Deactivate' if user.is_active else 'Activate' }} {{ user.username }}?')">
+                            {% if user.is_active %}
+                                Deactivate User
+                            {% else %}
+                                Activate User
+                            {% endif %}
+                        </button>
+                    </form>
+                    
+                    <!-- Reset Password -->
+                    <a href="{{ url_for('admin.reset_user_password', user_id=user.id) }}" 
+                       class="btn btn-outline-warning w-100">
+                        <i class="bi bi-key"></i> Reset Password
+                    </a>
+                    
+                    <!-- Unlock Account -->
+                    {% if user.is_locked() %}
+                    <form method="POST" action="{{ url_for('admin.unlock_user_account', user_id=user.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" 
+                                class="btn btn-outline-info w-100"
+                                onclick="return confirm('Unlock account for {{ user.username }}?')">
+                            <i class="bi bi-unlock"></i> Unlock Account
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    <!-- Delete User -->
+                    <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" 
+                                class="btn btn-outline-danger w-100"
+                                onclick="return confirm('Are you sure you want to delete {{ user.username }}? This will also delete all their books and reading logs. This action cannot be undone!')">
+                            Delete User
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Statistics -->
+    <div class="col-md-8">
+        <div class="row mb-4">
+            <div class="col-lg-3 col-sm-6 mb-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">{{ book_count }}</h4>
+                                <p class="card-text mb-0">Total Books</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-sm-6 mb-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">{{ reading_count }}</h4>
+                                <p class="card-text mb-0">Log Entries</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-sm-6 mb-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">{{ books_this_year }}</h4>
+                                <p class="card-text mb-0">Books This Year</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-sm-6 mb-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">{{ logs_this_month }}</h4>
+                                <p class="card-text mb-0">Logs This Month</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Books -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    Recent Books
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_books %}
+                    <div class="list-group list-group-flush">
+                        {% for book in recent_books %}
+                        <div class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">
+                                    <a href="{{ url_for('main.view_book_enhanced', uid=book.uid) }}" 
+                                       class="text-decoration-none">
+                                        {{ book.title }}
+                                    </a>
+                                </div>
+                                <div class="text-muted">by {{ book.author }}</div>
+                                <small class="text-muted">Added {{ book.created_at.strftime('%m/%d/%Y') if book.created_at else 'Unknown' }}</small>
+                            </div>
+                            <div>
+                                {% if book.finished %}
+                                    <span class="badge bg-success">Finished</span>
+                                {% elif book.currently_reading %}
+                                    <span class="badge bg-primary">Reading</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">To Read</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if book_count > 5 %}
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('main.library') }}?user={{ user.id }}" 
+                               class="btn btn-outline-primary">
+                                View All {{ book_count }} Books
+                            </a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted">No books in library yet.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Recent Reading Activity -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    Recent Reading Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_logs %}
+                    <div class="list-group list-group-flush">
+                        {% for log in recent_logs %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">{{ log.book.title }}</div>
+                                    <div class="text-muted small">
+                                        {% if log.pages_read %}
+                                            Read {{ log.pages_read }} pages
+                                        {% endif %}
+                                        {% if log.notes %}
+                                            • {{ log.notes }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <small class="text-muted">
+                                    {{ log.created_at.strftime('%m/%d/%Y') if log.created_at else 'Unknown' }}
+                                </small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if reading_count > 10 %}
+                        <div class="text-center mt-3">
+                            <span class="text-muted">Showing 10 most recent of {{ reading_count }} total entries</span>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted">No reading activity logged yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

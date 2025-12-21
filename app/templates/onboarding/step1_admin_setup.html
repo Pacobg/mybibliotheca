@@ -1,0 +1,147 @@
+{% extends "onboarding/base_onboarding.html" %}
+
+{% block title %}Create Admin Account - MyBibliotheca{% endblock %}
+
+{% block progress_width %}20%{% endblock %}
+
+{% block step_info %}Step 1 of 5: Create Admin Account{% endblock %}
+
+{% block content %}
+<div class="form-header">
+    <div class="icon-circle">
+        <i class="bi bi-person-fill-gear"></i>
+    </div>
+    <h2>Create Administrator Account</h2>
+    <p>This account will have full access to manage users, books, and system settings.</p>
+</div>
+
+<form method="POST" novalidate>
+    <!-- CSRF Token -->
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    
+    <!-- CSRF Error Display -->
+    {% if form.csrf_token.errors %}
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <strong>Security Error:</strong> The form session has expired. Please refresh the page and try again.
+        </div>
+    {% endif %}
+    
+    <!-- Username Field -->
+    <div class="form-group">
+        <label for="username" class="form-label" data-bs-toggle="tooltip" title="Used to sign in as the administrator. 3–20 characters.">
+            <i class="bi bi-person"></i>
+            Admin Username
+        </label>
+        <input type="text" 
+               class="form-control{% if form.username.errors %} is-invalid{% endif %}" 
+               id="username" 
+               name="username" 
+               value="{{ form.username.data or '' }}"
+               placeholder="Enter your username" 
+               autocomplete="username" 
+               required>
+        {% if form.username.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.username.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+        <div class="form-text">3-20 characters, will be used for login</div>
+    </div>
+    
+    <!-- Email Field -->
+    <div class="form-group">
+        <label for="email" class="form-label" data-bs-toggle="tooltip" title="For notifications and account recovery.">
+            <i class="bi bi-envelope"></i>
+            Email Address
+        </label>
+        <input type="email" 
+               class="form-control{% if form.email.errors %} is-invalid{% endif %}" 
+               id="email" 
+               name="email" 
+               value="{{ form.email.data or '' }}"
+               placeholder="Enter your email address" 
+               autocomplete="email" 
+               required>
+        {% if form.email.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.email.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+        <div class="form-text">Used for notifications and account recovery</div>
+    </div>
+    
+    <!-- Password Field -->
+    <div class="form-group">
+        <label for="password" class="form-label" data-bs-toggle="tooltip" title="Use a strong password (12+ chars, mix of cases, numbers, symbols).">
+            <i class="bi bi-lock"></i>
+            Password
+        </label>
+        <input type="password" 
+               class="form-control{% if form.password.errors %} is-invalid{% endif %}" 
+               id="password" 
+               name="password" 
+               placeholder="Create a secure password" 
+               required>
+        {% if form.password.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.password.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Password Requirements -->
+    <div class="requirements-box">
+        <div class="requirements-header">
+            <i class="bi bi-shield-check"></i>
+            Password Requirements
+        </div>
+            <ul class="requirements-list">
+                {% for requirement in password_requirements %}
+                <li>{{ requirement }}</li>
+                {% endfor %}
+        </ul>
+    </div>
+    
+    <!-- Confirm Password Field -->
+    <div class="form-group">
+        <label for="password2" class="form-label" data-bs-toggle="tooltip" title="Re-enter your password to confirm.">
+            <i class="bi bi-lock-fill"></i>
+            Confirm Password
+        </label>
+        <input type="password" 
+               class="form-control{% if form.password2.errors %} is-invalid{% endif %}" 
+               id="password2" 
+               name="password2" 
+               placeholder="Confirm your password" 
+               required>
+        {% if form.password2.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.password2.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Submit Button -->
+    <button type="submit" class="btn-submit">
+        <i class="bi bi-arrow-right"></i>
+        Continue to Site Configuration
+    </button>
+    
+    <!-- Footer -->
+    <div class="form-footer">
+        <small>
+            <i class="bi bi-info-circle"></i>
+            You can change these settings later in the admin panel
+        </small>
+    </div>
+</form>
+{% endblock %}

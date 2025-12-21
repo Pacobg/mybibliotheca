@@ -1,0 +1,1804 @@
+{% extends "base.html" %}
+{% block title %}Settings - MyBibliotheca{% endblock %}
+{% block content %}
+<style>
+.settings-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.settings-tile {
+    position: relative;
+    border-radius: .75rem;
+    padding: 1.1rem 1.1rem 1rem 1.1rem;
+    background: var(--bs-light);
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all .25s ease;
+    box-shadow: 0 4px 10px -4px rgba(0,0,0,.08);
+}
+[data-theme="dark"] .settings-tile { background: rgba(40,40,40,.85); }
+.settings-tile:hover { transform: translateY(-3px); box-shadow: 0 8px 18px -6px rgba(0,0,0,.18); }
+.settings-tile.active { border-color: var(--bs-primary); box-shadow: 0 0 0 4px rgba(var(--bs-primary-rgb), .15); background: linear-gradient(135deg,var(--bs-light),#eef5ff); }
+[data-theme="dark"] .settings-tile.active { background: linear-gradient(135deg,#2b2b2b,#1e2533); }
+.settings-tile h3 { font-size: 1.05rem; font-weight:600; margin:0 0 .35rem; display:flex; align-items:center; gap:.5rem; }
+.settings-tile .stat { font-size: .9rem; opacity:.85; }
+.settings-tile small { font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; opacity:.6; }
+.settings-section { display:none; animation: fade .35s ease; }
+.settings-section.active { display:block; }
+@keyframes fade { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform: translateY(0);} }
+.section-header { border-bottom:1px solid rgba(0,0,0,.08); margin-bottom:1.25rem; padding-bottom:.5rem; }
+[data-theme="dark"] .section-header { border-color:#333; }
+.quick-links a { text-decoration:none; }
+.settings-save-bar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    width: 100%;
+}
+.settings-save-bar .settings-status {
+    color: var(--bs-secondary-color, #6c757d);
+    font-size: 0.875rem;
+}
+</style>
+
+<div class="container mt-4 mb-5" id="settingsRoot">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0"><i class="bi bi-gear-fill me-2"></i>Settings</h1>
+        <a href="{{ url_for('main.library') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+    </div>
+
+    <div class="settings-tiles" id="settingsTiles" role="tablist" aria-label="Settings Sections">
+        <div class="settings-tile active" data-target="overviewSection" role="tab" aria-selected="true" tabindex="0">
+            <h3><i class="bi bi-bar-chart"></i> Overview</h3>
+            <div class="stat mb-1"><strong>{{ stats.books }}</strong> Books • <strong>{{ stats.people }}</strong> People</div>
+            <div class="stat"><strong>{{ stats.reading_logs }}</strong> Reading Logs • <strong>{{ stats.users }}</strong> Users</div>
+            <small>Library Snapshot</small>
+        </div>
+        <div class="settings-tile" data-target="personalSection" role="tab" aria-selected="false" tabindex="0">
+            <h3><i class="bi bi-person-circle"></i> Personal</h3>
+            <div class="stat mb-1">Profile • Password</div>
+            <div class="stat">Privacy & Preferences</div>
+            <small>Your Account</small>
+        </div>
+        <div class="settings-tile" data-target="dataSection" role="tab" aria-selected="false" tabindex="0">
+            <h3><i class="bi bi-database"></i> Data & Import</h3>
+            <div class="stat mb-1">Import • Export</div>
+            <div class="stat">Locations & Backups</div>
+            <small>Library Data</small>
+        </div>
+        {% if current_user.is_admin %}
+        <div class="settings-tile" data-target="serverSection" role="tab" aria-selected="false" tabindex="0">
+            <h3><i class="bi bi-shield-lock"></i> Server</h3>
+            <div class="stat mb-1">Admin, Users</div>
+            <div class="stat">Debug & System</div>
+            <small>Admin Only</small>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Dynamic Sections -->
+    <div id="sectionsContainer">
+        <div class="settings-section active" id="overviewSection">
+            <div class="section-header d-flex align-items-center justify-content-between">
+                <h2 class="h4 mb-0"><i class="bi bi-bar-chart"></i> Library Overview</h2>
+                <span class="text-muted small">Snapshot</span>
+            </div>
+            <div class="row g-4 mb-4">
+                <div class="col-sm-6 col-lg-3">
+                    <div class="p-3 rounded bg-primary text-white h-100 shadow-sm">
+                        <div class="fw-semibold small text-uppercase opacity-75">Books</div>
+                        <div class="display-6 fw-bold">{{ stats.books }}</div>
+                        <div class="small opacity-75">Avg/User: {{ stats.avg_books_per_user }}</div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="p-3 rounded bg-success text-white h-100 shadow-sm">
+                        <div class="fw-semibold small text-uppercase opacity-75">People</div>
+                        <div class="display-6 fw-bold">{{ stats.people }}</div>
+                        <div class="small opacity-75">Contributors</div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="p-3 rounded bg-info text-white h-100 shadow-sm">
+                        <div class="fw-semibold small text-uppercase opacity-75">Reading Logs</div>
+                        <div class="display-6 fw-bold">{{ stats.reading_logs }}</div>
+                        <div class="small opacity-75">Entries</div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="p-3 rounded bg-warning text-dark h-100 shadow-sm">
+                        <div class="fw-semibold small text-uppercase opacity-75">Users</div>
+                        <div class="display-6 fw-bold">{{ stats.users }}</div>
+                        <div class="small opacity-75">Active {{ stats.active_users }} • Admins {{ stats.admins }}</div>
+                    </div>
+                </div>
+                {% if current_user.is_admin %}
+                <div class="col-sm-6 col-lg-3">
+                    <div class="p-3 rounded bg-secondary text-white h-100 shadow-sm">
+                        <div class="fw-semibold small text-uppercase opacity-75">System</div>
+                        <div class="display-6 fw-bold" style="font-size:1.75rem;">{{ stats.app_version }}</div>
+                        <div class="small opacity-75">UTC {{ stats.utc_time }}</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    <div class="settings-section" id="personalSection">
+            <div class="d-flex flex-wrap gap-2 mb-3" id="personalActionBar">
+                <button data-personal-panel="profile" data-color="primary" class="btn btn-primary personal-nav flex-fill"><i class="bi bi-person"></i> Profile</button>
+                <button data-personal-panel="password" data-color="warning" class="btn btn-warning personal-nav flex-fill"><i class="bi bi-lock"></i> Password</button>
+                <button data-personal-panel="privacy" data-color="info" class="btn btn-info personal-nav flex-fill"><i class="bi bi-shield-check"></i> Privacy</button>
+                <button data-personal-panel="reading_prefs" data-color="secondary" class="btn btn-secondary personal-nav flex-fill"><i class="bi bi-journal-plus"></i> Library Defaults</button>
+                <button data-personal-panel="personal_abs" data-color="primary" class="btn btn-outline-primary personal-nav flex-fill"><i class="bi bi-soundwave"></i> Audiobookshelf</button>
+            </div>
+            <div id="personalDynamicContainer" class="mb-3"></div>
+            <div class="alert alert-light border small mb-0" role="alert">
+                <i class="bi bi-info-circle me-1"></i> Manage your account and privacy preferences here.
+            </div>
+        </div>
+
+    <div class="settings-section" id="dataSection">
+            <div class="row g-3 mb-3" id="dataActionBar">
+                <div class="col-md-3"><button data-data-panel="import_books" class="btn btn-outline-success w-100 data-nav"><i class="bi bi-book-half"></i> Import Books</button></div>
+                <div class="col-md-3"><button data-data-panel="import_reading" class="btn btn-outline-success w-100 data-nav"><i class="bi bi-calendar-check"></i> Import Reading</button></div>
+                {% if current_user.is_admin %}
+                <div class="col-md-3"><button data-data-panel="backup" class="btn btn-outline-success w-100 data-nav"><i class="bi bi-cloud-download"></i> Backup Manager</button></div>
+                {% else %}
+                <div class="col-md-3"><button data-data-panel="export_logs" class="btn btn-outline-success w-100 data-nav"><i class="bi bi-file-earmark-arrow-down"></i> Export Logs</button></div>
+                {% endif %}
+                <div class="col-md-3"><a href="{{ url_for('main.download_db') }}" class="btn btn-outline-primary w-100"><i class="bi bi-database-down"></i> Download Database</a></div>
+            </div>
+            <div id="dataDynamicContainer" class="mb-3"></div>
+            <div class="alert alert-light border small mb-0" role="alert">
+                <i class="bi bi-info-circle me-1"></i> Manage library data, imports, and backups.
+            </div>
+        </div>
+
+        {% if current_user.is_admin %}
+        <div class="settings-section" id="serverSection">
+            <div class="row g-3 mb-3" id="serverActionBar">
+                <div class="col-6 col-sm-4 col-md-2"><button data-server-panel="config" data-color="danger" class="btn btn-outline-danger w-100 server-nav"><i class="bi bi-gear-wide-connected"></i> Config</button></div>
+                <div class="col-6 col-sm-4 col-md-2"><button data-server-panel="users" data-color="danger" class="btn btn-outline-danger w-100 server-nav"><i class="bi bi-people"></i> Users</button></div>
+                <div class="col-6 col-sm-4 col-md-2"><button data-server-panel="metadata" data-color="secondary" class="btn btn-outline-secondary w-100 server-nav"><i class="bi bi-collection"></i> Metadata Providers</button></div>
+                <div class="col-6 col-sm-4 col-md-2"><button data-server-panel="ai" data-color="primary" class="btn btn-outline-primary w-100 server-nav"><i class="bi bi-robot"></i> AI</button></div>
+                <div class="col-6 col-sm-4 col-md-2"><button data-server-panel="smtp" data-color="success" class="btn btn-outline-success w-100 server-nav"><i class="bi bi-envelope-at"></i> SMTP</button></div>
+                <div class="col-6 col-sm-4 col-md-2"><button data-server-panel="backup" data-color="dark" class="btn btn-outline-dark w-100 server-nav"><i class="bi bi-archive"></i> Backup</button></div>
+                <div class="col-6 col-sm-4 col-md-2"><button data-server-panel="opds" data-color="primary" class="btn btn-outline-primary w-100 server-nav"><i class="bi bi-rss"></i> OPDS</button></div>
+                <div class="col-6 col-sm-4 col-md-2"><button data-server-panel="audiobookshelf" data-color="primary" class="btn btn-outline-primary w-100 server-nav"><i class="bi bi-soundwave"></i> Audiobookshelf</button></div>
+                <div class="col-6 col-sm-4 col-md-2"><button data-server-panel="debug" data-color="info" class="btn btn-outline-info w-100 server-nav"><i class="bi bi-bug"></i> Debug</button></div>
+                <div class="col-6 col-sm-4 col-md-2"><button data-server-panel="repairs" data-color="warning" class="btn btn-outline-warning w-100 server-nav"><i class="bi bi-tools"></i> Repairs</button></div>
+                <div class="col-6 col-sm-4 col-md-2"><button data-server-panel="jobs" data-color="secondary" class="btn btn-outline-secondary w-100 server-nav"><i class="bi bi-activity"></i> Jobs</button></div>
+            </div>
+            <div id="serverDynamicContainer" class="mb-3"></div>
+            <div class="alert alert-warning small mb-0" role="alert">
+                <i class="bi bi-exclamation-triangle me-1"></i> Administrative actions can affect all users. Proceed carefully.
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const tiles = document.querySelectorAll('.settings-tile');
+    function activate(tile){
+        const target = tile.getAttribute('data-target');
+        tiles.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+        tile.classList.add('active');
+        tile.setAttribute('aria-selected','true');
+        document.querySelectorAll('.settings-section').forEach(sec => {
+            if (sec.id === target) sec.classList.add('active'); else sec.classList.remove('active');
+        });
+    }
+    tiles.forEach(tile => {
+        tile.addEventListener('click', () => activate(tile));
+        tile.addEventListener('keydown', (e) => {
+            if(['Enter',' '].includes(e.key)){ e.preventDefault(); activate(tile); }
+            if(['ArrowRight','ArrowLeft'].includes(e.key)){
+                const arr = Array.from(tiles);
+                const idx = arr.indexOf(tile);
+                const dir = e.key === 'ArrowRight' ? 1 : -1;
+                let next = (idx + dir + arr.length) % arr.length;
+                arr[next].focus();
+            }
+        });
+    });
+    // Server dynamic panels (AJAX embed)
+    const serverContainer = document.getElementById('serverDynamicContainer');
+
+    async function unifiedSaveServerConfig(formEl){
+        const unifiedContainer = document.getElementById('serverDynamicContainer');
+        if(!unifiedContainer){
+            return true; // fallback to legacy submission
+        }
+        const fd = new FormData(formEl);
+        fd.append('inline','1');
+        const btn = formEl.querySelector('button[type="submit"], button:not([type])');
+        if(btn){
+            if(!btn.dataset.original){ btn.dataset.original = btn.innerHTML; }
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-1"></i>Saving...';
+        }
+        try {
+            const endpoint = "{{ url_for('auth.settings_server_partial', panel='config') }}";
+            const resp = await fetch(endpoint, {
+                method: 'POST',
+                body: fd,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const html = await resp.text();
+            unifiedContainer.innerHTML = html;
+            ensureServerConfigBindings();
+            if(!unifiedContainer.querySelector('.alert-inline-save-success')){
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success py-2 mb-3 alert-inline-save-success';
+                alert.textContent = 'Configuration saved.';
+                unifiedContainer.prepend(alert);
+                setTimeout(()=>alert.remove(), 3000);
+            }
+        } catch(err){
+            alert('Failed to save configuration.');
+        } finally {
+            if(btn){
+                btn.disabled = false;
+                btn.innerHTML = btn.dataset.original || '<i class="bi bi-check2 me-1"></i>Save';
+            }
+        }
+        return false;
+    }
+
+    function ensureServerConfigBindings(){
+        const container = document.getElementById('serverDynamicContainer');
+        const scope = container || document;
+        const typeSel = scope.querySelector('#bgType');
+        if(typeSel){
+            const form = typeSel.closest('form');
+            const sync = () => {
+                const toggleScope = form || scope;
+                toggleScope.querySelectorAll('[data-bg]').forEach(el => {
+                    const isMatch = el.getAttribute('data-bg') === typeSel.value;
+                    el.style.display = isMatch ? '' : 'none';
+                    if(isMatch && typeSel.value === 'gradient'){
+                        el.style.display = 'flex';
+                    }
+                });
+            };
+            sync();
+            if(!typeSel.dataset.bgBoundUnified){
+                typeSel.addEventListener('change', sync);
+                typeSel.dataset.bgBoundUnified = '1';
+            }
+        }
+        scope.querySelectorAll('form[data-server-config-form]').forEach(formEl => {
+            if(formEl.dataset.unifiedHandlerBound){
+                return;
+            }
+            formEl.addEventListener('submit', ev => {
+                if(!document.getElementById('serverDynamicContainer')){
+                    return; // legacy path, allow default submission
+                }
+                ev.preventDefault();
+                unifiedSaveServerConfig(formEl);
+            });
+            formEl.dataset.unifiedHandlerBound = '1';
+        });
+        window.saveServerConfig = unifiedSaveServerConfig;
+    }
+
+    function ensureServerAIBindings(){
+        const container = document.getElementById('serverDynamicContainer');
+        const scope = container || document;
+        const form = scope.querySelector('#aiConfigForm');
+        if(!form){
+            return;
+        }
+        const hasDynamicContainer = !!container;
+        if(hasDynamicContainer && !form.dataset.ajaxBound){
+            form.addEventListener('submit', async (ev) => {
+                ev.preventDefault();
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if(submitBtn){
+                    if(!submitBtn.dataset.original){
+                        submitBtn.dataset.original = submitBtn.innerHTML;
+                    }
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Saving...';
+                }
+                try {
+                    const resp = await fetch(form.action, {
+                        method: 'POST',
+                        body: new FormData(form),
+                        credentials: 'same-origin'
+                    });
+                    if(!resp.ok){
+                        throw new Error('Save failed');
+                    }
+                    const html = await resp.text();
+                    container.innerHTML = html;
+                    ensureServerAIBindings();
+                    const success = document.createElement('div');
+                    success.className = 'alert alert-success py-2 mb-3';
+                    success.innerHTML = '<i class="bi bi-check-circle me-1"></i>AI settings saved.';
+                    container.prepend(success);
+                    setTimeout(() => success.remove(), 3000);
+                } catch (err){
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-danger alert-dismissible fade show mt-3';
+                    alert.innerHTML = '<i class="bi bi-x-circle me-1"></i>Failed to save AI settings.<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+                    form.parentNode.insertBefore(alert, form.nextSibling);
+                    setTimeout(() => alert.remove(), 4000);
+                } finally {
+                    if(submitBtn){
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = submitBtn.dataset.original || '<i class="bi bi-check2 me-1"></i>Save AI Settings';
+                    }
+                }
+            });
+            form.dataset.ajaxBound = '1';
+        }
+
+        const providerSelect = scope.querySelector('#ai_provider');
+        const openaiSection = scope.querySelector('#openai-settings');
+        const ollamaSection = scope.querySelector('#ollama-settings');
+        const syncProviderVisibility = () => {
+            if(!providerSelect || !openaiSection || !ollamaSection){
+                return;
+            }
+            if((providerSelect.value || '').toLowerCase() === 'openai'){
+                openaiSection.style.display = 'block';
+                ollamaSection.style.display = 'none';
+            } else {
+                openaiSection.style.display = 'none';
+                ollamaSection.style.display = 'block';
+            }
+        };
+        if(providerSelect){
+            if(!providerSelect.dataset.bound){
+                providerSelect.addEventListener('change', syncProviderVisibility);
+                providerSelect.dataset.bound = '1';
+            }
+            syncProviderVisibility();
+        }
+
+        const manualToggle = scope.querySelector('#ollama_manual_model');
+        const ollamaSelect = scope.querySelector('#ollama_model');
+        const manualInput = scope.querySelector('#ollama_model_manual');
+        const syncManualToggle = () => {
+            if(!manualToggle || !manualInput || !ollamaSelect){
+                return;
+            }
+            const manual = manualToggle.checked;
+            manualInput.style.display = manual ? 'block' : 'none';
+            manualInput.required = manual;
+            ollamaSelect.style.display = manual ? 'none' : 'block';
+            ollamaSelect.required = !manual;
+        };
+        if(manualToggle){
+            if(!manualToggle.dataset.bound){
+                manualToggle.addEventListener('change', syncManualToggle);
+                manualToggle.dataset.bound = '1';
+            }
+            syncManualToggle();
+        }
+
+        const maxTokens = scope.querySelector('#ai_max_tokens');
+        const tokenWarning = scope.querySelector('#ai-max-tokens-warning');
+        if(maxTokens && tokenWarning){
+            const applyWarning = () => {
+                const value = parseInt(maxTokens.value || '0', 10);
+                tokenWarning.style.display = value > 16000 ? 'block' : 'none';
+            };
+            if(!maxTokens.dataset.bound){
+                maxTokens.addEventListener('input', applyWarning);
+                maxTokens.dataset.bound = '1';
+            }
+            applyWarning();
+        }
+
+        const aiTestBtn = scope.querySelector('#aiTestBtn');
+        if(aiTestBtn && !aiTestBtn.dataset.bound){
+            aiTestBtn.addEventListener('click', (ev) => {
+                ev.preventDefault();
+                if(typeof window.testAIConnection === 'function'){
+                    window.testAIConnection(aiTestBtn);
+                }
+            });
+            aiTestBtn.dataset.bound = '1';
+        }
+
+        const ollamaTestBtn = scope.querySelector('#ollamaTestBtn');
+        if(ollamaTestBtn && !ollamaTestBtn.dataset.bound){
+            ollamaTestBtn.addEventListener('click', (ev) => {
+                ev.preventDefault();
+                if(typeof window.testOllamaConnection === 'function'){
+                    window.testOllamaConnection(ollamaTestBtn);
+                }
+            });
+            ollamaTestBtn.dataset.bound = '1';
+        }
+
+        if(typeof window.__initAISettings === 'function'){
+            try { window.__initAISettings(); } catch (err){ console.debug('AI init helper failed', err); }
+        }
+    }
+
+    function ensureServerSMTPBindings(){
+        const container = document.getElementById('serverDynamicContainer');
+        const scope = container || document;
+        const form = scope.querySelector('#smtpConfigForm');
+        if(!form){
+            return;
+        }
+        const hasDynamicContainer = !!container;
+        if(hasDynamicContainer && !form.dataset.ajaxBound){
+            form.addEventListener('submit', async (ev) => {
+                ev.preventDefault();
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if(submitBtn){
+                    if(!submitBtn.dataset.original){
+                        submitBtn.dataset.original = submitBtn.innerHTML;
+                    }
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Saving...';
+                }
+                try {
+                    const resp = await fetch(form.action, {
+                        method: 'POST',
+                        body: new FormData(form),
+                        credentials: 'same-origin'
+                    });
+                    if(!resp.ok){
+                        throw new Error('Save failed');
+                    }
+                    const html = await resp.text();
+                    container.innerHTML = html;
+                    ensureServerSMTPBindings();
+                    const success = document.createElement('div');
+                    success.className = 'alert alert-success py-2 mb-3';
+                    success.innerHTML = '<i class="bi bi-check-circle me-1"></i>SMTP settings saved.';
+                    container.prepend(success);
+                    setTimeout(() => success.remove(), 3000);
+                } catch (err){
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-danger alert-dismissible fade show mt-3';
+                    alert.innerHTML = '<i class="bi bi-x-circle me-1"></i>Failed to save SMTP settings.<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+                    form.parentNode.insertBefore(alert, form.nextSibling);
+                    setTimeout(() => alert.remove(), 4000);
+                } finally {
+                    if(submitBtn){
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = submitBtn.dataset.original || '<i class="bi bi-save me-1"></i>Save SMTP Settings';
+                    }
+                }
+            });
+            form.dataset.ajaxBound = '1';
+        }
+
+        const testBtn = scope.querySelector('#testSmtpBtn');
+        const resultDiv = scope.querySelector('#smtpTestResult');
+        if(testBtn && !testBtn.dataset.bound){
+            testBtn.addEventListener('click', async (ev) => {
+                ev.preventDefault();
+                const original = testBtn.innerHTML;
+                testBtn.disabled = true;
+                testBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Testing...';
+                if(resultDiv){
+                    resultDiv.style.display = 'none';
+                }
+                try {
+                    const resp = await fetch("{{ url_for('auth.test_smtp_connection') }}", {
+                        method: 'POST',
+                        body: new FormData(form),
+                        credentials: 'same-origin'
+                    });
+                    const data = await resp.json();
+                    if(resultDiv){
+                        const ok = !!data.success;
+                        resultDiv.className = `alert alert-${ok ? 'success' : 'danger'} mt-3`;
+                        resultDiv.innerHTML = `<i class="bi ${ok ? 'bi-check-circle' : 'bi-x-circle'} me-1"></i>${data.message || 'Test complete.'}`;
+                        resultDiv.style.display = 'block';
+                    } else if(data && data.message){
+                        alert(data.message);
+                    }
+                } catch (error){
+                    if(resultDiv){
+                        resultDiv.className = 'alert alert-danger mt-3';
+                        resultDiv.innerHTML = '<i class="bi bi-x-circle me-1"></i>Error testing connection.';
+                        resultDiv.style.display = 'block';
+                    } else {
+                        alert('Error testing SMTP connection.');
+                    }
+                } finally {
+                    testBtn.disabled = false;
+                    testBtn.innerHTML = original;
+                }
+            });
+            testBtn.dataset.bound = '1';
+        }
+    }
+
+    function ensureServerBackupBindings(){
+        const container = document.getElementById('serverDynamicContainer');
+        if(!container){
+            return;
+        }
+        const form = container.querySelector('#backupConfigForm');
+        if(!form || form.dataset.ajaxBound){
+            return;
+        }
+        form.addEventListener('submit', async (ev) => {
+            ev.preventDefault();
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if(submitBtn){
+                if(!submitBtn.dataset.original){
+                    submitBtn.dataset.original = submitBtn.innerHTML;
+                }
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Saving...';
+            }
+            try {
+                const resp = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    credentials: 'same-origin'
+                });
+                if(!resp.ok){
+                    throw new Error('Save failed');
+                }
+                const html = await resp.text();
+                container.innerHTML = html;
+                ensureServerBackupBindings();
+                const success = document.createElement('div');
+                success.className = 'alert alert-success py-2 mb-3';
+                success.innerHTML = '<i class="bi bi-check-circle me-1"></i>Backup settings saved.';
+                container.prepend(success);
+                setTimeout(() => success.remove(), 3000);
+            } catch (err){
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-danger alert-dismissible fade show mt-3';
+                alert.innerHTML = '<i class="bi bi-x-circle me-1"></i>Failed to save backup settings.<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+                form.parentNode.insertBefore(alert, form.nextSibling);
+                setTimeout(() => alert.remove(), 4000);
+            } finally {
+                if(submitBtn){
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = submitBtn.dataset.original || '<i class="bi bi-save me-1"></i>Save Backup Settings';
+                }
+            }
+        });
+        form.dataset.ajaxBound = '1';
+    }
+    if(!window.__initOPDSPanel){
+        window.__initOPDSPanel = function(){
+            const root = document.getElementById('opdsPanelRoot');
+            if(!root) return;
+            const form = root.querySelector('#opdsMainForm');
+            const actionInput = root.querySelector('#opdsActionInput');
+            const statusEl = root.querySelector('#opdsStatus');
+            const mappingJsonField = root.querySelector('#opdsMappingJson');
+            const mappingList = root.querySelector('#opdsMappingList');
+            const fieldSelect = root.querySelector('#opdsFieldSelect');
+            const sourceSelect = root.querySelector('#opdsSourceSelect');
+            const addBtn = root.querySelector('#opdsAddMappingBtn');
+            const saveBtn = root.querySelector('#opdsSaveBtn');
+            const probeBtn = root.querySelector('#opdsProbeBtn');
+            const syncBtn = root.querySelector('#opdsSyncBtn');
+            const testSyncBtn = root.querySelector('#opdsTestSyncBtn');
+            const clearPasswordBtn = root.querySelector('#opdsClearPasswordBtn');
+            const revealPasswordBtn = root.querySelector('#opdsRevealPasswordBtn');
+            const clearPasswordField = root.querySelector('#opdsClearPassword');
+            const passwordInput = root.querySelector('input[name="password"]');
+            const savedPasswordDisplay = root.querySelector('#opdsSavedPasswordDisplay');
+            const suggestionsContainer = root.querySelector('#opdsSuggestionContainer');
+            const sourceSummary = root.querySelector('#opdsSourceSummary');
+            const mappingSeed = document.getElementById('opdsMappingSeed');
+            const suggestionsSeed = document.getElementById('opdsSuggestionsSeed');
+            const jobContainer = root.querySelector('#opdsJobProgressContainer');
+            const parseJSON = (value, fallback) => {
+                try { return value ? JSON.parse(value) : fallback; } catch(err){ return fallback; }
+            };
+            const escapeHtml = (value) => {
+                if(value === null || value === undefined) return '';
+                return String(value).replace(/[&<>"']/g, ch => {
+                    switch(ch){
+                        case '&': return '&amp;';
+                        case '<': return '&lt;';
+                        case '>': return '&gt;';
+                        case '"': return '&quot;';
+                        case "'": return '&#39;';
+                        default: return ch;
+                    }
+                });
+            };
+            const savedPasswordOriginalHtml = savedPasswordDisplay ? savedPasswordDisplay.innerHTML : '';
+            let mapping = parseJSON(root.dataset.mapping, {});
+            if(mappingSeed && mappingSeed.value){ mapping = parseJSON(mappingSeed.value, mapping); }
+            if(!mapping || typeof mapping !== 'object' || Array.isArray(mapping)){ mapping = {}; }
+            let suggestions = parseJSON(root.dataset.suggestions, {});
+            if(suggestionsSeed && suggestionsSeed.value){ suggestions = parseJSON(suggestionsSeed.value, suggestions); }
+            if(!suggestions || typeof suggestions !== 'object' || Array.isArray(suggestions)){ suggestions = {}; }
+            const mappingFields = parseJSON(root.dataset.mappingFields, []);
+            const mappingLabels = parseJSON(root.dataset.mappingLabels, {});
+            const sourceOptions = parseJSON(root.dataset.sourceOptions, []);
+            const pendingJobs = parseJSON(root.dataset.pendingJobs, []);
+
+            if(fieldSelect){
+                fieldSelect.innerHTML = '';
+                mappingFields.forEach(field => {
+                    const opt = document.createElement('option');
+                    opt.value = field;
+                    opt.textContent = mappingLabels[field] || field;
+                    fieldSelect.appendChild(opt);
+                });
+            }
+            if(sourceSelect){
+                sourceSelect.innerHTML = '';
+                sourceOptions.forEach(value => {
+                    const opt = document.createElement('option');
+                    opt.value = value;
+                    opt.textContent = value;
+                    sourceSelect.appendChild(opt);
+                });
+            }
+            const persistMapping = () => {
+                if(mappingJsonField){
+                    mappingJsonField.value = JSON.stringify(mapping || {});
+                }
+                if(sourceSummary){
+                    const total = Object.keys(mapping || {}).length;
+                    sourceSummary.textContent = `${total} mapped · ${sourceOptions.length} sources`;
+                }
+            };
+            const renderSuggestions = () => {
+                if(!suggestionsContainer) return;
+                suggestionsContainer.innerHTML = '';
+                const available = Object.entries(suggestions || {}).filter(([field])=> !mapping || !Object.prototype.hasOwnProperty.call(mapping, field));
+                if(!available.length){
+                    suggestionsContainer.innerHTML = '<span class="text-muted small">No suggestions available.</span>';
+                    return;
+                }
+                const heading = document.createElement('div');
+                heading.className = 'small text-muted mb-1';
+                heading.textContent = 'Suggestions';
+                suggestionsContainer.appendChild(heading);
+                available.forEach(([field, expr])=>{
+                    const row = document.createElement('div');
+                    row.className = 'd-flex align-items-center justify-content-between border rounded px-2 py-1 mb-1 bg-light small';
+                    const info = document.createElement('span');
+                    const strong = document.createElement('strong');
+                    strong.textContent = mappingLabels[field] || field;
+                    const arrow = document.createElement('span');
+                    arrow.className = 'text-muted mx-2';
+                    arrow.textContent = '←';
+                    const code = document.createElement('code');
+                    code.textContent = expr;
+                    info.appendChild(strong);
+                    info.appendChild(arrow);
+                    info.appendChild(code);
+                    row.appendChild(info);
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'btn btn-sm btn-outline-primary';
+                    btn.textContent = 'Add';
+                    btn.addEventListener('click', ()=>{
+                        mapping[field] = expr;
+                        renderMapping();
+                    });
+                    row.appendChild(btn);
+                    suggestionsContainer.appendChild(row);
+                });
+            };
+            const renderMapping = () => {
+                if(!mappingList) return;
+                mappingList.innerHTML = '';
+                const entries = Object.entries(mapping || {});
+                if(!entries.length){
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item text-muted small';
+                    li.dataset.empty = '1';
+                    li.textContent = 'Configure at least title, stable ID, and contributors.';
+                    mappingList.appendChild(li);
+                } else {
+                    entries.forEach(([field, expr])=>{
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                        li.dataset.field = field;
+                        const span = document.createElement('span');
+                        const strong = document.createElement('strong');
+                        strong.textContent = mappingLabels[field] || field;
+                        const arrow = document.createElement('span');
+                        arrow.className = 'text-muted mx-2';
+                        arrow.textContent = '←';
+                        const code = document.createElement('code');
+                        code.textContent = expr;
+                        span.appendChild(strong);
+                        span.appendChild(arrow);
+                        span.appendChild(code);
+                        li.appendChild(span);
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'btn btn-sm btn-outline-danger';
+                        btn.setAttribute('data-remove-mapping', field);
+                        const icon = document.createElement('i');
+                        icon.className = 'bi bi-x-lg';
+                        btn.appendChild(icon);
+                        li.appendChild(btn);
+                        mappingList.appendChild(li);
+                    });
+                }
+                persistMapping();
+                renderSuggestions();
+            };
+            if(mappingList){
+                mappingList.addEventListener('click', ev=>{
+                    const target = ev.target instanceof Element ? ev.target.closest('[data-remove-mapping]') : null;
+                    if(!target) return;
+                    ev.preventDefault();
+                    const field = target.getAttribute('data-remove-mapping');
+                    if(field && mapping && Object.prototype.hasOwnProperty.call(mapping, field)){
+                        delete mapping[field];
+                        renderMapping();
+                    }
+                });
+            }
+            if(addBtn){
+                addBtn.addEventListener('click', ()=>{
+                    if(!fieldSelect || !sourceSelect) return;
+                    const field = fieldSelect.value;
+                    const source = sourceSelect.value;
+                    if(!field || !source) return;
+                    mapping[field] = source;
+                    renderMapping();
+                });
+            }
+            const setPasswordVisibility = (visible) => {
+                if(!passwordInput) return;
+                passwordInput.setAttribute('type', visible ? 'text' : 'password');
+                if(revealPasswordBtn){
+                    revealPasswordBtn.classList.toggle('active', !!visible);
+                    revealPasswordBtn.setAttribute('aria-pressed', visible ? 'true' : 'false');
+                }
+            };
+
+            const attachRevealListeners = () => {
+                if(!revealPasswordBtn || !passwordInput) return;
+                const startReveal = (ev) => {
+                    if(ev && ev.type === 'keydown'){
+                        const key = ev.key || ev.code;
+                        if(key !== ' ' && key !== 'Spacebar' && key !== 'Enter' && key !== 'Space') return;
+                        ev.preventDefault();
+                    }
+                    if(ev && (ev.type === 'mousedown' || ev.type === 'touchstart')){
+                        ev.preventDefault();
+                    }
+                    setPasswordVisibility(true);
+                };
+                const stopReveal = () => setPasswordVisibility(false);
+
+                revealPasswordBtn.addEventListener('mousedown', startReveal);
+                revealPasswordBtn.addEventListener('mouseup', stopReveal);
+                revealPasswordBtn.addEventListener('mouseleave', stopReveal);
+                revealPasswordBtn.addEventListener('blur', stopReveal);
+                revealPasswordBtn.addEventListener('keydown', startReveal);
+                revealPasswordBtn.addEventListener('keyup', stopReveal);
+                revealPasswordBtn.addEventListener('touchstart', startReveal, { passive: false });
+                revealPasswordBtn.addEventListener('touchend', stopReveal);
+                revealPasswordBtn.addEventListener('touchcancel', stopReveal);
+            };
+
+            attachRevealListeners();
+            setPasswordVisibility(false);
+
+            if(clearPasswordBtn && clearPasswordField){
+                clearPasswordBtn.addEventListener('click', ()=>{
+                    clearPasswordField.value = '1';
+                    if(passwordInput) passwordInput.value = '';
+                    if(statusEl) statusEl.textContent = 'Password will be cleared on save.';
+                    if(savedPasswordDisplay) savedPasswordDisplay.textContent = 'Saved password will be cleared on save.';
+                    setPasswordVisibility(false);
+                });
+            }
+            if(passwordInput && clearPasswordField){
+                passwordInput.addEventListener('input', ()=>{
+                    clearPasswordField.value = '';
+                    if(savedPasswordDisplay){
+                        if(passwordInput.value){
+                            savedPasswordDisplay.innerHTML = `New password (pending save): <code>${escapeHtml(passwordInput.value)}</code>`;
+                        } else {
+                            savedPasswordDisplay.innerHTML = savedPasswordOriginalHtml || '';
+                        }
+                    }
+                });
+            }
+            const submitPanel = (action) => {
+                if(!form) return;
+                if(actionInput) actionInput.value = action;
+                persistMapping();
+                const targetUrl = form.getAttribute('action') || form.action;
+                if(!targetUrl){
+                    if(statusEl) statusEl.textContent = 'Missing form target.';
+                    return;
+                }
+                const fd = new FormData(form);
+                if(statusEl){
+                    if(action === 'probe') statusEl.textContent = 'Probing feed...';
+                    else if(action === 'sync-now') statusEl.textContent = 'Sync job queuing...';
+                    else if(action === 'test-sync') statusEl.textContent = 'Queuing test sync...';
+                    else statusEl.textContent = 'Saving...';
+                }
+                fetch(targetUrl, { method:'POST', body: fd, credentials:'same-origin' })
+                    .then(r=>{
+                        if(!r.ok){
+                            throw new Error(`HTTP ${r.status}`);
+                        }
+                        return r.text();
+                    })
+                    .then(html=>{
+                        if(serverContainer){
+                            serverContainer.innerHTML = html;
+                        }
+                        if(window.__initOPDSPanel){ window.__initOPDSPanel(); }
+                    })
+                    .catch(err=>{
+                        console.error('OPDS settings request failed', err);
+                        if(statusEl) statusEl.textContent = 'Request failed' + (err && err.message ? `: ${err.message}` : '.');
+                    });
+            };
+            if(form){
+                form.addEventListener('submit', ev=>{
+                    ev.preventDefault();
+                    submitPanel(actionInput ? actionInput.value || 'save-settings' : 'save-settings');
+                });
+            }
+            if(saveBtn){ saveBtn.addEventListener('click', ()=> submitPanel('save-settings')); }
+            if(probeBtn){ probeBtn.addEventListener('click', ()=> submitPanel('probe')); }
+            if(syncBtn){ syncBtn.addEventListener('click', ()=> submitPanel('sync-now')); }
+            if(testSyncBtn){ testSyncBtn.addEventListener('click', ()=> submitPanel('test-sync')); }
+            renderMapping();
+
+            if(window.__opdsPollIntervals){
+                window.__opdsPollIntervals.forEach(handle => clearInterval(handle));
+            }
+            window.__opdsPollIntervals = [];
+            window.__opdsActiveJobs = new Map();
+
+            const scheduleReload = () => {
+                if(window.__opdsReloadScheduled) return;
+                window.__opdsReloadScheduled = true;
+                setTimeout(()=>{
+                    try {
+                        if(typeof loadServerPanel === 'function'){
+                            loadServerPanel('opds');
+                        } else if(serverContainer){
+                            const endpoint = root.dataset.refreshUrl || "{{ url_for('auth.settings_server_partial', panel='opds') }}";
+                            fetch(endpoint, { credentials:'same-origin' })
+                                .then(r=> r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status}`)))
+                                .then(html=>{
+                                    serverContainer.innerHTML = html;
+                                    if(window.__initOPDSPanel){ window.__initOPDSPanel(); }
+                                })
+                                .catch(err=> console.error('OPDS reload failed', err));
+                        }
+                    } finally {
+                        setTimeout(()=>{ window.__opdsReloadScheduled = false; }, 1500);
+                    }
+                }, 1200);
+            };
+
+            const ensureJobCard = (jobId, job) => {
+                if(!jobContainer) return null;
+                let card = jobContainer.querySelector(`[data-job-card="${jobId}"]`);
+                if(card) return card;
+                card = document.createElement('div');
+                card.className = 'alert alert-info d-flex justify-content-between align-items-center py-2 mb-2';
+                card.dataset.jobCard = jobId;
+                const left = document.createElement('div');
+                const strong = document.createElement('strong');
+                strong.className = 'me-1 text-uppercase small';
+                strong.textContent = (job && job.kind) ? job.kind : 'job';
+                left.appendChild(strong);
+                const statusSpan = document.createElement('span');
+                statusSpan.className = 'small';
+                statusSpan.dataset.jobStatus = '';
+                left.appendChild(statusSpan);
+                card.appendChild(left);
+                const progressSpan = document.createElement('div');
+                progressSpan.className = 'small text-muted';
+                progressSpan.dataset.jobProgress = '';
+                card.appendChild(progressSpan);
+                if(job && job.progress_url){
+                    const link = document.createElement('a');
+                    link.className = 'small';
+                    link.href = job.progress_url;
+                    link.textContent = 'Details';
+                    link.target = '_blank';
+                    link.rel = 'noopener';
+                    card.appendChild(link);
+                }
+                jobContainer.appendChild(card);
+                return card;
+            };
+
+            const updateJobCard = (jobId, payload, jobMeta) => {
+                if(!jobContainer) return;
+                const card = ensureJobCard(jobId, jobMeta || {});
+                if(!card) return;
+                const statusEl = card.querySelector('[data-job-status]');
+                const progressEl = card.querySelector('[data-job-progress]');
+                if(statusEl && payload.status){
+                    statusEl.textContent = (payload.status || '').toString();
+                }
+                if(progressEl){
+                    const bits = [];
+                    const processed = typeof payload.processed === 'number' ? payload.processed : null;
+                    const total = typeof payload.total === 'number' ? payload.total : null;
+                    if(processed !== null){
+                        if(total && total > 0){
+                            const pct = Math.min(100, Math.round((processed / total) * 100));
+                            bits.push(`${processed}/${total} (${pct}%)`);
+                        } else {
+                            bits.push(`${processed} processed`);
+                        }
+                    }
+                    const recent = Array.isArray(payload.recent_activity) ? payload.recent_activity.slice(-1)[0] : null;
+                    if(recent){
+                        bits.push(recent);
+                    }
+                    if(payload.error_messages && payload.error_messages.length){
+                        bits.push(`Errors: ${payload.error_messages.length}`);
+                    }
+                    progressEl.textContent = bits.join(' · ');
+                }
+                const status = (payload.status || '').toLowerCase();
+                card.classList.remove('alert-info', 'alert-success', 'alert-danger');
+                if(status === 'completed'){
+                    card.classList.add('alert-success');
+                } else if(status.startsWith('fail') || status === 'cancelled'){
+                    card.classList.add('alert-danger');
+                } else {
+                    card.classList.add('alert-info');
+                }
+            };
+
+            const pollJob = (job) => {
+                if(!job || !job.api_progress_url) return;
+                const jobId = job.task_id || job.id;
+                if(!jobId) return;
+                if(window.__opdsActiveJobs.has(jobId)) return;
+                window.__opdsActiveJobs.set(jobId, true);
+                updateJobCard(jobId, { status: job.status || 'queued' }, job);
+                const handler = setInterval(async () => {
+                    try {
+                        const resp = await fetch(job.api_progress_url, { credentials: 'same-origin' });
+                        if(!resp.ok){
+                            if(resp.status === 404){
+                                clearInterval(handler);
+                                window.__opdsActiveJobs.delete(jobId);
+                                return;
+                            }
+                            throw new Error(`HTTP ${resp.status}`);
+                        }
+                        const payload = await resp.json();
+                        updateJobCard(jobId, payload || {}, job);
+                        const status = (payload && payload.status ? payload.status.toLowerCase() : '');
+                        if(status === 'completed' || status.startsWith('fail') || status === 'cancelled'){
+                            clearInterval(handler);
+                            window.__opdsActiveJobs.delete(jobId);
+                            scheduleReload();
+                        }
+                    } catch(err){
+                        console.error('OPDS job polling failed', err);
+                    }
+                }, 4000);
+                window.__opdsPollIntervals.push(handler);
+            };
+
+            if(Array.isArray(pendingJobs)){
+                pendingJobs.forEach(job => pollJob(job));
+            }
+
+        };
+    }
+    // Global delegated handlers for user edit actions (robust against non-executed partial scripts)
+    function ensureUserEditDelegation(){
+        if(!serverContainer) return;
+        if(serverContainer._userEditDelegationAttached) return; // idempotent
+    serverContainer.addEventListener('click', (e)=>{
+            const btn = e.target.closest('button[data-user-action]');
+            if(!btn) return;
+            const action = btn.getAttribute('data-user-action');
+            const uid = btn.getAttribute('data-user-id');
+            if(!action || !uid) return;
+            const csrfEl = serverContainer.querySelector('#deleteUserInlineForm input[name="csrf_token"]');
+            const csrf = csrfEl? csrfEl.value : '';
+            if(action==='legacy-delete'){
+                if(!confirm('Force delete via legacy admin route?')) return;
+                const fd = new FormData(); if(csrf) fd.append('csrf_token', csrf);
+        fetch(`/admin/users/${uid}/delete`, {method:'POST', body:fd, credentials:'same-origin'})
+                  .then(r=>{ if(r.redirected){ window.location.href=r.url; } })
+                  .catch(()=> alert('Legacy delete failed.'));
+            } else if(action==='api-delete'){
+                if(!confirm('Use API delete? This is immediate and logs diagnostics.')) return;
+                const fd = new FormData(); if(csrf) fd.append('csrf_token', csrf);
+        console.debug('[USER_DELETE_CLIENT] Initiating API delete', {user_id: uid});
+    fetch(`/admin/api/users/${uid}/delete`, {method:'POST', body:fd, credentials:'same-origin'})
+          .then(async r=>{ const txt = await r.text(); let data; try{ data = JSON.parse(txt); }catch(parseErr){ console.error('[USER_DELETE_CLIENT] JSON parse error', parseErr, txt); throw new Error('Bad JSON '+r.status); } return {status:r.status, data}; })
+          .then(({status, data})=>{ console.debug('[USER_DELETE_CLIENT] API response', {status, data}); if(data.ok){ alert('API delete success.'); if(typeof window.loadServerUsersFull==='function'){ window.loadServerUsersFull(); } } else { alert('API delete failed: '+(data.error||('deleted='+data.deleted+' exists_after='+data.exists_after))); } })
+          .catch(err=> { console.error('[USER_DELETE_CLIENT] API delete network/error', err); alert('API delete error. Check console for details.'); });
+            }
+        });
+        serverContainer.addEventListener('submit',(e)=>{
+            const form = e.target;
+            if(form && form.id === 'deleteUserInlineForm'){
+                e.preventDefault();
+                const uid = form.querySelector('input[name="user_id"]').value;
+                const adminPwd = form.querySelector('input[name="admin_password"]').value;
+                const csrf = form.querySelector('input[name="csrf_token"]').value;
+                const fd = new FormData();
+                if(csrf) fd.append('csrf_token', csrf);
+                if(adminPwd) fd.append('admin_password', adminPwd);
+                // Clear sensitive field immediately
+                try { form.querySelector('input[name="admin_password"]').value=''; } catch(_){ }
+                fetch(`/admin/api/users/${uid}/delete`, {method:'POST', body:fd, credentials:'same-origin'})
+                  .then(r=> r.json().catch(()=>({ok:false,error:'bad json'})))
+                  .then(d=>{
+                      if(d.ok){
+                          // Refresh users list silently
+                          if(typeof window.loadServerUsersFull==='function'){ window.loadServerUsersFull(); }
+                          showTempServerMessage('success','User deleted.');
+                      } else {
+                          showTempServerMessage('danger','Delete failed: '+(d.error||('deleted='+d.deleted+' exists_after='+d.exists_after)));
+                      }
+                  })
+                  .catch(err=> { console.error('[USER_DELETE_CLIENT] inline API delete error', err); showTempServerMessage('danger','Delete request error.'); });
+            }
+        });
+        // Helper to show ephemeral message inside the server panel
+        function showTempServerMessage(type, text){
+            const msg = document.createElement('div');
+            msg.className = `alert alert-${type} py-1 small`; msg.textContent = text;
+            serverContainer.prepend(msg);
+            setTimeout(()=>{ try{ msg.remove(); }catch(_){} }, 4000);
+        }
+        serverContainer._userEditDelegationAttached = true;
+    }
+        function loadServerPanel(panel){
+                if(!serverContainer) return;
+                let endpoint;
+                if(panel==='config') endpoint = "{{ url_for('auth.settings_server_partial', panel='config') }}";
+                if(panel==='users') endpoint = "{{ url_for('auth.settings_server_partial', panel='users') }}";
+                if(panel==='debug') endpoint = "{{ url_for('auth.settings_server_partial', panel='debug') }}";
+                if(panel==='ai') endpoint = "{{ url_for('auth.settings_server_partial', panel='ai') }}";
+                if(panel==='smtp') endpoint = "{{ url_for('auth.settings_server_partial', panel='smtp') }}";
+                if(panel==='backup') endpoint = "{{ url_for('auth.settings_server_partial', panel='backup') }}";
+                if(panel==='opds') endpoint = "{{ url_for('auth.settings_server_partial', panel='opds') }}";
+                if(panel==='audiobookshelf') endpoint = "{{ url_for('auth.settings_server_partial', panel='audiobookshelf') }}";
+                if(panel==='metadata') endpoint = "{{ url_for('auth.settings_server_partial', panel='metadata') }}";
+                if(panel==='repairs') endpoint = "{{ url_for('auth.settings_server_partial', panel='repairs') }}";
+                if(panel==='jobs') endpoint = "{{ url_for('auth.settings_server_partial', panel='jobs') }}";
+                if(!endpoint){ serverContainer.innerHTML = '<div class="text-danger small">Unknown panel.</div>'; return; }
+                serverContainer.innerHTML = '<div class="text-muted small">Loading...</div>';
+                fetch(endpoint, { credentials:'same-origin' })
+                    .then(r=>{
+                        if(!r.ok){
+                            throw new Error(`HTTP ${r.status}`);
+                        }
+                        return r.text();
+                    })
+                    .then(html=> { 
+                        serverContainer.innerHTML = html; 
+                        if(panel==='opds' && window.__initOPDSPanel){
+                            try { window.__initOPDSPanel(); } catch(err){ console.error('OPDS init error', err); }
+                        }
+                        if(panel==='config'){
+                            ensureServerConfigBindings();
+                        }
+                                                // Re-bind scripts for panels whose inline <script> won't auto-run after fetch
+                                                if(panel==='audiobookshelf'){
+                                                        try {
+                                                                if(!window.__initAudiobookshelfPanel){
+                                                                        window.__initAudiobookshelfPanel = function(){
+                                                                                const root = serverContainer;
+                                                                                const form = root.querySelector('#absSettingsForm');
+                                                                                const status = root.querySelector('#absStatus');
+                                                                                const testBtn = root.querySelector('#absTestBtn');
+                                                                                const syncTestBtn = root.querySelector('#absSyncTestBtn');
+                                                                                const listenTestBtn = root.querySelector('#absListenTestBtn');
+                                                                                const fullSyncBtn = root.querySelector('#absFullSyncBtn');
+                                                                                const schedForm = root.querySelector('#absSchedulerForm');
+                                                                                const schedStatus = root.querySelector('#absSchedulerStatus');
+                                                                                function getCsrf(){
+                                                                                        const m = document.querySelector('meta[name="csrf-token"]');
+                                                                                        return m && m.content ? m.content : '';
+                                                                                }
+                                                                                function startInlineProgressPolling(taskInfo){
+                                                                                        try { if (window.__absProgressPoll) { clearInterval(window.__absProgressPoll); } } catch(e){}
+                                                                                        if (!taskInfo || !taskInfo.api_progress_url) return;
+                                                                                        const startedAt = Date.now();
+                                                                                        window.__absProgressPoll = setInterval(async () => {
+                                                                                            try {
+                                                                                                const r = await fetch(taskInfo.api_progress_url, { credentials: 'same-origin' });
+                                                                                                if (!r.ok) return;
+                                                                                                const j = await r.json();
+                                                                                                const processed = j.processed || 0;
+                                                                                                const total = j.total || j.total_books || 0;
+                                                                                                const st = (j.status || '').toLowerCase();
+                                                                                                if (status) {
+                                                                                                    const pct = total > 0 ? Math.min(100, Math.round((processed/total)*100)) : 0;
+                                                                                                    let line = `Running: ${processed}/${total}${total?` (${pct}%)`:''}. `;
+                                                                                                    if (taskInfo.progress_url) { line += `<a href="${taskInfo.progress_url}" class="link-primary">View progress</a>`; }
+                                                                                                    status.innerHTML = line;
+                                                                                                }
+                                                                                                if (st === 'completed' || st === 'failed' || (total > 0 && processed >= total)) {
+                                                                                                    clearInterval(window.__absProgressPoll);
+                                                                                                    if (status) {
+                                                                                                        const doneLine = `${st === 'failed' ? 'Failed' : 'Completed'}: ${processed}/${total}.` + (taskInfo.progress_url?` <a href="${taskInfo.progress_url}" class="link-primary">Details</a>`:'');
+                                                                                                        status.innerHTML = doneLine;
+                                                                                                    }
+                                                                                                }
+                                                                                                if (Date.now() - startedAt > 15*60*1000) { clearInterval(window.__absProgressPoll); }
+                                                                                            } catch(e) { /* ignore */ }
+                                                                                        }, 1500);
+                                                                                }
+                                                                                if (form) {
+                                                                                        form.addEventListener('submit', function(ev){
+                                                                                            ev.preventDefault(); if(status) status.textContent='Saving...';
+                                                                                            const fd = new FormData(form);
+                                                                                                                                            fetch(form.action, {
+                                                                                                                                                    method:'POST',
+                                                                                                                                                    body: fd,
+                                                                                                                                                    credentials: 'same-origin',
+                                                                                                                                                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                                                                                                                                                })
+                                                                                                                                                .then(r=>r.text()).then(html=>{ serverContainer.innerHTML = html; if (window.__initAudiobookshelfPanel) window.__initAudiobookshelfPanel(); })
+                                                                                                .catch(()=>{ if(status) status.textContent='Save failed'; });
+                                                                                        });
+                                                                                }
+                                                                                if (schedForm) {
+                                                                                        schedForm.addEventListener('submit', function(ev){
+                                                                                            ev.preventDefault(); if(schedStatus) schedStatus.textContent='Saving scheduler...';
+                                                                                            const fd = new FormData(schedForm);
+                                                                                            if (!fd.get('auto_sync_enabled')) fd.set('auto_sync_enabled', '');
+                                                                                                                                            fetch(schedForm.action, {
+                                                                                                                                                    method:'POST',
+                                                                                                                                                    body: fd,
+                                                                                                                                                    credentials:'same-origin',
+                                                                                                                                                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                                                                                                                                                })
+                                                                                                                                                .then(r=>r.text()).then(html=>{ serverContainer.innerHTML = html; if (window.__initAudiobookshelfPanel) window.__initAudiobookshelfPanel(); })
+                                                                                                .catch(()=>{ if(schedStatus) schedStatus.textContent='Save failed'; });
+                                                                                        });
+                                                                                }
+                                                                                if (testBtn) {
+                                                                                        testBtn.addEventListener('click', function(){
+                                                                                            if(status) status.textContent='Testing...';
+                                                                                            const headers = {}; const tok=getCsrf(); if(tok) headers['X-CSRFToken']=tok;
+                                                                                            fetch("{{ url_for('auth.test_audiobookshelf_connection') }}", { method:'POST', credentials:'same-origin', headers })
+                                                                                                .then(r=>r.json()).then(j=>{
+                                                                                                    if(status) status.textContent=(j.ok?'OK: ':'Fail: ')+(j.message||'');
+                                                                                        fetch("{{ url_for('auth.settings_server_partial', panel='audiobookshelf') }}?test=1", { credentials:'same-origin' })
+                                                                                            .then(r=>r.text()).then(html=>{ serverContainer.innerHTML = html; if (window.__initAudiobookshelfPanel) window.__initAudiobookshelfPanel(); });
+                                                                                                }).catch(()=>{ if(status) status.textContent='Test failed'; });
+                                                                                        });
+                                                                                }
+                                                                                if (syncTestBtn) {
+                                                                                        syncTestBtn.addEventListener('click', async function(){
+                                                                                            if(status) status.textContent='Starting test sync...';
+                                                                                            const headers={'Content-Type':'application/json'}; const tok=getCsrf(); if(tok) headers['X-CSRFToken']=tok;
+                                                                                            try {
+                                                                                                const resp = await fetch("{{ url_for('auth.audiobookshelf_test_sync') }}", {method:'POST', headers, credentials:'same-origin', body: JSON.stringify({limit:5})});
+                                                                                                const j = await resp.json();
+                                                                                                if(j.ok){ try{ startInlineProgressPolling(j); }catch(e){}
+                                                                                                    const to = j.progress_url || j.api_progress_url || '#'; if(to && to !== '#'){ setTimeout(()=>{ window.location.assign(to); }, 150); }
+                                                                                                    else if(status){ status.innerHTML = 'Sync started. <a href="'+(j.progress_url||'#')+'" class="link-primary">View progress</a>'; }
+                                                                                                } else { if(status) status.textContent = 'Failed: ' + (j.message||''); }
+                                                                                            } catch(e){ if(status) status.textContent='Failed to start test sync'; }
+                                                                                        });
+                                                                                }
+                                                                                if (listenTestBtn) {
+                                                                                        listenTestBtn.addEventListener('click', async function(){
+                                                                                            if(status) status.textContent='Starting listening-only test...';
+                                                                                            const headers={'Content-Type':'application/json'}; const tok=getCsrf(); if(tok) headers['X-CSRFToken']=tok;
+                                                                                            try {
+                                                                                                const resp = await fetch("{{ url_for('auth.audiobookshelf_listen_test') }}", {method:'POST', headers, credentials:'same-origin', body: JSON.stringify({page_size: 200})});
+                                                                                                const j = await resp.json();
+                                                                                                if(j.ok){ try{ startInlineProgressPolling(j); }catch(e){}
+                                                                                                    const to = j.progress_url || j.api_progress_url || '#'; if(to && to !== '#'){ setTimeout(()=>{ window.location.assign(to); }, 150); }
+                                                                                                    else if(status){ status.innerHTML = 'Listening sync started. <a href="'+(j.progress_url||'#')+'" class="link-primary">View progress</a>'; }
+                                                                                                } else { if(status) status.textContent = 'Failed: ' + (j.message||''); }
+                                                                                            } catch(e){ if(status) status.textContent='Failed to start listening-only test'; }
+                                                                                        });
+                                                                                }
+                                                                                if (fullSyncBtn) {
+                                                                                        fullSyncBtn.addEventListener('click', async function(){
+                                                                                            if(status) status.textContent='Starting full sync...';
+                                                                                            const headers={'Content-Type':'application/json'}; const tok=getCsrf(); if(tok) headers['X-CSRFToken']=tok;
+                                                                                            try {
+                                                                                                const resp = await fetch("{{ url_for('auth.audiobookshelf_full_sync') }}", {method:'POST', headers, credentials:'same-origin'});
+                                                                                                const j = await resp.json();
+                                                                                                if(j.ok){ const queued = j.queued || (j.task_ids ? j.task_ids.length : 0);
+                                                                                                    if(status) status.textContent = `Queued ${queued} user job${queued===1?'':'s'}...`;
+                                                                                                    if (j.api_progress_url) { try{ startInlineProgressPolling(j); }catch(e){} setTimeout(()=>{ window.location.assign(j.progress_url); }, 200); }
+                                                                                                } else { if(status) status.textContent = 'Failed: ' + (j.message||''); }
+                                                                                            } catch(e){ if(status) status.textContent='Failed to start full sync'; }
+                                                                                        });
+                                                                                }
+                                                                        };
+                                                                }
+                                                                window.__initAudiobookshelfPanel();
+                                                        } catch(e) { console.warn('ABS panel init failed', e); }
+                                                }
+                        if(panel==='config'){
+                            try { ensureServerConfigBindings(); } catch(e){ console.warn('Config bindings refresh failed', e); }
+                        }
+                        if(panel==='ai'){
+                            // Inline <script> tags inside inserted HTML from fetch won't execute; ensure functions exist
+                            if(!window.__initAISettings){
+                                // Lightweight reimplementation if script tag not run
+                                window.__initAISettings = function(){
+                                    const providerSelect = document.getElementById('ai_provider');
+                                    if(!providerSelect) return;
+                                    const openai = document.getElementById('openai-settings');
+                                    const ollama = document.getElementById('ollama-settings');
+                                    function sync(){
+                                        const val = providerSelect.value;
+                                        if(val==='openai'){ openai.style.display='block'; ollama.style.display='none'; }
+                                        else { openai.style.display='none'; ollama.style.display='block'; }
+                                    }
+                                    providerSelect.addEventListener('change', sync); sync();
+                                    const manualChk = document.getElementById('ollama_manual_model');
+                                    if(manualChk){ manualChk.addEventListener('change', ()=>{
+                                        const manual = document.getElementById('ollama_model_manual');
+                                        const select = document.getElementById('ollama_model');
+                                        if(manual){ manual.style.display = manualChk.checked ? 'block':'none'; }
+                                        if(select){ select.style.display = manualChk.checked ? 'none':'block'; }
+                                    }); }
+                                    const maxTokens = document.getElementById('ai_max_tokens');
+                                    const warn = document.getElementById('ai-max-tokens-warning');
+                                    if(maxTokens && warn){ const toggle=()=>{ warn.style.display = parseInt(maxTokens.value||'0',10) > 16000 ? 'block':'none'; }; maxTokens.addEventListener('input', toggle); toggle(); }
+                                };
+                            }
+                            // Fallback test functions if inline script not executed
+                            if(typeof window.testAIConnection !== 'function'){
+                                window.testAIConnection = async function(btn){
+                                    if(!btn) return; const original = btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="bi bi-arrow-clockwise spin me-1"></i>Testing...';
+                                    const provider = document.getElementById('ai_provider').value;
+                                    const fd = new FormData();
+                                    const csrf = document.querySelector('input[name="csrf_token"]'); if(csrf) fd.append('csrf_token', csrf.value);
+                                    fd.append('ai_provider', provider);
+                                    if(provider==='openai'){
+                                        fd.append('openai_api_key', document.getElementById('openai_api_key').value);
+                                        fd.append('openai_base_url', document.querySelector('input[name="openai_base_url"]').value);
+                                        fd.append('openai_model', document.getElementById('openai_model').value);
+                                    } else {
+                                        fd.append('ollama_base_url', document.getElementById('ollama_base_url').value);
+                                        fd.append('ollama_model', document.getElementById('ollama_model').value);
+                                    }
+                                    const results = document.getElementById('ai-test-results'); if(results) results.innerHTML='';
+                                    try { const resp=await fetch("{{ url_for('auth.test_ai_connection') }}",{method:'POST', body:fd}); const data=await resp.json(); if(results) results.innerHTML=`<div class="alert alert-${data.success?'success':'danger'} p-2 mb-0 small">${data.message||'Test complete'}</div>`; } catch(e){ if(results) results.innerHTML='<div class="alert alert-danger p-2 mb-0 small">Error testing connection.</div>'; }
+                                    btn.disabled=false; btn.innerHTML=original;
+                                };
+                            }
+                            if(typeof window.testOllamaConnection !== 'function'){
+                                window.testOllamaConnection = async function(btn){
+                                    const baseUrlInput=document.getElementById('ollama_base_url'); const select=document.getElementById('ollama_model'); const resultsDiv=document.getElementById('ollama-test-results');
+                                    if(!baseUrlInput||!select){return;} const original=btn?btn.innerHTML:''; if(btn){btn.disabled=true; btn.innerHTML='<i class="bi bi-arrow-clockwise spin me-1"></i>Testing...';}
+                                    resultsDiv.innerHTML='<div class="text-muted small">Testing connection...</div>';
+                                    const fd=new FormData(); fd.append('ollama_base_url', baseUrlInput.value.trim()); const csrf=document.querySelector('input[name="csrf_token"]'); if(csrf) fd.append('csrf_token', csrf.value);
+                                    try { const resp=await fetch("{{ url_for('auth.test_ollama_connection') }}",{method:'POST', body: fd}); const data=await resp.json(); if(data.success && data.models){ select.innerHTML='<option value="">Select a model</option>'; data.models.forEach(m=>{ const opt=document.createElement('option'); opt.value=m.name||m; opt.textContent=(m.name?`${m.name} (${m.size})`:m); select.appendChild(opt); }); resultsDiv.innerHTML=`<div class="alert alert-success p-2 mb-0 small">Loaded ${data.models.length} models.</div>`;} else { resultsDiv.innerHTML=`<div class="alert alert-danger p-2 mb-0 small">${data.message||'Connection failed'}</div>`;} } catch(e){ resultsDiv.innerHTML='<div class="alert alert-danger p-2 mb-0 small">Error contacting server.</div>'; }
+                                    if(btn){btn.disabled=false; btn.innerHTML=original;}
+                                };
+                            }
+                            try { ensureServerAIBindings(); } catch(e){ console.warn('AI bindings refresh failed', e); }
+                        }
+                        if(panel==='smtp'){
+                            try { ensureServerSMTPBindings(); } catch(e){ console.warn('SMTP bindings refresh failed', e); }
+                        }
+                        if(panel==='backup'){
+                            try { ensureServerBackupBindings(); } catch(e){ console.warn('Backup bindings refresh failed', e); }
+                        }
+                        if(panel==='audiobookshelf'){
+                            // Fallback: define reusable initializer so we can rebind after content replacement
+                            if(!window.__initABSPanel){
+                                window.__initABSPanel = function(){
+                                    const container = document.getElementById('serverDynamicContainer');
+                                    if(!container) return;
+                                    const form = container.querySelector('#absSettingsForm');
+                                    const testBtn = container.querySelector('#absTestBtn');
+                                    const syncTestBtn = container.querySelector('#absSyncTestBtn');
+                                    const listenTestBtn = container.querySelector('#absListenTestBtn');
+                                    const status = container.querySelector('#absStatus');
+                                    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                                    const csrf = csrfMeta && csrfMeta.content ? csrfMeta.content : '';
+                                    if(form && !form.dataset.bound){
+                                        form.addEventListener('submit', function(ev){
+                                            ev.preventDefault();
+                                            if(status) status.textContent = 'Saving...';
+                                            const fd = new FormData(form);
+                                            if(csrf && !fd.get('csrf_token')) fd.append('csrf_token', csrf);
+                                            fetch(form.action, { method:'POST', body: fd, headers:{'X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin' })
+                                              .then(r=>r.text())
+                                              .then(html=>{ container.innerHTML = html; window.__initABSPanel(); })
+                                              .catch(()=>{ if(status) status.textContent = 'Save failed'; });
+                                        });
+                                        form.dataset.bound = '1';
+                                    }
+                                    if(testBtn && !testBtn.dataset.bound){
+                                        testBtn.addEventListener('click', function(){
+                                            if(status) status.textContent = 'Testing...';
+                                            const headers = csrf ? {'X-CSRFToken': csrf} : {};
+                                            fetch('/settings/audiobookshelf/test', { method:'POST', headers, credentials:'same-origin' })
+                                              .then(r=>r.json().catch(()=>({ok:false,message:'bad json'})))
+                                              .then(j=>{
+                                                  if(status) status.textContent = (j.ok ? 'OK: ' : 'Fail: ') + (j.message || '');
+                                                  // Reload panel with libraries list and rebind
+                                                  fetch("{{ url_for('auth.settings_server_partial', panel='audiobookshelf') }}?test=1")
+                                                    .then(r=>r.text())
+                                                    .then(html=>{ container.innerHTML = html; window.__initABSPanel(); });
+                                              })
+                                              .catch(()=>{ if(status) status.textContent = 'Test failed'; });
+                                        });
+                                        testBtn.dataset.bound = '1';
+                                    }
+                                    if(syncTestBtn && !syncTestBtn.dataset.bound){
+                                        syncTestBtn.addEventListener('click', function(){
+                                            if(status) status.textContent = 'Starting test sync...';
+                                            const headers = csrf ? {'X-CSRFToken': csrf, 'Content-Type':'application/json'} : {'Content-Type':'application/json'};
+                                            fetch("{{ url_for('auth.audiobookshelf_test_sync') }}", { method:'POST', headers, credentials:'same-origin', body: JSON.stringify({limit:5}) })
+                                              .then(r=>r.json().catch(()=>({ok:false,message:'bad json'})))
+                                              .then(j=>{
+                                                  if(j.ok && j.progress_url){
+                                                      if(status) status.innerHTML = 'Sync started. <a href="'+j.progress_url+'" class="link-primary">View progress</a>';
+                                                  } else {
+                                                      if(status) status.textContent = 'Failed: ' + (j.message || '');
+                                                  }
+                                              })
+                                              .catch(()=>{ if(status) status.textContent = 'Failed to start test sync'; });
+                                        });
+                                        syncTestBtn.dataset.bound = '1';
+                                    }
+                                    if(listenTestBtn && !listenTestBtn.dataset.bound){
+                                        listenTestBtn.addEventListener('click', function(){
+                                            if(status) status.textContent = 'Starting listening-only test...';
+                                            const headers = csrf ? {'X-CSRFToken': csrf, 'Content-Type':'application/json'} : {'Content-Type':'application/json'};
+                                            fetch("{{ url_for('auth.audiobookshelf_listen_test') }}", { method:'POST', headers, credentials:'same-origin', body: JSON.stringify({page_size:200}) })
+                                              .then(r=>r.json().catch(()=>({ok:false,message:'bad json'})))
+                                              .then(j=>{
+                                                  if(j.ok && j.progress_url){ if(status) status.innerHTML = 'Listening sync started. <a href="'+j.progress_url+'" class="link-primary">View progress</a>'; }
+                                                  else { if(status) status.textContent = 'Failed: ' + (j.message || ''); }
+                                              })
+                                              .catch(()=>{ if(status) status.textContent = 'Failed to start listening-only test'; });
+                                        });
+                                        listenTestBtn.dataset.bound = '1';
+                                    }
+                                };
+                            }
+                            try { window.__initABSPanel(); } catch(_) {}
+                        }
+                        if(panel==='users'){
+                            // Provide fallback JS if script tags inside partial didn't execute
+                            if(typeof window.editUserInline !== 'function'){
+                                window.editUserInline = function(uid){
+                                    const container = document.getElementById('serverDynamicContainer');
+                                    if(!container) return;
+                                    const url = `{{ url_for('auth.settings_server_partial', panel='user_edit') }}?user_id=`+encodeURIComponent(uid);
+                                    container.innerHTML = '<div class="text-muted small p-3">Loading editor...</div>';
+                                    fetch(url, {credentials:'same-origin'}).then(r=>{ if(!r.ok) throw new Error(r.status); return r.text();}).then(html=> { container.innerHTML = html; ensureUserEditDelegation(); }).catch(err=> container.innerHTML='<div class="text-danger small p-3">Failed to load editor ('+err+').</div>');
+                                };
+                            }
+                            if(typeof window.loadServerUsersFull !== 'function'){
+                                window.loadServerUsersFull = function(search){
+                                    const container = document.getElementById('serverDynamicContainer'); if(!container) return;
+                                    const urlObj = new URL("{{ url_for('auth.settings_server_partial', panel='users') }}", window.location.origin);
+                                    if(search) urlObj.searchParams.set('search', search);
+                                    container.innerHTML = '<div class="text-muted small p-3">Loading...</div>';
+                                    fetch(urlObj.toString()).then(r=>r.text()).then(html=> container.innerHTML=html).catch(()=> container.innerHTML='<div class="text-danger small p-3">Failed to load users.</div>');
+                                };
+                            }
+                        }
+                        if(panel==='user_edit'){
+                            if(typeof window.submitUserEdit !== 'function'){
+                                window.submitUserEdit = function(form){
+                                    const fd = new FormData(form);
+                                    fetch(`{{ url_for('auth.settings_server_partial', panel='user_edit') }}`, {method:'POST', body:fd, credentials:'same-origin'})
+                                      .then(r=>r.text())
+                                      .then(html=> document.getElementById('serverDynamicContainer').innerHTML = html)
+                                      .catch(()=> alert('Failed to submit.'));
+                                    return false;
+                                };
+                            }
+                            if(typeof window.confirmDeleteUser !== 'function'){
+                                window.confirmDeleteUser = function(form){
+                                    if(!confirm('This will permanently delete the user. Continue?')) return false;
+                                    return window.submitUserEdit(form);
+                                };
+                            }
+                            if(typeof window.submitLegacyAdminDelete !== 'function'){
+                                window.submitLegacyAdminDelete = function(uid){
+                                    if(!confirm('Force delete via legacy admin route?')) return;
+                                    try {
+                                        const csrfEl = document.querySelector('#deleteUserInlineForm input[name="csrf_token"]');
+                                        const csrf = csrfEl ? csrfEl.value : '';
+                                        const fd = new FormData(); if(csrf) fd.append('csrf_token', csrf);
+                                        fetch(`/admin/users/${uid}/delete`, {method:'POST', body:fd})
+                                          .then(r=>{ if(r.redirected){ window.location.href=r.url; return ''; } return r.text();})
+                                          .catch(()=> alert('Legacy delete failed.'));
+                                    } catch(err){ console.error('legacy delete error', err); alert('Legacy delete JS error.'); }
+                                };
+                            }
+                            if(typeof window.apiDeleteUser !== 'function'){
+                                window.apiDeleteUser = function(uid){
+                                    if(!confirm('Use API delete? This is immediate and logs diagnostics.')) return;
+                                    try {
+                                        const csrfEl = document.querySelector('#deleteUserInlineForm input[name="csrf_token"]');
+                                        const csrf = csrfEl ? csrfEl.value : '';
+                                        const fd = new FormData(); if(csrf) fd.append('csrf_token', csrf);
+                                        fetch(`/admin/api/users/${uid}/delete`, {method:'POST', body:fd})
+                                          .then(r=>r.json())
+                                          .then(d=>{
+                                            if(d.ok){
+                                                alert('API delete success. Refreshing list.');
+                                                if(typeof window.loadServerUsersFull === 'function'){ window.loadServerUsersFull(); }
+                                            } else {
+                                                alert('API delete failed: '+(d.error||('deleted='+d.deleted+' exists_after='+d.exists_after)));
+                                            }
+                                          })
+                                          .catch(()=> alert('API delete error.'));
+                                    } catch(err){ console.error('api delete error', err); alert('API delete JS error.'); }
+                                };
+                            }
+                            // Always ensure delegation after user edit load via server panel path
+                            try { ensureUserEditDelegation(); } catch(err) {}
+                        }
+                    })
+                    .catch(err=> {
+                        console.error('Server panel load failed', panel, err);
+                        serverContainer.innerHTML = '<div class="text-danger small">Failed to load panel. ' + (err && err.message ? err.message : '') + '</div>';
+                    });
+        }
+    function normalizeServerButtons(){
+        document.querySelectorAll('.server-nav').forEach(b=>{
+            const color = b.dataset.color;
+            b.classList.remove('active');
+            if(color){
+                b.classList.remove('btn-'+color);
+                if(!b.classList.contains('btn-outline-'+color)) b.classList.add('btn-outline-'+color);
+            }
+        });
+    }
+    function activateServerButton(btn){
+        const color = btn.dataset.color;
+        if(color){
+            btn.classList.remove('btn-outline-'+color);
+            btn.classList.add('btn-'+color);
+        }
+        btn.classList.add('active');
+    }
+    document.querySelectorAll('.server-nav').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+            normalizeServerButtons();
+            activateServerButton(btn);
+            loadServerPanel(btn.getAttribute('data-server-panel'));
+        });
+    });
+    // Preload config panel when server section first revealed
+    const serverTile = document.querySelector('[data-target="serverSection"]');
+    if(serverTile){
+        serverTile.addEventListener('click', ()=>{
+            if(!serverContainer.dataset.loaded){
+                loadServerPanel('config');
+                serverContainer.dataset.loaded = '1';
+                const cfg = document.querySelector('[data-server-panel="config"]');
+                if(cfg){ normalizeServerButtons(); activateServerButton(cfg); }
+            }
+        });
+    }
+
+    // Handle deep-linking into sections/panels via query params
+    (function applyQueryParams(){
+        try {
+            const params = new URLSearchParams(window.location.search);
+            let sectionParam = (params.get('section') || '').toLowerCase();
+            const panelParam = (params.get('panel') || '').toLowerCase();
+            if (!sectionParam && panelParam) {
+                sectionParam = 'server';
+            }
+            if (sectionParam === 'server' && serverContainer) {
+                const serverTileEl = document.querySelector('[data-target="serverSection"]');
+                if (serverTileEl) {
+                    activate(serverTileEl);
+                }
+                serverContainer.dataset.loaded = '1';
+                const targetPanel = panelParam || 'config';
+                normalizeServerButtons();
+                const targetBtn = document.querySelector(`.server-nav[data-server-panel="${targetPanel}"]`)
+                    || document.querySelector('.server-nav');
+                if (targetBtn) {
+                    activateServerButton(targetBtn);
+                }
+                loadServerPanel(targetPanel);
+                setTimeout(() => {
+                    try {
+                        document.getElementById('serverSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } catch (err) {
+                        console.debug('Server section scroll failed', err);
+                    }
+                }, 250);
+            }
+        } catch (err) {
+            console.debug('Settings query param handling failed', err);
+        }
+    })();
+
+    // Personal dynamic panels (simple inline content)
+    const personalContainer = document.getElementById('personalDynamicContainer');
+    function loadPersonal(panel){
+        if(!personalContainer) return;
+            const routes = {
+                'profile': "{{ url_for('auth.settings_profile_partial') }}",
+                'password': "{{ url_for('auth.settings_password_partial') }}",
+                'privacy': "{{ url_for('auth.settings_privacy_partial') }}",
+                'reading_prefs': "{{ url_for('auth.settings_reading_prefs_partial') }}",
+                'personal_abs': "{{ url_for('auth.settings_personal_abs_partial') }}",
+                'activity': "{{ url_for('auth.my_activity') }}" // fallback link
+            };
+            if(panel==='activity'){
+                personalContainer.innerHTML = `<div class='card p-3'><div class='small text-muted mb-2'>Your detailed activity opens in a new page.</div><a href='${routes.activity}' class='btn btn-sm btn-outline-primary'><i class='bi bi-graph-up'></i> Open Activity</a></div>`;
+                return;
+            }
+            personalContainer.innerHTML = '<div class="text-muted small">Loading...</div>';
+            fetch(routes[panel])
+              .then(r=>r.text())
+              .then(html=> personalContainer.innerHTML = html)
+              .catch(()=> personalContainer.innerHTML = '<div class="text-danger small">Failed to load.</div>');
+    }
+        // Intercept submits within personalContainer to avoid full page navigation
+        if(personalContainer){
+                personalContainer.addEventListener('submit', (e)=>{
+                        const form = e.target;
+                        if(!(form instanceof HTMLFormElement)) return;
+                        // Only handle partial routes to keep behavior scoped
+                        if(!form.action || form.action.indexOf('/settings/partial/') === -1) return;
+                        e.preventDefault();
+                        const fd = new FormData(form);
+                        const submitBtn = form.querySelector('button[type="submit"],button:not([type])');
+                        if(submitBtn){ submitBtn.disabled = true; submitBtn.dataset.original = submitBtn.innerHTML; submitBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-1"></i>Saving...'; }
+                        fetch(form.action, { method:'POST', body: fd, headers: { 'X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
+                            .then(r=>r.text())
+                            .then(html=> { personalContainer.innerHTML = html; })
+                            .catch(()=> { alert('Failed to save.'); })
+                            .finally(()=> {
+                                // Button is now in a replaced DOM; nothing to restore
+                            });
+                });
+        }
+    document.querySelectorAll('.personal-nav').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+            document.querySelectorAll('.personal-nav').forEach(b=>{
+                const c = b.dataset.color;
+                b.classList.remove('active');
+                if(c){
+                    b.classList.remove('btn-outline-'+c);
+                    if(!b.classList.contains('btn-'+c)) b.classList.add('btn-'+c);
+                }
+            });
+            const c = btn.dataset.color;
+            if(c){
+                btn.classList.remove('btn-'+c);
+                btn.classList.add('btn-outline-'+c);
+            }
+            btn.classList.add('active');
+            loadPersonal(btn.getAttribute('data-personal-panel'));
+        });
+    });
+    const personalTile = document.querySelector('[data-target="personalSection"]');
+    if(personalTile){
+        personalTile.addEventListener('click', ()=>{
+            if(!personalContainer.dataset.loaded){
+                loadPersonal('profile');
+                personalContainer.dataset.loaded='1';
+                // Set initial active styling (outlined) for 'profile'
+                const defBtn = document.querySelector('[data-personal-panel="profile"]');
+                if(defBtn){
+                    const c = defBtn.dataset.color; defBtn.classList.add('active');
+                    if(c){ defBtn.classList.remove('btn-'+c); defBtn.classList.add('btn-outline-'+c); }
+                }
+            }
+        });
+    }
+
+    // Data & Import dynamic panels
+    const dataContainer = document.getElementById('dataDynamicContainer');
+        function loadData(panel){
+                if(!dataContainer) return;
+                dataContainer.innerHTML = '<div class="text-muted small">Loading...</div>';
+                fetch(`{{ url_for('auth.settings_data_partial', panel='__P__') }}`.replace('__P__', panel))
+                    .then(r=>r.text())
+                    .then(html=> {
+                        dataContainer.innerHTML = html;
+                        initializeDataPanel(panel);
+                    })
+                    .catch(()=> dataContainer.innerHTML = '<div class="text-danger small">Failed to load.</div>');
+        }
+    function initializeDataPanel(panel){
+        if(panel === 'import_reading'){
+            initQuickAddModalControls();
+        }
+    }
+    function initQuickAddModalControls(){
+        const form = document.getElementById('quickAddForm');
+        const previewButton = document.getElementById('quickAddPreviewButton');
+        const modalEl = document.getElementById('quickAddModal');
+        const modalBody = document.getElementById('quickAddModalBody');
+        const confirmBtn = document.getElementById('quickAddModalConfirm');
+        if(!form || !modalEl || !modalBody || !confirmBtn) return;
+
+        const modalTitle = modalEl.querySelector('.modal-title');
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        const defaultBodyHtml = modalBody.innerHTML;
+        const defaultConfirmHtml = confirmBtn.innerHTML;
+        const spinnerHtml = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>';
+
+        if(form.dataset.quickAddBound === '1'){
+            return;
+        }
+        form.dataset.quickAddBound = '1';
+
+        let quickAddPayload = null;
+
+        function resetModal(){
+            modalTitle.textContent = 'Quick Add Preview';
+            modalBody.innerHTML = defaultBodyHtml;
+            confirmBtn.disabled = true;
+            confirmBtn.dataset.mode = 'confirm';
+            confirmBtn.innerHTML = defaultConfirmHtml;
+            confirmBtn.classList.remove('btn-success');
+            confirmBtn.classList.add('btn-primary');
+            quickAddPayload = null;
+        }
+
+        function setPreviewLoading(loading){
+            if(!previewButton) return;
+            if(loading){
+                previewButton.disabled = true;
+                previewButton.dataset.original = previewButton.innerHTML;
+                previewButton.innerHTML = `${spinnerHtml}Preparing…`;
+            } else {
+                if(previewButton.dataset.original){
+                    previewButton.innerHTML = previewButton.dataset.original;
+                    delete previewButton.dataset.original;
+                }
+                previewButton.disabled = false;
+            }
+        }
+
+        modalEl.addEventListener('hidden.bs.modal', () => {
+            if(confirmBtn.dataset.mode === 'refresh'){
+                window.location.reload();
+                return;
+            }
+            resetModal();
+        });
+
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            if(previewButton && previewButton.disabled){
+                return;
+            }
+            const formData = new FormData(form);
+            quickAddPayload = Object.fromEntries(formData.entries());
+            setPreviewLoading(true);
+            resetModal();
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            })
+            .then(resp => resp.ok ? resp.json() : Promise.reject(new Error('Unable to prepare preview.')))
+            .then(data => {
+                modalTitle.textContent = data.modal_title || 'Quick Add Preview';
+                modalBody.innerHTML = data.html || '<div class="text-muted small">No preview available.</div>';
+                if(data.status === 'ok' && data.confirm_enabled !== false){
+                    confirmBtn.disabled = false;
+                    confirmBtn.dataset.mode = 'confirm';
+                    confirmBtn.classList.remove('btn-success');
+                    confirmBtn.classList.add('btn-primary');
+                    confirmBtn.innerHTML = data.confirm_label || defaultConfirmHtml;
+                    if(quickAddPayload) {
+                        quickAddPayload.days = data.days ?? quickAddPayload.days;
+                        quickAddPayload.pages = data.pages ?? quickAddPayload.pages;
+                        quickAddPayload.minutes = data.minutes ?? quickAddPayload.minutes;
+                    }
+                } else {
+                    confirmBtn.disabled = true;
+                }
+                modalInstance.show();
+            })
+            .catch(err => {
+                modalTitle.textContent = 'Quick Add Issues';
+                modalBody.innerHTML = `<div class="alert alert-danger" role="alert">${err.message || 'Unable to prepare preview.'}</div>`;
+                confirmBtn.disabled = true;
+                modalInstance.show();
+            })
+            .finally(() => {
+                setPreviewLoading(false);
+            });
+        });
+
+        confirmBtn.addEventListener('click', () => {
+            const mode = confirmBtn.dataset.mode || 'confirm';
+            if(mode === 'refresh'){
+                window.location.reload();
+                return;
+            }
+            if(mode !== 'confirm' || !quickAddPayload){
+                return;
+            }
+            const executeUrl = form.getAttribute('data-execute-url');
+            if(!executeUrl){
+                console.error('Missing execute URL for quick add.');
+                return;
+            }
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = `${spinnerHtml}Creating…`;
+            const executeData = new FormData();
+            for (const [key, value] of Object.entries(quickAddPayload)){
+                executeData.append(key, value ?? '');
+            }
+            fetch(executeUrl, {
+                method: 'POST',
+                body: executeData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            })
+            .then(resp => resp.ok ? resp.json() : Promise.reject(new Error('Unable to apply quick add.')))
+            .then(data => {
+                modalTitle.textContent = data.modal_title || 'Quick Add Results';
+                modalBody.innerHTML = data.html || '<div class="text-muted small">No results available.</div>';
+                confirmBtn.disabled = false;
+                confirmBtn.dataset.mode = 'refresh';
+                confirmBtn.classList.remove('btn-primary');
+                confirmBtn.classList.add('btn-success');
+                confirmBtn.innerHTML = data.refresh_label || '<i class="bi bi-arrow-repeat"></i> Refresh to Update Stats';
+            })
+            .catch(err => {
+                modalTitle.textContent = 'Quick Add Issues';
+                modalBody.innerHTML = `<div class="alert alert-danger" role="alert">${err.message || 'Unable to apply quick add.'}</div>`;
+                confirmBtn.disabled = false;
+                confirmBtn.dataset.mode = 'confirm';
+                confirmBtn.classList.remove('btn-success');
+                confirmBtn.classList.add('btn-primary');
+                confirmBtn.innerHTML = defaultConfirmHtml;
+            });
+        });
+    }
+    document.querySelectorAll('.data-nav').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+            document.querySelectorAll('.data-nav').forEach(b=>b.classList.remove('active'));
+            btn.classList.add('active');
+            loadData(btn.getAttribute('data-data-panel'));
+        });
+    });
+    const dataTile = document.querySelector('[data-target="dataSection"]');
+    if(dataTile){
+        dataTile.addEventListener('click', ()=>{
+            if(!dataContainer.dataset.loaded){
+                loadData('import_books');
+                dataContainer.dataset.loaded='1';
+                document.querySelector('[data-data-panel="import_books"]').classList.add('active');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

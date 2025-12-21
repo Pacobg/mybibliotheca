@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Settings - Bibliotheca{% endblock %}
+
+{% block content %}
+<style>
+/* Dark mode enhancements for Privacy Settings */
+[data-theme="dark"] .text-muted {
+    color: #b0b0b0 !important;
+}
+
+[data-theme="dark"] small.text-muted {
+    color: #c0c0c0 !important;
+}
+
+[data-theme="dark"] .form-text {
+    color: #c0c0c0 !important;
+}
+
+[data-theme="dark"] .card {
+    background-color: rgba(40, 40, 40, 0.8) !important;
+    border-color: #404040 !important;
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .card-header {
+    background-color: rgba(60, 60, 60, 0.8) !important;
+    border-bottom-color: #404040 !important;
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .card-body {
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .card-body p {
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .card-body strong {
+    color: #f0f0f0 !important;
+}
+
+[data-theme="dark"] .alert-info {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    border-color: rgba(13, 110, 253, 0.3) !important;
+    color: #6ea8fe !important;
+}
+
+[data-theme="dark"] .form-check-label {
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .form-label {
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .form-select {
+    background-color: #495057 !important;
+    border-color: #6c757d !important;
+    color: #fff !important;
+}
+
+[data-theme="dark"] .form-select:focus {
+    background-color: #495057 !important;
+    border-color: #86b7fe !important;
+    color: #fff !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+
+[data-theme="dark"] .form-control {
+    background-color: #495057 !important;
+    border-color: #6c757d !important;
+    color: #fff !important;
+}
+
+[data-theme="dark"] .form-control:focus {
+    background-color: #495057 !important;
+    border-color: #86b7fe !important;
+    color: #fff !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+
+/* Ensure toggle switches work properly in dark mode */
+[data-theme="dark"] .form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+[data-theme="dark"] .form-check-input:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+</style>
+<div class="row">
+    <div class="col-12">
+        <h2><i class="bi bi-shield-lock"></i> Privacy Settings</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-eye"></i> Sharing Preferences
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">
+                    Control what information you share with other users and how your reading activity is displayed.
+                </p>
+                
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            {{ form.share_current_reading(class="form-check-input") }}
+                            {{ form.share_current_reading.label(class="form-check-label") }}
+                        </div>
+                        <small class="text-muted">Allow others to see what book you're currently reading</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            {{ form.share_reading_activity(class="form-check-input") }}
+                            {{ form.share_reading_activity.label(class="form-check-label") }}
+                        </div>
+                        <small class="text-muted">Share your reading statistics and activity timeline</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            {{ form.share_library(class="form-check-input") }}
+                            {{ form.share_library.label(class="form-check-label") }}
+                        </div>
+                        <small class="text-muted">Make your book library visible to other users</small>
+                    </div>
+                    
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-info-circle"></i> Privacy Information
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Current Reading:</strong>
+                    <p class="small text-muted">Controls whether your current book appears in activity feeds and your profile.</p>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Reading Activity:</strong>
+                    <p class="small text-muted">Includes reading statistics, completion dates, and reading history.</p>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Library Visibility:</strong>
+                    <p class="small text-muted">Your complete book collection and ratings will be visible to others.</p>
+                </div>
+                
+                <div class="alert alert-info">
+                    <small>
+                        <i class="bi bi-lightbulb"></i>
+                        <strong>Tip:</strong> You can change these settings at any time. Your data remains secure regardless of these preferences.
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-clock"></i> Timezone Information
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Current Timezone:</strong>
+                    <p class="small text-muted mb-1">{{ timezone_info.name }}</p>
+                    <p class="small" id="current-time">{{ timezone_info.current_time }}</p>
+                </div>
+                
+                <div class="alert alert-info">
+                    <small>
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Note:</strong> This timezone is used for displaying reading logs, activity timestamps, and streak calculations.
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-gear"></i> Change Timezone
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('auth.update_timezone') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.timezone.label(class="form-label") }}
+                        {{ form.timezone(class="form-select") }}
+                        <small class="text-muted">Select your timezone for accurate time display</small>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-sm">Update Timezone</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-calendar-check"></i> Reading Streak Settings
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('auth.update_streak_settings') }}">
+                    {{ streak_form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ streak_form.reading_streak_offset.label(class="form-label") }}
+                        {{ streak_form.reading_streak_offset(class="form-control form-control-sm") }}
+                        <div class="form-text">
+                            Add extra days to your reading streak. Current streak: <strong>{{ current_user.get_reading_streak() }}</strong> days.
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <small>
+                            <i class="bi bi-info-circle"></i>
+                            <strong>How it works:</strong> Your streak is calculated from your reading logs, 
+                            then this offset is added.
+                        </small>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-sm">Update Streak Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Update current time every minute
+function updateCurrentTime() {
+    const timeElement = document.getElementById('current-time');
+    if (timeElement) {
+        const now = new Date();
+        const timeString = now.toLocaleString('en-US', {
+            timeZone: '{{ timezone_info.name }}',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            timeZoneName: 'short'
+        });
+        timeElement.textContent = timeString;
+    }
+}
+
+// Update time immediately and then every 30 seconds
+updateCurrentTime();
+setInterval(updateCurrentTime, 30000);
+</script>
+{% endblock %}

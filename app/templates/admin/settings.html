@@ -1,0 +1,1330 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Settings - Bibliotheca{% endblock %}
+
+{% block content %}
+<style>
+.accordion-button {
+    font-weight: 500;
+    border-radius: 0.375rem;
+}
+
+.accordion-button:not(.collapsed) {
+    color: white;
+    box-shadow: none;
+}
+
+.accordion-button.bg-danger:not(.collapsed) {
+    background-color: var(--bs-danger) !important;
+}
+
+.accordion-button.bg-warning:not(.collapsed) {
+    background-color: var(--bs-warning) !important;
+}
+
+.accordion-button.bg-info:not(.collapsed) {
+    background-color: var(--bs-info) !important;
+}
+
+.accordion-button.bg-secondary:not(.collapsed) {
+    background-color: var(--bs-secondary) !important;
+}
+
+.accordion-button:focus {
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+.accordion-body {
+    padding: 1.25rem;
+}
+
+.breadcrumb-item a {
+    text-decoration: none;
+}
+
+/* Smooth transitions for accordion */
+.accordion-collapse {
+    transition: height 0.35s ease;
+}
+
+/* Better spacing between accordion items */
+.accordion-item:not(:last-child) {
+    margin-bottom: 0.5rem;
+}
+
+/* Dark mode enhancements for Admin Settings */
+[data-theme="dark"] .text-muted {
+    color: #b0b0b0 !important;
+}
+
+[data-theme="dark"] small.text-muted {
+    color: #c0c0c0 !important;
+}
+
+[data-theme="dark"] .form-text {
+    color: #c0c0c0 !important;
+}
+
+[data-theme="dark"] .accordion-item {
+    background-color: rgba(40, 40, 40, 0.8) !important;
+    border-color: #404040 !important;
+}
+
+[data-theme="dark"] .accordion-body {
+    background-color: rgba(40, 40, 40, 0.8) !important;
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .accordion-body p {
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .alert-info {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    border-color: rgba(13, 110, 253, 0.3) !important;
+    color: #6ea8fe !important;
+}
+
+[data-theme="dark"] .alert-warning {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+    border-color: rgba(255, 193, 7, 0.3) !important;
+    color: #ffda6a !important;
+}
+
+[data-theme="dark"] .alert-danger {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    border-color: rgba(220, 53, 69, 0.3) !important;
+    color: #ea868f !important;
+}
+</style>
+
+<div class="container mt-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-shield-exclamation me-2"></i>Admin Settings
+        </h1>
+        <div>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-primary">
+                <i class="bi bi-speedometer2 me-1"></i>Dashboard
+            </a>
+            <a href="{{ url_for('admin.users') }}" class="btn btn-primary ms-2">
+                <i class="bi bi-people me-1"></i>User Management
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <!-- Admin Settings Accordion -->
+            <div class="accordion" id="adminSettingsAccordion">
+                
+                <!-- System Configuration -->
+                <div class="accordion-item shadow-sm mb-3">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button bg-danger text-white" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#collapseSystemConfig" 
+                                aria-expanded="true" aria-controls="collapseSystemConfig">
+                            <i class="bi bi-gear-wide-connected me-2"></i>System Configuration
+                        </button>
+                    </h2>
+                    <div id="collapseSystemConfig" class="accordion-collapse collapse show" data-bs-parent="#adminSettingsAccordion">
+                        <div class="accordion-body">
+                            <p class="text-muted mb-3">Configure global system settings and site information.</p>
+                            
+                            <form method="POST" action="{{ url_for('admin.settings') }}" enctype="multipart/form-data">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="site_name" class="form-label">Site Name</label>
+                                        <input type="text" class="form-control" id="site_name" name="site_name" 
+                                               value="{{ site_name }}" placeholder="MyBibliotheca">
+                                        <small class="form-text text-muted">The name displayed in the site header</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="server_timezone" class="form-label">Server Timezone</label>
+                                        <select class="form-select" id="server_timezone" name="server_timezone">
+                                            <optgroup label="Common Timezones">
+                                                {% for tz in common_timezones %}
+                                                <option value="{{ tz }}" {% if tz == server_timezone %}selected{% endif %}>{{ tz }}</option>
+                                                {% endfor %}
+                                            </optgroup>
+                                            <optgroup label="All Timezones">
+                                                {% for tz in available_timezones %}
+                                                {% if tz not in common_timezones %}
+                                                <option value="{{ tz }}" {% if tz == server_timezone %}selected{% endif %}>{{ tz }}</option>
+                                                {% endif %}
+                                                {% endfor %}
+                                            </optgroup>
+                                        </select>
+                                        <small class="form-text text-muted">Default timezone for the server and new users</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="terminology_preference" class="form-label">{{ get_genre_term() }} Terminology</label>
+                                        <select class="form-select" id="terminology_preference" name="terminology_preference">
+                                            <option value="genre" 
+                                                    {% if terminology_preference == 'genre' %}selected{% endif %}>
+                                                Genres (e.g., "Science Fiction", "Romance", "Mystery")
+                                            </option>
+                                            <option value="category" 
+                                                    {% if terminology_preference == 'category' %}selected{% endif %}>
+                                                Categories (e.g., "Fiction", "Non-fiction", "Reference")
+                                            </option>
+                                        </select>
+                                        <small class="form-text text-muted">Choose whether to use "Genres" or "Categories" terminology throughout the application</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="min_password_length" class="form-label">Minimum Password Length</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="min_password_length" name="min_password_length"
+                                                   min="{{ password_policy_bounds.min }}" max="{{ password_policy_bounds.max }}"
+                                                   value="{{ configured_min_password_length }}" required>
+                                            <span class="input-group-text">characters</span>
+                                        </div>
+                                        <small class="form-text text-muted">Effective minimum: {{ effective_min_password_length }} characters.</small>
+                                        {% if password_policy_env_override %}
+                                        <small class="text-warning d-block mt-1">Environment variable {{ password_policy_env_key }} is set to {{ password_policy_env_override }} and overrides this value.</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Background Configuration -->
+                                <div class="mt-4">
+                                    <h6 class="fw-bold text-info mb-3">Background Configuration</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="background_type" class="form-label">Background Type</label>
+                                            <select class="form-select" id="background_type" name="background_type" onchange="toggleBackgroundOptions()">
+                                                <option value="default" {% if background_config.get('type', 'default') == 'default' %}selected{% endif %}>Default (Onboarding Style)</option>
+                                                <option value="solid" {% if background_config.get('type') == 'solid' %}selected{% endif %}>Solid Color</option>
+                                                <option value="gradient" {% if background_config.get('type') == 'gradient' %}selected{% endif %}>Gradient</option>
+                                                <option value="image" {% if background_config.get('type') == 'image' %}selected{% endif %}>Background Image</option>
+                                            </select>
+                                            <small class="form-text text-muted">Choose the type of background for the main application</small>
+                                        </div>
+                                        <div class="col-md-6" id="background-preview">
+                                            <label class="form-label">Preview</label>
+                                            <div id="background-preview-box" class="border rounded p-3 text-center text-white" style="height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                                <small>Background Preview</small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Solid Color Options -->
+                                    <div id="solid-color-options" class="mt-3" style="display: none;">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label for="solid_color" class="form-label">Color</label>
+                                                <input type="color" class="form-control form-control-color" id="solid_color" name="solid_color" 
+                                                       value="{{ background_config.get('solid_color', '#667eea') }}" onchange="updateBackgroundPreview()">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Gradient Options -->
+                                    <div id="gradient-options" class="mt-3" style="display: none;">
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label for="gradient_start" class="form-label">Start Color</label>
+                                                <input type="color" class="form-control form-control-color" id="gradient_start" name="gradient_start" 
+                                                       value="{{ background_config.get('gradient_start', '#667eea') }}" onchange="updateBackgroundPreview()">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="gradient_end" class="form-label">End Color</label>
+                                                <input type="color" class="form-control form-control-color" id="gradient_end" name="gradient_end" 
+                                                       value="{{ background_config.get('gradient_end', '#764ba2') }}" onchange="updateBackgroundPreview()">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="gradient_direction" class="form-label">Direction</label>
+                                                <select class="form-select" id="gradient_direction" name="gradient_direction" onchange="updateBackgroundPreview()">
+                                                    <option value="135deg" {% if background_config.get('gradient_direction', '135deg') == '135deg' %}selected{% endif %}>Diagonal (135°)</option>
+                                                    <option value="90deg" {% if background_config.get('gradient_direction') == '90deg' %}selected{% endif %}>Vertical (90°)</option>
+                                                    <option value="0deg" {% if background_config.get('gradient_direction') == '0deg' %}selected{% endif %}>Horizontal (0°)</option>
+                                                    <option value="45deg" {% if background_config.get('gradient_direction') == '45deg' %}selected{% endif %}>Diagonal (45°)</option>
+                                                    <option value="225deg" {% if background_config.get('gradient_direction') == '225deg' %}selected{% endif %}>Diagonal (225°)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Image Options -->
+                                    <div id="image-options" class="mt-3" style="display: none;">
+                                        <div class="row g-3">
+                                            <div class="col-12">
+                                                <div class="card">
+                                                    <div class="card-header">
+                                                        <h6 class="card-title mb-0">Upload Image File</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="row g-3">
+                                                            <div class="col-md-8">
+                                                                <label for="background_image_file" class="form-label">Choose Image File</label>
+                                                                <input type="file" class="form-control" id="background_image_file" name="background_image_file" 
+                                                                       accept="image/png,image/jpg,image/jpeg,image/gif,image/webp" onchange="updateBackgroundPreview()">
+                                                                <small class="form-text text-muted">Upload PNG, JPG, JPEG, GIF, or WebP images (max 100MB)</small>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label for="image_position" class="form-label">Position</label>
+                                                                <select class="form-select" id="image_position" name="image_position" onchange="updateBackgroundPreview()">
+                                                                    <option value="cover" {% if background_config.get('image_position', 'cover') == 'cover' %}selected{% endif %}>Cover</option>
+                                                                    <option value="contain" {% if background_config.get('image_position') == 'contain' %}selected{% endif %}>Contain</option>
+                                                                    <option value="center" {% if background_config.get('image_position') == 'center' %}selected{% endif %}>Center</option>
+                                                                    <option value="repeat" {% if background_config.get('image_position') == 'repeat' %}selected{% endif %}>Repeat</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="card mt-3">
+                                                    <div class="card-header">
+                                                        <h6 class="card-title mb-0">Or Use Image URL</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="row g-3">
+                                                            <div class="col-12">
+                                                                <label for="background_image_url" class="form-label">Image URL</label>
+                                                                <input type="url" class="form-control" id="background_image_url" name="background_image_url" 
+                                                                       value="{{ background_config.get('image_url', '') }}" placeholder="https://example.com/image.jpg" onchange="updateBackgroundPreview()">
+                                                                <small class="form-text text-muted">URL to background image (HTTPS recommended)</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mt-3">
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-check-lg me-1"></i>Save Settings
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                            
+                            <div class="alert alert-info mt-3">
+                                <strong><i class="bi bi-info-circle me-1"></i>Note:</strong> Additional system configuration options will be available in future updates.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security & Administrative Actions -->
+                <div class="accordion-item shadow-sm mb-3">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed bg-warning text-dark" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#collapseSecurity" 
+                                aria-expanded="false" aria-controls="collapseSecurity">
+                            <i class="bi bi-shield-lock me-2"></i>Security & Administrative Actions
+                        </button>
+                    </h2>
+                    <div id="collapseSecurity" class="accordion-collapse collapse" data-bs-parent="#adminSettingsAccordion">
+                        <div class="accordion-body">
+                            <p class="text-muted mb-3">Manage security settings and perform administrative actions.</p>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <button class="btn btn-warning w-100" onclick="showPasswordResetModal()">
+                                        <i class="bi bi-key me-1"></i>Change Admin Password
+                                    </button>
+                                </div>
+                                <div class="col-md-6">
+                                    <button class="btn btn-info w-100" onclick="exportData()">
+                                        <i class="bi bi-download me-1"></i>Export User Data
+                                    </button>
+                                </div>
+                                <div class="col-md-6">
+                                    <button class="btn btn-secondary w-100" onclick="clearSessions()">
+                                        <i class="bi bi-door-open me-1"></i>Clear All User Sessions
+                                    </button>
+                                </div>
+                                <div class="col-md-6">
+                                    <button class="btn btn-danger w-100" onclick="showMaintenanceModal()">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>Maintenance Mode
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Debug System -->
+                <div class="accordion-item shadow-sm mb-3">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed bg-info text-white" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#collapseDebug" 
+                                aria-expanded="false" aria-controls="collapseDebug">
+                            <i class="bi bi-bug me-2"></i>Debug System
+                        </button>
+                    </h2>
+                    <div id="collapseDebug" class="accordion-collapse collapse" data-bs-parent="#adminSettingsAccordion">
+                        <div class="accordion-body">
+                            <p class="text-muted mb-3">Control debug mode and access debugging tools.</p>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="border rounded p-3 text-center">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span><strong>Debug Mode</strong></span>
+                                            <span id="debugStatus" class="badge bg-{{ 'success' if debug_manager.is_debug_enabled() else 'secondary' }} fs-6">
+                                                {{ 'ON' if debug_manager.is_debug_enabled() else 'OFF' }}
+                                            </span>
+                                        </div>
+                                        <button id="toggleDebugBtn" 
+                                                class="btn btn-{{ 'warning' if debug_manager.is_debug_enabled() else 'success' }} w-100" 
+                                                onclick="toggleDebugMode()">
+                                            {{ '🟡 Disable Debug' if debug_manager.is_debug_enabled() else '🟢 Enable Debug' }}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ url_for('debug_admin.debug_dashboard') }}" class="btn btn-outline-info">
+                                            <i class="bi bi-graph-up me-1"></i>Debug Dashboard
+                                        </a>
+                                        <a href="{{ url_for('debug_admin.view_logs') }}" class="btn btn-outline-secondary">
+                                            <i class="bi bi-journal-text me-1"></i>View Debug Logs
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Configuration -->
+                <div class="accordion-item shadow-sm mb-3">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed bg-primary text-white" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#collapseAIConfig" 
+                                aria-expanded="false" aria-controls="collapseAIConfig">
+                            <i class="bi bi-robot me-2"></i>AI Configuration
+                        </button>
+                    </h2>
+                    <div id="collapseAIConfig" class="accordion-collapse collapse" data-bs-parent="#adminSettingsAccordion">
+                        <div class="accordion-body">
+                            <p class="text-muted mb-3">Configure AI services for enhanced book processing features.</p>
+                            
+                            <form method="POST" action="{{ url_for('admin.update_ai_settings') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                
+                                <!-- AI Provider Selection -->
+                                <div class="mb-3">
+                                    <label for="ai_provider" class="form-label fw-bold">AI Provider</label>
+                                    <select class="form-select" id="ai_provider" name="ai_provider" onchange="toggleProviderSettings()">
+                                        <option value="openai" {{ 'selected' if ai_config and ai_config.get('AI_PROVIDER') == 'openai' else '' }}>OpenAI</option>
+                                        <option value="ollama" {{ 'selected' if ai_config and ai_config.get('AI_PROVIDER') == 'ollama' else '' }}>Ollama (Local)</option>
+                                    </select>
+                                    <small class="form-text text-muted">Choose between cloud-based OpenAI or local Ollama</small>
+                                </div>
+
+                                <!-- OpenAI Settings -->
+                                <div id="openai-settings" class="provider-settings">
+                                    <h6 class="fw-bold text-primary mb-3">OpenAI Configuration</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="openai_api_key" class="form-label">API Key</label>
+                                            <input type="password" class="form-control" id="openai_api_key" name="openai_api_key" 
+                                                   value="{{ ai_config.get('OPENAI_API_KEY', '') if ai_config else '' }}" placeholder="sk-...">
+                                            <small class="form-text text-muted">Your OpenAI API key</small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="openai_model" class="form-label">Model</label>
+                                            <select class="form-select" id="openai_model" name="openai_model">
+                                                <option value="gpt-4o-mini" {{ 'selected' if ai_config and ai_config.get('OPENAI_MODEL') == 'gpt-4o-mini' else '' }}>GPT-4o Mini (Recommended)</option>
+                                                <option value="gpt-4o" {{ 'selected' if ai_config and ai_config.get('OPENAI_MODEL') == 'gpt-4o' else '' }}>GPT-4o</option>
+                                                <option value="gpt-4-turbo" {{ 'selected' if ai_config and ai_config.get('OPENAI_MODEL') == 'gpt-4-turbo' else '' }}>GPT-4 Turbo</option>
+                                                <option value="gpt-4" {{ 'selected' if ai_config and ai_config.get('OPENAI_MODEL') == 'gpt-4' else '' }}>GPT-4</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <label for="openai_base_url" class="form-label">Base URL</label>
+                                            <input type="url" class="form-control" id="openai_base_url" name="openai_base_url" 
+                                                   value="{{ ai_config.get('OPENAI_BASE_URL', 'https://api.openai.com/v1') if ai_config else 'https://api.openai.com/v1' }}">
+                                            <small class="form-text text-muted">API endpoint URL (use default unless using a proxy)</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Ollama Settings -->
+                                <div id="ollama-settings" class="provider-settings" style="display: none;">
+                                    <h6 class="fw-bold text-success mb-3">Ollama Configuration</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-8">
+                                            <label for="ollama_base_url" class="form-label">Base URL</label>
+                                            <div class="input-group">
+                                                <input type="url" class="form-control" id="ollama_base_url" name="ollama_base_url" 
+                                                       value="{{ ai_config.get('OLLAMA_BASE_URL', 'http://localhost:11434/v1') if ai_config else 'http://localhost:11434/v1' }}">
+                                                <button type="button" class="btn btn-outline-secondary" onclick="testOllamaConnection()">
+                                                    <i class="bi bi-wifi me-1"></i>Test & Load Models
+                                                </button>
+                                            </div>
+                                            <small class="form-text text-muted">Ollama server URL</small>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="ollama_model" class="form-label">Model</label>
+                                            <select class="form-select" id="ollama_model" name="ollama_model">
+                                                <option value="">Select model after testing connection</option>
+                                                <option value="{{ ai_config.get('OLLAMA_MODEL', 'llama3.2-vision:11b') if ai_config else 'llama3.2-vision:11b' }}" selected>
+                                                    {{ ai_config.get('OLLAMA_MODEL', 'llama3.2-vision:11b') if ai_config else 'llama3.2-vision:11b' }}
+                                                </option>
+                                            </select>
+                                            <small class="form-text text-muted">Vision-capable model name</small>
+                                            <div class="form-check mt-2">
+                                                <input class="form-check-input" type="checkbox" id="ollama_manual_model">
+                                                <label class="form-check-label" for="ollama_manual_model">
+                                                    Enter model name manually
+                                                </label>
+                                            </div>
+                                            <input type="text" class="form-control mt-2" id="ollama_model_manual" name="ollama_model_manual" 
+                                                   style="display: none;" placeholder="Enter model name manually">
+                                        </div>
+                                    </div>
+                                    <!-- Ollama Test Results Area -->
+                                    <div id="ollama-test-results" class="mt-3"></div>
+                                </div>
+
+                                <!-- General AI Settings -->
+                                <div class="mt-4">
+                                    <h6 class="fw-bold text-secondary mb-3">General Settings</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label for="ai_timeout" class="form-label">Timeout (seconds)</label>
+                                            <input type="number" class="form-control" id="ai_timeout" name="ai_timeout" 
+                                                   value="{{ ai_config.get('AI_TIMEOUT', '30') if ai_config else '30' }}" min="10" max="120">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="ai_max_tokens" class="form-label">Max Tokens</label>
+                                            <input type="number" class="form-control" id="ai_max_tokens" name="ai_max_tokens" 
+                                                   value="{{ ai_config.get('AI_MAX_TOKENS', '1000') if ai_config else '1000' }}" min="100" max="128000">
+                                            <small class="form-text text-muted">Supports up to 128k. Values above 16k may be slower or rejected by some models.</small>
+                                            <div id="ai-max-tokens-warning" class="form-text text-warning" style="display:none;">
+                                                Warning: Values above 16k can be slow and may not be supported by all providers/models.
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="ai_temperature" class="form-label">Temperature</label>
+                                            <input type="number" class="form-control" id="ai_temperature" name="ai_temperature" 
+                                                   value="{{ ai_config.get('AI_TEMPERATURE', '0.1') if ai_config else '0.1' }}" min="0" max="1" step="0.1">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Feature Settings -->
+                                <div class="mt-4">
+                                    <h6 class="fw-bold text-info mb-3">Feature Settings</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="ai_book_extraction_enabled" 
+                                                       name="ai_book_extraction_enabled" {{ 'checked' if ai_config and ai_config.get('AI_BOOK_EXTRACTION_ENABLED') == 'true' else '' }}>
+                                                <label class="form-check-label" for="ai_book_extraction_enabled">
+                                                    Enable AI Book Extraction
+                                                </label>
+                                            </div>
+                                            <small class="form-text text-muted">Allow users to process book images with AI</small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="ai_book_extraction_auto_search" 
+                                                       name="ai_book_extraction_auto_search" {{ 'checked' if ai_config and ai_config.get('AI_BOOK_EXTRACTION_AUTO_SEARCH') == 'true' else '' }}>
+                                                <label class="form-check-label" for="ai_book_extraction_auto_search">
+                                                    Auto-search after AI extraction
+                                                </label>
+                                            </div>
+                                            <small class="form-text text-muted">Automatically search APIs with extracted data</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check2 me-1"></i>Save AI Settings
+                                    </button>
+                                </div>
+                            </form>
+                            <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const input = document.getElementById('ai_max_tokens');
+                                const warn = document.getElementById('ai-max-tokens-warning');
+                                if (input && warn) {
+                                    const toggle = () => {
+                                        const val = parseInt(input.value || '0', 10);
+                                        warn.style.display = val > 16000 ? 'block' : 'none';
+                                    };
+                                    input.addEventListener('input', toggle);
+                                    toggle();
+                                }
+                            });
+                            </script>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SMTP Configuration -->
+                <div class="accordion-item shadow-sm mb-3">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed bg-success text-white" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#collapseSMTPConfig" 
+                                aria-expanded="false" aria-controls="collapseSMTPConfig">
+                            <i class="bi bi-envelope-at me-2"></i>SMTP Configuration
+                        </button>
+                    </h2>
+                    <div id="collapseSMTPConfig" class="accordion-collapse collapse" data-bs-parent="#adminSettingsAccordion">
+                        <div class="accordion-body">
+                            <p class="text-muted mb-3">Configure SMTP server settings for email functionality.</p>
+                            
+                            <form method="POST" action="{{ url_for('admin.update_smtp_settings') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                
+                                <!-- SMTP Server Settings -->
+                                <div class="mb-4">
+                                    <h6 class="fw-bold text-success mb-3">Server Settings</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-8">
+                                            <label for="smtp_server" class="form-label">SMTP Server</label>
+                                            <input type="text" class="form-control" id="smtp_server" name="smtp_server" 
+                                                   value="{{ smtp_config.get('smtp_server', '') if smtp_config else '' }}" 
+                                                   placeholder="smtp.gmail.com">
+                                            <small class="form-text text-muted">SMTP server hostname or IP address</small>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="smtp_port" class="form-label">Port</label>
+                                            <input type="number" class="form-control" id="smtp_port" name="smtp_port" 
+                                                   value="{{ smtp_config.get('smtp_port', 587) if smtp_config else 587 }}" 
+                                                   min="1" max="65535" placeholder="587">
+                                            <small class="form-text text-muted">Common: 587 (TLS), 465 (SSL), 25</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Authentication -->
+                                <div class="mb-4">
+                                    <h6 class="fw-bold text-primary mb-3">Authentication</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="smtp_username" class="form-label">Username</label>
+                                            <input type="text" class="form-control" id="smtp_username" name="smtp_username" 
+                                                   value="{{ smtp_config.get('smtp_username', '') if smtp_config else '' }}" 
+                                                   placeholder="user@example.com" autocomplete="off">
+                                            <small class="form-text text-muted">SMTP authentication username (often an email)</small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="smtp_password" class="form-label">Password</label>
+                                            <input type="password" class="form-control" id="smtp_password" name="smtp_password" 
+                                                   value="{{ smtp_config.get('smtp_password', '') if smtp_config else '' }}" 
+                                                   placeholder="••••••••" autocomplete="new-password">
+                                            <small class="form-text text-muted">SMTP authentication password or app password</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Security & Sender Settings -->
+                                <div class="mb-4">
+                                    <h6 class="fw-bold text-info mb-3">Security & Sender Settings</h6>
+                                    <div class="row g-3">
+                                        {% set smtp_security = smtp_config.get('smtp_security', 'starttls') if smtp_config else 'starttls' %}
+                                        <div class="col-md-4">
+                                            <label for="smtp_security" class="form-label">Security</label>
+                                            <select class="form-select" id="smtp_security" name="smtp_security">
+                                                <option value="starttls" {{ 'selected' if smtp_security == 'starttls' else '' }}>STARTTLS (port 587, recommended)</option>
+                                                <option value="ssl" {{ 'selected' if smtp_security == 'ssl' else '' }}>Implicit SSL (port 465)</option>
+                                                <option value="none" {{ 'selected' if smtp_security == 'none' else '' }}>None (port 25 or custom)</option>
+                                            </select>
+                                            <small class="form-text text-muted">Select the encryption mode required by your mail provider.</small>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="smtp_from_email" class="form-label">From Email</label>
+                                            <input type="email" class="form-control" id="smtp_from_email" name="smtp_from_email" 
+                                                   value="{{ smtp_config.get('smtp_from_email', '') if smtp_config else '' }}" 
+                                                   placeholder="noreply@mybibliotheca.local">
+                                            <small class="form-text text-muted">Sender email address</small>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="smtp_from_name" class="form-label">From Name</label>
+                                            <input type="text" class="form-control" id="smtp_from_name" name="smtp_from_name" 
+                                                   value="{{ smtp_config.get('smtp_from_name', 'MyBibliotheca') if smtp_config else 'MyBibliotheca' }}" 
+                                                   placeholder="MyBibliotheca">
+                                            <small class="form-text text-muted">Sender display name</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-4">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="testSMTPConnection()">
+                                        <i class="bi bi-wifi me-1"></i>Test Connection
+                                    </button>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-check2 me-1"></i>Save SMTP Settings
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <div class="alert alert-info mt-3">
+                                <strong><i class="bi bi-info-circle me-1"></i>Common SMTP Providers:</strong><br>
+                                <small>
+                                    <strong>Gmail:</strong> smtp.gmail.com:587 (Use App Password)<br>
+                                    <strong>Outlook/Office365:</strong> smtp-mail.outlook.com:587<br>
+                                    <strong>Yahoo:</strong> smtp.mail.yahoo.com:587<br>
+                                    <strong>SendGrid:</strong> smtp.sendgrid.net:587
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Backup Configuration -->
+                <div class="accordion-item shadow-sm mb-3">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed bg-dark text-white" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#collapseBackupConfig" 
+                                aria-expanded="false" aria-controls="collapseBackupConfig">
+                            <i class="bi bi-archive me-2"></i>Backup Configuration
+                        </button>
+                    </h2>
+                    <div id="collapseBackupConfig" class="accordion-collapse collapse" data-bs-parent="#adminSettingsAccordion">
+                        <div class="accordion-body">
+                            <p class="text-muted mb-3">Configure backup file storage location.</p>
+                            
+                            <form method="POST" action="{{ url_for('admin.update_backup_settings') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                
+                                <div class="mb-4">
+                                    <h6 class="fw-bold text-dark mb-3">Backup Storage</h6>
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label for="backup_directory" class="form-label">Backup Directory</label>
+                                            <input type="text" class="form-control" id="backup_directory" name="backup_directory" 
+                                                   value="{{ backup_config.get('backup_directory', 'data/backups') if backup_config else 'data/backups' }}" 
+                                                   placeholder="data/backups">
+                                            <small class="form-text text-muted">
+                                                Path where backup files will be stored (relative to application root or absolute path).
+                                                Default: <code>data/backups</code>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                                    <button type="submit" class="btn btn-dark">
+                                        <i class="bi bi-check2 me-1"></i>Save Backup Settings
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <div class="alert alert-info mt-3">
+                                <strong><i class="bi bi-info-circle me-1"></i>Note:</strong><br>
+                                <small>
+                                    • The directory will be created automatically if it doesn't exist<br>
+                                    • Use relative paths (e.g., <code>data/backups</code>) or absolute paths (e.g., <code>/mnt/backups</code>)<br>
+                                    • For Docker deployments, ensure the path is within a mounted volume<br>
+                                    • Existing backups will remain in their current location until manually moved
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Information -->
+                <div class="accordion-item shadow-sm mb-3">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed bg-secondary text-white" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#collapseSystemInfo" 
+                                aria-expanded="false" aria-controls="collapseSystemInfo">
+                            <i class="bi bi-info-square me-2"></i>System Information
+                        </button>
+                    </h2>
+                    <div id="collapseSystemInfo" class="accordion-collapse collapse" data-bs-parent="#adminSettingsAccordion">
+                        <div class="accordion-body">
+                            <p class="text-muted mb-3">View current system status and information.</p>
+                            
+                            <div class="row text-center g-3">
+                                <div class="col-md-4">
+                                    <div class="border rounded p-3">
+                                        <h5 class="text-primary">{{ current_user.username }}</h5>
+                                        <small class="text-muted">Logged in as Admin</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="border rounded p-3">
+                                        <h5 class="text-success">Online</h5>
+                                        <small class="text-muted">System Status</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="border rounded p-3">
+                                        <h5 class="text-info">Multi-User Platform</h5>
+                                        <small class="text-muted">Version</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="{{ url_for('main.library') }}" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Library
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Password Reset Modal -->
+<div class="modal fade" id="passwordResetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-key me-2"></i>Change Admin Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <strong><i class="bi bi-exclamation-triangle me-1"></i>Security Notice:</strong> For security reasons, admin passwords should be changed using the CLI tool.
+                </div>
+                <p>To change your admin password, run the following command on the server:</p>
+                <div class="bg-dark text-light p-3 rounded">
+                    <code>python admin_tools.py reset-admin-password</code>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Maintenance Mode Modal -->
+<div class="modal fade" id="maintenanceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Maintenance Mode</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <strong><i class="bi bi-exclamation-triangle me-1"></i>Warning:</strong> Maintenance mode will prevent all users (except admins) from accessing the system.
+                </div>
+                <p>This feature is not yet implemented in the current version.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showPasswordResetModal() {
+    new bootstrap.Modal(document.getElementById('passwordResetModal')).show();
+}
+
+function showMaintenanceModal() {
+    new bootstrap.Modal(document.getElementById('maintenanceModal')).show();
+}
+
+function exportData() {
+    alert('📤 Data export feature is not yet implemented.');
+}
+
+function clearSessions() {
+    if (confirm('🚪 Are you sure you want to clear all user sessions? This will log out all users.')) {
+        alert('Feature not yet implemented.');
+    }
+}
+
+async function toggleDebugMode() {
+    const btn = document.getElementById('toggleDebugBtn');
+    const status = document.getElementById('debugStatus');
+    
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Toggling...';
+    
+    try {
+        const response = await fetch('/admin/debug/toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Update status badge
+            status.textContent = data.debug_enabled ? 'ON' : 'OFF';
+            status.className = data.debug_enabled ? 'badge bg-success fs-6' : 'badge bg-secondary fs-6';
+            
+            // Update button
+            btn.className = data.debug_enabled ? 'btn btn-warning w-100' : 'btn btn-success w-100';
+            btn.innerHTML = data.debug_enabled ? '🟡 Disable Debug' : '🟢 Enable Debug';
+            
+            // Show success message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show mt-2';
+            alertDiv.innerHTML = `
+                <strong>✅ Success:</strong> Debug mode ${data.debug_enabled ? 'enabled' : 'disabled'}.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            btn.parentNode.appendChild(alertDiv);
+            
+            // Auto-dismiss after 3 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 3000);
+        } else {
+            throw new Error('Failed to toggle debug mode');
+        }
+    } catch (error) {
+        console.error('Error toggling debug mode:', error);
+        
+        // Show error message
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-2';
+        alertDiv.innerHTML = `
+            <strong>❌ Error:</strong> Failed to toggle debug mode. Please try again.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        btn.parentNode.appendChild(alertDiv);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+    
+    btn.disabled = false;
+}
+
+// AI Configuration Functions
+function toggleProviderSettings() {
+    const provider = document.getElementById('ai_provider').value;
+    const openaiSettings = document.getElementById('openai-settings');
+    const ollamaSettings = document.getElementById('ollama-settings');
+    
+    if (provider === 'openai') {
+        openaiSettings.style.display = 'block';
+        ollamaSettings.style.display = 'none';
+    } else if (provider === 'ollama') {
+        openaiSettings.style.display = 'none';
+        ollamaSettings.style.display = 'block';
+    }
+}
+
+async function testSMTPConnection() {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-1"></i>Testing...';
+    
+    try {
+        const formData = new FormData();
+        formData.append('csrf_token', '{{ csrf_token() }}');
+        formData.append('smtp_server', document.getElementById('smtp_server').value);
+        formData.append('smtp_port', document.getElementById('smtp_port').value);
+        formData.append('smtp_username', document.getElementById('smtp_username').value);
+        formData.append('smtp_password', document.getElementById('smtp_password').value);
+        const securityField = document.getElementById('smtp_security');
+        if (securityField) {
+            formData.append('smtp_security', securityField.value);
+        }
+        
+        const response = await fetch('/admin/test-smtp-connection', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        // Remove any existing alerts
+        const existingAlerts = document.querySelectorAll('.smtp-test-alert');
+        existingAlerts.forEach(alert => alert.remove());
+        
+        // Create new alert
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${result.success ? 'success' : 'danger'} alert-dismissible fade show mt-3 smtp-test-alert`;
+        alertDiv.innerHTML = `
+            <strong>${result.success ? '✅ Success:' : '❌ Error:'}</strong> ${result.message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        btn.parentNode.parentNode.appendChild(alertDiv);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    } catch (error) {
+        console.error('Error testing SMTP connection:', error);
+        
+        // Show error message
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3 smtp-test-alert';
+        alertDiv.innerHTML = `
+            <strong>❌ Error:</strong> Failed to test SMTP connection. Please try again.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        btn.parentNode.parentNode.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+    
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+}
+
+async function testAIConnection() {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-1"></i>Testing...';
+    
+    try {
+        const provider = document.getElementById('ai_provider').value;
+        const formData = new FormData();
+        formData.append('csrf_token', '{{ csrf_token() }}');
+        formData.append('ai_provider', provider);
+        
+        if (provider === 'openai') {
+            formData.append('openai_api_key', document.getElementById('openai_api_key').value);
+            formData.append('openai_base_url', document.getElementById('openai_base_url').value);
+            formData.append('openai_model', document.getElementById('openai_model').value);
+        } else if (provider === 'ollama') {
+            formData.append('ollama_base_url', document.getElementById('ollama_base_url').value);
+            formData.append('ollama_model', document.getElementById('ollama_model').value);
+        }
+        
+        const response = await fetch('/admin/test-ai-connection', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        // Remove any existing alerts
+        const existingAlerts = document.querySelectorAll('.ai-test-alert');
+        existingAlerts.forEach(alert => alert.remove());
+        
+        // Create new alert
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${result.success ? 'success' : 'danger'} alert-dismissible fade show mt-3 ai-test-alert`;
+        
+        let alertContent = `<strong>${result.success ? '✅ Success:' : '❌ Error:'}</strong> ${result.message}`;
+        
+        // Add model information for successful Ollama connections
+        if (result.success && result.models && Array.isArray(result.models) && result.models.length > 0) {
+            alertContent += `<br><br><strong>Available Models:</strong><ul class="mt-2 mb-1">`;
+            result.models.forEach(model => {
+                alertContent += `<li><code>${model}</code></li>`;
+            });
+            alertContent += `</ul>`;
+        }
+        
+        alertContent += `<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+        alertDiv.innerHTML = alertContent;
+        btn.parentNode.appendChild(alertDiv);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+        
+    } catch (error) {
+        // Remove any existing alerts
+        const existingAlerts = document.querySelectorAll('.ai-test-alert');
+        existingAlerts.forEach(alert => alert.remove());
+        
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3 ai-test-alert';
+        alertDiv.innerHTML = `
+            <strong>❌ Error:</strong> Failed to test AI connection. Please try again.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        btn.parentNode.appendChild(alertDiv);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+    
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+}
+
+async function testOllamaConnection() {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    const ollamaUrl = document.getElementById('ollama_base_url').value;
+    const resultsDiv = document.getElementById('ollama-test-results');
+    
+    if (!ollamaUrl) {
+        alert('Please enter the Ollama server URL first');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-1"></i>Testing...';
+    
+    // Clear previous results
+    resultsDiv.innerHTML = '';
+    
+    try {
+        const formData = new FormData();
+        formData.append('csrf_token', '{{ csrf_token() }}');
+        formData.append('ollama_base_url', ollamaUrl);
+        
+        const response = await fetch('/admin/test-ollama-connection', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.models) {
+            // Populate model dropdown
+            const modelSelect = document.getElementById('ollama_model');
+            modelSelect.innerHTML = '<option value="">Select a model</option>';
+            
+            result.models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.name;
+                option.textContent = `${model.name} (${model.size})`;
+                modelSelect.appendChild(option);
+            });
+            
+            // Show success message
+            resultsDiv.innerHTML = `
+                <div class="alert alert-success alert-dismissible fade show">
+                    <i class="bi bi-check-circle me-1"></i>
+                    <strong>Connection successful!</strong> Found ${result.models.length} models. Please select one from the dropdown above.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        } else {
+            // Show error message
+            resultsDiv.innerHTML = `
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    <strong>Connection failed:</strong> ${result.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+        
+    } catch (error) {
+        resultsDiv.innerHTML = `
+            <div class="alert alert-danger alert-dismissible fade show">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                <strong>Error:</strong> Failed to test connection. Please try again.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+    }
+    
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+}
+
+// Handle manual model entry toggle
+document.addEventListener('DOMContentLoaded', function() {
+    const manualCheckbox = document.getElementById('ollama_manual_model');
+    const modelSelect = document.getElementById('ollama_model');
+    const manualInput = document.getElementById('ollama_model_manual');
+    
+    if (manualCheckbox) {
+        manualCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                modelSelect.style.display = 'none';
+                manualInput.style.display = 'block';
+                manualInput.required = true;
+                modelSelect.required = false;
+            } else {
+                modelSelect.style.display = 'block';
+                manualInput.style.display = 'none';
+                manualInput.required = false;
+                modelSelect.required = true;
+            }
+        });
+    }
+});
+
+// Initialize provider settings on page load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleProviderSettings();
+    toggleBackgroundOptions();
+    updateBackgroundPreview();
+
+    try {
+        const params = new URLSearchParams(window.location.search);
+        if ((params.get('section') || '').toLowerCase() === 'ai') {
+            const aiCollapse = document.getElementById('collapseAIConfig');
+            if (aiCollapse && typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
+                const instance = bootstrap.Collapse.getOrCreateInstance(aiCollapse, { toggle: false });
+                instance.show();
+                setTimeout(() => {
+                    try {
+                        aiCollapse.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } catch (err) {
+                        console.debug('AI collapse scroll failed', err);
+                    }
+                }, 250);
+            }
+        }
+    } catch (err) {
+        console.debug('AI collapse init failed', err);
+    }
+});
+
+// Background configuration functions
+function toggleBackgroundOptions() {
+    const backgroundType = document.getElementById('background_type').value;
+    const solidOptions = document.getElementById('solid-color-options');
+    const gradientOptions = document.getElementById('gradient-options');
+    const imageOptions = document.getElementById('image-options');
+    
+    // Hide all options first
+    solidOptions.style.display = 'none';
+    gradientOptions.style.display = 'none';
+    imageOptions.style.display = 'none';
+    
+    // Clear file input and URL when switching away from image mode
+    if (backgroundType !== 'image') {
+        const fileInput = document.getElementById('background_image_file');
+        const urlInput = document.getElementById('background_image_url');
+        if (fileInput) fileInput.value = '';
+        if (urlInput) urlInput.value = '';
+    }
+    
+    // Show relevant options
+    switch(backgroundType) {
+        case 'solid':
+            solidOptions.style.display = 'block';
+            break;
+        case 'gradient':
+            gradientOptions.style.display = 'block';
+            break;
+        case 'image':
+            imageOptions.style.display = 'block';
+            break;
+    }
+    
+    updateBackgroundPreview();
+}
+
+function updateBackgroundPreview() {
+    const backgroundType = document.getElementById('background_type').value;
+    const previewBox = document.getElementById('background-preview-box');
+    
+    // Clear previous styles first
+    previewBox.style.background = '';
+    previewBox.style.backgroundSize = '';
+    previewBox.style.backgroundRepeat = '';
+    previewBox.style.backgroundPosition = '';
+    previewBox.innerHTML = '';
+    
+    switch(backgroundType) {
+        case 'default':
+            previewBox.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            previewBox.innerHTML = '<small>Background Preview</small>';
+            break;
+        case 'solid':
+            const solidColor = document.getElementById('solid_color').value;
+            previewBox.style.background = solidColor;
+            previewBox.innerHTML = '<small>Background Preview</small>';
+            break;
+        case 'gradient':
+            const startColor = document.getElementById('gradient_start').value;
+            const endColor = document.getElementById('gradient_end').value;
+            const direction = document.getElementById('gradient_direction').value;
+            previewBox.style.background = `linear-gradient(${direction}, ${startColor} 0%, ${endColor} 100%)`;
+            previewBox.innerHTML = '<small>Background Preview</small>';
+            break;
+        case 'image':
+            const imageUrl = document.getElementById('background_image_url').value;
+            const imageFile = document.getElementById('background_image_file').files[0];
+            const imagePosition = document.getElementById('image_position').value;
+            
+            if (imageFile) {
+                // If there's an uploaded file, preview that
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const fileUrl = e.target.result;
+                    applyImageBackground(previewBox, fileUrl, imagePosition);
+                    previewBox.innerHTML = '<small>Uploaded Image Preview</small>';
+                };
+                reader.readAsDataURL(imageFile);
+            } else if (imageUrl) {
+                // Fall back to URL if no file uploaded
+                applyImageBackground(previewBox, imageUrl, imagePosition);
+                previewBox.innerHTML = '<small>URL Image Preview</small>';
+            } else {
+                previewBox.style.background = '#f8f9fa';
+                previewBox.innerHTML = '<small class="text-muted">Upload file or enter image URL to preview</small>';
+            }
+            break;
+    }
+}
+
+function applyImageBackground(element, imageUrl, position) {
+    switch(position) {
+        case 'cover':
+            element.style.background = `url('${imageUrl}') center center`;
+            element.style.backgroundSize = 'cover';
+            element.style.backgroundRepeat = 'no-repeat';
+            break;
+        case 'contain':
+            element.style.background = `url('${imageUrl}') center center`;
+            element.style.backgroundSize = 'contain';
+            element.style.backgroundRepeat = 'no-repeat';
+            break;
+        case 'center':
+            element.style.background = `url('${imageUrl}') center center`;
+            element.style.backgroundSize = 'auto';
+            element.style.backgroundRepeat = 'no-repeat';
+            break;
+        case 'repeat':
+            element.style.background = `url('${imageUrl}')`;
+            element.style.backgroundSize = 'auto';
+            element.style.backgroundRepeat = 'repeat';
+            break;
+    }
+}
+
+// Add spinning animation for loading states
+const style = document.createElement('style');
+style.textContent = `
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

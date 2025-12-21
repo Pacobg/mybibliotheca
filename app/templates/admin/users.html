@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - MyBibliotheca{% endblock %}
+
+{% block content %}
+<style>
+.icon-square {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    font-weight: bold;
+    color: white;
+    margin-right: 6px;
+    font-size: 12px;
+}
+.icon-square.users { background-color: #0d6efd; }
+.icon-square.dash { background-color: #6f42c1; }
+.icon-square.create { background-color: #198754; }
+.icon-square.search { background-color: #20c997; }
+</style>
+
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                User Management
+            </h2>
+            <div class="btn-group">
+                <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+                    Dashboard
+                </a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-outline-success">
+                    Create User
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-8">
+                        <label for="search" class="form-label">Search Users</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="search" 
+                               name="search" 
+                               value="{{ search }}"
+                               placeholder="Search by username or email...">
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            Search
+                        </button>
+                        {% if search %}
+                        <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+                            Clear
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    Users
+                    {% if search %}
+                        <small class="text-muted">(filtered by "{{ search }}")</small>
+                    {% endif %}
+                </h5>
+                <span class="badge bg-secondary">{{ users.total }} total</span>
+            </div>
+            <div class="card-body p-0">
+                {% if users.items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Books</th>
+                                    <th>Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users.items %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div>
+                                                <strong>
+                                                    <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" 
+                                                       class="text-decoration-none">
+                                                        {{ user.username }}
+                                                    </a>
+                                                </strong>
+                                                {% if user.is_admin %}
+                                                    <span class="badge bg-danger ms-1">Admin</span>
+                                                {% endif %}
+                                                {% if user.id == current_user.id %}
+                                                    <span class="badge bg-primary ms-1">You</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">{{ user.email }}</span>
+                                    </td>
+                                    <td>
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ user.books|length }}</span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ user.created_at.strftime('%m/%d/%Y') }}
+                                        </small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if users.pages > 1 %}
+                    <div class="card-footer">
+                        <nav aria-label="User pagination">
+                            <ul class="pagination pagination-sm justify-content-center mb-0">
+                                {% if users.has_prev %}
+                                    <li class="page-item">
+                                        <a class="page-link" 
+                                           href="{{ url_for('admin.users', page=users.prev_num, search=search) }}">
+                                            Previous
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for page_num in users.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                                    {% if page_num %}
+                                        {% if page_num != users.page %}
+                                            <li class="page-item">
+                                                <a class="page-link" 
+                                                   href="{{ url_for('admin.users', page=page_num, search=search) }}">
+                                                    {{ page_num }}
+                                                </a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ page_num }}</span>
+                                            </li>
+                                        {% endif %}
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if users.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" 
+                                           href="{{ url_for('admin.users', page=users.next_num, search=search) }}">
+                                            Next
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        
+                        <div class="text-center mt-2">
+                            <small class="text-muted">
+                                Showing {{ users.per_page * (users.page - 1) + 1 }} to 
+                                {{ users.per_page * (users.page - 1) + users.items|length }} 
+                                of {{ users.total }} users
+                            </small>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <h5 class="text-muted">No users found</h5>
+                        {% if search %}
+                            <p class="text-muted">Try adjusting your search criteria.</p>
+                            <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary">
+                                View All Users
+                            </a>
+                        {% else %}
+                            <p class="text-muted">No users have registered yet.</p>
+                            <a href="{{ url_for('auth.register') }}" class="btn btn-outline-success">
+                                Create First User
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions (Future Enhancement) -->
+{% endblock %}

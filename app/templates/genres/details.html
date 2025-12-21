@@ -1,0 +1,428 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category.name }} - Genres - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Breadcrumb Navigation -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('genres.index') }}">
+                            <i class="bi bi-tags"></i> Genres
+                        </a>
+                    </li>
+                    {% for ancestor in category.get_ancestors() %}
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('genres.category_details', category_id=ancestor.id) }}">
+                            {{ ancestor.name }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                    <li class="breadcrumb-item active" aria-current="page">{{ category.name }}</li>
+                </ol>
+            </nav>
+
+            <!-- Category Header -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                {% if category.icon %}
+                                    <span class="display-6 me-3">{{ category.icon }}</span>
+                                {% else %}
+                                    <i class="bi bi-tag display-6 me-3"></i>
+                                {% endif %}
+                                <div>
+                                    <h1 class="mb-1">{{ category.name }}</h1>
+                                    {% if category.color %}
+                                        <div class="color-indicator-large" style="background-color: {{ category.color }};"></div>
+                                    {% endif %}
+                                    <p class="text-muted mb-0">
+                                        Level {{ category.level }} Category
+                                        {% if category.parent_id %}
+                                            <span class="mx-2">•</span>
+                                            Child of <a href="{{ url_for('genres.category_details', category_id=category.parent_id) }}">{{ parent_category.name if parent_category else 'Unknown' }}</a>
+                                        {% else %}
+                                            <span class="mx-2">•</span>
+                                            Root Category
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Compact Statistics -->
+                        <div class="col-md-3">
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <h4 class="text-primary mb-0">{{ category.book_count }}</h4>
+                                    <small class="text-muted">Books</small>
+                                </div>
+                                <div class="col-6">
+                                    <h4 class="text-info mb-0">{{ children|length if children else 0 }}</h4>
+                                    <small class="text-muted">Subcategories</small>
+                                </div>
+                                {% if total_books_with_descendants > category.book_count %}
+                                <div class="col-12 mt-2">
+                                    <h5 class="text-success mb-0">{{ total_books_with_descendants }}</h5>
+                                    <small class="text-muted">Total with descendants</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Compact Action Buttons -->
+                        <div class="col-md-3">
+                            <div class="btn-group w-100" role="group">
+                                <a href="{{ url_for('genres.edit_category', category_id=category.id) }}" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{{ url_for('genres.add_category', parent_id=category.id) }}" class="btn btn-success btn-sm">
+                                    <i class="bi bi-plus-circle"></i>
+                                </a>
+                                {% if category.book_count > 0 %}
+                                <a href="{{ url_for('main.library') }}?category={{ category.id }}" class="btn btn-info btn-sm" title="View {{ category.book_count }} books">
+                                    <i class="bi bi-book"></i> ({{ category.book_count }})
+                                </a>
+                                {% endif %}
+                                <a href="{{ url_for('genres.merge_categories', source_id=category.id) }}" class="btn btn-outline-secondary btn-sm" title="Merge with Another Category">
+                                    <i class="bi bi-arrow-down-up"></i>
+                                </a>
+                                <a href="{{ url_for('genres.hierarchy_view', highlight=category.id) }}" class="btn btn-outline-secondary btn-sm" title="View in Hierarchy">
+                                    <i class="bi bi-diagram-3"></i>
+                                </a>
+                                {% if not children or children|length == 0 %}
+                                <form method="POST" action="{{ url_for('genres.delete_category', category_id=category.id) }}" 
+                                      class="d-inline" onsubmit="return confirm('Are you sure you want to delete {{ category.name }}?{% if category.book_count > 0 %} This will remove the category from {{ category.book_count }} book(s).{% endif %} This action cannot be undone.')">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete Category">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Description and Aliases (if present) -->
+                    {% if category.description or category.aliases %}
+                    <div class="row mt-3">
+                        {% if category.description %}
+                        <div class="col-md-8">
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-text-paragraph"></i> Description
+                            </h6>
+                            <p class="mb-0">{{ category.description }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if category.aliases %}
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-tags"></i> Also Known As
+                            </h6>
+                            <div class="aliases">
+                                {% for alias in category.aliases %}
+                                <span class="badge bg-secondary me-1 mb-1">{{ alias }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Books in this Category -->
+            {% if books and books|length > 0 %}
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-book"></i> Books in {{ category.name }} ({{ books|length }})
+                    </h5>
+                    <div>
+                        {% if total_books_with_descendants > books|length %}
+                        <small class="text-muted me-3">
+                            {{ total_books_with_descendants }} total including subcategories
+                        </small>
+                        {% endif %}
+                        <a href="{{ url_for('main.add_book') }}" class="btn btn-sm btn-success">
+                            <i class="bi bi-plus-circle"></i> Add Book
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        {% for book in books %}
+                        <div class="col-md-6 col-lg-4 col-xl-3 mb-2">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="row g-0 h-100">
+                                    <div class="col-3">
+                                        {% if book.cover_url %}
+                                            <img src="{{ book.cover_url }}" 
+                                                 alt="{{ book.title }}" 
+                                                 class="img-fluid rounded-start h-100"
+                                                 style="object-fit: cover; max-height: 120px;">
+                                        {% else %}
+                                            <div class="bg-light rounded-start h-100 d-flex align-items-center justify-content-center" 
+                                                 style="min-height: 120px;">
+                                                <i class="bi bi-book text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-9">
+                                        <div class="card-body p-2">
+                                            <h6 class="card-title mb-1" style="font-size: 0.875rem; line-height: 1.2;">
+                                                <a href="{{ url_for('main.view_book_enhanced', uid=book.uid) }}" 
+                                                   class="text-decoration-none">
+                                                    {{ book.title[:40] }}{% if book.title|length > 40 %}...{% endif %}
+                                                </a>
+                                            </h6>
+                                            
+                                            {% if book.authors and book.authors|length > 0 %}
+                                            <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
+                                                <i class="bi bi-person"></i> 
+                                                {{ book.authors[0].name if book.authors[0].name is defined else book.authors[0] }}
+                                                {% if book.authors|length > 1 %}+{{ book.authors|length - 1 }}{% endif %}
+                                            </small>
+                                            {% endif %}
+                                            
+                                            <!-- Compact status badges -->
+                                            <div class="mt-1">
+                                                {% if book.reading_status is defined %}
+                                                <span class="badge bg-{{ 'success' if book.reading_status == 'read' else 'warning' if book.reading_status == 'reading' else 'primary' if book.reading_status == 'currently-reading' else 'secondary' }} text-white" 
+                                                      style="font-size: 0.6rem;">
+                                                    {{ book.reading_status.replace('_', ' ').replace('-', ' ').title() }}
+                                                </span>
+                                                {% endif %}
+                                                
+                                                {% if book.user_rating %}
+                                                <span class="badge bg-warning text-dark" style="font-size: 0.6rem;">
+                                                    <i class="bi bi-star-fill"></i> {{ book.user_rating }}
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card mb-4">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-book display-1 text-muted"></i>
+                    <h3 class="mt-3 text-muted">No Books Found</h3>
+                    <p class="text-muted">
+                        No books in the "{{ category.name }}" category were found in your library.
+                        {% if total_books_with_descendants > 0 %}
+                        <br>However, there are {{ total_books_with_descendants }} books in subcategories.
+                        {% endif %}
+                    </p>
+                    <a href="{{ url_for('main.add_book') }}" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> Add Books
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Subcategories Section -->
+            {% if children and children|length > 0 %}
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-diagram-3"></i> Subcategories ({{ children|length }})
+                    </h5>
+                    <a href="{{ url_for('genres.add_category', parent_id=category.id) }}" class="btn btn-sm btn-success">
+                        <i class="bi bi-plus-circle"></i> Add Subcategory
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        {% for child in children %}
+                        <div class="col-lg-3 col-md-4 col-sm-6 mb-2">
+                            <div class="card h-100 border-start border-2 shadow-sm" 
+                                 {% if child.color %}style="border-left-color: {{ child.color }} !important;"{% endif %}>
+                                <div class="card-body p-3">
+                                    <h6 class="card-title d-flex align-items-center mb-2">
+                                        {% if child.icon %}
+                                            <span class="me-2">{{ child.icon }}</span>
+                                        {% else %}
+                                            <i class="bi bi-tag me-2"></i>
+                                        {% endif %}
+                                        <a href="{{ url_for('genres.category_details', category_id=child.id) }}" class="text-decoration-none">
+                                            {{ child.name }}
+                                        </a>
+                                    </h6>
+                                    
+                                    {% if child.description %}
+                                    <p class="card-text text-muted small mb-2">
+                                        {{ child.description[:50] }}
+                                        {% if child.description|length > 50 %}...{% endif %}
+                                    </p>
+                                    {% endif %}
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="text-center">
+                                            <strong class="text-primary">{{ child.book_count }}</strong>
+                                            <small class="text-muted d-block">Books</small>
+                                        </div>
+                                        <div class="text-center">
+                                            <strong class="text-info">{{ child.children|length if child.children else 0 }}</strong>
+                                            <small class="text-muted d-block">Children</small>
+                                        </div>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('genres.category_details', category_id=child.id) }}" class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('genres.edit_category', category_id=child.id) }}" class="btn btn-outline-secondary btn-sm">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Hierarchy Path Section -->
+            {% if category.level > 0 %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-diagram-2"></i> Category Path
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <nav aria-label="Category hierarchy">
+                        <ol class="breadcrumb hierarchy-path">
+                            {% for ancestor in category.get_ancestors() %}
+                            <li class="breadcrumb-item">
+                                {% if ancestor.icon %}
+                                    <span class="me-1">{{ ancestor.icon }}</span>
+                                {% endif %}
+                                <a href="{{ url_for('genres.category_details', category_id=ancestor.id) }}">
+                                    {{ ancestor.name }}
+                                </a>
+                            </li>
+                            {% endfor %}
+                            <li class="breadcrumb-item active">
+                                {% if category.icon %}
+                                    <span class="me-1">{{ category.icon }}</span>
+                                {% endif %}
+                                {{ category.name }}
+                            </li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Related Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-arrow-repeat"></i> Related Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-2">
+                            <a href="{{ url_for('genres.index') }}" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-arrow-left"></i> Back to All Categories
+                            </a>
+                        </div>
+                        {% if category.parent_id %}
+                        <div class="col-md-4 mb-2">
+                            <a href="{{ url_for('genres.category_details', category_id=category.parent_id) }}" class="btn btn-outline-info w-100">
+                                <i class="bi bi-arrow-up"></i> Parent Category
+                            </a>
+                        </div>
+                        {% endif %}
+                        <div class="col-md-4 mb-2">
+                            <a href="{{ url_for('genres.hierarchy_view') }}" class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-diagram-3"></i> View Hierarchy
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.color-indicator-large {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 2px;
+}
+
+.hierarchy-path .breadcrumb-item + .breadcrumb-item::before {
+    content: "→";
+    font-weight: bold;
+}
+
+.aliases .badge {
+    font-size: 0.8em;
+}
+
+.card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.card-img-top {
+    transition: transform 0.2s;
+}
+
+.card:hover .card-img-top {
+    transform: scale(1.05);
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+/* Fix dropdown z-index to ensure it appears above other elements */
+.dropdown-menu {
+    z-index: 1055 !important;
+    position: absolute !important;
+}
+
+.btn-group .dropdown-menu {
+    z-index: 1055 !important;
+    position: absolute !important;
+}
+
+/* Ensure dropdown toggle button has proper positioning */
+.btn-group {
+    position: relative !important;
+}
+
+/* Fix for Bootstrap dropdown positioning issues */
+.dropdown {
+    position: relative !important;
+}
+
+.dropdown-toggle::after {
+    vertical-align: 0.125em;
+}
+</style>
+{% endblock %}

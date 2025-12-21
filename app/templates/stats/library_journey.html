@@ -1,0 +1,863 @@
+{% extends "base.html" %}
+
+{% block title %}Library Journey Timeline - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2 text-primary">
+                        <i class="bi bi-graph-up"></i>
+                        Library Journey Timeline
+                    </h1>
+                    <p class="text-muted mb-0">Explore your reading journey through time</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('stats.index') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Stats
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stats Summary -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary">{{ stats.total_books }}</h5>
+                            <p class="card-text text-muted">Total Books</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <h5 class="card-title text-info">{{ stats.date_range }}</h5>
+                            <p class="card-text text-muted">Time Range</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">{{ stats.avg_rating }}</h5>
+                            <p class="card-text text-muted">Avg Rating</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <h5 class="card-title text-success">{{ stats.total_pages }}</h5>
+                            <p class="card-text text-muted">Total Pages</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if not books %}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-book text-muted" style="font-size: 4rem;"></i>
+                </div>
+                <h3 class="text-muted">No Books Found</h3>
+                <p class="text-muted">Start adding books to see your reading journey timeline!</p>
+                <a href="{{ url_for('main.add_book') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Add Your First Book
+                </a>
+            </div>
+            {% else %}
+            <!-- Timeline Container -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-clock-history"></i> Reading Timeline
+                        </h5>
+                        <div class="text-muted small">
+                            Showing {{ books|length }} books
+                        </div>
+                    </div>
+                    
+                    <!-- Date Filter Controls -->
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <select class="form-select form-select-sm" id="dateTypeFilter">
+                                <option value="date_added" {% if filters and filters.date_type == 'date_added' %}selected{% endif %}>Date Added</option>
+                                <option value="finish_date" {% if filters and filters.date_type == 'finish_date' %}selected{% endif %}>Date Finished</option>
+                                <option value="publication_date" {% if filters and filters.date_type == 'publication_date' %}selected{% endif %}>Publication Date</option>
+                                <option value="start_date" {% if filters and filters.date_type == 'start_date' %}selected{% endif %}>Start Date</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select form-select-sm" id="statusFilter">
+                                <option value="" {% if not filters or not filters.status %}selected{% endif %}>All Statuses</option>
+                                <option value="read" {% if filters and filters.status == 'read' %}selected{% endif %}>Read</option>
+                                <option value="reading" {% if filters and filters.status == 'reading' %}selected{% endif %}>Reading</option>
+                                <option value="plan_to_read" {% if filters and filters.status == 'plan_to_read' %}selected{% endif %}>Plan to Read</option>
+                                <option value="on_hold" {% if filters and filters.status == 'on_hold' %}selected{% endif %}>On Hold</option>
+                                <option value="did_not_finish" {% if filters and filters.status == 'did_not_finish' %}selected{% endif %}>Did Not Finish</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="number" class="form-control form-control-sm" id="yearFrom" placeholder="From year" min="1900" max="2030" value="{% if filters and filters.year_from %}{{ filters.year_from }}{% endif %}">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="number" class="form-control form-control-sm" id="yearTo" placeholder="To year" min="1900" max="2030" value="{% if filters and filters.year_to %}{{ filters.year_to }}{% endif %}">
+                        </div>
+                        <div class="col-md-1">
+                            <button class="btn btn-primary btn-sm w-100" onclick="applyFilters()">
+                                <i class="bi bi-funnel"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Timeline Visualization -->
+                    <div class="timeline-container" style="position: relative; height: 700px; overflow: hidden; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 30px 40px 100px 40px;">
+                        <!-- Timeline Items (Books and Clusters) -->
+                        {% for item in books %}
+                        {% if item.type == 'cluster' %}
+                        <!-- Book Cluster -->
+                    <div class="timeline-cluster" 
+                             style="position: absolute; 
+                                    left: calc({{ item.x_position }}% - 25px); 
+                                    top: calc({{ item.y_position }}% - 25px); 
+                                    cursor: pointer;
+                                    transition: transform 0.2s ease-in-out;"
+                             data-cluster-count="{{ item.books|length }}"
+                             data-cluster-year="{{ item.year }}"
+                             data-bs-toggle="tooltip" 
+                             data-bs-placement="top" 
+                        title="{{ item.books|length }} books from {{ item.year }}"
+                             {% for book in item.books %}
+                             data-book-{{ loop.index0 }}-id="{{ book.id }}"
+                             data-book-{{ loop.index0 }}-uid="{{ book.uid }}"
+                             data-book-{{ loop.index0 }}-title="{{ book.title }}"
+                             data-book-{{ loop.index0 }}-authors="{{ book.authors_text }}"
+                             data-book-{{ loop.index0 }}-status="{{ book.reading_status }}"
+                             data-book-{{ loop.index0 }}-status-color="{{ book.status_color }}"
+                             data-book-{{ loop.index0 }}-cover="{{ book.cover_url or '' }}"
+                             data-book-{{ loop.index0 }}-rating="{{ book.user_rating or '' }}"
+                             data-book-{{ loop.index0 }}-pages="{{ book.page_count or '' }}"
+                             data-book-{{ loop.index0 }}-categories="{{ book.categories_text or '' }}"
+                             data-book-{{ loop.index0 }}-notes="{{ book.personal_notes or '' }}"
+                        data-book-{{ loop.index0 }}-date="{{ book.timeline_date or book.date_added or '' }}"
+                        data-book-{{ loop.index0 }}-date-source="{{ book.timeline_source or 'date_added' }}"
+                             data-book-{{ loop.index0 }}-display-title="{{ book.display_title or book.title[:10] }}"
+                             {% endfor %}>
+                            
+                            <!-- Cluster Circle -->
+                            <div class="cluster-circle" 
+                                 style="width: 50px; 
+                                        height: 50px; 
+                                        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+                                        border: 3px solid white; 
+                                        border-radius: 50%; 
+                                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                                        display: flex; 
+                                        align-items: center; 
+                                        justify-content: center;
+                                        color: white;
+                                        font-weight: bold;
+                                        font-size: 1.1rem;">
+                                {{ item.books|length }}
+                            </div>
+                            
+                            <!-- Year Label -->
+                            <div class="year-label" 
+                                 style="position: absolute; 
+                                        top: -20px; 
+                                        left: 50%; 
+                                        transform: translateX(-50%); 
+                                        background: rgba(0,0,0,0.7); 
+                                        color: white; 
+                                        padding: 2px 6px; 
+                                        border-radius: 10px; 
+                                        font-size: 0.7rem; 
+                                        font-weight: 500;
+                                        white-space: nowrap;">
+                                {{ item.year }}
+                            </div>
+                        </div>
+                        {% else %}
+                        <!-- Individual Book -->
+                    <div class="timeline-book" 
+                             style="position: absolute; 
+                                    left: calc({{ item.x_position }}% - 30px); 
+                                    top: calc({{ item.y_position }}% - 40px); 
+                                    cursor: pointer;
+                                    transition: transform 0.2s ease-in-out;"
+                             data-book-id="{{ item.book.id }}"
+                             data-book-uid="{{ item.book.uid }}"
+                             data-book-title="{{ item.book.title }}"
+                             data-book-authors="{{ item.book.authors_text }}"
+                             data-book-status="{{ item.book.reading_status }}"
+                             data-book-status-color="{{ item.book.status_color }}"
+                             data-book-cover="{{ item.book.cover_url or '' }}"
+                             data-book-rating="{{ item.book.user_rating or '' }}"
+                             data-book-pages="{{ item.book.page_count or '' }}"
+                             data-book-categories="{{ item.book.categories_text or '' }}"
+                             data-book-notes="{{ item.book.personal_notes or '' }}"
+                        data-book-date="{{ item.book.timeline_date or item.book.date_added or '' }}"
+                        data-book-date-source="{{ item.book.timeline_source or 'date_added' }}"
+                             data-bs-toggle="tooltip" 
+                             data-bs-placement="top" 
+                        title="{{ item.book.title }} by {{ item.book.authors_text }} • Using: {{ item.book.timeline_source|replace('_', ' ')|title }}">
+                            
+                            <!-- Book Cover or Placeholder -->
+                            <div class="book-cover-container" style="position: relative;">
+                                {% if item.book.cover_url %}
+                    <img src="{{ item.book.cover_url }}" 
+                      alt="{{ item.book.title }}" 
+                      class="book-cover"
+                      style="width: 60px; 
+                          height: 80px; 
+                          object-fit: cover; 
+                          border-radius: 6px; 
+                          box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                          border: 3px solid {{ item.book.status_color }};"
+                      loading="lazy" decoding="async" fetchpriority="low">
+                                {% else %}
+                                <div class="book-placeholder" 
+                                     style="width: 60px; 
+                                            height: 80px; 
+                                            background: linear-gradient(135deg, {{ item.book.status_color }} 0%, color-mix(in srgb, {{ item.book.status_color }} 80%, white) 100%);
+                                            border-radius: 6px; 
+                                            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                                            display: flex; 
+                                            align-items: center; 
+                                            justify-content: center;
+                                            color: white;
+                                            font-size: 0.7rem;
+                                            text-align: center;
+                                            padding: 4px;
+                                            font-weight: 600;">
+                                    {{ item.book.display_title }}
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Status Indicator -->
+                                <div class="status-indicator" 
+                                     style="position: absolute; 
+                                            top: -5px; 
+                                            right: -5px; 
+                                            width: 16px; 
+                                            height: 16px; 
+                                            background: {{ item.book.status_color }}; 
+                                            border: 2px solid white; 
+                                            border-radius: 50%; 
+                                            box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+                            </div>
+                            
+                            <!-- Year Label -->
+                            <div class="year-label" 
+                                 style="position: absolute; 
+                                        top: -20px; 
+                                        left: 50%; 
+                                        transform: translateX(-50%); 
+                                        background: rgba(0,0,0,0.7); 
+                                        color: white; 
+                                        padding: 2px 6px; 
+                                        border-radius: 10px; 
+                                        font-size: 0.7rem; 
+                                        font-weight: 500;
+                                        white-space: nowrap;">
+                                {{ item.year }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        <!-- Timeline Axis -->
+                        <div class="timeline-axis" 
+                             style="position: absolute; 
+                                    bottom: 40px; 
+                                    left: 10%; 
+                                    right: 10%; 
+                                    height: 2px; 
+                                    background: linear-gradient(to right, #dee2e6, #6c757d, #dee2e6); 
+                                    border-radius: 1px;"></div>
+                        
+                        <!-- Timeline Labels -->
+                        <div class="timeline-labels" style="position: absolute; bottom: 20px; left: 10%; right: 10%; height: 20px;">
+                            {% if books %}
+                            {% set all_years = [] %}
+                            {% for item in books %}
+                            {% if item.type == 'cluster' %}
+                            {% set _ = all_years.append(item.year) %}
+                            {% else %}
+                            {% set _ = all_years.append(item.year) %}
+                            {% endif %}
+                            {% endfor %}
+                            {% set min_year = all_years|min %}
+                            {% set max_year = all_years|max %}
+                            <div style="position: absolute; left: 0; bottom: 0; font-size: 0.8rem; color: #6c757d; font-weight: 500;">{{ min_year }}</div>
+                            <div style="position: absolute; right: 0; bottom: 0; font-size: 0.8rem; color: #6c757d; font-weight: 500;">{{ max_year }}</div>
+                            {% if min_year != max_year %}
+                            <div style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); font-size: 0.8rem; color: #6c757d; font-weight: 500;">
+                                {% set mid_year = ((min_year + max_year) / 2)|int %}
+                                {{ mid_year }}
+                            </div>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Book Details Modal -->
+            <div class="modal fade" id="bookDetailsModal" tabindex="-1" aria-labelledby="bookDetailsModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="bookDetailsModalLabel">Book Details</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" id="bookDetailsContent">
+                            <!-- Book details will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-info-circle"></i> Reading Status Legend
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-2 d-flex align-items-center mb-2">
+                                    <div style="width: 16px; height: 16px; background: #28a745; border-radius: 50%; margin-right: 8px;"></div>
+                                    <span class="small">Read</span>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-center mb-2">
+                                    <div style="width: 16px; height: 16px; background: #17a2b8; border-radius: 50%; margin-right: 8px;"></div>
+                                    <span class="small">Reading</span>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-center mb-2">
+                                    <div style="width: 16px; height: 16px; background: #ffc107; border-radius: 50%; margin-right: 8px;"></div>
+                                    <span class="small">Plan to Read</span>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-center mb-2">
+                                    <div style="width: 16px; height: 16px; background: #fd7e14; border-radius: 50%; margin-right: 8px;"></div>
+                                    <span class="small">On Hold</span>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-center mb-2">
+                                    <div style="width: 16px; height: 16px; background: #dc3545; border-radius: 50%; margin-right: 8px;"></div>
+                                    <span class="small">Did Not Finish</span>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-center mb-2">
+                                    <div style="width: 16px; height: 16px; background: #6c757d; border-radius: 50%; margin-right: 8px;"></div>
+                                    <span class="small">Other</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Timeline styling */
+.timeline-book {
+    will-change: transform;
+    backface-visibility: hidden;
+    perspective: 1000px;
+    z-index: 1;
+    position: relative;
+}
+
+.timeline-book:hover {
+    transform: scale(1.1) !important;
+    z-index: 100 !important;
+    position: relative;
+}
+
+.timeline-cluster {
+    will-change: transform;
+    backface-visibility: hidden;
+    perspective: 1000px;
+    z-index: 5;
+    position: relative;
+}
+
+.timeline-cluster:hover {
+    transform: scale(1.15) !important;
+    z-index: 105 !important;
+    position: relative;
+}
+
+.timeline-cluster:hover .cluster-circle {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4) !important;
+    background: linear-gradient(135deg, #0056b3 0%, #003d82 100%) !important;
+}
+
+.timeline-book:nth-child(odd) {
+    z-index: 2;
+}
+
+.timeline-book:nth-child(even) {
+    z-index: 3;
+}
+
+.timeline-book:hover .book-cover,
+.timeline-book:hover .book-placeholder {
+    box-shadow: 0 8px 16px rgba(0,0,0,0.4) !important;
+}
+
+.timeline-book:hover .year-label {
+    background: rgba(0,0,0,0.9) !important;
+    transform: translateX(-50%) scale(1.05);
+}
+
+.timeline-cluster:hover .year-label {
+    background: rgba(0,0,0,0.9) !important;
+    transform: translateX(-50%) scale(1.05);
+}
+
+.book-cover,
+.book-placeholder {
+    transition: box-shadow 0.2s ease-in-out;
+    transform-origin: center center;
+}
+
+.cluster-circle {
+    transition: all 0.2s ease-in-out;
+    transform-origin: center center;
+}
+
+.year-label {
+    transition: all 0.2s ease-in-out;
+    transform-origin: center center;
+}
+
+.status-indicator {
+    transition: transform 0.2s ease-in-out;
+    transform-origin: center center;
+}
+
+.timeline-book:hover .status-indicator {
+    transform: scale(1.1);
+}
+
+/* Expanded cluster view */
+.cluster-expanded {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0,0,0,0.8) !important;
+    z-index: 1060 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.cluster-books-grid {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 80%;
+    max-height: 80%;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.cluster-book-item {
+    display: inline-block;
+    margin: 10px;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+    position: relative;
+}
+
+.cluster-book-item:hover {
+    transform: scale(1.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .timeline-container {
+        height: 500px !important;
+        padding: 20px 30px 80px 30px !important;
+    }
+    
+    .book-cover,
+    .book-placeholder {
+        width: 40px !important;
+        height: 55px !important;
+    }
+    
+    .cluster-circle {
+        width: 35px !important;
+        height: 35px !important;
+        font-size: 0.9rem !important;
+    }
+    
+    .year-label {
+        font-size: 0.6rem !important;
+        padding: 1px 4px !important;
+    }
+    
+    .status-indicator {
+        width: 12px !important;
+        height: 12px !important;
+        top: -3px !important;
+        right: -3px !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .timeline-container {
+        height: 400px !important;
+        padding: 15px 20px 60px 20px !important;
+    }
+    
+    .book-cover,
+    .book-placeholder {
+        width: 30px !important;
+        height: 40px !important;
+    }
+    
+    .cluster-circle {
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .year-label {
+        display: none; /* Hide year labels on very small screens */
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Restore filter values from URL parameters or server-provided filters
+    const urlParams = new URLSearchParams(window.location.search);
+    const dateTypeFromUrl = urlParams.get('date_type');
+    const dateTypeFromServer = '{{ filters.date_type if filters and filters.date_type else "date_added" }}';
+    document.getElementById('dateTypeFilter').value = dateTypeFromUrl || dateTypeFromServer;
+    if (urlParams.get('status')) {
+        document.getElementById('statusFilter').value = urlParams.get('status');
+    }
+    if (urlParams.get('year_from')) {
+        document.getElementById('yearFrom').value = urlParams.get('year_from');
+    }
+    if (urlParams.get('year_to')) {
+        document.getElementById('yearTo').value = urlParams.get('year_to');
+    }
+    
+    // Auto-apply when date type filter changes
+    const dateTypeEl = document.getElementById('dateTypeFilter');
+    if (dateTypeEl) {
+        dateTypeEl.addEventListener('change', function() {
+            applyFilters();
+        });
+    }
+    
+    // Handle individual book clicks
+    document.querySelectorAll('.timeline-book').forEach(function(bookEl) {
+        bookEl.addEventListener('click', function() {
+            showBookModal(this);
+        });
+    });
+    
+    // Handle cluster clicks
+    document.querySelectorAll('.timeline-cluster').forEach(function(clusterEl) {
+        clusterEl.addEventListener('click', function() {
+            try {
+                const bookCount = parseInt(this.getAttribute('data-cluster-count'));
+                const year = this.getAttribute('data-cluster-year');
+                
+                // Extract book data from individual attributes
+                const books = [];
+                for (let i = 0; i < bookCount; i++) {
+                    const book = {
+                        id: this.getAttribute(`data-book-${i}-id`),
+                        uid: this.getAttribute(`data-book-${i}-uid`),
+                        title: this.getAttribute(`data-book-${i}-title`),
+                        authors_text: this.getAttribute(`data-book-${i}-authors`),
+                        reading_status: this.getAttribute(`data-book-${i}-status`),
+                        status_color: this.getAttribute(`data-book-${i}-status-color`),
+                        cover_url: this.getAttribute(`data-book-${i}-cover`),
+                        user_rating: this.getAttribute(`data-book-${i}-rating`),
+                        page_count: this.getAttribute(`data-book-${i}-pages`),
+                        categories_text: this.getAttribute(`data-book-${i}-categories`),
+                        personal_notes: this.getAttribute(`data-book-${i}-notes`),
+                        date_added: this.getAttribute(`data-book-${i}-date`),
+                        display_title: this.getAttribute(`data-book-${i}-display-title`)
+                    };
+                    books.push(book);
+                }
+                
+                console.log('Cluster books data:', books); // Debug log
+                showClusterModal(books, year);
+                
+            } catch (error) {
+                console.error('Error parsing cluster data:', error);
+                alert('Failed to load cluster books: ' + error.message);
+            }
+        });
+    });
+});
+
+function showBookModal(bookEl) {
+    try {
+        // Get book data from individual attributes
+        const book = {
+            id: bookEl.getAttribute('data-book-id'),
+            uid: bookEl.getAttribute('data-book-uid'),
+            title: bookEl.getAttribute('data-book-title'),
+            authors_text: bookEl.getAttribute('data-book-authors'),
+            reading_status: bookEl.getAttribute('data-book-status'),
+            status_color: bookEl.getAttribute('data-book-status-color'),
+            cover_url: bookEl.getAttribute('data-book-cover'),
+            user_rating: bookEl.getAttribute('data-book-rating'),
+            page_count: bookEl.getAttribute('data-book-pages'),
+            categories_text: bookEl.getAttribute('data-book-categories'),
+            personal_notes: bookEl.getAttribute('data-book-notes'),
+            date_added: bookEl.getAttribute('data-book-date')
+        };
+        
+        console.log('Book data from attributes:', book); // Debug log
+        
+        // Check if modal exists
+        const modalElement = document.getElementById('bookDetailsModal');
+        const modalContent = document.getElementById('bookDetailsContent');
+        
+        if (!modalElement || !modalContent) {
+            throw new Error('Modal elements not found');
+        }
+        
+        // Populate modal with book details
+        modalContent.innerHTML = generateBookModalContent(book);
+        
+        // Show modal
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        
+    } catch (error) {
+        console.error('Error displaying book details:', error);
+        alert('Failed to display book details: ' + error.message);
+    }
+}
+
+function showClusterModal(books, year) {
+    try {
+        const modalElement = document.getElementById('bookDetailsModal');
+        const modalContent = document.getElementById('bookDetailsContent');
+        const modalTitle = document.getElementById('bookDetailsModalLabel');
+        
+        if (!modalElement || !modalContent || !modalTitle) {
+            throw new Error('Modal elements not found');
+        }
+        
+        // Update modal title
+        modalTitle.textContent = `${books.length} Books from ${year}`;
+        
+        // Create cluster view
+        let clusterHTML = `
+            <div class="cluster-books-container">
+                <div class="row g-3">
+        `;
+        
+        books.forEach(function(book) {
+            clusterHTML += `
+                <div class="col-md-4 col-sm-6">
+                    <div class="cluster-book-item card h-100" onclick="showIndividualBookFromCluster(this)" 
+                         data-book-id="${book.id || ''}"
+                         data-book-uid="${book.uid || ''}"
+                         data-book-title="${book.title || ''}"
+                         data-book-authors="${book.authors_text || ''}"
+                         data-book-status="${book.reading_status || ''}"
+                         data-book-status-color="${book.status_color || ''}"
+                         data-book-cover="${book.cover_url || ''}"
+                         data-book-rating="${book.user_rating || ''}"
+                         data-book-pages="${book.page_count || ''}"
+                         data-book-categories="${book.categories_text || ''}"
+                         data-book-notes="${book.personal_notes || ''}"
+                         data-book-date="${book.date_added || ''}">
+                        <div class="card-body p-2 text-center">
+                            ${book.cover_url ? 
+                                `<img src="${book.cover_url}" alt="${book.title}" class="img-fluid mb-2" style="max-height: 80px; max-width: 60px; object-fit: cover; border-radius: 4px; border: 2px solid ${book.status_color};">` :
+                                `<div class="bg-secondary text-white rounded mb-2 mx-auto d-flex align-items-center justify-content-center" style="height: 80px; width: 60px; font-size: 0.7rem; text-align: center;">${book.display_title || book.title.substring(0, 10)}</div>`
+                            }
+                            <h6 class="card-title small mb-1">${book.title}</h6>
+                            <p class="card-text small text-muted mb-1">${book.authors_text}</p>
+                            <span class="badge" style="background-color: ${book.status_color}; font-size: 0.7rem;">
+                                ${formatStatus(book.reading_status)}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        clusterHTML += `
+                </div>
+                <div class="text-center mt-3">
+                    <button class="btn btn-secondary" onclick="closeClusterModal()">Close</button>
+                </div>
+            </div>
+        `;
+        
+        modalContent.innerHTML = clusterHTML;
+        
+        // Show modal
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        
+    } catch (error) {
+        console.error('Error displaying cluster:', error);
+        alert('Failed to display cluster: ' + error.message);
+    }
+}
+
+function showIndividualBookFromCluster(bookEl) {
+    // Close cluster modal and show individual book modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('bookDetailsModal'));
+    if (modal) {
+        modal.hide();
+    }
+    
+    // Wait for modal to close then show book details
+    setTimeout(function() {
+        showBookModal(bookEl);
+    }, 300);
+}
+
+function closeClusterModal() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('bookDetailsModal'));
+    if (modal) {
+        modal.hide();
+    }
+}
+
+function generateBookModalContent(book) {
+    return `
+        <div class="row">
+            <div class="col-md-4">
+                ${book.cover_url ? 
+                    `<img src="${book.cover_url}" alt="${book.title || 'Book cover'}" class="img-fluid rounded shadow">` :
+                    `<div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <i class="bi bi-book" style="font-size: 3rem;"></i>
+                    </div>`
+                }
+            </div>
+            <div class="col-md-8">
+                <h4>${book.title || 'Unknown Title'}</h4>
+                <p class="text-muted">by ${book.authors_text || 'Unknown Author'}</p>
+                
+                <div class="row">
+                    <div class="col-sm-6">
+                        <strong>Status:</strong> 
+                        <span class="badge" style="background-color: ${book.status_color || '#6c757d'};">
+                            ${formatStatus(book.reading_status)}
+                        </span>
+                    </div>
+                    <div class="col-sm-6">
+                        <strong>Added:</strong> ${formatDate(book.date_added)}
+                    </div>
+                    ${book.user_rating ? `
+                    <div class="col-sm-6">
+                        <strong>Rating:</strong> ${'★'.repeat(parseInt(book.user_rating))}${'☆'.repeat(5-parseInt(book.user_rating))}
+                    </div>
+                    ` : ''}
+                    ${book.page_count ? `
+                    <div class="col-sm-6">
+                        <strong>Pages:</strong> ${book.page_count}
+                    </div>
+                    ` : ''}
+                    ${book.categories_text ? `
+                    <div class="col-sm-12 mt-2">
+                        <strong>Categories:</strong> ${book.categories_text}
+                    </div>
+                    ` : ''}
+                </div>
+                
+                ${book.personal_notes ? `
+                <div class="mt-3">
+                    <strong>Notes:</strong>
+                    <p class="text-muted">${book.personal_notes}</p>
+                </div>
+                ` : ''}
+                
+                <div class="mt-3">
+                    <a href="/view_book_enhanced/${book.uid}" class="btn btn-primary btn-sm">View Details</a>
+                    <a href="/view_book_enhanced/${book.uid}" class="btn btn-outline-secondary btn-sm">Edit</a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function applyFilters() {
+    const dateType = document.getElementById('dateTypeFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    const yearFrom = document.getElementById('yearFrom').value;
+    const yearTo = document.getElementById('yearTo').value;
+    
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (dateType) params.append('date_type', dateType);
+    if (status) params.append('status', status);
+    if (yearFrom) params.append('year_from', yearFrom);
+    if (yearTo) params.append('year_to', yearTo);
+    
+    // Reload page with filters
+    window.location.href = '{{ url_for("stats.library_journey") }}?' + params.toString();
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'read': '#28a745',
+        'reading': '#17a2b8', 
+        'plan_to_read': '#ffc107',
+        'on_hold': '#fd7e14',
+        'did_not_finish': '#dc3545'
+    };
+    return colors[status] || '#6c757d';
+}
+
+function formatStatus(status) {
+    const labels = {
+        'read': 'Read',
+        'reading': 'Reading',
+        'plan_to_read': 'Plan to Read',
+        'on_hold': 'On Hold',
+        'did_not_finish': 'Did Not Finish'
+    };
+    return labels[status] || 'Unknown';
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'Unknown';
+    try {
+        return new Date(dateString).toLocaleDateString();
+    } catch {
+        return dateString;
+    }
+}
+</script>
+{% endblock %}
