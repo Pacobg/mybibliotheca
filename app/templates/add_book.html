@@ -1098,7 +1098,7 @@ function displayTitleSearchResults(results) {
                                 </small>
                                 ${isbn !== 'N/A' ? 
                                     `<button type="button" class="btn btn-primary btn-sm" 
-                                            onclick="event.stopPropagation(); event.preventDefault(); selectBookFromSearch(${index}); return false;"
+                                            onclick="event.stopPropagation(); event.preventDefault(); if(typeof forceCloseSearchModal === 'function') forceCloseSearchModal(); selectBookFromSearch(${index}); return false;"
                                             style="z-index: 1051; position: relative;">
                                         <i class="bi bi-check-lg me-1"></i>Use This Book
                                     </button>` :
