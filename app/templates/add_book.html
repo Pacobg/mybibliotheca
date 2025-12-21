@@ -2650,31 +2650,134 @@ if(document.readyState === 'loading'){
 function setupModalCleanup() {
     const modalElement = document.getElementById('titleSearchModal');
     if (modalElement) {
+        // Use MutationObserver to watch for Bootstrap adding modal-open class or backdrop
+        const bodyObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    if (document.body.classList.contains('modal-open')) {
+                        // Bootstrap just added modal-open, but we want to allow clicks
+                        // Don't remove it immediately, but ensure pointer-events work
+                        document.body.style.setProperty('pointer-events', 'auto', 'important');
+                    }
+                }
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    if (document.body.style.overflow === 'hidden') {
+                        // Bootstrap added overflow:hidden, but we need to allow scrolling for modal content
+                        // Keep it for now but ensure modal is clickable
+                    }
+                }
+            });
+        });
+        
+        // Watch body for class and style changes
+        bodyObserver.observe(document.body, {
+            attributes: true,
+            attributeFilter: ['class', 'style']
+        });
+        
+        // Watch for backdrop being added to DOM
+        const backdropObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1 && node.classList && node.classList.contains('modal-backdrop')) {
+                        console.log('🚫 Backdrop detected, making it non-interactive');
+                        node.style.setProperty('pointer-events', 'none', 'important');
+                        node.style.setProperty('display', 'none', 'important');
+                        node.style.setProperty('z-index', '-1', 'important');
+                        // Try to remove it after a short delay
+                        setTimeout(() => {
+                            if (node.parentNode) {
+                                node.remove();
+                            }
+                        }, 100);
+                    }
+                });
+            });
+        });
+        
+        // Watch document body for backdrop additions
+        backdropObserver.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+        
         modalElement.addEventListener('hidden.bs.modal', function() {
-            // Double-check backdrop is removed
-            const backdrops = document.querySelectorAll('.modal-backdrop');
-            backdrops.forEach(backdrop => backdrop.remove());
-            document.body.classList.remove('modal-open');
-            document.body.style.overflow = '';
-            document.body.style.paddingRight = '';
+            console.log('📦 Bootstrap modal hidden event fired');
+            forceCloseSearchModal();
         });
         
         // Also handle close button clicks
         const closeBtn = modalElement.querySelector('.btn-close');
         if (closeBtn) {
-            closeBtn.addEventListener('click', function() {
-                setTimeout(forceCloseSearchModal, 50);
+            closeBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                console.log('❌ Close button clicked');
+                forceCloseSearchModal();
             });
         }
         
         // Handle Cancel button
         const cancelBtn = modalElement.querySelector('[data-bs-dismiss="modal"]');
         if (cancelBtn) {
-            cancelBtn.addEventListener('click', function() {
-                setTimeout(forceCloseSearchModal, 50);
+            cancelBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                console.log('🚫 Cancel button clicked');
+                forceCloseSearchModal();
             });
         }
+        
+        // Also listen for hide event (before hidden)
+        modalElement.addEventListener('hide.bs.modal', function() {
+            console.log('📦 Bootstrap modal hide event fired');
+            // Preemptively remove backdrop
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(backdrop => {
+                backdrop.style.pointerEvents = 'none';
+                backdrop.style.display = 'none';
+            });
+        });
     }
+    
+    // Global safety net: periodically check for stuck modals
+    setInterval(function() {
+        // Only clean up if no modal is actually showing
+        const visibleModals = document.querySelectorAll('.modal.show, .modal[aria-hidden="false"]');
+        const titleSearchModal = document.getElementById('titleSearchModal');
+        const isTitleSearchVisible = titleSearchModal && (titleSearchModal.classList.contains('show') || titleSearchModal.getAttribute('aria-hidden') !== 'true');
+        
+        if (visibleModals.length === 0 && !isTitleSearchVisible) {
+            // No visible modals, but body might still be blocked
+            if (document.body.classList.contains('modal-open') || document.body.style.overflow === 'hidden') {
+                console.warn('🧹 Safety net: cleaning up stuck modal state');
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('overflow');
+                document.body.style.removeProperty('padding-right');
+                document.body.style.removeProperty('padding');
+                const backdrops = document.querySelectorAll('.modal-backdrop');
+                backdrops.forEach(backdrop => {
+                    backdrop.remove();
+                });
+            }
+        } else {
+            // Modal is visible, but ensure backdrop doesn't block
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(backdrop => {
+                backdrop.style.setProperty('pointer-events', 'none', 'important');
+                backdrop.style.setProperty('display', 'none', 'important');
+            });
+        }
+    }, 200); // Check every 200ms for faster response
+    
+    // Also add Escape key handler to force close
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const titleSearchModal = document.getElementById('titleSearchModal');
+            if (titleSearchModal && (titleSearchModal.classList.contains('show') || titleSearchModal.getAttribute('aria-hidden') !== 'true')) {
+                console.log('⌨️ Escape key pressed, forcing modal close');
+                forceCloseSearchModal();
+            }
+        }
+    });
 }
 </script>
 
