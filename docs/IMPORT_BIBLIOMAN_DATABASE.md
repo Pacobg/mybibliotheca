@@ -1,48 +1,51 @@
 # Импортиране на Biblioman база данни
 
-## Стъпка 1: Копирай SQL файла в контейнера
+## Проблем: Базата данни съществува, но няма таблици
+
+Ако базата данни `biblioman` съществува, но няма таблици, това означава че импортът не е работил правилно.
+
+## Решение: Провери SQL файла и импортирай правилно
+
+### Стъпка 1: Провери какво има в SQL файла
 
 ```bash
-# Копирай файла в контейнера
-docker cp /root/biblioman.sql ossoo808goc4cw4wos8sg0so:/tmp/biblioman.sql
+# Провери първите редове на SQL файла
+head -n 50 /root/biblioman.sql
+
+# Търси за CREATE DATABASE или USE команди
+grep -i "CREATE DATABASE\|USE " /root/biblioman.sql | head -5
 ```
 
-## Стъпка 2: Импортирай в MariaDB
+### Стъпка 2: Импортирай правилно
 
-### Вариант 1: Използвай базата данни в командата (Препоръчително)
+#### Вариант A: Ако SQL файлът създава базата данни
 
 ```bash
-# Импортирай директно в biblioman базата данни
-docker exec -i ossoo808goc4cw4wos8sg0so mariadb -u root -p<ROOT_PASSWORD> biblioman < /root/biblioman.sql
+# Импортирай без да указваш базата данни (SQL файлът ще я създаде)
+docker exec -i ossoo808goc4cw4wos8sg0so mariadb -u root -p<ROOT_PASSWORD> < /root/biblioman.sql
 ```
 
-Или ако използваш файла от контейнера:
+#### Вариант B: Ако SQL файлът НЕ създава базата данни
 
 ```bash
-docker exec -i ossoo808goc4cw4wos8sg0so mariadb -u root -p<ROOT_PASSWORD> biblioman < /tmp/biblioman.sql
-```
-
-### Вариант 2: Създай базата данни първо, след това импортирай
-
-```bash
-# Първо създай базата данни
-docker exec -it ossoo808goc4cw4wos8sg0so mariadb -u root -p<ROOT_PASSWORD> -e "CREATE DATABASE IF NOT EXISTS biblioman CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+# Първо изтрий старата база данни (ако има проблеми)
+docker exec -it ossoo808goc4cw4wos8sg0so mariadb -u root -p<ROOT_PASSWORD> -e "DROP DATABASE IF EXISTS biblioman; CREATE DATABASE biblioman CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 # След това импортирай
 docker exec -i ossoo808goc4cw4wos8sg0so mariadb -u root -p<ROOT_PASSWORD> biblioman < /root/biblioman.sql
 ```
 
-### Вариант 3: Ако SQL файлът е компресиран (.sql.gz)
+#### Вариант C: Използвай файла от контейнера
 
 ```bash
-# Копирай файла в контейнера
-docker cp /root/biblioman.sql.gz ossoo808goc4cw4wos8sg0so:/tmp/biblioman.sql.gz
+# Копирай файла в контейнера (ако още не е копиран)
+docker cp /root/biblioman.sql ossoo808goc4cw4wos8sg0so:/tmp/biblioman.sql
 
-# Декомпресирай и импортирай
-docker exec -i ossoo808goc4cw4wos8sg0so bash -c "gunzip < /tmp/biblioman.sql.gz | mariadb -u root -p<ROOT_PASSWORD> biblioman"
+# Импортирай от контейнера
+docker exec -i ossoo808goc4cw4wos8sg0so mariadb -u root -p<ROOT_PASSWORD> < /tmp/biblioman.sql
 ```
 
-## Стъпка 3: Проверка след импорт
+### Стъпка 3: Проверка след импорт
 
 ```bash
 # Провери дали таблицата book съществува
@@ -55,22 +58,43 @@ docker exec -it ossoo808goc4cw4wos8sg0so mariadb -u root -p<ROOT_PASSWORD> -e "U
 docker exec -it ossoo808goc4cw4wos8sg0so mariadb -u root -p<ROOT_PASSWORD> -e "USE biblioman; DESCRIBE book;"
 ```
 
-## Стъпка 4: Тествай с Python скрипта
+### Стъпка 4: Тествай с Python скрипта
 
 ```bash
 cd ~/mybibliotheca
-git pull origin main
 source venv/bin/activate
 python scripts/test_biblioman_connection.py
 ```
 
+## Troubleshooting
+
+### Ако все още няма таблици след импорт:
+
+1. **Провери дали SQL файлът е валиден:**
+   ```bash
+   # Провери синтаксиса
+   head -n 100 /root/biblioman.sql
+   ```
+
+2. **Провери дали има грешки при импорт:**
+   ```bash
+   # Импортирай и виж грешките
+   docker exec -i ossoo808goc4cw4wos8sg0so mariadb -u root -p<ROOT_PASSWORD> < /root/biblioman.sql 2>&1 | grep -i error
+   ```
+
+3. **Опитай да импортираш на части:**
+   ```bash
+   # Първо създай базата данни
+   docker exec -it ossoo808goc4cw4wos8sg0so mariadb -u root -p<ROOT_PASSWORD> -e "CREATE DATABASE IF NOT EXISTS biblioman CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+   
+   # След това импортирай
+   docker exec -i ossoo808goc4cw4wos8sg0so mariadb -u root -p<ROOT_PASSWORD> biblioman < /root/biblioman.sql
+   ```
+
 ## Важни бележки:
 
 1. **Заменяй `<ROOT_PASSWORD>`** с действителната root парола от Coolify
-2. **Важно:** Добави `biblioman` след паролата в командата - това избира базата данни преди импорта
-3. **Ако базата данни вече съществува**, може да трябва да я изтриеш първо:
-   ```sql
-   DROP DATABASE IF EXISTS biblioman;
-   CREATE DATABASE biblioman CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   ```
-4. **Импортът може да отнеме време** за големи SQL файлове (211MB е доста голям файл)
+2. **Импортът може да отнеме време** за големи SQL файлове (211MB е доста голям файл)
+3. **Провери логовете** за грешки по време на импорта
+4. **Ако SQL файлът създава базата данни**, не указвай базата данни в командата
+5. **Ако SQL файлът НЕ създава базата данни**, създай я първо и след това импортирай
