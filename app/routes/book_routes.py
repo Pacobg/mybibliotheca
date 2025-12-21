@@ -1676,8 +1676,8 @@ def search_book_details():
                 if len(results) >= 8:
                     fut_gb.cancel()
                 else:
-                try:
-                    gb_results = fut_gb.result(timeout=provider_timeout)
+                    try:
+                        gb_results = fut_gb.result(timeout=provider_timeout)
                 except concurrent.futures.TimeoutError:
                     timed_out_providers.append('google')
                     current_app.logger.warning(f"[SEARCH] Google Books timed out after {provider_timeout:.1f}s")
