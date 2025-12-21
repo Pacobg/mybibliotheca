@@ -37,15 +37,22 @@ class BibliomanProvider:
     def connect(self):
         """Establish database connection."""
         if not self._enabled:
+            logger.debug("Biblioman provider is not enabled")
             return False
         
         try:
             if not self.db or not self.db.is_connected():
+                logger.debug(f"Connecting to Biblioman database at {self.config['host']}:{self.config['port']}")
                 self.db = mysql.connector.connect(**self.config)
                 logger.debug("Biblioman database connection established")
             return True
+        except mysql.connector.Error as e:
+            logger.warning(f"Biblioman database connection failed: {e}")
+            logger.debug(f"Connection config: host={self.config['host']}, port={self.config['port']}, user={self.config['user']}, database={self.config['database']}")
+            self.db = None
+            return False
         except Exception as e:
-            logger.error(f"Failed to connect to Biblioman database: {e}")
+            logger.warning(f"Failed to connect to Biblioman database: {e}")
             self.db = None
             return False
     

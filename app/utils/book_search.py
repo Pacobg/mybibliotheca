@@ -799,20 +799,30 @@ def search_books_by_title(title: str, max_results: int = 10, author: Optional[st
                 from app.services.metadata_providers.biblioman import BibliomanProvider
                 provider = BibliomanProvider()
                 if provider.is_enabled():
-                    if title and author_arg:
-                        result = provider.find_best_match(title, author_arg, threshold=0.7)
-                        if result:
-                            biblioman_results = [result]
-                        else:
-                            biblioman_results = provider.search_by_title(title, limit=max_results * 2)
-                    elif title:
-                        biblioman_results = provider.search_by_title(title, limit=max_results * 2)
-                    elif author_arg:
-                        biblioman_results = provider.search_by_author(author_arg, limit=max_results * 2)
-                    provider.close()
-                    print(f"✅ [BOOK_SEARCH] Biblioman returned {len(biblioman_results)} results")
+                    # Try to connect first - if connection fails, skip Biblioman but don't break search
+                    if provider.connect():
+                        try:
+                            if title and author_arg:
+                                result = provider.find_best_match(title, author_arg, threshold=0.7)
+                                if result:
+                                    biblioman_results = [result]
+                                else:
+                                    biblioman_results = provider.search_by_title(title, limit=max_results * 2)
+                            elif title:
+                                biblioman_results = provider.search_by_title(title, limit=max_results * 2)
+                            elif author_arg:
+                                biblioman_results = provider.search_by_author(author_arg, limit=max_results * 2)
+                            print(f"✅ [BOOK_SEARCH] Biblioman returned {len(biblioman_results)} results")
+                        finally:
+                            provider.close()
+                    else:
+                        print(f"⚠️ [BOOK_SEARCH] Biblioman connection failed, skipping Biblioman search")
+                else:
+                    print(f"⚠️ [BOOK_SEARCH] Biblioman is not enabled")
             except Exception as exc:
                 print(f"❌ [BOOK_SEARCH] Biblioman search failed: {exc}")
+                # Don't break the entire search if Biblioman fails
+                biblioman_results = []
     except ImportError:
         print("⚠️ [BOOK_SEARCH] Biblioman provider not available")
     
