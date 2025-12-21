@@ -700,14 +700,32 @@
 /* Ensure modal backdrop doesn't block interactions when modal is hidden */
 .modal-backdrop {
     z-index: 1040;
+    pointer-events: auto;
 }
 
 .modal-backdrop.show {
     z-index: 1040;
 }
 
-/* Force remove backdrop if it persists */
+/* Force remove backdrop if it persists or if modal is not open */
 body:not(.modal-open) .modal-backdrop {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Additional safety: hide backdrop when modal is hidden */
+#titleSearchModal:not(.show) ~ .modal-backdrop,
+#titleSearchModal[aria-hidden="true"] ~ .modal-backdrop {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Prevent backdrop from blocking clicks even when modal is showing if it's not needed */
+.modal-backdrop.fade:not(.show) {
     display: none !important;
 }
 </style>
