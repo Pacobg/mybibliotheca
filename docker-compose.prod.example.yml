@@ -1,0 +1,41 @@
+# Production Docker Compose example for Coolify
+# Copy this to your Coolify docker-compose.yml and configure environment variables in Coolify UI
+
+services:
+  mybibliotheca:
+    image: 'pickles4evaaaa/mybibliotheca:beta-latest'
+    container_name: mybibliotheca
+    ports:
+      - '5054:5054'
+    volumes:
+      - 'mybibliotheca_data:/app/data'
+    environment:
+      SECRET_KEY: '${SECRET_KEY}'
+      SECURITY_PASSWORD_SALT: '${SECURITY_PASSWORD_SALT}'
+      SITE_NAME: MyBibliotheca
+      TIMEZONE: Europe/Sofia
+      KUZU_DB_PATH: /app/data/kuzu
+      GRAPH_DATABASE_ENABLED: 'true'
+      WORKERS: '1'
+      LOG_LEVEL: INFO
+      ACCESS_LOGS: 'false'
+      
+      # Biblioman Integration (Bulgarian books metadata)
+      # Configure these in Coolify UI → Environment Variables
+      BIBLIOMAN_ENABLED: '${BIBLIOMAN_ENABLED}'
+      BIBLIOMAN_HOST: '${BIBLIOMAN_HOST}'
+      BIBLIOMAN_PORT: '${BIBLIOMAN_PORT}'
+      BIBLIOMAN_USER: '${BIBLIOMAN_USER}'
+      BIBLIOMAN_PASSWORD: '${BIBLIOMAN_PASSWORD}'
+      BIBLIOMAN_DATABASE: '${BIBLIOMAN_DATABASE}'
+    restart: unless-stopped
+    healthcheck:
+      test: "timeout 10s bash -c ':> /dev/tcp/127.0.0.1/5054' || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+
+volumes:
+  mybibliotheca_data: null
+
