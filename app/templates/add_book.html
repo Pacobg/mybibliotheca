@@ -2032,11 +2032,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const submitButtons = form.querySelectorAll('button[type="submit"]');
         const submitActionField = document.getElementById('submitActionField');
         submitButtons.forEach(button => {
-            button.addEventListener('click', () => {
+            button.addEventListener('click', (e) => {
+                console.log('🖱️ [FORM_SUBMIT] Submit button clicked:', button.id || button.className, 'value:', button.value);
                 lastClickedSubmitButton = button;
                 if (submitActionField) {
                     const actionValue = button.value || button.getAttribute('value') || 'save';
                     submitActionField.value = actionValue;
+                    console.log('🖱️ [FORM_SUBMIT] Set submit_action to:', actionValue);
                 }
             });
         });
