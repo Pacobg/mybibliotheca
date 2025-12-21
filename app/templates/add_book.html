@@ -1116,8 +1116,31 @@ function selectBookFromSearch(bookIndex) {
     console.log('📖 Using merged book data:', fullData);
     
     // Close the modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('titleSearchModal'));
-    modal.hide();
+    try {
+        const modalElement = document.getElementById('titleSearchModal');
+        if (modalElement) {
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+            } else {
+                // If modal instance doesn't exist, try to create and hide it
+                const newModal = new bootstrap.Modal(modalElement);
+                newModal.hide();
+            }
+        }
+    } catch (e) {
+        console.warn('Error closing modal:', e);
+        // Try alternative method - remove backdrop and hide modal manually
+        const modalElement = document.getElementById('titleSearchModal');
+        if (modalElement) {
+            modalElement.classList.remove('show');
+            modalElement.style.display = 'none';
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) backdrop.remove();
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+        }
+    }
     
     // The fullData already contains the BEST merged information from both APIs
     // This includes smart date selection, combined metadata, etc.
