@@ -330,8 +330,22 @@ class BibliomanProvider:
         cover_field = book.get('cover')
         book_id = book.get('id')
         import builtins
+        
+        # Extract chitanka_id from cover field if chitanka_id is NULL
+        # Cover format: {chitanka_id}-{hash}.jpg (e.g., "16516-61e2e079eca99.jpg")
+        if not chitanka_id and cover_field and isinstance(cover_field, str):
+            # Try to extract chitanka_id from cover filename
+            cover_filename = cover_field.strip()
+            if '-' in cover_filename:
+                try:
+                    potential_id = cover_filename.split('-')[0]
+                    if potential_id.isdigit():
+                        chitanka_id = int(potential_id)
+                        builtins.print(f"🔍 [BIBLIOMAN][FORMAT] Extracted chitanka_id={chitanka_id} from cover field: {cover_field}")
+                except (ValueError, IndexError):
+                    pass
+        
         builtins.print(f"🔍 [BIBLIOMAN][FORMAT] Book ID: {book_id}, chitanka_id: {chitanka_id}, cover field: {cover_field}")
-        builtins.print(f"🔍 [BIBLIOMAN][FORMAT] All book keys: {list(book.keys())}")
         logger.info(f"🔍 [BIBLIOMAN] Book ID: {book_id}, chitanka_id: {chitanka_id}, cover field: {cover_field}")
         
         if chitanka_id:
