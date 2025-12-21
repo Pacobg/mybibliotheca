@@ -1456,6 +1456,25 @@ function mergeBookData(searchData, isbnData) {
         }
     }
     
+    // CRITICAL: Preserve Biblioman-specific fields from searchData (they won't be in isbnData)
+    // These fields are essential for Biblioman books and must be preserved
+    if (searchData.biblioman_id) merged.biblioman_id = searchData.biblioman_id;
+    if (searchData.chitanka_id) merged.chitanka_id = searchData.chitanka_id;
+    if (searchData.chitanka_url) merged.chitanka_url = searchData.chitanka_url;
+    if (searchData.chitanka_cover_url) merged.chitanka_cover_url = searchData.chitanka_cover_url;
+    
+    // Also preserve from isbnData if present (shouldn't happen, but be safe)
+    if (isbnData.biblioman_id && !merged.biblioman_id) merged.biblioman_id = isbnData.biblioman_id;
+    if (isbnData.chitanka_id && !merged.chitanka_id) merged.chitanka_id = isbnData.chitanka_id;
+    if (isbnData.chitanka_url && !merged.chitanka_url) merged.chitanka_url = isbnData.chitanka_url;
+    if (isbnData.chitanka_cover_url && !merged.chitanka_cover_url) merged.chitanka_cover_url = isbnData.chitanka_cover_url;
+    
+    console.log('🔀 [MERGE_DATA] Preserved Biblioman fields:', {
+        biblioman_id: merged.biblioman_id,
+        chitanka_id: merged.chitanka_id,
+        chitanka_url: merged.chitanka_url
+    });
+    
     return merged;
 }
 
