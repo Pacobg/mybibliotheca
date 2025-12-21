@@ -4985,152 +4985,252 @@ def add_book_manual():
             flash('Title is required', 'danger')
             return redirect(url_for('main.library'))
 
-    contrib = {k: _load_json_list(f'contributors_{k}') for k in ['authored','narrated','edited','translated','illustrated']}
-    author = (contrib['authored'][0]['name'].strip() if contrib.get('authored') else (request.form.get('author') or '').strip()) or 'Unknown Author'
-    additional_authors = ', '.join([c['name'] for c in (contrib.get('authored') or [])[1:]]) or None
-    narrator = ', '.join([c['name'] for c in contrib.get('narrated', [])]) or None
-    editor = ', '.join([c['name'] for c in contrib.get('edited', [])]) or None
-    translator = ', '.join([c['name'] for c in contrib.get('translated', [])]) or None
-    illustrator = ', '.join([c['name'] for c in contrib.get('illustrated', [])]) or None
+        contrib = {k: _load_json_list(f'contributors_{k}') for k in ['authored','narrated','edited','translated','illustrated']}
+        author = (contrib['authored'][0]['name'].strip() if contrib.get('authored') else (request.form.get('author') or '').strip()) or 'Unknown Author'
+        additional_authors = ', '.join([c['name'] for c in (contrib.get('authored') or [])[1:]]) or None
+        narrator = ', '.join([c['name'] for c in contrib.get('narrated', [])]) or None
+        editor = ', '.join([c['name'] for c in contrib.get('edited', [])]) or None
+        translator = ', '.join([c['name'] for c in contrib.get('translated', [])]) or None
+        illustrator = ', '.join([c['name'] for c in contrib.get('illustrated', [])]) or None
 
-    # Categories
-    categories = []
-    if 'categories' in request.form:
+        # Categories
+        categories = []
+        if 'categories' in request.form:
+            try:
+                categories = [c.get('name') for c in json.loads(request.form['categories']) if c.get('name')]
+            except Exception:
+                pass
+        raw_categories = None
+        raw_cat_val = request.form.get('raw_categories')
+        if raw_cat_val:
+            try:
+                raw_categories = json.loads(raw_cat_val)
+            except Exception:
+                raw_categories = [s.strip() for s in raw_cat_val.split(',') if s.strip()]
+
+        # Scalars
+        # Accept multiple ISBN field names and normalize
+        isbn_raw = (request.form.get('isbn') or '').upper()
+        # Accept both snake_case and camelCase field names from templates/forms
+        isbn10_form = (request.form.get('isbn_10') or request.form.get('isbn10') or '').upper()
+        isbn13_form = (request.form.get('isbn_13') or request.form.get('isbn13') or '').upper()
+        subtitle = (request.form.get('subtitle') or '').strip()
+        publisher_name = (request.form.get('publisher') or '').strip()
+        description = (request.form.get('description') or '').strip()
+        page_count = None
+        pcs = (request.form.get('page_count') or '').strip()
+        if pcs:
+            try:
+                page_count = int(pcs)
+            except ValueError:
+                pass
+        language = (request.form.get('language') or 'en').strip() or 'en'
+        cover_url = (request.form.get('cover_url') or '').strip()
+        published_date = (request.form.get('published_date') or '').strip()
+        series = (request.form.get('series') or '').strip()
+        series_volume = (request.form.get('series_volume') or '').strip()
+        series_id = (request.form.get('series_id') or '').strip()
+
+        isbn10 = isbn13 = None
+        import re
+        # Prefer explicit fields if present; otherwise use legacy 'isbn'
+        preferred = isbn13_form or isbn10_form or isbn_raw
+        clean = re.sub(r'[^0-9X]', '', preferred)
+        if len(clean) == 10:
+            isbn10 = clean
+        elif len(clean) == 13:
+            isbn13 = clean
+        # If one form field held the other type, capture both
+        if not isbn10 and isbn10_form:
+            c10 = re.sub(r'[^0-9X]', '', isbn10_form)
+            if len(c10) == 10:
+                isbn10 = c10
+        if not isbn13 and isbn13_form:
+            c13 = re.sub(r'[^0-9X]', '', isbn13_form)
+            if len(c13) == 13:
+                isbn13 = c13
+        # Derive missing counterpart when possible
+        def _isbn10_to_13(i10: str) -> str:
+            base = "978" + i10[:9]
+            total = 0
+            for idx, ch in enumerate(base):
+                total += int(ch) * (1 if idx % 2 == 0 else 3)
+            check_digit = (10 - (total % 10)) % 10
+            return base + str(check_digit)
+
+        def _isbn13_to_10(i13: str) -> Optional[str]:
+            if not i13.startswith('978'):
+                return None
+            base = i13[3:12]
+            total = 0
+            for idx, ch in enumerate(base):
+                total += int(ch) * (10 - idx)
+            check_digit = (11 - (total % 11)) % 11
+            if check_digit == 10:
+                check_char = 'X'
+            elif check_digit == 11:
+                check_char = '0'
+            else:
+                check_char = str(check_digit)
+            return base + check_char
         try:
-            categories = [c.get('name') for c in json.loads(request.form['categories']) if c.get('name')]
+            if isbn10 and not isbn13:
+                isbn13 = _isbn10_to_13(isbn10)
+            elif isbn13 and not isbn10:
+                maybe10 = _isbn13_to_10(isbn13)
+                if maybe10:
+                    isbn10 = maybe10
         except Exception:
             pass
-    raw_categories = None
-    raw_cat_val = request.form.get('raw_categories')
-    if raw_cat_val:
-        try:
-            raw_categories = json.loads(raw_cat_val)
-        except Exception:
-            raw_categories = [s.strip() for s in raw_cat_val.split(',') if s.strip()]
 
-    # Scalars
-    # Accept multiple ISBN field names and normalize
-    isbn_raw = (request.form.get('isbn') or '').upper()
-    # Accept both snake_case and camelCase field names from templates/forms
-    isbn10_form = (request.form.get('isbn_10') or request.form.get('isbn10') or '').upper()
-    isbn13_form = (request.form.get('isbn_13') or request.form.get('isbn13') or '').upper()
-    subtitle = (request.form.get('subtitle') or '').strip()
-    publisher_name = (request.form.get('publisher') or '').strip()
-    description = (request.form.get('description') or '').strip()
-    page_count = None
-    pcs = (request.form.get('page_count') or '').strip()
-    if pcs:
-        try:
-            page_count = int(pcs)
-        except ValueError:
-            pass
-    language = (request.form.get('language') or 'en').strip() or 'en'
-    cover_url = (request.form.get('cover_url') or '').strip()
-    published_date = (request.form.get('published_date') or '').strip()
-    series = (request.form.get('series') or '').strip()
-    series_volume = (request.form.get('series_volume') or '').strip()
-    series_id = (request.form.get('series_id') or '').strip()
-
-    isbn10 = isbn13 = None
-    import re
-    # Prefer explicit fields if present; otherwise use legacy 'isbn'
-    preferred = isbn13_form or isbn10_form or isbn_raw
-    clean = re.sub(r'[^0-9X]', '', preferred)
-    if len(clean) == 10:
-        isbn10 = clean
-    elif len(clean) == 13:
-        isbn13 = clean
-    # If one form field held the other type, capture both
-    if not isbn10 and isbn10_form:
-        c10 = re.sub(r'[^0-9X]', '', isbn10_form)
-        if len(c10) == 10:
-            isbn10 = c10
-    if not isbn13 and isbn13_form:
-        c13 = re.sub(r'[^0-9X]', '', isbn13_form)
-        if len(c13) == 13:
-            isbn13 = c13
-    # Derive missing counterpart when possible
-    def _isbn10_to_13(i10: str) -> str:
-        base = "978" + i10[:9]
-        total = 0
-        for idx, ch in enumerate(base):
-            total += int(ch) * (1 if idx % 2 == 0 else 3)
-        check_digit = (10 - (total % 10)) % 10
-        return base + str(check_digit)
-
-    def _isbn13_to_10(i13: str) -> Optional[str]:
-        if not i13.startswith('978'):
-            return None
-        base = i13[3:12]
-        total = 0
-        for idx, ch in enumerate(base):
-            total += int(ch) * (10 - idx)
-        check_digit = (11 - (total % 11)) % 11
-        if check_digit == 10:
-            check_char = 'X'
-        elif check_digit == 11:
-            check_char = '0'
+        submitted_media_type = (request.form.get('media_type') or '').strip().lower()
+        if submitted_media_type:
+            try:
+                media_type = MediaType(submitted_media_type).value
+            except ValueError:
+                media_type = get_default_book_format()
         else:
-            check_char = str(check_digit)
-        return base + check_char
-    try:
-        if isbn10 and not isbn13:
-            isbn13 = _isbn10_to_13(isbn10)
-        elif isbn13 and not isbn10:
-            maybe10 = _isbn13_to_10(isbn13)
-            if maybe10:
-                isbn10 = maybe10
-    except Exception:
-        pass
-
-    submitted_media_type = (request.form.get('media_type') or '').strip().lower()
-    if submitted_media_type:
-        try:
-            media_type = MediaType(submitted_media_type).value
-        except ValueError:
             media_type = get_default_book_format()
-    else:
-        media_type = get_default_book_format()
 
-    book_data = SimplifiedBook(
-        title=title,
-        author=author,
-        isbn13=isbn13,
-        isbn10=isbn10,
-        subtitle=subtitle,
-        description=description,
-        publisher=publisher_name,
-        published_date=published_date,
-        page_count=page_count,
-        language=language,
-        cover_url=cover_url,
-        series=series,
-        series_volume=series_volume,
-        categories=categories,
-        additional_authors=additional_authors,
-        editor=editor,
-        translator=translator,
-        narrator=narrator,
-        illustrator=illustrator,
-        google_books_id=(request.form.get('google_books_id') or '').strip() or None,
-        openlibrary_id=None
-    )
-    # Attempt to add; gracefully handle duplicates
-    try:
-        added = SimplifiedBookService().add_book_to_user_library_sync(
-            book_data=book_data,
-            user_id=current_user.id,
-            reading_status=request.form.get('reading_status',''),
-            ownership_status=request.form.get('ownership_status','owned'),
-            media_type=media_type,
-            location_id=request.form.get('location_id')
+        book_data = SimplifiedBook(
+            title=title,
+            author=author,
+            isbn13=isbn13,
+            isbn10=isbn10,
+            subtitle=subtitle,
+            description=description,
+            publisher=publisher_name,
+            published_date=published_date,
+            page_count=page_count,
+            language=language,
+            cover_url=cover_url,
+            series=series,
+            series_volume=series_volume,
+            categories=categories,
+            additional_authors=additional_authors,
+            editor=editor,
+            translator=translator,
+            narrator=narrator,
+            illustrator=illustrator,
+            google_books_id=(request.form.get('google_books_id') or '').strip() or None,
+            openlibrary_id=None
         )
-    except BookAlreadyExistsError as dup:
-        # Handle duplicate detection - check if this is an AJAX request
+        # Attempt to add; gracefully handle duplicates
         try:
-            existing_id = getattr(dup, 'book_id', None)
+            added = SimplifiedBookService().add_book_to_user_library_sync(
+                book_data=book_data,
+                user_id=current_user.id,
+                reading_status=request.form.get('reading_status',''),
+                ownership_status=request.form.get('ownership_status','owned'),
+                media_type=media_type,
+                location_id=request.form.get('location_id')
+            )
+        except BookAlreadyExistsError as dup:
+            # Handle duplicate detection - check if this is an AJAX request
+            try:
+                existing_id = getattr(dup, 'book_id', None)
+            except Exception:
+                existing_id = None
+            
+            # Check if request wants JSON response (AJAX or explicit header)
+            wants_json = (
+                request.headers.get('Accept', '').find('application/json') != -1 or
+                request.headers.get('X-Requested-With') == 'XMLHttpRequest' or
+                request.args.get('format') == 'json'
+            )
+            
+            if wants_json:
+                # Return JSON with duplicate info and book data for modal
+                return jsonify({
+                    'success': False,
+                    'duplicate': True,
+                    'book_id': existing_id,
+                    'message': f'Book "{title}" already exists in your library',
+                    'book_data': {
+                        'title': title,
+                        'author': author,
+                        'isbn13': isbn13,
+                        'isbn10': isbn10,
+                        'subtitle': subtitle or '',
+                        'description': description or '',
+                        'publisher': publisher_name or '',
+                        'published_date': published_date or '',
+                        'language': language,
+                        'cover_url': cover_url or '',
+                        'series': series or '',
+                        'series_volume': series_volume or '',
+                        'categories': categories,
+                        'media_type': media_type,
+                        'reading_status': request.form.get('reading_status', ''),
+                        'ownership_status': request.form.get('ownership_status', 'owned'),
+                        'location_id': request.form.get('location_id')
+                    }
+                }), 409  # 409 Conflict status code
+            else:
+                # Original behavior for non-AJAX requests: flash and redirect
+                flash('That book already exists. Taking you to it.', 'info')
+                if existing_id:
+                    return redirect(url_for('book.view_book_enhanced', uid=existing_id))
+                return redirect(url_for('main.library'))
+        if not added:
+            # Check if request wants JSON response
+            wants_json = (
+                request.headers.get('Accept', '').find('application/json') != -1 or
+                request.headers.get('X-Requested-With') == 'XMLHttpRequest' or
+                request.args.get('format') == 'json'
+            )
+            
+            if wants_json:
+                return jsonify({'success': False, 'message': 'Failed to add book'}), 500
+            else:
+                flash('Failed to add book','danger')
+                return redirect(url_for('main.library'))
+
+        # Find created book to apply personal metadata & attach series
+        created = None
+        try:
+            for b in book_service.get_user_books_sync(current_user.id):
+                if b.title == title:
+                    created = b; break
         except Exception:
-            existing_id = None
+            created = None
+
+        if created and series_id:
+            try:
+                from app.services.kuzu_series_service import get_series_service
+                bid = getattr(created,'id',None) or getattr(created,'uid',None)
+                if bid:
+                    get_series_service().attach_book(bid, series_id, volume=series_volume)
+            except Exception as serr:
+                current_app.logger.warning(f"[SERIES][ATTACH_FAIL] {serr}")
+
+        if created:
+            updates = {}
+            pn = (request.form.get('personal_notes') or '').strip()
+            if pn: updates['personal_notes']=pn
+            rv = (request.form.get('review') or '').strip()
+            if rv: updates['review']=rv
+            ur = (request.form.get('user_rating') or '').strip()
+            if ur:
+                try: updates['user_rating']=int(ur)
+                except ValueError: pass
+            sd = (request.form.get('start_date') or '').strip()
+            if sd: updates['start_date']=sd
+            fd = (request.form.get('finish_date') or '').strip()
+            if fd: updates['finish_date']=fd
+            if raw_categories: updates['raw_categories']=raw_categories
+            if updates:
+                try: book_service.update_book_sync(created.uid, str(current_user.id), **updates)
+                except Exception: pass
+
+        # Invalidate/bump the user's library cache version so the new book shows immediately
+        try:
+            from app.utils.simple_cache import bump_user_library_version
+            bump_user_library_version(str(current_user.id))
+        except Exception:
+            pass
+
+        message = f'Added "{title}"'
         
         # Check if request wants JSON response (AJAX or explicit header)
         wants_json = (
@@ -5140,121 +5240,21 @@ def add_book_manual():
         )
         
         if wants_json:
-            # Return JSON with duplicate info and book data for modal
+            # Return JSON for AJAX requests
+            redirect_url = url_for('book.add_book') if submit_action == 'save_and_new' else url_for('main.library')
             return jsonify({
-                'success': False,
-                'duplicate': True,
-                'book_id': existing_id,
-                'message': f'Book "{title}" already exists in your library',
-                'book_data': {
-                    'title': title,
-                    'author': author,
-                    'isbn13': isbn13,
-                    'isbn10': isbn10,
-                    'subtitle': subtitle or '',
-                    'description': description or '',
-                    'publisher': publisher_name or '',
-                    'published_date': published_date or '',
-                    'language': language,
-                    'cover_url': cover_url or '',
-                    'series': series or '',
-                    'series_volume': series_volume or '',
-                    'categories': categories,
-                    'media_type': media_type,
-                    'reading_status': request.form.get('reading_status', ''),
-                    'ownership_status': request.form.get('ownership_status', 'owned'),
-                    'location_id': request.form.get('location_id')
-                }
-            }), 409  # 409 Conflict status code
+                'success': True,
+                'message': message,
+                'redirect_url': redirect_url
+            })
         else:
-            # Original behavior for non-AJAX requests: flash and redirect
-            flash('That book already exists. Taking you to it.', 'info')
-            if existing_id:
-                return redirect(url_for('book.view_book_enhanced', uid=existing_id))
+            # Original behavior for non-AJAX requests
+            if submit_action == 'save_and_new':
+                flash(f'{message}. Ready for the next book!', 'success')
+                return redirect(url_for('book.add_book'))
+            
+            flash(message, 'success')
             return redirect(url_for('main.library'))
-    if not added:
-        # Check if request wants JSON response
-        wants_json = (
-            request.headers.get('Accept', '').find('application/json') != -1 or
-            request.headers.get('X-Requested-With') == 'XMLHttpRequest' or
-            request.args.get('format') == 'json'
-        )
-        
-        if wants_json:
-            return jsonify({'success': False, 'message': 'Failed to add book'}), 500
-        else:
-            flash('Failed to add book','danger')
-            return redirect(url_for('main.library'))
-
-    # Find created book to apply personal metadata & attach series
-    created = None
-    try:
-        for b in book_service.get_user_books_sync(current_user.id):
-            if b.title == title:
-                created = b; break
-    except Exception:
-        created = None
-
-    if created and series_id:
-        try:
-            from app.services.kuzu_series_service import get_series_service
-            bid = getattr(created,'id',None) or getattr(created,'uid',None)
-            if bid:
-                get_series_service().attach_book(bid, series_id, volume=series_volume)
-        except Exception as serr:
-            current_app.logger.warning(f"[SERIES][ATTACH_FAIL] {serr}")
-
-    if created:
-        updates = {}
-        pn = (request.form.get('personal_notes') or '').strip()
-        if pn: updates['personal_notes']=pn
-        rv = (request.form.get('review') or '').strip()
-        if rv: updates['review']=rv
-        ur = (request.form.get('user_rating') or '').strip()
-        if ur:
-            try: updates['user_rating']=int(ur)
-            except ValueError: pass
-        sd = (request.form.get('start_date') or '').strip()
-        if sd: updates['start_date']=sd
-        fd = (request.form.get('finish_date') or '').strip()
-        if fd: updates['finish_date']=fd
-        if raw_categories: updates['raw_categories']=raw_categories
-        if updates:
-            try: book_service.update_book_sync(created.uid, str(current_user.id), **updates)
-            except Exception: pass
-
-    # Invalidate/bump the user's library cache version so the new book shows immediately
-    try:
-        from app.utils.simple_cache import bump_user_library_version
-        bump_user_library_version(str(current_user.id))
-    except Exception:
-        pass
-
-    message = f'Added "{title}"'
-    
-    # Check if request wants JSON response (AJAX or explicit header)
-    wants_json = (
-        request.headers.get('Accept', '').find('application/json') != -1 or
-        request.headers.get('X-Requested-With') == 'XMLHttpRequest' or
-        request.args.get('format') == 'json'
-    )
-    
-    if wants_json:
-        # Return JSON for AJAX requests
-        redirect_url = url_for('book.add_book') if submit_action == 'save_and_new' else url_for('main.library')
-        return jsonify({
-            'success': True,
-            'message': message,
-            'redirect_url': redirect_url
-        })
-    else:
-        # Original behavior for non-AJAX requests
-        if submit_action == 'save_and_new':
-            flash(f'{message}. Ready for the next book!', 'success')
-            return redirect(url_for('book.add_book'))
-        
-        flash(message, 'success')
-        return redirect(url_for('main.library'))
     
     except Exception as e:
         # Handle any unexpected errors
