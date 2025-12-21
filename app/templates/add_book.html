@@ -728,6 +728,26 @@ body:not(.modal-open) .modal-backdrop {
 .modal-backdrop.fade:not(.show) {
     display: none !important;
 }
+
+/* Critical: Ensure buttons in modal are always clickable */
+#titleSearchModal .btn,
+#titleSearchModal button,
+#titleSearchModal a {
+    position: relative;
+    z-index: 1055 !important;
+    pointer-events: auto !important;
+}
+
+/* Ensure modal content is above backdrop */
+#titleSearchModal .modal-dialog {
+    z-index: 1055 !important;
+    position: relative;
+}
+
+#titleSearchModal .modal-content {
+    z-index: 1055 !important;
+    position: relative;
+}
 </style>
 
 <script>
