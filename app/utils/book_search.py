@@ -579,8 +579,14 @@ def merge_and_rank_results(search_title: str, google_results: List[Dict],
                     record['author'] = ', '.join(record['authors'])
                 else:
                     record['author'] = record['authors']
+            # Calculate similarity score if not already set (Biblioman results should have high priority)
+            if 'similarity_score' not in record or not record.get('similarity_score'):
+                record['similarity_score'] = calculate_title_similarity(search_title, record.get('title', ''))
+                # Boost Biblioman results for Cyrillic searches (they're more likely to be correct)
+                if record['similarity_score'] > 0.5:
+                    record['similarity_score'] = min(1.0, record['similarity_score'] + 0.1)  # Small boost for Biblioman
             merged_results[isbn_key] = record
-            builtins.print(f"  ✅ Added to merged_results with key: {isbn_key[:50]}")
+            builtins.print(f"  ✅ Added to merged_results with key: {isbn_key[:50]}, similarity: {record.get('similarity_score', 0):.3f}")
     
     # Process Google Books results and merge with Biblioman where ISBN matches
     # DO NOT add Google Books results separately - merge them directly to preserve Biblioman priority
