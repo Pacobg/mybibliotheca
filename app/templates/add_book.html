@@ -1170,8 +1170,18 @@ function displayTitleSearchResults(results) {
                                 </small>
                                 ${isbn !== 'N/A' ? 
                                     `<button type="button" class="btn btn-primary btn-sm" 
-                                            onclick="event.stopPropagation(); event.preventDefault(); if(typeof forceCloseSearchModal === 'function') forceCloseSearchModal(); selectBookFromSearch(${index}); return false;"
-                                            style="z-index: 1051; position: relative;">
+                                            onclick="(function(e){e.stopPropagation();e.preventDefault();
+                                                     document.body.classList.remove('modal-open');
+                                                     document.body.className=document.body.className.replace(/\\bmodal-open\\b/g,'');
+                                                     document.body.style.removeProperty('overflow');
+                                                     document.body.style.removeProperty('padding-right');
+                                                     document.body.style.setProperty('overflow','','important');
+                                                     document.body.style.setProperty('padding-right','0','important');
+                                                     document.querySelectorAll('.modal-backdrop').forEach(b=>{b.style.pointerEvents='none';b.remove();});
+                                                     const m=document.getElementById('titleSearchModal');if(m){m.classList.remove('show');m.style.display='none';m.setAttribute('aria-hidden','true');try{const inst=bootstrap.Modal.getInstance(m);if(inst)inst.hide();}catch(e){}}if(typeof forceCloseSearchModal==='function')forceCloseSearchModal();
+                                                     setTimeout(()=>selectBookFromSearch(${index}),100);
+                                                     return false;})(event)"
+                                            style="z-index: 1055 !important; position: relative; pointer-events: auto !important;">
                                         <i class="bi bi-check-lg me-1"></i>Use This Book
                                     </button>` :
                                     `<small class="text-warning">
