@@ -763,8 +763,13 @@ def search_books_by_title(title: str, max_results: int = 10, author: Optional[st
     cache_key = (title.lower(), (author_arg or '').lower(), int(max_results))
     cached = _search_cache_get(cache_key)
     if cached is not None:
-        print(f"💾 [BOOK_SEARCH] Cache hit for '{title}'")
-        return cached
+        print(f"💾 [BOOK_SEARCH] Cache hit for '{title}' - returning cached results (may not include Biblioman if cached before Biblioman integration)")
+        print(f"💾 [BOOK_SEARCH] Cached results count: {len(cached) if isinstance(cached, list) else 'N/A'}")
+        # For debugging: clear cache to force fresh search with Biblioman
+        # Uncomment the next line to bypass cache during testing:
+        # cached = None
+        if cached is not None:
+            return cached
 
     start_time = time.perf_counter()
     
@@ -886,7 +891,9 @@ def search_books_with_display_fields(title: str, max_results: int = 10, isbn_req
     Returns:
         Dict with 'results' containing the book list and 'metadata' with search info
     """
+    print(f"🔍 [SEARCH_DISPLAY] search_books_with_display_fields called: title='{title}', author='{author}', isbn_required={isbn_required}")
     results = search_books_by_title(title, max_results, author)  # Pass author to search_books_by_title
+    print(f"📊 [SEARCH_DISPLAY] Got {len(results)} results from search_books_by_title")
     
     # Filter for ISBN if required
     if isbn_required:
