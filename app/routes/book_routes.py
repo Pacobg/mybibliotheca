@@ -5225,8 +5225,12 @@ def add_book_manual():
 
         # Invalidate/bump the user's library cache version so the new book shows immediately
         try:
-            from app.utils.simple_cache import bump_user_library_version
+            from app.utils.simple_cache import bump_user_library_version, cache_delete
             bump_user_library_version(str(current_user.id))
+            # Also invalidate specific cache keys for book counts
+            user_id_str = str(current_user.id)
+            cache_delete(f"total_count:{user_id_str}")
+            cache_delete(f"status_counts:{user_id_str}")
         except Exception:
             pass
 
