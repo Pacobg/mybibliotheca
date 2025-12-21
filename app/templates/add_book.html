@@ -1353,7 +1353,10 @@ function populateFormWithBookData(bookData) {
         const title = document.getElementById('title').value || '';
         const authors = getSelectedAuthorsForSearch();
         // Defer slightly so DOM updates settle
-        setTimeout(() => fetchAndShowCoverCandidates({isbn, title, authors}), 250);
+        // Try to fetch cover candidates if function exists
+        if (typeof fetchAndShowCoverCandidates === 'function') {
+            setTimeout(() => fetchAndShowCoverCandidates({isbn, title, authors}), 250);
+        }
     } catch (_) {}
 }
 
