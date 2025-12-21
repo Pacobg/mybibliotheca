@@ -2525,10 +2525,19 @@ function forceCloseSearchModal() {
     console.log('🔒 forceCloseSearchModal called');
     
     // CRITICAL: First, restore body styles IMMEDIATELY to unblock clicks
+    // Use multiple methods to ensure it works
     document.body.classList.remove('modal-open');
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
-    document.body.style.padding = '';
+    // Force remove the class using classList API
+    if (document.body.classList.contains('modal-open')) {
+        document.body.className = document.body.className.replace(/\bmodal-open\b/g, '');
+    }
+    // Force remove inline styles
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+    document.body.style.removeProperty('padding');
+    // Use setProperty with important flag
+    document.body.style.setProperty('overflow', '', 'important');
+    document.body.style.setProperty('padding-right', '0', 'important');
     
     // Aggressively remove ALL backdrops (sometimes multiple can exist)
     const backdrops = document.querySelectorAll('.modal-backdrop');
