@@ -5255,6 +5255,27 @@ def add_book_manual():
         
         flash(message, 'success')
         return redirect(url_for('main.library'))
+    
+    except Exception as e:
+        # Handle any unexpected errors
+        current_app.logger.error(f"Error in add_book_manual: {type(e).__name__}: {e}")
+        current_app.logger.error(traceback.format_exc())
+        
+        # Check if request wants JSON response (may not be set if error occurred early)
+        wants_json = (
+            request.headers.get('Accept', '').find('application/json') != -1 or
+            request.headers.get('X-Requested-With') == 'XMLHttpRequest' or
+            request.args.get('format') == 'json'
+        )
+        
+        if wants_json:
+            return jsonify({
+                'success': False,
+                'message': f'An error occurred while adding the book: {str(e)}'
+            }), 500
+        else:
+            flash(f'Error adding book: {str(e)}', 'danger')
+            return redirect(url_for('book.add_book'))
 
 @book_bp.route('/api/resolve_duplicate', methods=['POST'])
 @login_required
