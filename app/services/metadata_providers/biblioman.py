@@ -398,7 +398,7 @@ class BibliomanProvider:
                 cursor = self.db.cursor(dictionary=True)
                 # Try to get categories from book_category table (many-to-many relationship)
                 # Biblioman uses book_category table to link books to labels (categories)
-                # Try both label_id and category_id (Biblioman schema might vary)
+                # First try with category_id
                 sql = """
                     SELECT l.name 
                     FROM book_category bc
@@ -411,9 +411,27 @@ class BibliomanProvider:
                     if result and result.get('name'):
                         categories.append(result['name'])
                 cursor.close()
-                builtins.print(f"📚 [BIBLIOMAN][FORMAT] Found {len(categories)} categories from book_category table for book {book_id}: {categories}")
+                builtins.print(f"📚 [BIBLIOMAN][FORMAT] Found {len(categories)} categories from book_category table (category_id) for book {book_id}: {categories}")
                 logger.debug(f"Biblioman: Found {len(categories)} categories from book_category table for book {book_id}")
+                
+                # If no categories found, try with label_id
+                if not categories:
+                    cursor = self.db.cursor(dictionary=True)
+                    sql = """
+                        SELECT l.name 
+                        FROM book_category bc
+                        JOIN label l ON bc.label_id = l.id
+                        WHERE bc.book_id = %s
+                    """
+                    cursor.execute(sql, (book_id,))
+                    results = cursor.fetchall()
+                    for result in results:
+                        if result and result.get('name'):
+                            categories.append(result['name'])
+                    cursor.close()
+                    builtins.print(f"📚 [BIBLIOMAN][FORMAT] Found {len(categories)} categories from book_category table (label_id) for book {book_id}: {categories}")
             except Exception as e:
+                builtins.print(f"❌ [BIBLIOMAN][FORMAT] Error fetching categories from book_category: {e}")
                 logger.debug(f"Biblioman: Could not fetch categories from book_category table for book {book_id}: {e}")
                 # Fallback: try category_id field
                 try:
