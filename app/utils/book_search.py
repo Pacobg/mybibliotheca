@@ -546,18 +546,40 @@ def search_openlibrary(title: str, max_results: int = 20, author: Optional[str] 
 
 
 def merge_and_rank_results(search_title: str, google_results: List[Dict], 
-                          openlibrary_results: List[Dict], max_results: int = 10) -> List[Dict]:
+                          openlibrary_results: List[Dict], max_results: int = 10,
+                          biblioman_results: Optional[List[Dict]] = None) -> List[Dict]:
     """
-    Merge results from both APIs, deduplicate by ISBN, and rank by similarity.
+    Merge results from multiple APIs, deduplicate by ISBN, and rank by similarity.
     
-    When the same book is found in both APIs (matching ISBN), merge the data
-    and keep both source IDs.
+    When the same book is found in multiple APIs (matching ISBN), merge the data
+    and keep all source IDs. Biblioman results are prioritized for Bulgarian books.
     """
-    print(f"🔀 [MERGE_RANK] Merging {len(google_results)} Google + {len(openlibrary_results)} OpenLibrary results")
+    if biblioman_results is None:
+        biblioman_results = []
+    print(f"🔀 [MERGE_RANK] Merging {len(biblioman_results)} Biblioman + {len(google_results)} Google + {len(openlibrary_results)} OpenLibrary results")
     
     merged_results = {}
     
-    # Process Google Books results first
+    # Process Biblioman results first (highest priority for Bulgarian books)
+    for result in biblioman_results:
+        isbn_key = result.get('isbn_13') or result.get('isbn_10') or result.get('isbn') or f"biblioman_{result.get('biblioman_id')}"
+        if isbn_key:
+            record = result.copy()
+            # Ensure source is set
+            if 'source' not in record:
+                record['source'] = 'Biblioman'
+            # Convert authors to list if needed
+            if 'authors' in record and isinstance(record['authors'], str):
+                record['authors'] = [a.strip() for a in record['authors'].split(',') if a.strip()]
+            # Set author field for compatibility
+            if 'author' not in record and 'authors' in record:
+                if isinstance(record['authors'], list):
+                    record['author'] = ', '.join(record['authors'])
+                else:
+                    record['author'] = record['authors']
+            merged_results[isbn_key] = record
+    
+    # Process Google Books results second
     for result in google_results:
         isbn_key = result.get('isbn_13') or result.get('isbn_10') or f"google_{result.get('google_books_id')}"
         if isbn_key:
@@ -566,31 +588,40 @@ def merge_and_rank_results(search_title: str, google_results: List[Dict],
                 record['cover_candidates'] = [c.copy() for c in result['cover_candidates'] if isinstance(c, dict)]
             merged_results[isbn_key] = record
     
-    # Process OpenLibrary results and merge with Google Books where ISBN matches
-    for result in openlibrary_results:
-        isbn_key = result.get('isbn_13') or result.get('isbn_10') or f"openlibrary_{result.get('openlibrary_id')}"
+    # Process Google Books results and merge with Biblioman where ISBN matches
+    for result in google_results:
+        isbn_key = result.get('isbn_13') or result.get('isbn_10') or f"google_{result.get('google_books_id')}"
         
         if isbn_key in merged_results:
-            # Found matching ISBN - merge data
+            # Found matching ISBN - merge data (but prioritize Biblioman data)
             existing = merged_results[isbn_key]
             
-            # Merge OpenLibrary ID
-            existing['openlibrary_id'] = result.get('openlibrary_id')
-            
-            # Smart merge publication date information
-            best_date, best_year = select_best_publication_date(
-                existing.get('published_date', ''),
-                result.get('published_date', ''),
-                existing.get('publication_year'),
-                result.get('publication_year')
-            )
-            existing['published_date'] = best_date
-            existing['publication_year'] = best_year
-            
-            # Fill in missing data from OpenLibrary (except dates which we handled above)
-            for key, value in result.items():
-                if key not in ['published_date', 'publication_year'] and (key not in existing or not existing[key]):
-                    existing[key] = value
+            # If existing is from Biblioman, keep Biblioman data and only fill missing fields
+            if existing.get('source') == 'Biblioman':
+                # Keep Biblioman data, only fill missing fields from Google
+                for key, value in result.items():
+                    if key not in existing or not existing[key]:
+                        existing[key] = value
+                existing['google_books_id'] = result.get('google_books_id')
+                existing['source'] = 'Biblioman + Google Books'
+            else:
+                # Merge Google Books ID
+                existing['google_books_id'] = result.get('google_books_id')
+                
+                # Smart merge publication date information
+                best_date, best_year = select_best_publication_date(
+                    existing.get('published_date', ''),
+                    result.get('published_date', ''),
+                    existing.get('publication_year'),
+                    result.get('publication_year')
+                )
+                existing['published_date'] = best_date
+                existing['publication_year'] = best_year
+                
+                # Fill in missing data from Google (except dates which we handled above)
+                for key, value in result.items():
+                    if key not in ['published_date', 'publication_year'] and (key not in existing or not existing[key]):
+                        existing[key] = value
 
             incoming_candidates = result.get('cover_candidates') or []
             if incoming_candidates:
@@ -605,8 +636,75 @@ def merge_and_rank_results(search_title: str, google_results: List[Dict],
                 if existing_candidates:
                     existing['cover_candidates'] = existing_candidates
             
-            # Update source to indicate both
-            existing['source'] = 'Google Books + OpenLibrary'
+            # Use the higher similarity score
+            existing['similarity_score'] = max(
+                existing.get('similarity_score', 0),
+                result.get('similarity_score', 0)
+            )
+            
+            print(f"🔗 [MERGE_RANK] Merged book with ISBN {isbn_key[:20]}...")
+            
+        else:
+            # New book from Google Books
+            record = result.copy()
+            if result.get('cover_candidates'):
+                record['cover_candidates'] = [c.copy() for c in result['cover_candidates'] if isinstance(c, dict)]
+            merged_results[isbn_key] = record
+    
+    # Process OpenLibrary results and merge with existing results where ISBN matches
+    for result in openlibrary_results:
+        isbn_key = result.get('isbn_13') or result.get('isbn_10') or f"openlibrary_{result.get('openlibrary_id')}"
+        
+        if isbn_key in merged_results:
+            # Found matching ISBN - merge data (but prioritize Biblioman/Google data)
+            existing = merged_results[isbn_key]
+            
+            # If existing is from Biblioman, keep Biblioman data and only fill missing fields
+            if existing.get('source') == 'Biblioman' or 'Biblioman' in str(existing.get('source', '')):
+                # Keep Biblioman data, only fill missing fields from OpenLibrary
+                for key, value in result.items():
+                    if key not in existing or not existing[key]:
+                        existing[key] = value
+                existing['openlibrary_id'] = result.get('openlibrary_id')
+                if 'Biblioman' in str(existing.get('source', '')):
+                    existing['source'] = str(existing.get('source', '')) + ' + OpenLibrary'
+                else:
+                    existing['source'] = 'Biblioman + OpenLibrary'
+            else:
+                # Merge OpenLibrary ID
+                existing['openlibrary_id'] = result.get('openlibrary_id')
+                
+                # Smart merge publication date information
+                best_date, best_year = select_best_publication_date(
+                    existing.get('published_date', ''),
+                    result.get('published_date', ''),
+                    existing.get('publication_year'),
+                    result.get('publication_year')
+                )
+                existing['published_date'] = best_date
+                existing['publication_year'] = best_year
+                
+                # Fill in missing data from OpenLibrary (except dates which we handled above)
+                for key, value in result.items():
+                    if key not in ['published_date', 'publication_year'] and (key not in existing or not existing[key]):
+                        existing[key] = value
+
+            incoming_candidates = result.get('cover_candidates') or []
+            if incoming_candidates:
+                existing_candidates = list(existing.get('cover_candidates') or [])
+                seen_urls = {c.get('url') for c in existing_candidates if isinstance(c, dict) and c.get('url')}
+                for cand in incoming_candidates:
+                    url = cand.get('url') if isinstance(cand, dict) else None
+                    if not url or url in seen_urls:
+                        continue
+                    existing_candidates.append(cand.copy())
+                    seen_urls.add(url)
+                if existing_candidates:
+                    existing['cover_candidates'] = existing_candidates
+            
+            # Update source if not already indicating multiple sources
+            if '+' not in str(existing.get('source', '')):
+                existing['source'] = str(existing.get('source', '')) + ' + OpenLibrary'
             
             # Use the higher similarity score
             existing['similarity_score'] = max(
@@ -669,11 +767,65 @@ def search_books_by_title(title: str, max_results: int = 10, author: Optional[st
         return cached
 
     start_time = time.perf_counter()
-    google_results: List[Dict[str, Any]] = []
+    
+    # Check if Biblioman should be used (check metadata settings or Cyrillic detection)
+    biblioman_results: List[Dict[str, Any]] = []
+    use_biblioman = False
     try:
-        google_results = search_google_books(title, max_results * 2, author_arg)
-    except Exception as exc:
-        print(f"❌ [BOOK_SEARCH] Google search failed: {exc}")
+        from app.utils.text_utils import should_use_biblioman
+        from app.utils.metadata_settings import _get_cache
+        
+        # Check metadata settings for primary provider preference
+        try:
+            cache = _get_cache()
+            settings = cache.load()
+            books_settings = settings.get('books', {})
+            title_cfg = books_settings.get('title', {})
+            title_mode = title_cfg.get('mode', 'both')
+            title_default = title_cfg.get('default', 'google')
+            
+            if title_mode == 'biblioman' or title_default == 'biblioman':
+                use_biblioman = True
+            else:
+                # Fallback to Cyrillic detection
+                use_biblioman = should_use_biblioman(title, author_arg)
+        except Exception as e:
+            print(f"⚠️ [BOOK_SEARCH] Failed to check metadata settings: {e}")
+            # Fallback to Cyrillic detection
+            use_biblioman = should_use_biblioman(title, author_arg)
+        
+        if use_biblioman:
+            try:
+                from app.services.metadata_providers.biblioman import BibliomanProvider
+                provider = BibliomanProvider()
+                if provider.is_enabled():
+                    if title and author_arg:
+                        result = provider.find_best_match(title, author_arg, threshold=0.7)
+                        if result:
+                            biblioman_results = [result]
+                        else:
+                            biblioman_results = provider.search_by_title(title, limit=max_results * 2)
+                    elif title:
+                        biblioman_results = provider.search_by_title(title, limit=max_results * 2)
+                    elif author_arg:
+                        biblioman_results = provider.search_by_author(author_arg, limit=max_results * 2)
+                    provider.close()
+                    print(f"✅ [BOOK_SEARCH] Biblioman returned {len(biblioman_results)} results")
+            except Exception as exc:
+                print(f"❌ [BOOK_SEARCH] Biblioman search failed: {exc}")
+    except ImportError:
+        print("⚠️ [BOOK_SEARCH] Biblioman provider not available")
+    
+    google_results: List[Dict[str, Any]] = []
+    elapsed = time.perf_counter() - start_time
+    remaining_budget = max(0.0, _BOOK_SEARCH_GLOBAL_TIMEOUT - elapsed)
+    if remaining_budget <= 0:
+        print("⏱️ [BOOK_SEARCH] Skipping Google Books due to global timeout budget")
+    else:
+        try:
+            google_results = search_google_books(title, max_results * 2, author_arg)
+        except Exception as exc:
+            print(f"❌ [BOOK_SEARCH] Google search failed: {exc}")
 
     openlibrary_results: List[Dict[str, Any]] = []
     elapsed = time.perf_counter() - start_time
@@ -686,8 +838,8 @@ def search_books_by_title(title: str, max_results: int = 10, author: Optional[st
         except Exception as exc:
             print(f"❌ [BOOK_SEARCH] OpenLibrary search failed: {exc}")
     
-    # Merge, deduplicate, and rank results
-    final_results = merge_and_rank_results(title, google_results, openlibrary_results, max_results)
+    # Merge, deduplicate, and rank results (Biblioman first if available)
+    final_results = merge_and_rank_results(title, google_results, openlibrary_results, max_results, biblioman_results)
     _search_cache_set(cache_key, final_results)
     
     print(f"🎯 [BOOK_SEARCH] Search complete. Returning {len(final_results)} results for '{title}'" + (f" by '{author}'" if author else ""))
