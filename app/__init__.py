@@ -514,34 +514,65 @@ def create_app():
         headers_to_fix = {}
         for key, value in response.headers.items():
             if value:
+                value_str = str(value)
                 try:
                     # Try to encode as latin-1 (required by HTTP spec for headers)
-                    str(value).encode('latin-1', 'strict')
-                except UnicodeEncodeError:
+                    value_str.encode('latin-1', 'strict')
+                except UnicodeEncodeError as e:
+                    app.logger.debug(f"Header {key} contains non-latin-1 characters: {value_str[:100]}")
                     # This header contains non-latin-1 characters
                     if key.lower() == 'location':
                         # Special handling for Location header - re-encode URL
                         try:
-                            parsed = urlparse(str(value))
+                            location_url = str(value)
+                            parsed = urlparse(location_url)
+                            
                             # Encode path if needed
                             safe_path = parsed.path
                             try:
                                 parsed.path.encode('latin-1', 'strict')
                             except UnicodeEncodeError:
                                 path_parts = parsed.path.split('/')
-                                encoded_parts = [quote(part, safe='') for part in path_parts]
+                                encoded_parts = []
+                                for part in path_parts:
+                                    try:
+                                        part.encode('latin-1', 'strict')
+                                        encoded_parts.append(part)
+                                    except UnicodeEncodeError:
+                                        encoded_parts.append(quote(part, safe=''))
                                 safe_path = '/'.join(encoded_parts)
                             
-                            # Re-encode query parameters
+                            # Re-encode query parameters - parse and re-encode each parameter
                             if parsed.query:
-                                query_params = parse_qs(parsed.query, keep_blank_values=True)
+                                # Parse query string (may already be encoded, but parse_qs handles that)
+                                query_params = parse_qs(parsed.query, keep_blank_values=True, encoding='utf-8', errors='replace')
                                 flat_params = {}
                                 for k, v_list in query_params.items():
-                                    if len(v_list) == 1:
-                                        flat_params[k] = v_list[0]
+                                    # Decode key if needed, then re-encode
+                                    try:
+                                        decoded_key = k.encode('latin-1', 'strict').decode('latin-1')
+                                    except (UnicodeEncodeError, UnicodeDecodeError):
+                                        # Key contains non-latin-1, keep as-is (it's already percent-encoded)
+                                        decoded_key = k
+                                    
+                                    # Process values
+                                    safe_values = []
+                                    for v in v_list:
+                                        try:
+                                            # Try to decode if it's percent-encoded
+                                            decoded_val = v.encode('latin-1', 'strict').decode('latin-1')
+                                            safe_values.append(decoded_val)
+                                        except (UnicodeEncodeError, UnicodeDecodeError):
+                                            # Value contains non-latin-1, keep as-is
+                                            safe_values.append(v)
+                                    
+                                    if len(safe_values) == 1:
+                                        flat_params[decoded_key] = safe_values[0]
                                     else:
-                                        flat_params[k] = v_list
-                                encoded_query = urlencode(flat_params, doseq=True)
+                                        flat_params[decoded_key] = safe_values
+                                
+                                # Re-encode with proper encoding
+                                encoded_query = urlencode(flat_params, doseq=True, quote_via=quote)
                             else:
                                 encoded_query = ''
                             
@@ -554,23 +585,31 @@ def create_app():
                                 encoded_query,
                                 parsed.fragment
                             ))
-                            headers_to_fix[key] = safe_location
-                        except Exception as e:
-                            app.logger.warning(f"Failed to fix Location header encoding: {e}")
-                            # Fallback: remove query params to avoid encoding issues
+                            
+                            # Verify the result can be encoded as latin-1
                             try:
-                                parsed = urlparse(str(value))
-                                safe_location = urlunparse((
+                                safe_location.encode('latin-1', 'strict')
+                                headers_to_fix[key] = safe_location
+                            except UnicodeEncodeError:
+                                app.logger.warning(f"Re-encoded Location still contains non-latin-1: {safe_location[:100]}")
+                                # Last resort: remove query params
+                                safe_location_no_query = urlunparse((
                                     parsed.scheme or '',
                                     parsed.netloc or '',
-                                    parsed.path,
+                                    safe_path,
                                     parsed.params,
                                     '',  # Remove query
                                     parsed.fragment
                                 ))
+                                headers_to_fix[key] = safe_location_no_query
+                        except Exception as e:
+                            app.logger.error(f"Failed to fix Location header encoding: {e}", exc_info=True)
+                            # Last resort: redirect to library without query params
+                            try:
+                                from flask import url_for
+                                safe_location = url_for('book.library')
                                 headers_to_fix[key] = safe_location
                             except Exception:
-                                # Last resort: remove the problematic header
                                 headers_to_fix[key] = None
                     else:
                         # For other headers, try to encode using percent-encoding
