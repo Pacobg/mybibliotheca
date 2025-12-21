@@ -927,6 +927,8 @@ def _unified_fetch_pair(isbn: str):
 					openlib = data
 				elif kind == 'biblioman':
 					biblioman = data
+					if _META_DEBUG:
+						_META_LOG.info(f"[UNIFIED_METADATA][FETCH_PAIR] Biblioman result for ISBN={isbn_clean}: biblioman_id={data.get('biblioman_id')}, chitanka_id={data.get('chitanka_id')}, cover_url={data.get('cover_url')}, chitanka_cover_url={data.get('chitanka_cover_url')}, categories={data.get('categories')}")
 		except TimeoutError:
 			# If as_completed times out, mark all pending futures as timed out
 			for fut, kind in future_map.items():
