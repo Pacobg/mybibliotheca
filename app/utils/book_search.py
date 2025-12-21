@@ -906,7 +906,10 @@ def search_books_with_display_fields(title: str, max_results: int = 10, isbn_req
     
     # Filter for ISBN if required
     if isbn_required:
-        results = [book for book in results if book.get('isbn_10') or book.get('isbn_13')]
+        before_count = len(results)
+        results = [book for book in results if book.get('isbn_10') or book.get('isbn_13') or book.get('isbn') or book.get('isbn10') or book.get('isbn13')]
+        after_count = len(results)
+        builtins.print(f"🔍 [SEARCH_DISPLAY] ISBN filter: {before_count} -> {after_count} results (removed {before_count - after_count} without ISBN)")
     
     # Format results for display - keep only essential fields visible, store full data
     display_results = []
