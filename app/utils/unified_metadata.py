@@ -797,6 +797,11 @@ def _merge_dicts(google: Dict[str, Any], openlib: Dict[str, Any], biblioman: Opt
 	merged['chitanka_url'] = biblioman.get('chitanka_url')
 	merged['chitanka_cover_url'] = biblioman.get('chitanka_cover_url') or biblioman.get('cover_url')
 	
+	# Debug logging for Biblioman fields
+	if _META_DEBUG and biblioman:
+		_META_LOG.info(f"[UNIFIED_METADATA][MERGE] Biblioman fields: biblioman_id={biblioman.get('biblioman_id')}, chitanka_id={biblioman.get('chitanka_id')}, chitanka_cover_url={biblioman.get('chitanka_cover_url')}, cover_url={biblioman.get('cover_url')}, categories={biblioman.get('categories')}")
+		_META_LOG.info(f"[UNIFIED_METADATA][MERGE] Merged chitanka fields: chitanka_id={merged.get('chitanka_id')}, chitanka_cover_url={merged.get('chitanka_cover_url')}, categories={merged.get('categories')}")
+	
 	# Prefer Biblioman ISBNs (most accurate for Bulgarian books), then Google, fallback to OpenLibrary
 	def _norm_isbn(v: Optional[str]) -> Optional[str]:
 		if not v:
@@ -832,16 +837,20 @@ def _fetch_biblioman_by_isbn(isbn: str) -> Dict[str, Any]:
 		from app.services.metadata_providers.biblioman import BibliomanProvider
 		provider = BibliomanProvider()
 		if not provider.is_enabled():
+			if _META_DEBUG:
+				_META_LOG.debug(f"[UNIFIED_METADATA][BIBLIOMAN] Provider not enabled for ISBN={isbn}")
 			return {}
 		result = provider.search_by_isbn(isbn)
 		if result:
 			if _META_DEBUG:
-				_META_LOG.info(f"[UNIFIED_METADATA][BIBLIOMAN] Found ISBN={isbn}")
+				_META_LOG.info(f"[UNIFIED_METADATA][BIBLIOMAN] Found ISBN={isbn}: cover_url={result.get('cover_url')}, categories={result.get('categories')}, chitanka_id={result.get('chitanka_id')}")
 			return result
+		if _META_DEBUG:
+			_META_LOG.debug(f"[UNIFIED_METADATA][BIBLIOMAN] No result for ISBN={isbn}")
 		return {}
 	except Exception as e:
 		if _META_DEBUG:
-			_META_LOG.debug(f"[UNIFIED_METADATA][BIBLIOMAN] Exception: {e}")
+			_META_LOG.debug(f"[UNIFIED_METADATA][BIBLIOMAN] Exception for ISBN={isbn}: {e}", exc_info=True)
 		return {}
 
 
