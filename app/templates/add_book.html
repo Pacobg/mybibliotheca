@@ -991,9 +991,20 @@ function displayTitleSearchResults(results) {
             <div class="card mb-3 search-result-card h-100">
                 <div class="row g-0">
                     <div class="col-3 col-md-2">
-                    <img src="${coverUrl}" class="img-fluid rounded-start" alt="Book Cover" 
-                             style="height: 160px; width: 100%; object-fit: cover;"
-                        onerror="this.src='${FALLBACK_COVER_URL}'">
+                    ${coverUrl && coverUrl !== FALLBACK_COVER_URL ? 
+                        `<img src="${coverUrl}" class="img-fluid rounded-start" alt="Book Cover" 
+                             style="height: 160px; width: 100%; object-fit: cover; background-color: #f8f9fa;"
+                             loading="lazy"
+                             onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="bg-light rounded-start d-flex align-items-center justify-content-center" 
+                             style="height: 160px; width: 100%; display: none;">
+                            <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
+                        </div>` :
+                        `<div class="bg-light rounded-start d-flex align-items-center justify-content-center" 
+                             style="height: 160px; width: 100%;">
+                            <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
+                        </div>`
+                    }
                     </div>
                     <div class="col-9 col-md-10">
                         <div class="card-body p-3">
