@@ -15,6 +15,7 @@ import os as _os_for_verbose
 from collections import OrderedDict
 import threading
 import copy
+import builtins
 
 # Quiet logging by default; enable with VERBOSE=true or IMPORT_VERBOSE=true
 _IMPORT_VERBOSE = (
@@ -24,7 +25,7 @@ _IMPORT_VERBOSE = (
 
 def _dprint(*args, **kwargs):
     if _IMPORT_VERBOSE:
-        __builtins__.print(*args, **kwargs)
+        builtins.print(*args, **kwargs)
 
 # Shadow print in this module to respect verbosity toggle
 print = _dprint
@@ -751,11 +752,11 @@ def search_books_by_title(title: str, max_results: int = 10, author: Optional[st
         - description, categories, average_rating, rating_count
         - google_books_id, openlibrary_id, source, similarity_score
     """
-    # Use __builtins__.print for debug output (always visible, not affected by VERBOSE flag)
-    __builtins__.print(f"🔍 [BOOK_SEARCH] Starting search for: '{title}'" + (f" by '{author}'" if author else ""))
+    # Use builtins.print for debug output (always visible, not affected by VERBOSE flag)
+    builtins.print(f"🔍 [BOOK_SEARCH] Starting search for: '{title}'" + (f" by '{author}'" if author else ""))
     
     if not title or not title.strip():
-        __builtins__.print(f"❌ [BOOK_SEARCH] Empty title provided")
+        builtins.print(f"❌ [BOOK_SEARCH] Empty title provided")
         return []
     
     title = title.strip()
@@ -771,10 +772,10 @@ def search_books_by_title(title: str, max_results: int = 10, author: Optional[st
         # Only use cache for non-Cyrillic searches (to avoid stale results without Biblioman)
         cached = _search_cache_get(cache_key)
         if cached is not None:
-            __builtins__.print(f"💾 [BOOK_SEARCH] Cache hit for '{title}'")
+            builtins.print(f"💾 [BOOK_SEARCH] Cache hit for '{title}'")
             return cached
     else:
-        __builtins__.print(f"🔤 [BOOK_SEARCH] Cyrillic detected - bypassing cache to ensure Biblioman results are included")
+        builtins.print(f"🔤 [BOOK_SEARCH] Cyrillic detected - bypassing cache to ensure Biblioman results are included")
 
     start_time = time.perf_counter()
     
@@ -800,57 +801,57 @@ def search_books_by_title(title: str, max_results: int = 10, author: Optional[st
                 # Fallback to Cyrillic detection
                 use_biblioman = should_use_biblioman(title, author_arg)
         except Exception as e:
-            __builtins__.print(f"⚠️ [BOOK_SEARCH] Failed to check metadata settings: {e}")
+            builtins.print(f"⚠️ [BOOK_SEARCH] Failed to check metadata settings: {e}")
             # Fallback to Cyrillic detection
             use_biblioman = should_use_biblioman(title, author_arg)
         
         if use_biblioman:
-            __builtins__.print(f"🔍 [BOOK_SEARCH] Biblioman should be used (Cyrillic detected or configured as primary)")
+            builtins.print(f"🔍 [BOOK_SEARCH] Biblioman should be used (Cyrillic detected or configured as primary)")
             try:
                 from app.services.metadata_providers.biblioman import BibliomanProvider
                 import os
                 provider = BibliomanProvider()
                 enabled_status = provider.is_enabled()
-                __builtins__.print(f"🔍 [BOOK_SEARCH] Biblioman enabled check: {enabled_status} (BIBLIOMAN_ENABLED={os.getenv('BIBLIOMAN_ENABLED', 'NOT SET')})")
+                builtins.print(f"🔍 [BOOK_SEARCH] Biblioman enabled check: {enabled_status} (BIBLIOMAN_ENABLED={os.getenv('BIBLIOMAN_ENABLED', 'NOT SET')})")
                 if enabled_status:
                     # Try to connect first - if connection fails, skip Biblioman but don't break search
                     if provider.connect():
-                        __builtins__.print(f"✅ [BOOK_SEARCH] Biblioman connected successfully")
+                        builtins.print(f"✅ [BOOK_SEARCH] Biblioman connected successfully")
                         try:
                             if title and author_arg:
-                                __builtins__.print(f"🔍 [BOOK_SEARCH] Searching Biblioman: title='{title}', author='{author_arg}'")
+                                builtins.print(f"🔍 [BOOK_SEARCH] Searching Biblioman: title='{title}', author='{author_arg}'")
                                 result = provider.find_best_match(title, author_arg, threshold=0.7)
                                 if result:
                                     biblioman_results = [result]
-                                    __builtins__.print(f"✅ [BOOK_SEARCH] Biblioman find_best_match found 1 result")
+                                    builtins.print(f"✅ [BOOK_SEARCH] Biblioman find_best_match found 1 result")
                                 else:
-                                    __builtins__.print(f"🔍 [BOOK_SEARCH] Biblioman find_best_match returned None, trying search_by_title")
+                                    builtins.print(f"🔍 [BOOK_SEARCH] Biblioman find_best_match returned None, trying search_by_title")
                                     biblioman_results = provider.search_by_title(title, limit=max_results * 2)
                             elif title:
-                                __builtins__.print(f"🔍 [BOOK_SEARCH] Searching Biblioman by title: '{title}'")
+                                builtins.print(f"🔍 [BOOK_SEARCH] Searching Biblioman by title: '{title}'")
                                 biblioman_results = provider.search_by_title(title, limit=max_results * 2)
                             elif author_arg:
-                                __builtins__.print(f"🔍 [BOOK_SEARCH] Searching Biblioman by author: '{author_arg}'")
+                                builtins.print(f"🔍 [BOOK_SEARCH] Searching Biblioman by author: '{author_arg}'")
                                 biblioman_results = provider.search_by_author(author_arg, limit=max_results * 2)
-                            __builtins__.print(f"✅ [BOOK_SEARCH] Biblioman returned {len(biblioman_results)} results")
+                            builtins.print(f"✅ [BOOK_SEARCH] Biblioman returned {len(biblioman_results)} results")
                             if biblioman_results:
-                                __builtins__.print(f"📚 [BOOK_SEARCH] First Biblioman result: {biblioman_results[0].get('title', 'N/A')} by {biblioman_results[0].get('authors', 'N/A')}")
+                                builtins.print(f"📚 [BOOK_SEARCH] First Biblioman result: {biblioman_results[0].get('title', 'N/A')} by {biblioman_results[0].get('authors', 'N/A')}")
                         finally:
                             provider.close()
                     else:
-                        __builtins__.print(f"⚠️ [BOOK_SEARCH] Biblioman connection failed, skipping Biblioman search")
+                        builtins.print(f"⚠️ [BOOK_SEARCH] Biblioman connection failed, skipping Biblioman search")
                 else:
-                    __builtins__.print(f"⚠️ [BOOK_SEARCH] Biblioman is not enabled (BIBLIOMAN_ENABLED={os.getenv('BIBLIOMAN_ENABLED', 'NOT SET')})")
+                    builtins.print(f"⚠️ [BOOK_SEARCH] Biblioman is not enabled (BIBLIOMAN_ENABLED={os.getenv('BIBLIOMAN_ENABLED', 'NOT SET')})")
             except Exception as exc:
-                __builtins__.print(f"❌ [BOOK_SEARCH] Biblioman search failed: {exc}")
+                builtins.print(f"❌ [BOOK_SEARCH] Biblioman search failed: {exc}")
                 import traceback
                 traceback.print_exc()
                 # Don't break the entire search if Biblioman fails
                 biblioman_results = []
         else:
-            __builtins__.print(f"ℹ️ [BOOK_SEARCH] Biblioman not used (no Cyrillic detected, not configured as primary)")
+            builtins.print(f"ℹ️ [BOOK_SEARCH] Biblioman not used (no Cyrillic detected, not configured as primary)")
     except ImportError:
-        __builtins__.print("⚠️ [BOOK_SEARCH] Biblioman provider not available")
+        builtins.print("⚠️ [BOOK_SEARCH] Biblioman provider not available")
     
     google_results: List[Dict[str, Any]] = []
     elapsed = time.perf_counter() - start_time
@@ -878,7 +879,7 @@ def search_books_by_title(title: str, max_results: int = 10, author: Optional[st
     final_results = merge_and_rank_results(title, google_results, openlibrary_results, max_results, biblioman_results)
     _search_cache_set(cache_key, final_results)
     
-    __builtins__.print(f"🎯 [BOOK_SEARCH] Search complete. Returning {len(final_results)} results for '{title}'" + (f" by '{author}'" if author else ""))
+    builtins.print(f"🎯 [BOOK_SEARCH] Search complete. Returning {len(final_results)} results for '{title}'" + (f" by '{author}'" if author else ""))
     
     return copy.deepcopy(final_results)
 
@@ -896,9 +897,9 @@ def search_books_with_display_fields(title: str, max_results: int = 10, isbn_req
     Returns:
         Dict with 'results' containing the book list and 'metadata' with search info
     """
-    __builtins__.print(f"🔍 [SEARCH_DISPLAY] search_books_with_display_fields called: title='{title}', author='{author}', isbn_required={isbn_required}")
+    builtins.print(f"🔍 [SEARCH_DISPLAY] search_books_with_display_fields called: title='{title}', author='{author}', isbn_required={isbn_required}")
     results = search_books_by_title(title, max_results, author)  # Pass author to search_books_by_title
-    __builtins__.print(f"📊 [SEARCH_DISPLAY] Got {len(results)} results from search_books_by_title")
+    builtins.print(f"📊 [SEARCH_DISPLAY] Got {len(results)} results from search_books_by_title")
     
     # Filter for ISBN if required
     if isbn_required:
