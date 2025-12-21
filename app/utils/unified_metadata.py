@@ -754,10 +754,13 @@ def _merge_dicts(google: Dict[str, Any], openlib: Dict[str, Any], biblioman: Opt
 	# Apply normalization to provider lists
 	g_cats = [c for c in (_norm_cat(c) for c in g_cats) if c]
 	o_cats = [c for c in (_norm_cat(c) for c in o_cats) if c]
+	b_cats = biblioman.get('categories', [])
+	b_cats = [c for c in (_norm_cat(c) for c in (b_cats if isinstance(b_cats, list) else [b_cats])) if c]
 
 	categories: List[str] = []
 	seen_cats = set()
-	for src in [g_cats, o_cats]:
+	# Priority: Biblioman (for Bulgarian books) > Google > OpenLibrary
+	for src in [b_cats, g_cats, o_cats]:
 		for c in src:
 			key = c.casefold()
 			if key and key not in seen_cats:
