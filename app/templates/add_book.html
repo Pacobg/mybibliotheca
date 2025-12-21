@@ -473,6 +473,10 @@
                                                            value="{{ book_data.openlibrary_id if book_data else request.form.openlibrary_id or '' }}"
                                                            placeholder="OpenLibrary work/edition ID">
                                                 </div>
+                                                <!-- Biblioman IDs (hidden fields) -->
+                                                <input type="hidden" id="biblioman_id" name="biblioman_id" value="">
+                                                <input type="hidden" id="chitanka_id" name="chitanka_id" value="">
+                                                <input type="hidden" id="chitanka_url" name="chitanka_url" value="">
                                             </div>
                                         </div>
                                     </div>
@@ -1447,6 +1451,13 @@ function populateFormWithBookData(bookData) {
     document.getElementById('google_books_id').value = bookData.google_books_id || '';
     const olInput2 = document.getElementById('openlibrary_id');
     if (olInput2) olInput2.value = bookData.openlibrary_id || '';
+    // Biblioman fields
+    const bibliomanIdInput = document.getElementById('biblioman_id');
+    if (bibliomanIdInput) bibliomanIdInput.value = bookData.biblioman_id || '';
+    const chitankaIdInput = document.getElementById('chitanka_id');
+    if (chitankaIdInput) chitankaIdInput.value = bookData.chitanka_id || '';
+    const chitankaUrlInput = document.getElementById('chitanka_url');
+    if (chitankaUrlInput) chitankaUrlInput.value = bookData.chitanka_url || '';
     
     // Publication date handling
     if (bookData.published_date) {
