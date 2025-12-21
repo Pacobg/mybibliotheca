@@ -1226,8 +1226,12 @@ function displayTitleSearchResults(results) {
 }
 
 function selectBookFromSearch(bookIndex) {
+    console.log('📖 [SELECT_BOOK] selectBookFromSearch called with index:', bookIndex);
+    console.log('📖 [SELECT_BOOK] window.searchResults:', window.searchResults);
+    
     // Get the selected book data from our stored results
     if (!window.searchResults || !window.searchResults[bookIndex]) {
+        console.error('❌ [SELECT_BOOK] Book data not found for index:', bookIndex);
         showMessage('Error: Book data not found. Please try searching again.', 'error');
         return;
     }
@@ -1235,7 +1239,9 @@ function selectBookFromSearch(bookIndex) {
     const selectedBook = window.searchResults[bookIndex];
     const fullData = selectedBook.full_data || selectedBook;
     
-    console.log('📖 Using merged book data:', fullData);
+    console.log('📖 [SELECT_BOOK] Using merged book data:', fullData);
+    console.log('📖 [SELECT_BOOK] Book title:', fullData.title);
+    console.log('📖 [SELECT_BOOK] Book ISBN:', fullData.isbn_13 || fullData.isbn_10 || fullData.isbn);
     
     // Close the modal immediately using global function
     if (typeof forceCloseSearchModal === 'function') {
