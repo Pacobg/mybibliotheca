@@ -303,13 +303,73 @@ class BibliomanProvider:
         if chitanka_id:
             chitanka_url = f"https://chitanka.info/text/{chitanka_id}"
             # Generate Chitanka cover URL if not already provided
-            # Format: https://chitanka.info/book/{chitanka_id}/cover or https://biblioman.chitanka.info/books/{chitanka_id}
-            # Try multiple possible formats
+            # Format: https://biblioman.chitanka.info/thumb/covers/{digits}/{chitanka_id}-{hash}.1000.jpg/{filename}
+            # Example: https://biblioman.chitanka.info/thumb/covers/6/5/1/6/16516-61e2e079eca99.1000.jpg/...
             if not cover_url:
-                # Try biblioman.chitanka.info format first (more reliable)
-                cover_url = f"https://biblioman.chitanka.info/books/{chitanka_id}/cover"
-            # Also try chitanka.info format as fallback
-            # Note: We'll use biblioman.chitanka.info as primary since that's where the book page is
+                # Try to get cover filename from database
+                cover_filename = book.get('cover')  # This might be just the filename like "16516-61e2e079eca99.jpg"
+                if cover_filename and isinstance(cover_filename, str):
+                    # Extract hash from filename (format: {chitanka_id}-{hash}.jpg)
+                    if '-' in cover_filename and '.' in cover_filename:
+                        # Format: https://biblioman.chitanka.info/thumb/covers/{reversed_digits}/{filename}
+                        # For chitanka_id=16516, digits are [6,5,1,6] reversed = [6,1,5,6]
+                        chitanka_str = str(chitanka_id)
+                        if len(chitanka_str) >= 4:
+                            # Take last 4 digits and reverse them
+                            digits = list(chitanka_str[-4:])
+                            digits.reverse()
+                            digits_path = '/'.join(digits)
+                            # Use the filename from database, but ensure .1000.jpg extension
+                            base_filename = cover_filename.replace('.jpg', '').replace('.jpeg', '')
+                            cover_url = f"https://biblioman.chitanka.info/thumb/covers/{digits_path}/{base_filename}.1000.jpg"
+                        else:
+                            # Fallback: use simple format
+                            cover_url = f"https://biblioman.chitanka.info/books/{chitanka_id}/cover"
+                    else:
+                        # Fallback: use simple format
+                        cover_url = f"https://biblioman.chitanka.info/books/{chitanka_id}/cover"
+                else:
+                    # Fallback: use simple format
+                    cover_url = f"https://biblioman.chitanka.info/books/{chitanka_id}/cover"
+        
+        # Extract categories/genres from Biblioman
+        categories = []
+        category_id = book.get('category_id')
+        if category_id and self.db:
+            try:
+                cursor = self.db.cursor(dictionary=True)
+                # Query category name from label table (Biblioman uses 'label' table for categories)
+                sql = """
+                    SELECT name FROM label 
+                    WHERE id = %s
+                    LIMIT 1
+                """
+                cursor.execute(sql, (category_id,))
+                result = cursor.fetchone()
+                cursor.close()
+                if result and result.get('name'):
+                    categories.append(result['name'])
+            except Exception as e:
+                logger.debug(f"Could not fetch category for book {book.get('id')}: {e}")
+        
+        # Also check theme/genre fields directly
+        theme = book.get('theme') or book.get('genre')
+        if theme:
+            # Theme might be comma-separated or single value
+            if isinstance(theme, str):
+                theme_categories = [t.strip() for t in theme.split(',') if t.strip()]
+                categories.extend(theme_categories)
+            elif isinstance(theme, list):
+                categories.extend([str(t).strip() for t in theme if t])
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_categories = []
+        for cat in categories:
+            cat_lower = cat.lower()
+            if cat_lower not in seen:
+                seen.add(cat_lower)
+                unique_categories.append(cat)
         
         return {
             'title': book.get('title') or '',
@@ -330,10 +390,12 @@ class BibliomanProvider:
             'page_count': book.get('page_count'),
             'language': book.get('language', 'bg'),  # Default to Bulgarian
             'cover_url': cover_url,
+            'categories': unique_categories if unique_categories else [],  # Add categories/genres
             'source': 'Biblioman',
             'biblioman_id': book.get('id'),
             'chitanka_id': chitanka_id,
             'chitanka_url': chitanka_url,
+            'chitanka_cover_url': cover_url,  # Explicit cover URL for Chitanka
             'translator': book.get('translator'),
             'editor': book.get('editor'),
             'content_type': book.get('content_type'),
