@@ -795,6 +795,7 @@ def _merge_dicts(google: Dict[str, Any], openlib: Dict[str, Any], biblioman: Opt
 	merged['biblioman_id'] = biblioman.get('biblioman_id')
 	merged['chitanka_id'] = biblioman.get('chitanka_id')
 	merged['chitanka_url'] = biblioman.get('chitanka_url')
+	merged['chitanka_cover_url'] = biblioman.get('chitanka_cover_url') or biblioman.get('cover_url')
 	
 	# Prefer Biblioman ISBNs (most accurate for Bulgarian books), then Google, fallback to OpenLibrary
 	def _norm_isbn(v: Optional[str]) -> Optional[str]:
