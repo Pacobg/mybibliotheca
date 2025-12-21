@@ -1021,16 +1021,41 @@ def create_app():
     def serve_covers(filename):
         """Serve cover images from data directory."""
         import os
+        from pathlib import Path
         from flask import send_from_directory
         
-        # Check for Docker (production) or local development
-        docker_data_dir = '/app/data/covers'
-        local_data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'covers')
+        # Try multiple paths to find the correct covers directory (same logic as simplified_book_service.py)
+        covers_dir = None
+        possible_paths = [
+            Path('/app/data/covers'),  # Docker path
+            Path('./data/covers'),  # Relative path
+        ]
         
-        if os.path.exists(docker_data_dir):
-            covers_dir = docker_data_dir
-        else:
-            covers_dir = local_data_dir
+        # Check for data directory from app config
+        try:
+            data_dir = getattr(app.config, 'DATA_DIR', None)
+            if data_dir:
+                possible_paths.insert(0, Path(data_dir) / 'covers')
+        except:
+            pass
+        
+        # Last resort - use relative path from app root
+        try:
+            base_dir = Path(__file__).parent.parent
+            possible_paths.append(base_dir / 'data' / 'covers')
+        except:
+            pass
+        
+        # Find the first existing directory or use the first one
+        for path in possible_paths:
+            if path.exists():
+                covers_dir = str(path)
+                break
+        
+        if not covers_dir:
+            # Use the first path and create it
+            covers_dir = str(possible_paths[0])
+            Path(covers_dir).mkdir(parents=True, exist_ok=True)
 
         from flask import send_from_directory as _sfd, make_response
         try:
