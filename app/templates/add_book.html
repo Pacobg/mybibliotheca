@@ -754,24 +754,46 @@ body.modal-open {
     pointer-events: auto !important;
 }
 
-/* Ensure backdrop doesn't block clicks on modal content */
+/* CRITICAL: Prevent backdrop from blocking ANY clicks - make it completely non-interactive */
 .modal-backdrop {
     pointer-events: none !important;
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    z-index: -1 !important;
 }
 
 .modal-backdrop.show {
     pointer-events: none !important;
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    z-index: -1 !important;
 }
 
-/* But allow clicks on backdrop itself to close modal */
-.modal-backdrop.show::before {
-    pointer-events: auto;
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+/* Force backdrop to never block modal content */
+#titleSearchModal ~ .modal-backdrop,
+.modal-backdrop:has(~ #titleSearchModal) {
+    display: none !important;
+    pointer-events: none !important;
+}
+
+/* Ensure modal content is always interactive */
+#titleSearchModal.modal.show {
+    z-index: 1055 !important;
+    pointer-events: auto !important;
+}
+
+#titleSearchModal.modal.show .modal-dialog {
+    pointer-events: auto !important;
+}
+
+#titleSearchModal.modal.show .modal-content {
+    pointer-events: auto !important;
+}
+
+#titleSearchModal.modal.show * {
+    pointer-events: auto !important;
 }
 </style>
 
