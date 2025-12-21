@@ -504,68 +504,92 @@ def create_app():
         return render_markdown(text)
 
     # CSRF error handler
-    # Middleware to ensure Location headers are properly encoded for Werkzeug dev server
+    # Middleware to ensure all headers are properly encoded for Werkzeug dev server
     @app.after_request
-    def fix_location_header_encoding(response):
-        """Ensure Location header is properly encoded for Werkzeug development server."""
-        if 'Location' in response.headers:
-            location = response.headers['Location']
-            try:
-                # Try to encode as latin-1 (required by HTTP spec for headers)
-                location.encode('latin-1')
-            except UnicodeEncodeError:
-                # If it can't be encoded, the URL needs to be re-encoded
-                from urllib.parse import urlparse, urlunparse, urlencode, parse_qs, quote
+    def fix_header_encoding(response):
+        """Ensure all headers are properly encoded for Werkzeug development server (latin-1 required)."""
+        from urllib.parse import urlparse, urlunparse, urlencode, parse_qs, quote
+        
+        # Check all headers for encoding issues
+        headers_to_fix = {}
+        for key, value in response.headers.items():
+            if value:
                 try:
-                    parsed = urlparse(location)
-                    # Encode path if needed
-                    safe_path = parsed.path
-                    try:
-                        parsed.path.encode('latin-1')
-                    except UnicodeEncodeError:
-                        path_parts = parsed.path.split('/')
-                        encoded_parts = [quote(part, safe='') for part in path_parts]
-                        safe_path = '/'.join(encoded_parts)
-                    
-                    # Re-encode query parameters
-                    if parsed.query:
-                        query_params = parse_qs(parsed.query, keep_blank_values=True)
-                        flat_params = {}
-                        for k, v_list in query_params.items():
-                            if len(v_list) == 1:
-                                flat_params[k] = v_list[0]
+                    # Try to encode as latin-1 (required by HTTP spec for headers)
+                    str(value).encode('latin-1', 'strict')
+                except UnicodeEncodeError:
+                    # This header contains non-latin-1 characters
+                    if key.lower() == 'location':
+                        # Special handling for Location header - re-encode URL
+                        try:
+                            parsed = urlparse(str(value))
+                            # Encode path if needed
+                            safe_path = parsed.path
+                            try:
+                                parsed.path.encode('latin-1', 'strict')
+                            except UnicodeEncodeError:
+                                path_parts = parsed.path.split('/')
+                                encoded_parts = [quote(part, safe='') for part in path_parts]
+                                safe_path = '/'.join(encoded_parts)
+                            
+                            # Re-encode query parameters
+                            if parsed.query:
+                                query_params = parse_qs(parsed.query, keep_blank_values=True)
+                                flat_params = {}
+                                for k, v_list in query_params.items():
+                                    if len(v_list) == 1:
+                                        flat_params[k] = v_list[0]
+                                    else:
+                                        flat_params[k] = v_list
+                                encoded_query = urlencode(flat_params, doseq=True)
                             else:
-                                flat_params[k] = v_list
-                        encoded_query = urlencode(flat_params, doseq=True)
+                                encoded_query = ''
+                            
+                            # Reconstruct URL
+                            safe_location = urlunparse((
+                                parsed.scheme or '',
+                                parsed.netloc or '',
+                                safe_path,
+                                parsed.params,
+                                encoded_query,
+                                parsed.fragment
+                            ))
+                            headers_to_fix[key] = safe_location
+                        except Exception as e:
+                            app.logger.warning(f"Failed to fix Location header encoding: {e}")
+                            # Fallback: remove query params to avoid encoding issues
+                            try:
+                                parsed = urlparse(str(value))
+                                safe_location = urlunparse((
+                                    parsed.scheme or '',
+                                    parsed.netloc or '',
+                                    parsed.path,
+                                    parsed.params,
+                                    '',  # Remove query
+                                    parsed.fragment
+                                ))
+                                headers_to_fix[key] = safe_location
+                            except Exception:
+                                # Last resort: remove the problematic header
+                                headers_to_fix[key] = None
                     else:
-                        encoded_query = ''
-                    
-                    # Reconstruct URL
-                    safe_location = urlunparse((
-                        parsed.scheme or '',
-                        parsed.netloc or '',
-                        safe_path,
-                        parsed.params,
-                        encoded_query,
-                        parsed.fragment
-                    ))
-                    response.headers['Location'] = safe_location
-                except Exception as e:
-                    app.logger.warning(f"Failed to fix Location header encoding: {e}")
-                    # Fallback: remove query params to avoid encoding issues
-                    try:
-                        parsed = urlparse(location)
-                        safe_location = urlunparse((
-                            parsed.scheme or '',
-                            parsed.netloc or '',
-                            parsed.path,
-                            parsed.params,
-                            '',  # Remove query
-                            parsed.fragment
-                        ))
-                        response.headers['Location'] = safe_location
-                    except Exception:
-                        pass
+                        # For other headers, try to encode using percent-encoding
+                        try:
+                            # Percent-encode the value
+                            encoded_value = quote(str(value), safe='')
+                            headers_to_fix[key] = encoded_value
+                        except Exception:
+                            # If encoding fails, remove the header
+                            app.logger.warning(f"Removing header {key} due to encoding issues")
+                            headers_to_fix[key] = None
+        
+        # Apply fixes
+        for key, new_value in headers_to_fix.items():
+            if new_value is None:
+                response.headers.pop(key, None)
+            else:
+                response.headers[key] = new_value
+        
         return response
     
     # Error handler for Unicode encoding issues (e.g., Cyrillic in URLs)
