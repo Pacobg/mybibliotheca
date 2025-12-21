@@ -1129,53 +1129,20 @@ function selectBookFromSearch(bookIndex) {
     
     console.log('📖 Using merged book data:', fullData);
     
-    // Close the modal and ensure backdrop is removed
-    function forceCloseModal() {
+    // Close the modal immediately using global function
+    if (typeof forceCloseSearchModal === 'function') {
+        forceCloseSearchModal();
+    } else {
+        // Fallback if function doesn't exist yet
         const modalElement = document.getElementById('titleSearchModal');
         if (modalElement) {
-            // Remove show class
             modalElement.classList.remove('show');
             modalElement.style.display = 'none';
-            modalElement.setAttribute('aria-hidden', 'true');
-            modalElement.removeAttribute('aria-modal');
-            
-            // Remove all backdrops (sometimes multiple can exist)
             const backdrops = document.querySelectorAll('.modal-backdrop');
             backdrops.forEach(backdrop => backdrop.remove());
-            
-            // Restore body styles
             document.body.classList.remove('modal-open');
             document.body.style.overflow = '';
-            document.body.style.paddingRight = '';
         }
-    }
-    
-    try {
-        const modalElement = document.getElementById('titleSearchModal');
-        if (modalElement) {
-            // Add event listener to ensure cleanup when modal is fully hidden
-            const cleanupHandler = () => {
-                forceCloseModal();
-                modalElement.removeEventListener('hidden.bs.modal', cleanupHandler);
-            };
-            modalElement.addEventListener('hidden.bs.modal', cleanupHandler);
-            
-            const modal = bootstrap.Modal.getInstance(modalElement);
-            if (modal) {
-                modal.hide();
-                // Force cleanup after a short delay to ensure backdrop is removed
-                setTimeout(forceCloseModal, 100);
-            } else {
-                // If modal instance doesn't exist, try to create and hide it
-                const newModal = new bootstrap.Modal(modalElement);
-                newModal.hide();
-                setTimeout(forceCloseModal, 100);
-            }
-        }
-    } catch (e) {
-        console.warn('Error closing modal:', e);
-        // Force cleanup on error
-        forceCloseModal();
     }
     
     // The fullData already contains the BEST merged information from both APIs
