@@ -41,10 +41,37 @@ def test_connection():
         conn = mysql.connector.connect(**config)
         cursor = conn.cursor()
         
+        # First, check what databases exist
+        cursor.execute("SHOW DATABASES")
+        databases = [db[0] for db in cursor.fetchall()]
+        print(f"📂 Available databases: {', '.join(databases)}")
+        
+        # Check if biblioman database exists
+        if config['database'] not in databases:
+            print(f"\n⚠️  Database '{config['database']}' not found!")
+            print(f"   Available databases: {', '.join(databases)}")
+            cursor.close()
+            conn.close()
+            return False
+        
+        # Check what tables exist in biblioman database
+        cursor.execute(f"USE {config['database']}")
+        cursor.execute("SHOW TABLES")
+        tables = [table[0] for table in cursor.fetchall()]
+        print(f"\n📋 Tables in '{config['database']}' database: {', '.join(tables)}")
+        
+        # Check if 'book' table exists
+        if 'book' not in tables:
+            print(f"\n⚠️  Table 'book' not found in '{config['database']}' database!")
+            print(f"   Available tables: {', '.join(tables)}")
+            cursor.close()
+            conn.close()
+            return False
+        
         # Test 1: Count books
         cursor.execute("SELECT COUNT(*) FROM book")
         count = cursor.fetchone()[0]
-        print(f"✅ Connection successful!")
+        print(f"\n✅ Connection successful!")
         print(f"   Found {count:,} books in biblioman database.")
         
         # Test 2: Get a sample book with Cyrillic title
@@ -58,10 +85,13 @@ def test_connection():
         else:
             print("\n⚠️  No books found with 'море' in title")
         
-        # Test 3: Check if chitanka_id exists
-        cursor.execute("SELECT COUNT(*) FROM book WHERE chitanka_id IS NOT NULL")
-        chitanka_count = cursor.fetchone()[0]
-        print(f"\n📖 Books with Chitanka ID: {chitanka_count:,}")
+        # Test 3: Check if chitanka_id exists (if column exists)
+        try:
+            cursor.execute("SELECT COUNT(*) FROM book WHERE chitanka_id IS NOT NULL")
+            chitanka_count = cursor.fetchone()[0]
+            print(f"\n📖 Books with Chitanka ID: {chitanka_count:,}")
+        except mysql.connector.Error:
+            print("\n⚠️  Column 'chitanka_id' not found in 'book' table")
         
         cursor.close()
         conn.close()
