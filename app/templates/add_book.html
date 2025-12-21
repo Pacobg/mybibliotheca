@@ -2113,7 +2113,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch (error) {
                 console.error('Error submitting form:', error);
-                alert('An error occurred while adding the book. Please try again.');
+                console.error('Error details:', error.message, error.stack);
+                alert('An error occurred while adding the book: ' + (error.message || 'Unknown error') + '. Please check the browser console for details.');
                 buttons.forEach(button => {
                     button.disabled = false;
                     if (button.dataset.originalHtml) {
