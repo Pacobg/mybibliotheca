@@ -302,7 +302,8 @@ class BibliomanProvider:
         
         # Get cover field from database (might be filename or URL)
         cover_field = book.get('cover')
-        logger.debug(f"Biblioman cover field for book {book.get('id')}: {cover_field}, chitanka_id: {chitanka_id}")
+        book_id = book.get('id')
+        logger.info(f"🔍 [BIBLIOMAN] Book ID: {book_id}, chitanka_id: {chitanka_id}, cover field: {cover_field}")
         
         if chitanka_id:
             chitanka_url = f"https://chitanka.info/text/{chitanka_id}"
@@ -410,7 +411,8 @@ class BibliomanProvider:
                 seen.add(cat_lower)
                 unique_categories.append(cat)
         
-        logger.debug(f"Biblioman: Final categories for book {book.get('id')}: {unique_categories}")
+        logger.info(f"📚 [BIBLIOMAN] Final categories for book {book.get('id')}: {unique_categories}")
+        logger.info(f"🖼️ [BIBLIOMAN] Final cover_url for book {book.get('id')}: {cover_url}")
         
         return {
             'title': book.get('title') or '',
