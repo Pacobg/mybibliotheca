@@ -65,12 +65,14 @@ class BibliomanProvider:
     def search_by_isbn(self, isbn: str) -> Optional[Dict[str, Any]]:
         """Search for book by ISBN (cleaned ISBN-10 or ISBN-13)."""
         if not self.connect():
+            logger.warning(f"🔍 [BIBLIOMAN][ISBN] Cannot connect to database for ISBN: {isbn}")
             return None
         
         try:
             cursor = self.db.cursor(dictionary=True)
             # Clean ISBN: remove dashes and spaces
             clean_isbn = isbn.replace('-', '').replace(' ', '').strip()
+            logger.info(f"🔍 [BIBLIOMAN][ISBN] Searching for ISBN: {isbn} (cleaned: {clean_isbn})")
             
             # Try both isbn and isbn_clean fields
             sql = """
@@ -83,11 +85,30 @@ class BibliomanProvider:
             cursor.close()
             
             if result:
-                logger.debug(f"Biblioman found book by ISBN: {clean_isbn}")
-                return self._format_metadata(result)
+                logger.info(f"✅ [BIBLIOMAN][ISBN] Found book by ISBN: {clean_isbn}, book_id: {result.get('id')}, chitanka_id: {result.get('chitanka_id')}, cover: {result.get('cover')}")
+                formatted = self._format_metadata(result)
+                logger.info(f"📚 [BIBLIOMAN][ISBN] Formatted result: cover_url={formatted.get('cover_url')}, chitanka_cover_url={formatted.get('chitanka_cover_url')}, categories={formatted.get('categories')}, chitanka_id={formatted.get('chitanka_id')}")
+                return formatted
+            else:
+                logger.warning(f"⚠️ [BIBLIOMAN][ISBN] No book found for ISBN: {clean_isbn}")
+                # Try partial match as fallback
+                sql_partial = """
+                    SELECT * FROM book 
+                    WHERE isbn_clean LIKE %s OR isbn LIKE %s 
+                    LIMIT 1
+                """
+                cursor = self.db.cursor(dictionary=True)
+                cursor.execute(sql_partial, (f"%{clean_isbn}%", f"%{clean_isbn}%"))
+                partial_result = cursor.fetchone()
+                cursor.close()
+                if partial_result:
+                    logger.info(f"✅ [BIBLIOMAN][ISBN] Found book by partial ISBN match: {clean_isbn}, book_id: {partial_result.get('id')}")
+                    formatted = self._format_metadata(partial_result)
+                    logger.info(f"📚 [BIBLIOMAN][ISBN] Formatted partial result: cover_url={formatted.get('cover_url')}, chitanka_cover_url={formatted.get('chitanka_cover_url')}, categories={formatted.get('categories')}")
+                    return formatted
             return None
         except Exception as e:
-            logger.error(f"Biblioman ISBN search error: {e}")
+            logger.error(f"❌ [BIBLIOMAN][ISBN] Search error for ISBN {isbn}: {e}", exc_info=True)
             return None
     
     def search_by_title(self, title: str, limit: int = 10) -> List[Dict[str, Any]]:
