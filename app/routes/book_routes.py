@@ -1691,10 +1691,14 @@ def search_book_details():
                 # Merge Google Books results, avoiding duplicates
                 existing_keys = {(r.get('title','').lower(), r.get('authors','').lower()) for r in results}
                 for r in gb_results:
-                key = (r.get('title','').lower(), r.get('authors','').lower())
-                if key not in existing_keys:
-                    results.append(r)
-                    existing_keys.add(key)
+                    key = (r.get('title','').lower(), r.get('authors','').lower())
+                    if key not in existing_keys:
+                        results.append(r)
+                        existing_keys.add(key)
+            else:
+                # Biblioman is primary and has enough results, cancel Google Books
+                fut_gb.cancel()
+                gb_results = []
 
         def _format_provider_label(raw: str) -> str:
             mapping = {
