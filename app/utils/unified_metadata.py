@@ -833,22 +833,28 @@ def _merge_dicts(google: Dict[str, Any], openlib: Dict[str, Any], biblioman: Opt
 
 def _fetch_biblioman_by_isbn(isbn: str) -> Dict[str, Any]:
 	"""Fetch Biblioman metadata for an ISBN."""
+	import builtins
 	try:
+		builtins.print(f"🔍 [UNIFIED_METADATA][BIBLIOMAN] Fetching Biblioman data for ISBN: {isbn}")
 		from app.services.metadata_providers.biblioman import BibliomanProvider
 		provider = BibliomanProvider()
 		if not provider.is_enabled():
+			builtins.print(f"⚠️ [UNIFIED_METADATA][BIBLIOMAN] Provider not enabled for ISBN={isbn}")
 			if _META_DEBUG:
 				_META_LOG.debug(f"[UNIFIED_METADATA][BIBLIOMAN] Provider not enabled for ISBN={isbn}")
 			return {}
 		result = provider.search_by_isbn(isbn)
 		if result:
+			builtins.print(f"✅ [UNIFIED_METADATA][BIBLIOMAN] Found ISBN={isbn}: biblioman_id={result.get('biblioman_id')}, chitanka_id={result.get('chitanka_id')}, cover_url={result.get('cover_url')}, chitanka_cover_url={result.get('chitanka_cover_url')}, categories={result.get('categories')}")
 			if _META_DEBUG:
 				_META_LOG.info(f"[UNIFIED_METADATA][BIBLIOMAN] Found ISBN={isbn}: cover_url={result.get('cover_url')}, categories={result.get('categories')}, chitanka_id={result.get('chitanka_id')}")
 			return result
+		builtins.print(f"⚠️ [UNIFIED_METADATA][BIBLIOMAN] No result for ISBN={isbn}")
 		if _META_DEBUG:
 			_META_LOG.debug(f"[UNIFIED_METADATA][BIBLIOMAN] No result for ISBN={isbn}")
 		return {}
 	except Exception as e:
+		builtins.print(f"❌ [UNIFIED_METADATA][BIBLIOMAN] Exception for ISBN={isbn}: {e}")
 		if _META_DEBUG:
 			_META_LOG.debug(f"[UNIFIED_METADATA][BIBLIOMAN] Exception for ISBN={isbn}: {e}", exc_info=True)
 		return {}

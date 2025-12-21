@@ -88,9 +88,14 @@ class BibliomanProvider:
                 logger.info(f"✅ [BIBLIOMAN][ISBN] Found book by ISBN: {clean_isbn}, book_id: {result.get('id')}, chitanka_id: {result.get('chitanka_id')}, cover: {result.get('cover')}")
                 formatted = self._format_metadata(result)
                 logger.info(f"📚 [BIBLIOMAN][ISBN] Formatted result: cover_url={formatted.get('cover_url')}, chitanka_cover_url={formatted.get('chitanka_cover_url')}, categories={formatted.get('categories')}, chitanka_id={formatted.get('chitanka_id')}")
+                # Use builtins.print to ensure this is always visible
+                import builtins
+                builtins.print(f"✅ [BIBLIOMAN][ISBN] Returning formatted result for ISBN {clean_isbn}: chitanka_id={formatted.get('chitanka_id')}, cover_url={formatted.get('cover_url')}, categories={formatted.get('categories')}")
                 return formatted
             else:
                 logger.warning(f"⚠️ [BIBLIOMAN][ISBN] No book found for ISBN: {clean_isbn}")
+                import builtins
+                builtins.print(f"⚠️ [BIBLIOMAN][ISBN] No book found for ISBN: {clean_isbn}")
                 # Try partial match as fallback
                 sql_partial = """
                     SELECT * FROM book 
