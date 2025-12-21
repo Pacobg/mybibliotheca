@@ -582,16 +582,8 @@ def merge_and_rank_results(search_title: str, google_results: List[Dict],
             merged_results[isbn_key] = record
             builtins.print(f"  ✅ Added to merged_results with key: {isbn_key[:50]}")
     
-    # Process Google Books results second
-    for result in google_results:
-        isbn_key = result.get('isbn_13') or result.get('isbn_10') or f"google_{result.get('google_books_id')}"
-        if isbn_key:
-            record = result.copy()
-            if result.get('cover_candidates'):
-                record['cover_candidates'] = [c.copy() for c in result['cover_candidates'] if isinstance(c, dict)]
-            merged_results[isbn_key] = record
-    
     # Process Google Books results and merge with Biblioman where ISBN matches
+    # DO NOT add Google Books results separately - merge them directly to preserve Biblioman priority
     for result in google_results:
         isbn_key = result.get('isbn_13') or result.get('isbn_10') or f"google_{result.get('google_books_id')}"
         
@@ -645,14 +637,15 @@ def merge_and_rank_results(search_title: str, google_results: List[Dict],
                 result.get('similarity_score', 0)
             )
             
-            print(f"🔗 [MERGE_RANK] Merged book with ISBN {isbn_key[:20]}...")
+            builtins.print(f"🔗 [MERGE_RANK] Merged Google Books with Biblioman for ISBN {isbn_key[:20]}... (source: {existing.get('source', 'N/A')})")
             
         else:
-            # New book from Google Books
+            # New book from Google Books (no Biblioman match)
             record = result.copy()
             if result.get('cover_candidates'):
                 record['cover_candidates'] = [c.copy() for c in result['cover_candidates'] if isinstance(c, dict)]
             merged_results[isbn_key] = record
+            builtins.print(f"  ➕ Added new Google Books result: '{record.get('title', 'N/A')}' with ISBN {isbn_key[:20]}")
     
     # Process OpenLibrary results and merge with existing results where ISBN matches
     for result in openlibrary_results:
