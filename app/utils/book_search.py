@@ -319,6 +319,15 @@ def search_google_books(title: str, max_results: int = 20, author: Optional[str]
                 if not cover_url and cover_candidates:
                     cover_url = cover_candidates[0].get('url')
                 
+                # Fallback: Generate cover URL from Google Books ID if no imageLinks available
+                if not cover_url and item.get('id'):
+                    google_books_id = item.get('id')
+                    # Google Books cover URL pattern: https://books.google.com/books/content?id={id}&printsec=frontcover&img=1&zoom=1
+                    cover_url = f"https://books.google.com/books/content?id={google_books_id}&printsec=frontcover&img=1&zoom=1"
+                    # Add to cover_candidates for consistency
+                    if not cover_candidates:
+                        cover_candidates = [{'provider': 'google', 'size': 'generated', 'url': cover_url}]
+                
                 # Extract publication year
                 publication_year = None
                 if published_date:
