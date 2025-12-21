@@ -2045,8 +2045,18 @@ document.addEventListener('DOMContentLoaded', function() {
             // Prevent default submission to handle via AJAX
             e.preventDefault();
             
+            console.log('📝 [FORM_SUBMIT] Form submit event triggered');
+            
             // Collect contributors and categories before submit
-            collectContributorsAndCategories();
+            try {
+                console.log('📝 [FORM_SUBMIT] Collecting contributors and categories...');
+                collectContributorsAndCategories();
+                console.log('✅ [FORM_SUBMIT] Contributors and categories collected successfully');
+            } catch (collectError) {
+                console.error('❌ [FORM_SUBMIT] Error collecting contributors/categories:', collectError);
+                alert('Error preparing form data: ' + collectError.message);
+                return; // Stop submission if collection fails
+            }
 
             const buttons = Array.from(form.querySelectorAll('button[type="submit"]'));
             let submitter = e.submitter || lastClickedSubmitButton;
