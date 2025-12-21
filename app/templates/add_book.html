@@ -1519,7 +1519,13 @@ function mergeBookData(searchData, isbnData) {
 }
 
 function populateFormWithBookData(bookData) {
-    console.log('📝 Populating form with book data:', bookData);
+    console.log('📝 [POPULATE_FORM] Populating form with book data:', bookData);
+    console.log('📝 [POPULATE_FORM] Cover URL fields:', {
+        chitanka_cover_url: bookData.chitanka_cover_url,
+        cover_url: bookData.cover_url,
+        cover: bookData.cover
+    });
+    console.log('📝 [POPULATE_FORM] Categories:', bookData.categories);
     
     // Basic information
     document.getElementById('title').value = bookData.title || '';
@@ -1533,6 +1539,9 @@ function populateFormWithBookData(bookData) {
     const coverUrl = bookData.chitanka_cover_url || bookData.cover_url || bookData.cover || '';
     document.getElementById('cover_url').value = coverUrl;
     console.log('📝 [POPULATE_FORM] Cover URL set to:', coverUrl);
+    if (!coverUrl) {
+        console.warn('⚠️ [POPULATE_FORM] No cover URL found in bookData!');
+    }
     document.getElementById('publisher').value = bookData.publisher || '';
     document.getElementById('language').value = bookData.language || 'en';
     // Series (if provided by unified metadata)
@@ -1622,10 +1631,23 @@ function populateFormWithBookData(bookData) {
         
     }
 
-    if (bookData.categories && bookData.categories.length > 0) {
-        
-        bookData.categories.forEach(category => {
+    // Categories/Genres
+    console.log('📝 [POPULATE_FORM] Processing categories:', {
+        categories: bookData.categories,
+        isArray: Array.isArray(bookData.categories),
+        length: bookData.categories?.length
+    });
+    if (bookData.categories && Array.isArray(bookData.categories) && bookData.categories.length > 0) {
+        console.log('✅ [POPULATE_FORM] Adding', bookData.categories.length, 'categories');
+        bookData.categories.forEach((category, index) => {
+            console.log(`📚 [POPULATE_FORM] Adding category ${index + 1}:`, category);
             addCategorySmart(category, null, null, null);
+        });
+    } else {
+        console.warn('⚠️ [POPULATE_FORM] No categories to add:', {
+            categories: bookData.categories,
+            isArray: Array.isArray(bookData.categories),
+            length: bookData.categories?.length
         });
     }
 
