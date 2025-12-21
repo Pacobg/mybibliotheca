@@ -956,6 +956,15 @@ function searchByTitle() {
         }
         
         const modal = new bootstrap.Modal(modalElement);
+        
+        // Ensure backdrop cleanup when modal is hidden
+        const cleanupHandler = function() {
+            setTimeout(() => {
+                forceCloseSearchModal();
+            }, 50);
+        };
+        modalElement.addEventListener('hidden.bs.modal', cleanupHandler, { once: true });
+        
         modal.show();
         
         const loadingDiv = document.getElementById('title-search-loading');
