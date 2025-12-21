@@ -1675,17 +1675,22 @@ def search_book_details():
             if should_fetch_fallbacks:
                 if len(results) >= 8:
                     fut_gb.cancel()
+                    gb_results = []
                 else:
                     try:
                         gb_results = fut_gb.result(timeout=provider_timeout)
-                except concurrent.futures.TimeoutError:
-                    timed_out_providers.append('google')
-                    current_app.logger.warning(f"[SEARCH] Google Books timed out after {provider_timeout:.1f}s")
-                    fut_gb.cancel()
-                except Exception as e:
-                    current_app.logger.debug(f"[SEARCH] Google Books exception: {e}")
-                    gb_results = []
-            for r in gb_results:
+                    except concurrent.futures.TimeoutError:
+                        timed_out_providers.append('google')
+                        current_app.logger.warning(f"[SEARCH] Google Books timed out after {provider_timeout:.1f}s")
+                        fut_gb.cancel()
+                        gb_results = []
+                    except Exception as e:
+                        current_app.logger.debug(f"[SEARCH] Google Books exception: {e}")
+                        gb_results = []
+                
+                # Merge Google Books results, avoiding duplicates
+                existing_keys = {(r.get('title','').lower(), r.get('authors','').lower()) for r in results}
+                for r in gb_results:
                 key = (r.get('title','').lower(), r.get('authors','').lower())
                 if key not in existing_keys:
                     results.append(r)
