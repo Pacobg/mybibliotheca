@@ -103,10 +103,75 @@ def api_user_books():
     return _api_user_books()
 
 
+def _safe_redirect(url: str, code: int = 302):
+    """
+    Create a redirect response with properly encoded URL for Location header.
+    This ensures Cyrillic and other Unicode characters are correctly percent-encoded
+    so they can be safely used in HTTP headers (which must be latin-1 compatible).
+    """
+    from flask import redirect as flask_redirect
+    from urllib.parse import urlparse, urlunparse, urlencode, parse_qs, quote
+    
+    try:
+        # Parse the URL
+        parsed = urlparse(url)
+        
+        # Encode path segments if they contain non-ASCII characters
+        safe_path = parsed.path
+        try:
+            # Try to encode as latin-1 to check if path needs encoding
+            parsed.path.encode('latin-1')
+        except UnicodeEncodeError:
+            # Path contains non-ASCII, need to percent-encode each segment
+            path_parts = parsed.path.split('/')
+            encoded_parts = [quote(part, safe='') for part in path_parts]
+            safe_path = '/'.join(encoded_parts)
+        
+        # Encode query parameters properly
+        if parsed.query:
+            # Parse existing query string
+            query_params = parse_qs(parsed.query, keep_blank_values=True)
+            # Flatten MultiDict-like structure
+            flat_params = {}
+            for k, v_list in query_params.items():
+                if len(v_list) == 1:
+                    flat_params[k] = v_list[0]
+                else:
+                    flat_params[k] = v_list
+            
+            # Re-encode with proper encoding (urlencode handles UTF-8 -> percent-encoding)
+            encoded_query = urlencode(flat_params, doseq=True)
+        else:
+            encoded_query = ''
+        
+        # Reconstruct URL with properly encoded path and query
+        safe_url = urlunparse((
+            parsed.scheme or '',
+            parsed.netloc or '',
+            safe_path,
+            parsed.params,
+            encoded_query,
+            parsed.fragment
+        ))
+        
+        # Create redirect response - Flask should handle the rest
+        return flask_redirect(safe_url, code=code)
+    except Exception as e:
+        # Fallback to standard redirect if encoding fails
+        import logging
+        logging.getLogger(__name__).warning(f"Failed to safely encode redirect URL, using standard redirect: {e}")
+        try:
+            return flask_redirect(url, code=code)
+        except Exception:
+            # Last resort: redirect to library without query params
+            from flask import url_for
+            return flask_redirect(url_for('book.library'), code=code)
+
+
 @main_bp.route('/library')
 def library():
     """Compatibility route for main.library - redirect to book.library"""
-    from flask import redirect, url_for
+    from flask import url_for
     from urllib.parse import urlencode
     target = url_for('book.library')
     try:
@@ -118,7 +183,7 @@ def library():
                 target = f"{target}?{urlencode(query_params, doseq=True)}"
     except Exception:
         pass
-    return redirect(target)
+    return _safe_redirect(target)
 
 @main_bp.route('/stats')
 def stats():
