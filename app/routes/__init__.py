@@ -131,16 +131,35 @@ def _safe_redirect(url: str, code: int = 302):
         if parsed.query:
             # Parse existing query string
             query_params = parse_qs(parsed.query, keep_blank_values=True)
-            # Flatten MultiDict-like structure
+            # Flatten MultiDict-like structure and ensure proper encoding
             flat_params = {}
             for k, v_list in query_params.items():
-                if len(v_list) == 1:
-                    flat_params[k] = v_list[0]
+                # Encode key if needed
+                safe_key = k
+                try:
+                    k.encode('latin-1', 'strict')
+                except UnicodeEncodeError:
+                    safe_key = quote(k, safe='')
+                
+                # Encode values if needed
+                safe_values = []
+                for v in v_list:
+                    try:
+                        v.encode('latin-1', 'strict')
+                        safe_values.append(v)
+                    except UnicodeEncodeError:
+                        # Value contains non-latin-1 characters, ensure it's properly encoded
+                        # urlencode will handle this, but we need to make sure it's a string
+                        safe_values.append(str(v))
+                
+                if len(safe_values) == 1:
+                    flat_params[safe_key] = safe_values[0]
                 else:
-                    flat_params[k] = v_list
+                    flat_params[safe_key] = safe_values
             
             # Re-encode with proper encoding (urlencode handles UTF-8 -> percent-encoding)
-            encoded_query = urlencode(flat_params, doseq=True)
+            # Use quote_via=quote to ensure proper encoding
+            encoded_query = urlencode(flat_params, doseq=True, quote_via=quote)
         else:
             encoded_query = ''
         
