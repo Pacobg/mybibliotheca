@@ -328,9 +328,25 @@ def create_app():
     if not os.path.exists(static_folder):
         os.makedirs(static_folder, exist_ok=True)
     
+    # Configure UTF-8 encoding for the application
+    import sys
+    if sys.stdout.encoding != 'utf-8':
+        try:
+            sys.stdout.reconfigure(encoding='utf-8')
+        except Exception:
+            pass
+    if sys.stderr.encoding != 'utf-8':
+        try:
+            sys.stderr.reconfigure(encoding='utf-8')
+        except Exception:
+            pass
+    
     # Disable Flask's default static file handling completely
     app = Flask(__name__, static_folder=None, static_url_path=None)
     app.config.from_object(Config)
+    
+    # Ensure Flask uses UTF-8 for URL encoding/decoding
+    app.config['JSON_AS_ASCII'] = False  # Allow non-ASCII characters in JSON responses
     
     # Configure Python logging level from LOG_LEVEL env (default ERROR)
     try:
@@ -488,6 +504,18 @@ def create_app():
         return render_markdown(text)
 
     # CSRF error handler
+    # Error handler for Unicode encoding issues (e.g., Cyrillic in URLs)
+    @app.errorhandler(UnicodeEncodeError)
+    def handle_unicode_encode_error(e):
+        """Handle UnicodeEncodeError that can occur with Cyrillic characters in URLs."""
+        app.logger.error(f"UnicodeEncodeError: {e}")
+        from flask import redirect, url_for, request
+        # Try to redirect to library without problematic query parameters
+        try:
+            return redirect(url_for('book.library'))
+        except Exception:
+            return jsonify({'error': 'Encoding error occurred. Please try again.'}), 500
+    
     @app.errorhandler(400)
     def handle_csrf_error(e):
         """Handle CSRF errors with user-friendly messages."""

@@ -107,11 +107,15 @@ def api_user_books():
 def library():
     """Compatibility route for main.library - redirect to book.library"""
     from flask import redirect, url_for
+    from urllib.parse import urlencode
     target = url_for('book.library')
     try:
-        query_bytes = request.query_string or b''
-        if query_bytes:
-            target = f"{target}?{query_bytes.decode('utf-8', 'ignore')}"
+        # Use request.args which is already properly decoded, then re-encode with urlencode
+        # This ensures Cyrillic and other Unicode characters are properly URL-encoded
+        if request.args:
+            query_params = {k: v for k, v in request.args.items()}
+            if query_params:
+                target = f"{target}?{urlencode(query_params, doseq=True)}"
     except Exception:
         pass
     return redirect(target)
