@@ -1322,11 +1322,23 @@ function selectBookFromSearch(bookIndex) {
                     const titleField = document.getElementById('title');
                     const isbnField = document.getElementById('isbn');
                     const addBookBtn = document.getElementById('addBookBtn');
+                    const form = document.getElementById('addBookForm');
                     console.log('📝 [SELECT_BOOK] Final form state - title:', titleField?.value, 'isbn:', isbnField?.value);
+                    console.log('📝 [SELECT_BOOK] Form exists:', !!form);
+                    console.log('📝 [SELECT_BOOK] Form visible:', form ? (form.offsetParent !== null) : false);
                     console.log('📝 [SELECT_BOOK] Add Book button exists:', !!addBookBtn);
                     if (addBookBtn) {
                         console.log('📝 [SELECT_BOOK] Add Book button disabled:', addBookBtn.disabled);
+                        console.log('📝 [SELECT_BOOK] Add Book button visible:', addBookBtn.offsetParent !== null);
+                        console.log('📝 [SELECT_BOOK] Add Book button style.display:', window.getComputedStyle(addBookBtn).display);
+                        console.log('📝 [SELECT_BOOK] Add Book button style.visibility:', window.getComputedStyle(addBookBtn).visibility);
                     }
+                    // Check if modal is still blocking
+                    const modal = document.getElementById('titleSearchModal');
+                    const backdrops = document.querySelectorAll('.modal-backdrop');
+                    console.log('📝 [SELECT_BOOK] Modal still showing:', modal ? modal.classList.contains('show') : false);
+                    console.log('📝 [SELECT_BOOK] Modal backdrops count:', backdrops.length);
+                    console.log('📝 [SELECT_BOOK] Body has modal-open:', document.body.classList.contains('modal-open'));
                 }, 500);
             })
             .catch(error => {
@@ -1358,11 +1370,39 @@ function selectBookFromSearch(bookIndex) {
         const titleField = document.getElementById('title');
         const isbnField = document.getElementById('isbn');
         const addBookBtn = document.getElementById('addBookBtn');
-        console.log('📝 [SELECT_BOOK] Final form state - title:', titleField?.value, 'isbn:', isbnField?.value);
+        const form = document.getElementById('addBookForm');
+        console.log('📝 [SELECT_BOOK] Final form state (after all operations) - title:', titleField?.value, 'isbn:', isbnField?.value);
+        console.log('📝 [SELECT_BOOK] Form exists:', !!form);
+        console.log('📝 [SELECT_BOOK] Form visible:', form ? (form.offsetParent !== null) : false);
         console.log('📝 [SELECT_BOOK] Add Book button exists:', !!addBookBtn);
         if (addBookBtn) {
             console.log('📝 [SELECT_BOOK] Add Book button disabled:', addBookBtn.disabled);
             console.log('📝 [SELECT_BOOK] Add Book button visible:', addBookBtn.offsetParent !== null);
+            console.log('📝 [SELECT_BOOK] Add Book button style.display:', window.getComputedStyle(addBookBtn).display);
+            console.log('📝 [SELECT_BOOK] Add Book button style.visibility:', window.getComputedStyle(addBookBtn).visibility);
+            console.log('📝 [SELECT_BOOK] Add Book button z-index:', window.getComputedStyle(addBookBtn).zIndex);
+        }
+        // Check if modal is still blocking
+        const modal = document.getElementById('titleSearchModal');
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        console.log('📝 [SELECT_BOOK] Modal still showing:', modal ? modal.classList.contains('show') : false);
+        console.log('📝 [SELECT_BOOK] Modal backdrops count:', backdrops.length);
+        console.log('📝 [SELECT_BOOK] Body has modal-open:', document.body.classList.contains('modal-open'));
+        
+        // Try to ensure form is visible and scroll to it
+        if (form && form.offsetParent === null) {
+            console.warn('⚠️ [SELECT_BOOK] Form is not visible! Attempting to make it visible...');
+            form.style.display = 'block';
+            form.style.visibility = 'visible';
+        }
+        if (addBookBtn && addBookBtn.offsetParent === null) {
+            console.warn('⚠️ [SELECT_BOOK] Add Book button is not visible! Attempting to make it visible...');
+            addBookBtn.style.display = 'block';
+            addBookBtn.style.visibility = 'visible';
+        }
+        // Scroll to form
+        if (form) {
+            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }, 1000);
 }
