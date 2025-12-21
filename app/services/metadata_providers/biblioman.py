@@ -298,20 +298,27 @@ class BibliomanProvider:
         # Build Chitanka URL and cover URL if chitanka_id exists
         chitanka_id = book.get('chitanka_id')
         chitanka_url = None
-        cover_url = book.get('cover')  # Try direct cover field first
+        cover_url = None
+        
+        # Get cover field from database (might be filename or URL)
+        cover_field = book.get('cover')
         
         if chitanka_id:
             chitanka_url = f"https://chitanka.info/text/{chitanka_id}"
-            # Generate Chitanka cover URL if not already provided
-            # Format: https://biblioman.chitanka.info/thumb/covers/{digits}/{chitanka_id}-{hash}.1000.jpg/{filename}
-            # Example: https://biblioman.chitanka.info/thumb/covers/6/5/1/6/16516-61e2e079eca99.1000.jpg/...
-            if not cover_url:
-                # Try to get cover filename from database
-                cover_filename = book.get('cover')  # This might be just the filename like "16516-61e2e079eca99.jpg"
-                if cover_filename and isinstance(cover_filename, str):
-                    # Extract hash from filename (format: {chitanka_id}-{hash}.jpg)
+            
+            # Generate Chitanka cover URL
+            # Format: https://biblioman.chitanka.info/thumb/covers/{last_4_digits}/{chitanka_id}-{hash}.1000.jpg
+            # Example: https://biblioman.chitanka.info/thumb/covers/6/5/1/6/16516-61e2e079eca99.1000.jpg
+            if cover_field and isinstance(cover_field, str):
+                # Check if it's already a full URL
+                if cover_field.startswith('http://') or cover_field.startswith('https://'):
+                    cover_url = cover_field
+                else:
+                    # It's just a filename, generate full URL
+                    # Format: {chitanka_id}-{hash}.jpg -> convert to full URL
+                    cover_filename = cover_field.strip()
                     if '-' in cover_filename and '.' in cover_filename:
-                        # Format: https://biblioman.chitanka.info/thumb/covers/{last_4_digits}/{filename}
+                        # Extract chitanka_id from filename (format: {chitanka_id}-{hash}.jpg)
                         # For chitanka_id=16516, last 4 digits are 6516 -> path: 6/5/1/6
                         chitanka_str = str(chitanka_id)
                         if len(chitanka_str) >= 4:
@@ -327,9 +334,9 @@ class BibliomanProvider:
                     else:
                         # Fallback: use simple format
                         cover_url = f"https://biblioman.chitanka.info/books/{chitanka_id}/cover"
-                else:
-                    # Fallback: use simple format
-                    cover_url = f"https://biblioman.chitanka.info/books/{chitanka_id}/cover"
+            else:
+                # No cover field, try to generate from chitanka_id
+                cover_url = f"https://biblioman.chitanka.info/books/{chitanka_id}/cover"
         
         # Extract categories/genres from Biblioman
         categories = []
