@@ -4969,6 +4969,13 @@ def add_book_manual():
         request.args.get('format') == 'json'
     )
     
+    def _load_json_list(field):
+        if field not in request.form: return []
+        try:
+            return json.loads(request.form[field])
+        except Exception:
+            return []
+    
     try:
         submit_action = request.form.get('submit_action', 'save')
         title = (request.form.get('title') or '').strip()
@@ -4977,13 +4984,6 @@ def add_book_manual():
                 return jsonify({'success': False, 'message': 'Title is required'}), 400
             flash('Title is required', 'danger')
             return redirect(url_for('main.library'))
-
-    def _load_json_list(field):
-        if field not in request.form: return []
-        try:
-            return json.loads(request.form[field])
-        except Exception:
-            return []
 
     contrib = {k: _load_json_list(f'contributors_{k}') for k in ['authored','narrated','edited','translated','illustrated']}
     author = (contrib['authored'][0]['name'].strip() if contrib.get('authored') else (request.form.get('author') or '').strip()) or 'Unknown Author'
