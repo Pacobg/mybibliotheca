@@ -322,8 +322,10 @@ class BibliomanProvider:
             'published_date_raw': published_date,
             'published_date_specificity': 1 if pub_year else 0,  # Year-only specificity
             'isbn': isbn_clean if isbn_clean else None,
-            'isbn10': isbn10,
-            'isbn13': isbn13,
+            'isbn10': isbn10,  # Keep for backward compatibility
+            'isbn13': isbn13,  # Keep for backward compatibility
+            'isbn_10': isbn10,  # Standard format used by merge function
+            'isbn_13': isbn13,  # Standard format used by merge function
             'isbn_list': [isbn_clean] if isbn_clean else [],
             'page_count': book.get('page_count'),
             'language': book.get('language', 'bg'),  # Default to Bulgarian
