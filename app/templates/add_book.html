@@ -1158,7 +1158,12 @@ function selectBookFromSearch(bookIndex) {
                 credentials: 'same-origin',
                 headers: { 'Accept': 'application/json' }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(apiResp => {
                 const isbnData = apiResp && apiResp.data ? apiResp.data : {};
                 console.log('📚 Retrieved additional ISBN data (unified):', isbnData);
@@ -1174,20 +1179,37 @@ function selectBookFromSearch(bookIndex) {
                 } catch(_) { /* noop */ }
                 
                 // Populate form with the intelligently merged data
-                populateFormWithBookData(mergedData);
+                try {
+                    populateFormWithBookData(mergedData);
+                } catch (populateError) {
+                    console.error('Error populating form:', populateError);
+                    // Try with just basic data if full populate fails
+                    document.getElementById('title').value = mergedData.title || fullData.title || '';
+                    document.getElementById('isbn').value = isbn || '';
+                }
                 
                 // Check for ISBN mismatch warnings
                 if (apiResp.isbn_mismatch && apiResp.warnings && apiResp.warnings.length > 0) {
-                    showIsbnMismatchWarning(apiResp.warnings);
+                    if (typeof showIsbnMismatchWarning === 'function') {
+                        showIsbnMismatchWarning(apiResp.warnings);
+                    }
                 } else {
-                    showMessage(`Selected "${mergedData.title}" - Form populated with enhanced book details!`, 'success');
+                    showMessage(`Selected "${mergedData.title || fullData.title}" - Form populated with enhanced book details!`, 'success');
                 }
             })
             .catch(error => {
                 console.warn('⚠️ ISBN lookup failed, using search data only:', error);
                 // Fall back to using just the search result data
-                populateFormWithBookData(fullData);
-                showMessage(`Selected "${fullData.title}" - Form populated with available details!`, 'success');
+                try {
+                    populateFormWithBookData(fullData);
+                    showMessage(`Selected "${fullData.title}" - Form populated with available details!`, 'success');
+                } catch (populateError) {
+                    console.error('Error populating form with search data:', populateError);
+                    // Last resort: just set title and ISBN
+                    document.getElementById('title').value = fullData.title || '';
+                    document.getElementById('isbn').value = isbn || '';
+                    showMessage(`Selected "${fullData.title}" - Basic information loaded!`, 'info');
+                }
             });
     } else {
         // No ISBN available, use the search data directly
