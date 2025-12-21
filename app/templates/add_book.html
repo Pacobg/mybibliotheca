@@ -2468,22 +2468,33 @@ if(document.readyState === 'loading'){
 
 // Global function to force close search modal and remove backdrop
 function forceCloseSearchModal() {
+    console.log('🔒 forceCloseSearchModal called');
+    
+    // First, aggressively remove all backdrops
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    console.log(`Found ${backdrops.length} backdrop(s) to remove`);
+    backdrops.forEach((backdrop, index) => {
+        console.log(`Removing backdrop ${index + 1}`);
+        backdrop.style.display = 'none';
+        backdrop.style.visibility = 'hidden';
+        backdrop.style.opacity = '0';
+        backdrop.style.pointerEvents = 'none';
+        backdrop.remove();
+    });
+    
+    // Restore body styles immediately
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    document.body.style.padding = '';
+    
     const modalElement = document.getElementById('titleSearchModal');
     if (modalElement) {
-        // Remove show class
+        // Remove show class and hide modal
         modalElement.classList.remove('show');
         modalElement.style.display = 'none';
         modalElement.setAttribute('aria-hidden', 'true');
         modalElement.removeAttribute('aria-modal');
-        
-        // Remove all backdrops (sometimes multiple can exist)
-        const backdrops = document.querySelectorAll('.modal-backdrop');
-        backdrops.forEach(backdrop => backdrop.remove());
-        
-        // Restore body styles
-        document.body.classList.remove('modal-open');
-        document.body.style.overflow = '';
-        document.body.style.paddingRight = '';
         
         // Also try Bootstrap modal hide if instance exists
         try {
@@ -2492,9 +2503,28 @@ function forceCloseSearchModal() {
                 modal.hide();
             }
         } catch (e) {
-            // Ignore errors
+            console.warn('Error hiding Bootstrap modal:', e);
         }
     }
+    
+    // Double-check: remove any remaining backdrops after a short delay
+    setTimeout(() => {
+        const remainingBackdrops = document.querySelectorAll('.modal-backdrop');
+        if (remainingBackdrops.length > 0) {
+            console.warn(`⚠️ Found ${remainingBackdrops.length} remaining backdrop(s), removing...`);
+            remainingBackdrops.forEach(backdrop => {
+                backdrop.remove();
+            });
+        }
+        // Ensure body is not modal-open
+        if (document.body.classList.contains('modal-open')) {
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        }
+    }, 100);
+    
+    console.log('✅ forceCloseSearchModal completed');
 }
 
 // Ensure backdrop is removed when modal is hidden via Bootstrap events
