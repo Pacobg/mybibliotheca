@@ -1349,9 +1349,34 @@ def search_book_details():
         import concurrent.futures
         import requests as _req
         
-        # Check if Biblioman should be used (Cyrillic text detected)
+        # Check if Biblioman should be used
+        # 1. Check metadata settings for primary provider preference
+        # 2. Fallback to Cyrillic detection if not explicitly configured
         from app.utils.text_utils import should_use_biblioman
-        use_biblioman = should_use_biblioman(title, author)
+        from app.utils.metadata_settings import _get_cache
+        
+        use_biblioman = False
+        try:
+            cache = _get_cache()
+            settings = cache.load()
+            books_settings = settings.get('books', {})
+            # Check if Biblioman is set as primary/default for any field
+            # If title field has Biblioman as default or mode, use it
+            title_cfg = books_settings.get('title', {})
+            title_mode = title_cfg.get('mode', 'both')
+            title_default = title_cfg.get('default', 'google')
+            
+            if title_mode == 'biblioman' or title_default == 'biblioman':
+                use_biblioman = True
+            elif title_mode == 'both' and title_default == 'biblioman':
+                use_biblioman = True
+            else:
+                # Fallback to Cyrillic detection
+                use_biblioman = should_use_biblioman(title, author)
+        except Exception as e:
+            current_app.logger.debug(f"[SEARCH] Failed to check metadata settings: {e}")
+            # Fallback to Cyrillic detection
+            use_biblioman = should_use_biblioman(title, author)
         
         def _fetch_biblioman():
             """Fetch results from Biblioman database (Bulgarian books)."""
@@ -1603,7 +1628,7 @@ def search_book_details():
             fut_bm = None
             if use_biblioman:
                 fut_bm = ex.submit(_fetch_biblioman)
-            # Fetch Biblioman results first if Cyrillic detected (prioritize for Bulgarian books)
+            # Fetch Biblioman results first if enabled (prioritize for Bulgarian books or when configured)
             biblioman_results = []
             if fut_bm:
                 try:
@@ -1619,29 +1644,38 @@ def search_book_details():
                     current_app.logger.debug(f"[SEARCH] Biblioman exception: {e}")
                     biblioman_results = []
             
-            try:
-                ol_results = fut_ol.result(timeout=provider_timeout)
-            except concurrent.futures.TimeoutError:
-                timed_out_providers.append('openlibrary')
-                current_app.logger.warning(f"[SEARCH] OpenLibrary timed out after {provider_timeout:.1f}s")
-                fut_ol.cancel()
-                ol_results = []
-            except Exception as e:
-                current_app.logger.debug(f"[SEARCH] OpenLibrary exception: {e}")
-                ol_results = []
-            
-            # Merge results, avoiding duplicates
-            existing_keys = {(r.get('title','').lower(), r.get('authors','').lower()) for r in results}
-            for r in ol_results:
-                key = (r.get('title','').lower(), r.get('authors','').lower())
-                if key not in existing_keys:
-                    results.append(r)
-                    existing_keys.add(key)
-            
+            # If Biblioman is primary and has results, use them first, then add Google/OpenLibrary as fallback
+            # Otherwise, fetch Google and OpenLibrary in parallel
+            ol_results = []
             gb_results = []
-            if len(results) >= 8:
-                fut_gb.cancel()
-            else:
+            
+            # Only fetch Google/OpenLibrary if Biblioman didn't return enough results or isn't primary
+            should_fetch_fallbacks = len(biblioman_results) < 8 or not use_biblioman
+            
+            if should_fetch_fallbacks:
+                try:
+                    ol_results = fut_ol.result(timeout=provider_timeout)
+                except concurrent.futures.TimeoutError:
+                    timed_out_providers.append('openlibrary')
+                    current_app.logger.warning(f"[SEARCH] OpenLibrary timed out after {provider_timeout:.1f}s")
+                    fut_ol.cancel()
+                    ol_results = []
+                except Exception as e:
+                    current_app.logger.debug(f"[SEARCH] OpenLibrary exception: {e}")
+                    ol_results = []
+                
+                # Merge OpenLibrary results, avoiding duplicates
+                existing_keys = {(r.get('title','').lower(), r.get('authors','').lower()) for r in results}
+                for r in ol_results:
+                    key = (r.get('title','').lower(), r.get('authors','').lower())
+                    if key not in existing_keys:
+                        results.append(r)
+                        existing_keys.add(key)
+            
+            if should_fetch_fallbacks:
+                if len(results) >= 8:
+                    fut_gb.cancel()
+                else:
                 try:
                     gb_results = fut_gb.result(timeout=provider_timeout)
                 except concurrent.futures.TimeoutError:

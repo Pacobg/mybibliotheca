@@ -491,13 +491,16 @@ def site_config_step():
                     logger.info("🔍 ONBOARDING DEBUG: Seeding initial metadata settings file")
                 book_mode = site_config.get('book_metadata_mode','both')
                 people_mode = site_config.get('people_metadata_mode','openlibrary')
-                if book_mode not in ('google','openlibrary','both'): book_mode = 'both'
+                if book_mode not in ('google','openlibrary','biblioman','both'): book_mode = 'both'
                 if people_mode not in ('openlibrary','none'): people_mode = 'openlibrary'
                 # Build new settings structure respecting chosen coarse modes
                 books_cfg = {}
                 for f in DEFAULT_BOOK_FIELDS:
                     if book_mode == 'both':
                         books_cfg[f] = {'mode': 'both', 'default': 'google'}
+                    elif book_mode == 'biblioman':
+                        # Biblioman as primary, but allow fallback to Google/OpenLibrary
+                        books_cfg[f] = {'mode': 'both', 'default': 'biblioman'}
                     else:
                         books_cfg[f] = {'mode': book_mode}
                 people_cfg = {}

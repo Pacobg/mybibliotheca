@@ -3,19 +3,20 @@
 {% set book_provider_map = {
   'google_books_id': ['google'],
   'openlibrary_id': ['openlibrary'],
+  'biblioman_id': ['biblioman'],
   'average_rating': ['google'],
   'rating_count': ['google'],
-  'language': ['google'],
-  'cover_url': ['google','openlibrary'],
-  'isbn10': ['google','openlibrary'],
-  'isbn13': ['google','openlibrary'],
-  'title': ['google','openlibrary'],
-  'subtitle': ['google','openlibrary'],
-  'authors': ['google','openlibrary'],
-  'publisher': ['google','openlibrary'],
-  'published_date': ['google','openlibrary'],
-  'page_count': ['google','openlibrary'],
-  'description': ['google','openlibrary'],
+  'language': ['google', 'biblioman'],
+  'cover_url': ['google','openlibrary','biblioman'],
+  'isbn10': ['google','openlibrary','biblioman'],
+  'isbn13': ['google','openlibrary','biblioman'],
+  'title': ['google','openlibrary','biblioman'],
+  'subtitle': ['google','openlibrary','biblioman'],
+  'authors': ['google','openlibrary','biblioman'],
+  'publisher': ['google','openlibrary','biblioman'],
+  'published_date': ['google','openlibrary','biblioman'],
+  'page_count': ['google','openlibrary','biblioman'],
+  'description': ['google','openlibrary','biblioman'],
   'categories': ['google','openlibrary'],
   'series': ['google','openlibrary']
 } %}
@@ -56,30 +57,50 @@
                 {% set allowed_modes = [] %}
                 {% if providers|length == 1 %}
                   {% set _ = allowed_modes.append(providers[0]) %}
+                {% elif providers|length == 2 %}
+                  {% set _ = allowed_modes.append(providers[0]) %}
+                  {% set _ = allowed_modes.append(providers[1]) %}
+                  {% set _ = allowed_modes.append('both') %}
                 {% else %}
-                  {% set _ = allowed_modes.append('google') %}
-                  {% set _ = allowed_modes.append('openlibrary') %}
+                  {# 3+ providers: add each individually and 'both' #}
+                  {% for provider in providers %}
+                    {% set _ = allowed_modes.append(provider) %}
+                  {% endfor %}
                   {% set _ = allowed_modes.append('both') %}
                 {% endif %}
                 {% set _ = allowed_modes.append('none') %}
                 <select class="form-select form-select-sm mode-select" data-providers="{{ providers|join(',') }}">
                   {% for mode in allowed_modes %}
-                    <option value="{{ mode }}" {% if cfg.mode == mode %}selected{% endif %}>{{ mode.title() }}</option>
+                    {% set mode_label = mode %}
+                    {% if mode == 'google' %}{% set mode_label = 'Google' %}
+                    {% elif mode == 'openlibrary' %}{% set mode_label = 'OpenLibrary' %}
+                    {% elif mode == 'biblioman' %}{% set mode_label = 'Biblioman' %}
+                    {% elif mode == 'both' %}{% set mode_label = 'Both' %}
+                    {% elif mode == 'none' %}{% set mode_label = 'None' %}
+                    {% endif %}
+                    <option value="{{ mode }}" {% if cfg.mode == mode %}selected{% endif %}>{{ mode_label }}</option>
                   {% endfor %}
                 </select>
               </td>
               <td>
-                {% if book_provider_map.get(field, ['google','openlibrary'])|length > 1 %}
+                {% set field_providers = book_provider_map.get(field, ['google','openlibrary']) %}
+                {% if field_providers|length > 1 %}
                   <div class="default-wrapper {% if cfg.mode != 'both' %}d-none{% endif %}">
                     <select class="form-select form-select-sm default-select" {% if cfg.mode != 'both' %}disabled{% endif %}>
-                      <option value="google" {% if cfg.default=='google' %}selected{% endif %}>Google</option>
-                      <option value="openlibrary" {% if cfg.default=='openlibrary' %}selected{% endif %}>OpenLibrary</option>
+                      {% for provider in field_providers %}
+                        {% set provider_label = provider %}
+                        {% if provider == 'google' %}{% set provider_label = 'Google' %}
+                        {% elif provider == 'openlibrary' %}{% set provider_label = 'OpenLibrary' %}
+                        {% elif provider == 'biblioman' %}{% set provider_label = 'Biblioman' %}
+                        {% endif %}
+                        <option value="{{ provider }}" {% if cfg.default==provider %}selected{% endif %}>{{ provider_label }}</option>
+                      {% endfor %}
                     </select>
                   </div>
                   <div class="default-placeholder text-muted small {% if cfg.mode == 'both' %}d-none{% endif %}">—</div>
                 {% else %}
                   <div class="text-muted small">—</div>
-                  <select class="d-none default-select"><option value="google">Google</option></select>
+                  <select class="d-none default-select"><option value="{{ field_providers[0] }}">{{ field_providers[0]|title }}</option></select>
                 {% endif %}
               </td>
             </tr>

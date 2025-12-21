@@ -288,11 +288,21 @@ class BibliomanProvider:
         pub_year = book.get('publishing_year')
         published_date = str(pub_year) if pub_year else None
         
-        # Build Chitanka URL if chitanka_id exists
+        # Build Chitanka URL and cover URL if chitanka_id exists
         chitanka_id = book.get('chitanka_id')
         chitanka_url = None
+        cover_url = book.get('cover')  # Try direct cover field first
+        
         if chitanka_id:
             chitanka_url = f"https://chitanka.info/text/{chitanka_id}"
+            # Generate Chitanka cover URL if not already provided
+            # Format: https://chitanka.info/book/{chitanka_id}/cover or https://biblioman.chitanka.info/books/{chitanka_id}
+            # Try multiple possible formats
+            if not cover_url:
+                # Try biblioman.chitanka.info format first (more reliable)
+                cover_url = f"https://biblioman.chitanka.info/books/{chitanka_id}/cover"
+            # Also try chitanka.info format as fallback
+            # Note: We'll use biblioman.chitanka.info as primary since that's where the book page is
         
         return {
             'title': book.get('title') or '',
@@ -310,7 +320,7 @@ class BibliomanProvider:
             'isbn_list': [isbn_clean] if isbn_clean else [],
             'page_count': book.get('page_count'),
             'language': book.get('language', 'bg'),  # Default to Bulgarian
-            'cover_url': book.get('cover'),
+            'cover_url': cover_url,
             'source': 'Biblioman',
             'biblioman_id': book.get('id'),
             'chitanka_id': chitanka_id,
