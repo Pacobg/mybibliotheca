@@ -11,10 +11,12 @@ KuzuDB lock грешки се появяват когато:
 
 ### На Dev Server (192.168.1.52)
 
+**ВАЖНО:** Използвай `dev_run.py` вместо `run.py` за development! `dev_run.py` изключва Flask reloader който причинява lock конфликти.
+
 ```bash
 # 1. Спри приложението (ако работи)
 # Намери процеса
-ps aux | grep python | grep run.py
+ps aux | grep python | grep -E "run.py|dev_run.py"
 
 # Спри процеса
 kill <PID>
@@ -29,10 +31,15 @@ rm -f data/kuzu/*.lock
 # 3. Провери за други процеси
 ps aux | grep python | grep -v grep
 
-# 4. Рестартирай приложението
+# 4. Рестартирай приложението с dev_run.py (БЕЗ reloader)
 source venv/bin/activate
-python run.py
+python dev_run.py
 ```
+
+**ЗАЩО `dev_run.py`?**
+- Flask development server с `use_reloader=True` създава два процеса (parent + child)
+- И двата процеса се опитват да достъпят KuzuDB → lock конфликт
+- `dev_run.py` използва `use_reloader=False` → само един процес → няма конфликт
 
 ### Използвай скрипта
 
@@ -89,7 +96,12 @@ chown -R $USER:$USER data/kuzu/
 
 ```bash
 source venv/bin/activate
-python run.py
+
+# Използвай dev_run.py за development (без reloader)
+python dev_run.py
+
+# ИЛИ ако предпочиташ Gunicorn (production-like):
+python run.py  # Това използва Gunicorn с 1 worker
 ```
 
 ## Предотвратяване на Проблеми
