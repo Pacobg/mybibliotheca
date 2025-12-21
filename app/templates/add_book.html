@@ -696,6 +696,20 @@
         margin: 1.75rem auto;
     }
 }
+
+/* Ensure modal backdrop doesn't block interactions when modal is hidden */
+.modal-backdrop {
+    z-index: 1040;
+}
+
+.modal-backdrop.show {
+    z-index: 1040;
+}
+
+/* Force remove backdrop if it persists */
+body:not(.modal-open) .modal-backdrop {
+    display: none !important;
+}
 </style>
 
 <script>
@@ -2480,7 +2494,7 @@ if(document.readyState === 'loading'){
                 <h5 class="modal-title" id="titleSearchModalLabel">
                     <i class="bi bi-search me-2"></i>Book Search Results
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="forceCloseSearchModal()"></button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                 <div id="title-search-loading" class="text-center p-4" style="display: none;">
