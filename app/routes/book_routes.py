@@ -4960,11 +4960,23 @@ def search_books_in_library():
 def add_book_manual():
     """Manual add with series autocomplete integration (simplified)."""
     import json
-    submit_action = request.form.get('submit_action', 'save')
-    title = (request.form.get('title') or '').strip()
-    if not title:
-        flash('Title is required', 'danger')
-        return redirect(url_for('main.library'))
+    import traceback
+    
+    # Check if request wants JSON response (AJAX or explicit header)
+    wants_json = (
+        request.headers.get('Accept', '').find('application/json') != -1 or
+        request.headers.get('X-Requested-With') == 'XMLHttpRequest' or
+        request.args.get('format') == 'json'
+    )
+    
+    try:
+        submit_action = request.form.get('submit_action', 'save')
+        title = (request.form.get('title') or '').strip()
+        if not title:
+            if wants_json:
+                return jsonify({'success': False, 'message': 'Title is required'}), 400
+            flash('Title is required', 'danger')
+            return redirect(url_for('main.library'))
 
     def _load_json_list(field):
         if field not in request.form: return []
