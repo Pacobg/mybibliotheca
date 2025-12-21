@@ -2499,7 +2499,13 @@ if(document.readyState === 'loading'){
 function forceCloseSearchModal() {
     console.log('🔒 forceCloseSearchModal called');
     
-    // First, aggressively remove all backdrops
+    // CRITICAL: First, restore body styles IMMEDIATELY to unblock clicks
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    document.body.style.padding = '';
+    
+    // Aggressively remove ALL backdrops (sometimes multiple can exist)
     const backdrops = document.querySelectorAll('.modal-backdrop');
     console.log(`Found ${backdrops.length} backdrop(s) to remove`);
     backdrops.forEach((backdrop, index) => {
@@ -2511,12 +2517,7 @@ function forceCloseSearchModal() {
         backdrop.remove();
     });
     
-    // Restore body styles immediately
-    document.body.classList.remove('modal-open');
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
-    document.body.style.padding = '';
-    
+    // Close and hide the search modal
     const modalElement = document.getElementById('titleSearchModal');
     if (modalElement) {
         // Remove show class and hide modal
@@ -2536,7 +2537,7 @@ function forceCloseSearchModal() {
         }
     }
     
-    // Double-check: remove any remaining backdrops after a short delay
+    // Double-check: remove any remaining backdrops and restore body styles after a short delay
     setTimeout(() => {
         const remainingBackdrops = document.querySelectorAll('.modal-backdrop');
         if (remainingBackdrops.length > 0) {
@@ -2545,13 +2546,28 @@ function forceCloseSearchModal() {
                 backdrop.remove();
             });
         }
-        // Ensure body is not modal-open
+        // CRITICAL: Ensure body is not modal-open and styles are restored
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+        document.body.style.padding = '';
+    }, 50);
+    
+    // Triple-check after another delay
+    setTimeout(() => {
         if (document.body.classList.contains('modal-open')) {
+            console.warn('⚠️ Body still has modal-open class, forcing removal...');
             document.body.classList.remove('modal-open');
             document.body.style.overflow = '';
             document.body.style.paddingRight = '';
+            document.body.style.padding = '';
         }
-    }, 100);
+        const finalBackdrops = document.querySelectorAll('.modal-backdrop');
+        if (finalBackdrops.length > 0) {
+            console.warn(`⚠️ Final cleanup: removing ${finalBackdrops.length} backdrop(s)`);
+            finalBackdrops.forEach(backdrop => backdrop.remove());
+        }
+    }, 200);
     
     console.log('✅ forceCloseSearchModal completed');
 }
