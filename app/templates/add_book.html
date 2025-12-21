@@ -2151,6 +2151,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     submitActionField.value = actionValue;
                     console.log('🖱️ [FORM_SUBMIT] Set submit_action to:', actionValue);
                 }
+                // Don't prevent default - let the form submit naturally
+                // The form's submit event listener will handle it
             }, { capture: true }); // Use capture phase to catch event earlier
         });
 
