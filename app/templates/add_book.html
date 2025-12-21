@@ -2134,18 +2134,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle form submission to collect contributors and categories
     const form = document.getElementById('addBookForm');
     if (form) {
+        console.log('✅ [INIT] Form found, setting up submit handlers');
         const submitButtons = form.querySelectorAll('button[type="submit"]');
+        console.log('✅ [INIT] Found', submitButtons.length, 'submit button(s)');
         const submitActionField = document.getElementById('submitActionField');
-        submitButtons.forEach(button => {
+        submitButtons.forEach((button, index) => {
+            console.log(`✅ [INIT] Registering click handler for button ${index}:`, button.id || button.className || 'unnamed', 'value:', button.value);
             button.addEventListener('click', (e) => {
                 console.log('🖱️ [FORM_SUBMIT] Submit button clicked:', button.id || button.className, 'value:', button.value);
+                console.log('🖱️ [FORM_SUBMIT] Event type:', e.type);
+                console.log('🖱️ [FORM_SUBMIT] Event target:', e.target);
+                console.log('🖱️ [FORM_SUBMIT] Event currentTarget:', e.currentTarget);
                 lastClickedSubmitButton = button;
                 if (submitActionField) {
                     const actionValue = button.value || button.getAttribute('value') || 'save';
                     submitActionField.value = actionValue;
                     console.log('🖱️ [FORM_SUBMIT] Set submit_action to:', actionValue);
                 }
-            });
+            }, { capture: true }); // Use capture phase to catch event earlier
         });
 
         form.addEventListener('submit', async function(e) {
