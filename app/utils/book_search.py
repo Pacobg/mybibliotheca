@@ -557,13 +557,14 @@ def merge_and_rank_results(search_title: str, google_results: List[Dict],
     """
     if biblioman_results is None:
         biblioman_results = []
-    print(f"🔀 [MERGE_RANK] Merging {len(biblioman_results)} Biblioman + {len(google_results)} Google + {len(openlibrary_results)} OpenLibrary results")
+    builtins.print(f"🔀 [MERGE_RANK] Merging {len(biblioman_results)} Biblioman + {len(google_results)} Google + {len(openlibrary_results)} OpenLibrary results")
     
     merged_results = {}
     
     # Process Biblioman results first (highest priority for Bulgarian books)
-    for result in biblioman_results:
-        isbn_key = result.get('isbn_13') or result.get('isbn_10') or result.get('isbn') or f"biblioman_{result.get('biblioman_id')}"
+    for i, result in enumerate(biblioman_results):
+        isbn_key = result.get('isbn_13') or result.get('isbn_10') or result.get('isbn') or result.get('isbn10') or result.get('isbn13') or f"biblioman_{result.get('biblioman_id')}"
+        builtins.print(f"📚 [MERGE_RANK] Biblioman result {i+1}: '{result.get('title', 'N/A')}' - ISBN key: {isbn_key[:50] if isbn_key else 'NO ISBN'}")
         if isbn_key:
             record = result.copy()
             # Ensure source is set
@@ -579,6 +580,7 @@ def merge_and_rank_results(search_title: str, google_results: List[Dict],
                 else:
                     record['author'] = record['authors']
             merged_results[isbn_key] = record
+            builtins.print(f"  ✅ Added to merged_results with key: {isbn_key[:50]}")
     
     # Process Google Books results second
     for result in google_results:
@@ -729,9 +731,10 @@ def merge_and_rank_results(search_title: str, google_results: List[Dict],
     # Limit to max_results
     final_results = final_results[:max_results]
     
-    print(f"✅ [MERGE_RANK] Final results: {len(final_results)} books")
+    builtins.print(f"✅ [MERGE_RANK] Final results: {len(final_results)} books")
     for i, result in enumerate(final_results[:5]):  # Log top 5
-        print(f"  {i+1}. '{result.get('title', '')}' (score: {result.get('similarity_score', 0):.3f}, source: {result.get('source', '')})")
+        isbn_info = result.get('isbn_13') or result.get('isbn_10') or result.get('isbn') or 'NO ISBN'
+        builtins.print(f"  {i+1}. '{result.get('title', '')}' (score: {result.get('similarity_score', 0):.3f}, source: {result.get('source', '')}, ISBN: {isbn_info})")
     
     return final_results
 
