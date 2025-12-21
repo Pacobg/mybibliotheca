@@ -800,7 +800,7 @@ def search_books_by_title(title: str, max_results: int = 10, author: Optional[st
                 # Fallback to Cyrillic detection
                 use_biblioman = should_use_biblioman(title, author_arg)
         except Exception as e:
-            print(f"⚠️ [BOOK_SEARCH] Failed to check metadata settings: {e}")
+            __builtins__.print(f"⚠️ [BOOK_SEARCH] Failed to check metadata settings: {e}")
             # Fallback to Cyrillic detection
             use_biblioman = should_use_biblioman(title, author_arg)
         
