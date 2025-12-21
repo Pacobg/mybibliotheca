@@ -1325,8 +1325,28 @@ function populateFormWithBookData(bookData) {
     
     if (bookData.authors && bookData.authors.length > 0) {
         bookData.authors.forEach(author => {
-            addContributor('authored', author, null);
+            try {
+                if (typeof addContributor === 'function') {
+                    addContributor('authored', author, null);
+                } else {
+                    console.warn('addContributor function not found, skipping author:', author);
+                }
+            } catch (e) {
+                console.error('Error adding contributor:', e, author);
+            }
         });
+    } else if (bookData.author) {
+        // Fallback: if authors is not an array but author is a string
+        try {
+            const authorList = String(bookData.author).split(/[,;]/).map(a => a.trim()).filter(a => a);
+            authorList.forEach(author => {
+                if (typeof addContributor === 'function') {
+                    addContributor('authored', author, null);
+                }
+            });
+        } catch (e) {
+            console.error('Error processing author string:', e);
+        }
     }
     
     // Clear existing categories and add new ones
