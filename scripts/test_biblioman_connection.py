@@ -74,6 +74,20 @@ def test_connection():
         print(f"\n✅ Connection successful!")
         print(f"   Found {count:,} books in biblioman database.")
         
+        # Test 1.5: Check table structure
+        cursor.execute("DESCRIBE book")
+        columns = cursor.fetchall()
+        column_names = [col[0] for col in columns]
+        print(f"\n📋 Columns in 'book' table: {', '.join(column_names)}")
+        
+        # Check for important columns
+        important_cols = ['title', 'author', 'isbn', 'chitanka_id', 'cover']
+        missing_cols = [col for col in important_cols if col not in column_names]
+        if missing_cols:
+            print(f"⚠️  Missing important columns: {', '.join(missing_cols)}")
+        else:
+            print(f"✅ All important columns present!")
+        
         # Test 2: Get a sample book with Cyrillic title
         cursor.execute("SELECT title, author, isbn FROM book WHERE title LIKE '%море%' LIMIT 3")
         books = cursor.fetchall()
