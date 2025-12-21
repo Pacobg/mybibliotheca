@@ -2447,6 +2447,76 @@ if(document.readyState === 'loading'){
 } else {
     initializeSeriesAutocomplete();
 }
+
+// Global function to force close search modal and remove backdrop
+function forceCloseSearchModal() {
+    const modalElement = document.getElementById('titleSearchModal');
+    if (modalElement) {
+        // Remove show class
+        modalElement.classList.remove('show');
+        modalElement.style.display = 'none';
+        modalElement.setAttribute('aria-hidden', 'true');
+        modalElement.removeAttribute('aria-modal');
+        
+        // Remove all backdrops (sometimes multiple can exist)
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => backdrop.remove());
+        
+        // Restore body styles
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+        
+        // Also try Bootstrap modal hide if instance exists
+        try {
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+            }
+        } catch (e) {
+            // Ignore errors
+        }
+    }
+}
+
+// Ensure backdrop is removed when modal is hidden via Bootstrap events
+if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function() {
+        setupModalCleanup();
+    });
+} else {
+    setupModalCleanup();
+}
+
+function setupModalCleanup() {
+    const modalElement = document.getElementById('titleSearchModal');
+    if (modalElement) {
+        modalElement.addEventListener('hidden.bs.modal', function() {
+            // Double-check backdrop is removed
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(backdrop => backdrop.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        });
+        
+        // Also handle close button clicks
+        const closeBtn = modalElement.querySelector('.btn-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                setTimeout(forceCloseSearchModal, 50);
+            });
+        }
+        
+        // Handle Cancel button
+        const cancelBtn = modalElement.querySelector('[data-bs-dismiss="modal"]');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function() {
+                setTimeout(forceCloseSearchModal, 50);
+            });
+        }
+    }
+}
 </script>
 
 <script>
