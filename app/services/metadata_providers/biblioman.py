@@ -311,14 +311,13 @@ class BibliomanProvider:
                 if cover_filename and isinstance(cover_filename, str):
                     # Extract hash from filename (format: {chitanka_id}-{hash}.jpg)
                     if '-' in cover_filename and '.' in cover_filename:
-                        # Format: https://biblioman.chitanka.info/thumb/covers/{reversed_digits}/{filename}
-                        # For chitanka_id=16516, digits are [6,5,1,6] reversed = [6,1,5,6]
+                        # Format: https://biblioman.chitanka.info/thumb/covers/{last_4_digits}/{filename}
+                        # For chitanka_id=16516, last 4 digits are 6516 -> path: 6/5/1/6
                         chitanka_str = str(chitanka_id)
                         if len(chitanka_str) >= 4:
-                            # Take last 4 digits and reverse them
-                            digits = list(chitanka_str[-4:])
-                            digits.reverse()
-                            digits_path = '/'.join(digits)
+                            # Take last 4 digits and split them individually
+                            last_four = chitanka_str[-4:]
+                            digits_path = '/'.join(list(last_four))
                             # Use the filename from database, but ensure .1000.jpg extension
                             base_filename = cover_filename.replace('.jpg', '').replace('.jpeg', '')
                             cover_url = f"https://biblioman.chitanka.info/thumb/covers/{digits_path}/{base_filename}.1000.jpg"
