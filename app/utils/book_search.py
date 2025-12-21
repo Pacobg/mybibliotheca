@@ -795,34 +795,50 @@ def search_books_by_title(title: str, max_results: int = 10, author: Optional[st
             use_biblioman = should_use_biblioman(title, author_arg)
         
         if use_biblioman:
+            print(f"🔍 [BOOK_SEARCH] Biblioman should be used (Cyrillic detected or configured as primary)")
             try:
                 from app.services.metadata_providers.biblioman import BibliomanProvider
+                import os
                 provider = BibliomanProvider()
-                if provider.is_enabled():
+                enabled_status = provider.is_enabled()
+                print(f"🔍 [BOOK_SEARCH] Biblioman enabled check: {enabled_status} (BIBLIOMAN_ENABLED={os.getenv('BIBLIOMAN_ENABLED', 'NOT SET')})")
+                if enabled_status:
                     # Try to connect first - if connection fails, skip Biblioman but don't break search
                     if provider.connect():
+                        print(f"✅ [BOOK_SEARCH] Biblioman connected successfully")
                         try:
                             if title and author_arg:
+                                print(f"🔍 [BOOK_SEARCH] Searching Biblioman: title='{title}', author='{author_arg}'")
                                 result = provider.find_best_match(title, author_arg, threshold=0.7)
                                 if result:
                                     biblioman_results = [result]
+                                    print(f"✅ [BOOK_SEARCH] Biblioman find_best_match found 1 result")
                                 else:
+                                    print(f"🔍 [BOOK_SEARCH] Biblioman find_best_match returned None, trying search_by_title")
                                     biblioman_results = provider.search_by_title(title, limit=max_results * 2)
                             elif title:
+                                print(f"🔍 [BOOK_SEARCH] Searching Biblioman by title: '{title}'")
                                 biblioman_results = provider.search_by_title(title, limit=max_results * 2)
                             elif author_arg:
+                                print(f"🔍 [BOOK_SEARCH] Searching Biblioman by author: '{author_arg}'")
                                 biblioman_results = provider.search_by_author(author_arg, limit=max_results * 2)
                             print(f"✅ [BOOK_SEARCH] Biblioman returned {len(biblioman_results)} results")
+                            if biblioman_results:
+                                print(f"📚 [BOOK_SEARCH] First Biblioman result: {biblioman_results[0].get('title', 'N/A')} by {biblioman_results[0].get('authors', 'N/A')}")
                         finally:
                             provider.close()
                     else:
                         print(f"⚠️ [BOOK_SEARCH] Biblioman connection failed, skipping Biblioman search")
                 else:
-                    print(f"⚠️ [BOOK_SEARCH] Biblioman is not enabled")
+                    print(f"⚠️ [BOOK_SEARCH] Biblioman is not enabled (BIBLIOMAN_ENABLED={os.getenv('BIBLIOMAN_ENABLED', 'NOT SET')})")
             except Exception as exc:
                 print(f"❌ [BOOK_SEARCH] Biblioman search failed: {exc}")
+                import traceback
+                traceback.print_exc()
                 # Don't break the entire search if Biblioman fails
                 biblioman_results = []
+        else:
+            print(f"ℹ️ [BOOK_SEARCH] Biblioman not used (no Cyrillic detected, not configured as primary)")
     except ImportError:
         print("⚠️ [BOOK_SEARCH] Biblioman provider not available")
     
