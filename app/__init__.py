@@ -1025,8 +1025,14 @@ def create_app():
         # If neither exists, fall back to whichever directory exists to preserve
         # prior behavior (will 404 from send_from_directory)
         if os.path.isdir(docker_static_dir):
+            # Try fallback one more time before giving up
+            if fallback_filename and os.path.exists(docker_fallback_path):
+                return _with_cache_headers(send_from_directory(docker_static_dir, fallback_filename))
             return _with_cache_headers(send_from_directory(docker_static_dir, filename))
         if os.path.isdir(package_static_dir):
+            # Try fallback one more time before giving up
+            if fallback_filename and os.path.exists(pkg_fallback_path):
+                return _with_cache_headers(send_from_directory(package_static_dir, fallback_filename))
             return _with_cache_headers(send_from_directory(package_static_dir, filename))
         return abort(404)
 

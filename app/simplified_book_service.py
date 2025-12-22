@@ -491,8 +491,28 @@ class SimplifiedBookService:
                     import logging
                     logger = logging.getLogger(__name__)
                     logger.error(f"❌ [COVER_DOWNLOAD] Failed to download cover for '{book_data.title}': {cover_error}", exc_info=True)
-                    # Continue with original cover URL if download fails
-                    final_cover_url = book_data.cover_url
+                    # Set default cover if download fails
+                    try:
+                        from flask import url_for, has_app_context
+                        if has_app_context():
+                            final_cover_url = url_for('serve_static', filename='bookshelf.png', _external=True)
+                        else:
+                            final_cover_url = '/static/bookshelf.png'
+                        logger.info(f"🔄 [COVER_DOWNLOAD] Using default cover: {final_cover_url}")
+                    except Exception:
+                        final_cover_url = '/static/bookshelf.png'
+            
+            # If cover_url is empty or None, set default cover
+            if not final_cover_url or final_cover_url == '':
+                try:
+                    from flask import url_for, has_app_context
+                    if has_app_context():
+                        final_cover_url = url_for('serve_static', filename='bookshelf.png', _external=True)
+                    else:
+                        final_cover_url = '/static/bookshelf.png'
+                    logger.info(f"🔄 [COVER_DEFAULT] No cover URL provided, using default: {final_cover_url}")
+                except Exception:
+                    final_cover_url = '/static/bookshelf.png'
             
             # Update the book_data with the final cover URL for logging
             book_data.cover_url = final_cover_url
