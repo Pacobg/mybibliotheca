@@ -395,73 +395,60 @@ class BibliomanProvider:
         
         if book_id and self.db:
             try:
-                # First, check the actual structure of book_category table
                 cursor = self.db.cursor(dictionary=True)
-                try:
-                    # Try to describe the table structure
-                    cursor.execute("DESCRIBE book_category")
-                    columns = cursor.fetchall()
-                    column_names = [col.get('Field') or col.get('field') for col in columns]
-                    builtins.print(f"🔍 [BIBLIOMAN][FORMAT] book_category table columns: {column_names}")
-                    logger.debug(f"Biblioman: book_category table columns: {column_names}")
-                except Exception as desc_error:
-                    builtins.print(f"⚠️ [BIBLIOMAN][FORMAT] Could not DESCRIBE book_category: {desc_error}")
-                    # Try SHOW COLUMNS instead
+                
+                # Try to find the correct junction table for book-category relationship
+                # Common names: book_label, book_category, book_label_rel, etc.
+                junction_tables = ['book_label', 'book_category', 'book_label_rel', 'book_category_rel']
+                
+                for table_name in junction_tables:
                     try:
-                        cursor.execute("SHOW COLUMNS FROM book_category")
+                        cursor.execute(f"SHOW COLUMNS FROM {table_name}")
                         columns = cursor.fetchall()
                         column_names = [col.get('Field') or col.get('field') for col in columns]
-                        builtins.print(f"🔍 [BIBLIOMAN][FORMAT] book_category table columns (SHOW COLUMNS): {column_names}")
-                        logger.debug(f"Biblioman: book_category table columns: {column_names}")
-                    except Exception as show_error:
-                        builtins.print(f"⚠️ [BIBLIOMAN][FORMAT] Could not SHOW COLUMNS from book_category: {show_error}")
-                        column_names = []
+                        builtins.print(f"🔍 [BIBLIOMAN][FORMAT] {table_name} table columns: {column_names}")
+                        
+                        # Find book column and label/category column
+                        book_col = None
+                        label_col = None
+                        
+                        for col in column_names:
+                            col_lower = col.lower()
+                            if 'book' in col_lower and book_col is None:
+                                book_col = col
+                            if ('label' in col_lower or 'category' in col_lower) and label_col is None:
+                                label_col = col
+                        
+                        if book_col and label_col:
+                            # Try to query categories using this table
+                            sql = f"""
+                                SELECT l.name 
+                                FROM {table_name} bl
+                                JOIN label l ON bl.{label_col} = l.id
+                                WHERE bl.{book_col} = %s
+                            """
+                            cursor.execute(sql, (book_id,))
+                            results = cursor.fetchall()
+                            for result in results:
+                                if result and result.get('name'):
+                                    categories.append(result['name'])
+                            
+                            if categories:
+                                builtins.print(f"✅ [BIBLIOMAN][FORMAT] Found {len(categories)} categories using {table_name}({book_col}, {label_col}): {categories}")
+                                logger.debug(f"Biblioman: Found {len(categories)} categories using {table_name}({book_col}, {label_col})")
+                                break  # Success, stop trying other tables
+                        else:
+                            builtins.print(f"⚠️ [BIBLIOMAN][FORMAT] {table_name} exists but missing book/label columns. Columns: {column_names}")
+                    except Exception as table_error:
+                        # Table doesn't exist or error accessing it, try next
+                        builtins.print(f"⚠️ [BIBLIOMAN][FORMAT] Could not access {table_name}: {table_error}")
+                        continue
                 
                 cursor.close()
-                
-                # Now try to query based on actual column names
-                if column_names:
-                    # Find book column (could be 'book', 'book_id', or something else)
-                    book_col = None
-                    for col in column_names:
-                        if 'book' in col.lower():
-                            book_col = col
-                            break
-                    
-                    # Find category/label column
-                    cat_col = None
-                    for col in column_names:
-                        if 'category' in col.lower() or 'label' in col.lower():
-                            cat_col = col
-                            break
-                    
-                    if book_col and cat_col:
-                        cursor = self.db.cursor(dictionary=True)
-                        sql = f"""
-                            SELECT l.name 
-                            FROM book_category bc
-                            JOIN label l ON bc.{cat_col} = l.id
-                            WHERE bc.{book_col} = %s
-                        """
-                        cursor.execute(sql, (book_id,))
-                        results = cursor.fetchall()
-                        for result in results:
-                            if result and result.get('name'):
-                                categories.append(result['name'])
-                        cursor.close()
-                        if categories:
-                            builtins.print(f"✅ [BIBLIOMAN][FORMAT] Found {len(categories)} categories using ({book_col}, {cat_col}): {categories}")
-                            logger.debug(f"Biblioman: Found {len(categories)} categories using ({book_col}, {cat_col})")
-                    else:
-                        builtins.print(f"⚠️ [BIBLIOMAN][FORMAT] Could not identify book/category columns. Found columns: {column_names}")
-                        logger.debug(f"Biblioman: Could not identify book/category columns. Found columns: {column_names}")
-                else:
-                    builtins.print(f"⚠️ [BIBLIOMAN][FORMAT] Could not get column names from book_category table")
-                    logger.debug(f"Biblioman: Could not get column names from book_category table")
                     
             except Exception as e:
-                builtins.print(f"❌ [BIBLIOMAN][FORMAT] Error checking book_category structure: {e}")
-                logger.debug(f"Biblioman: Error checking book_category structure: {e}")
+                builtins.print(f"❌ [BIBLIOMAN][FORMAT] Error checking junction tables: {e}")
+                logger.debug(f"Biblioman: Error checking junction tables: {e}")
                 # Fallback: try category_id field
                 try:
                     category_id = book.get('category_id')
