@@ -294,6 +294,8 @@ class SimplifiedBookService:
             # Only print basic info to reduce log noise
             if description:
                 print(f"📖 Creating: {book_node_data.get('title')} by {book_data.author}")
+            # Always print cover URL info for debugging
+            print(f"📖 [CREATE_BOOK] Creating book '{book_data.title}' with cover_url='{book_data.cover_url}'")
             logger.info(f"📖 [CREATE_BOOK] Creating book '{book_data.title}' with cover_url='{book_data.cover_url}'")
             
             # 1. Create book node (SINGLE TRANSACTION) - Use explicit property syntax for KuzuDB
@@ -344,6 +346,8 @@ class SimplifiedBookService:
             import logging
             logger = logging.getLogger(__name__)
             final_cover_url = book_data.cover_url or ''
+            # Always print cover check info for debugging
+            print(f"🔍 [COVER_CHECK] Checking cover for '{book_data.title}': cover_url='{book_data.cover_url}', type={type(book_data.cover_url)}, starts_with_http={book_data.cover_url and book_data.cover_url.startswith('http') if book_data.cover_url else False}")
             logger.info(f"🔍 [COVER_CHECK] Checking cover for '{book_data.title}': cover_url='{book_data.cover_url}', type={type(book_data.cover_url)}, starts_with_http={book_data.cover_url and book_data.cover_url.startswith('http') if book_data.cover_url else False}")
             if book_data.cover_url and book_data.cover_url.startswith('http'):
                 try:
