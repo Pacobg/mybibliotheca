@@ -5116,6 +5116,7 @@ def add_book_manual():
             openlibrary_id=None
         )
         # Attempt to add; gracefully handle duplicates
+        added = None
         try:
             added = SimplifiedBookService().add_book_to_user_library_sync(
                 book_data=book_data,
@@ -5125,6 +5126,7 @@ def add_book_manual():
                 media_type=media_type,
                 location_id=request.form.get('location_id')
             )
+            current_app.logger.info(f"[ADD_BOOK] add_book_to_user_library_sync returned: {added}")
         except BookAlreadyExistsError as dup:
             # Handle duplicate detection - check if this is an AJAX request
             try:
@@ -5206,6 +5208,12 @@ def add_book_manual():
                     return redirect(url_for('book.view_book_enhanced', uid=existing_id))
                 return redirect(url_for('main.library'))
         if not added:
+            # Log the error for debugging
+            import traceback
+            error_msg = f"Failed to add book '{title}'. add_book_to_user_library_sync returned: {added}"
+            current_app.logger.error(f"[ADD_BOOK] {error_msg}")
+            current_app.logger.error(f"[ADD_BOOK] Traceback: {traceback.format_exc()}")
+            
             # Check if request wants JSON response
             wants_json = (
                 request.headers.get('Accept', '').find('application/json') != -1 or
@@ -5214,7 +5222,7 @@ def add_book_manual():
             )
             
             if wants_json:
-                return jsonify({'success': False, 'message': 'Failed to add book'}), 500
+                return jsonify({'success': False, 'message': f'Failed to add book: {error_msg}'}), 500
             else:
                 flash('Failed to add book','danger')
                 return redirect(url_for('main.library'))
