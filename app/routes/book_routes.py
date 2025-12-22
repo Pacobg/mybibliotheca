@@ -4962,6 +4962,10 @@ def add_book_manual():
     import json
     import traceback
     
+    print(f"🚀 [ROUTE_START] add_book_manual called")
+    import sys
+    sys.stdout.flush()
+    
     # Check if request wants JSON response (AJAX or explicit header)
     wants_json = (
         request.headers.get('Accept', '').find('application/json') != -1 or
@@ -4979,6 +4983,8 @@ def add_book_manual():
     try:
         submit_action = request.form.get('submit_action', 'save')
         title = (request.form.get('title') or '').strip()
+        print(f"🚀 [ROUTE_START] title='{title}'")
+        sys.stdout.flush()
         if not title:
             if wants_json:
                 return jsonify({'success': False, 'message': 'Title is required'}), 400
