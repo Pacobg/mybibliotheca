@@ -1115,6 +1115,7 @@ class SimplifiedBookService:
                     raise BookAlreadyExistsError(existing_id, f"Book already exists: '{book_data.title}' by '{book_data.author}'")
             
             # Book doesn't exist, create new one
+            print(f"🆕 [FIND_OR_CREATE] Creating new book '{book_data.title}' with cover_url='{book_data.cover_url}'")
             return await self.create_standalone_book(book_data)
             
         except BookAlreadyExistsError:
