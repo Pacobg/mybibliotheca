@@ -1572,42 +1572,67 @@ class SimplifiedBookService:
         Use this method from Flask routes and other sync contexts.
         Raises BookAlreadyExistsError if book already exists in communal library.
         """
+        print(f"🔄 [ADD_BOOK_SYNC] Starting sync wrapper for '{book_data.title}'")
         import asyncio
         
         # Create coroutine
-        coro = self.add_book_to_user_library(
-            book_data=book_data,
-            user_id=user_id,
-            reading_status=reading_status,
-            ownership_status=ownership_status,
-            media_type=media_type,
-            user_rating=user_rating,
-            personal_notes=personal_notes,
-            location_id=location_id,
-            custom_metadata=custom_metadata
-        )
+        try:
+            coro = self.add_book_to_user_library(
+                book_data=book_data,
+                user_id=user_id,
+                reading_status=reading_status,
+                ownership_status=ownership_status,
+                media_type=media_type,
+                user_rating=user_rating,
+                personal_notes=personal_notes,
+                location_id=location_id,
+                custom_metadata=custom_metadata
+            )
+            print(f"🔄 [ADD_BOOK_SYNC] Coroutine created successfully")
+        except Exception as e:
+            print(f"❌ [ADD_BOOK_SYNC] Error creating coroutine: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
         
         # Run the coroutine synchronously
         try:
             loop = asyncio.get_event_loop()
+            print(f"🔄 [ADD_BOOK_SYNC] Got event loop, is_running={loop.is_running()}")
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
+            print(f"🔄 [ADD_BOOK_SYNC] Created new event loop")
         
-        if loop.is_running():
-            # If we're already in an async context, create a new thread
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                def run_in_new_loop():
-                    new_loop = asyncio.new_event_loop()
-                    try:
-                        return new_loop.run_until_complete(coro)
-                    finally:
-                        new_loop.close()
-                future = executor.submit(run_in_new_loop)
-                return future.result()
-        else:
-            return loop.run_until_complete(coro)
+        try:
+            if loop.is_running():
+                # If we're already in an async context, create a new thread
+                print(f"🔄 [ADD_BOOK_SYNC] Loop is running, using ThreadPoolExecutor")
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    def run_in_new_loop():
+                        new_loop = asyncio.new_event_loop()
+                        try:
+                            print(f"🔄 [ADD_BOOK_SYNC] Running coroutine in new loop")
+                            result = new_loop.run_until_complete(coro)
+                            print(f"🔄 [ADD_BOOK_SYNC] Coroutine completed, result={result}")
+                            return result
+                        finally:
+                            new_loop.close()
+                    future = executor.submit(run_in_new_loop)
+                    result = future.result()
+                    print(f"🔄 [ADD_BOOK_SYNC] ThreadPoolExecutor returned: {result}")
+                    return result
+            else:
+                print(f"🔄 [ADD_BOOK_SYNC] Loop not running, running coroutine directly")
+                result = loop.run_until_complete(coro)
+                print(f"🔄 [ADD_BOOK_SYNC] Coroutine completed, result={result}")
+                return result
+        except Exception as e:
+            print(f"❌ [ADD_BOOK_SYNC] Error running coroutine: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
     
     def create_standalone_book_sync(self, book_data: SimplifiedBook) -> Optional[str]:
         """
