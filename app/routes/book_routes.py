@@ -5117,7 +5117,10 @@ def add_book_manual():
         )
         # Attempt to add; gracefully handle duplicates
         added = None
+        print(f"📝 [ROUTE] About to call add_book_to_user_library_sync for '{title}'")
+        current_app.logger.info(f"[ROUTE] About to call add_book_to_user_library_sync for '{title}'")
         try:
+            print(f"📝 [ROUTE] Calling SimplifiedBookService().add_book_to_user_library_sync")
             added = SimplifiedBookService().add_book_to_user_library_sync(
                 book_data=book_data,
                 user_id=current_user.id,
@@ -5126,6 +5129,7 @@ def add_book_manual():
                 media_type=media_type,
                 location_id=request.form.get('location_id')
             )
+            print(f"📝 [ROUTE] add_book_to_user_library_sync returned: {added}")
             current_app.logger.info(f"[ADD_BOOK] add_book_to_user_library_sync returned: {added}")
         except BookAlreadyExistsError as dup:
             # Handle duplicate detection - check if this is an AJAX request
