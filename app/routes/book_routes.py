@@ -4979,8 +4979,6 @@ def add_book_manual():
     try:
         submit_action = request.form.get('submit_action', 'save')
         title = (request.form.get('title') or '').strip()
-        cover_url = (request.form.get('cover_url') or '').strip()
-        print(f"📝 [ADD_BOOK_MANUAL] Starting add_book_manual: title='{title}', cover_url='{cover_url}'")
         if not title:
             if wants_json:
                 return jsonify({'success': False, 'message': 'Title is required'}), 400
@@ -5028,6 +5026,7 @@ def add_book_manual():
                 pass
         language = (request.form.get('language') or 'en').strip() or 'en'
         cover_url = (request.form.get('cover_url') or '').strip()
+        print(f"📝 [ADD_BOOK_MANUAL] Processing book: title='{title}', cover_url='{cover_url}'")
         published_date = (request.form.get('published_date') or '').strip()
         series = (request.form.get('series') or '').strip()
         series_volume = (request.form.get('series_volume') or '').strip()
