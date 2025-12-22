@@ -4962,7 +4962,7 @@ def add_book_manual():
     import json
     import traceback
     
-    current_app.logger.info("🚀 [ROUTE_START] add_book_manual called")
+    current_app.logger.error("🚀 [ROUTE_START] add_book_manual called")
     
     # Check if request wants JSON response (AJAX or explicit header)
     wants_json = (
@@ -4981,7 +4981,7 @@ def add_book_manual():
     try:
         submit_action = request.form.get('submit_action', 'save')
         title = (request.form.get('title') or '').strip()
-        current_app.logger.info(f"🚀 [ROUTE_START] title='{title}'")
+        current_app.logger.error(f"🚀 [ROUTE_START] title='{title}'")
         if not title:
             if wants_json:
                 return jsonify({'success': False, 'message': 'Title is required'}), 400
@@ -5029,7 +5029,7 @@ def add_book_manual():
                 pass
         language = (request.form.get('language') or 'en').strip() or 'en'
         cover_url = (request.form.get('cover_url') or '').strip()
-        current_app.logger.info(f"📝 [ROUTE] Processing book data: title='{title}', cover_url='{cover_url}', categories={categories}")
+        current_app.logger.error(f"📝 [ROUTE] Processing book data: title='{title}', cover_url='{cover_url}', categories={categories}")
         published_date = (request.form.get('published_date') or '').strip()
         series = (request.form.get('series') or '').strip()
         series_volume = (request.form.get('series_volume') or '').strip()
@@ -5121,9 +5121,9 @@ def add_book_manual():
         )
         # Attempt to add; gracefully handle duplicates
         added = None
-        current_app.logger.info(f"📝 [ROUTE] About to call add_book_to_user_library_sync for '{title}'")
+        current_app.logger.error(f"📝 [ROUTE] About to call add_book_to_user_library_sync for '{title}'")
         try:
-            current_app.logger.info(f"📝 [ROUTE] Calling SimplifiedBookService().add_book_to_user_library_sync")
+            current_app.logger.error(f"📝 [ROUTE] Calling SimplifiedBookService().add_book_to_user_library_sync")
             added = SimplifiedBookService().add_book_to_user_library_sync(
                 book_data=book_data,
                 user_id=current_user.id,
@@ -5132,7 +5132,7 @@ def add_book_manual():
                 media_type=media_type,
                 location_id=request.form.get('location_id')
             )
-            current_app.logger.info(f"📝 [ROUTE] add_book_to_user_library_sync returned: {added}")
+            current_app.logger.error(f"📝 [ROUTE] add_book_to_user_library_sync returned: {added}")
         except BookAlreadyExistsError as dup:
             # Handle duplicate detection - check if this is an AJAX request
             try:
