@@ -1403,6 +1403,7 @@ class SimplifiedBookService:
         This is the main entry point for the simplified architecture.
         Raises BookAlreadyExistsError if book already exists in communal library.
         """
+        print(f"🚀 [ADD_BOOK] Starting add_book_to_user_library for '{book_data.title}' by '{book_data.author}'")
         try:
             # Validate and set media_type on book_data BEFORE creating the book
             if not media_type:
