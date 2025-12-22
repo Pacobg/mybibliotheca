@@ -398,12 +398,12 @@ class BibliomanProvider:
                 cursor = self.db.cursor(dictionary=True)
                 # Try to get categories from book_category table (many-to-many relationship)
                 # Biblioman uses book_category table to link books to labels (categories)
-                # First try with category_id and book column (not book_id)
+                # First try with category_id and book_id column
                 sql = """
                     SELECT l.name 
                     FROM book_category bc
                     JOIN label l ON bc.category_id = l.id
-                    WHERE bc.book = %s
+                    WHERE bc.book_id = %s
                 """
                 cursor.execute(sql, (book_id,))
                 results = cursor.fetchall()
@@ -411,7 +411,7 @@ class BibliomanProvider:
                     if result and result.get('name'):
                         categories.append(result['name'])
                 cursor.close()
-                builtins.print(f"📚 [BIBLIOMAN][FORMAT] Found {len(categories)} categories from book_category table (category_id, book) for book {book_id}: {categories}")
+                builtins.print(f"📚 [BIBLIOMAN][FORMAT] Found {len(categories)} categories from book_category table (category_id, book_id) for book {book_id}: {categories}")
                 logger.debug(f"Biblioman: Found {len(categories)} categories from book_category table for book {book_id}")
                 
                 # If no categories found, try with label_id
@@ -421,7 +421,7 @@ class BibliomanProvider:
                         SELECT l.name 
                         FROM book_category bc
                         JOIN label l ON bc.label_id = l.id
-                        WHERE bc.book = %s
+                        WHERE bc.book_id = %s
                     """
                     cursor.execute(sql, (book_id,))
                     results = cursor.fetchall()
@@ -429,7 +429,7 @@ class BibliomanProvider:
                         if result and result.get('name'):
                             categories.append(result['name'])
                     cursor.close()
-                    builtins.print(f"📚 [BIBLIOMAN][FORMAT] Found {len(categories)} categories from book_category table (label_id, book) for book {book_id}: {categories}")
+                    builtins.print(f"📚 [BIBLIOMAN][FORMAT] Found {len(categories)} categories from book_category table (label_id, book_id) for book {book_id}: {categories}")
             except Exception as e:
                 builtins.print(f"❌ [BIBLIOMAN][FORMAT] Error fetching categories from book_category: {e}")
                 logger.debug(f"Biblioman: Could not fetch categories from book_category table for book {book_id}: {e}")
