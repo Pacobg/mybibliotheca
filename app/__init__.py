@@ -1066,6 +1066,17 @@ def create_app():
         except:
             pass
         
+        # Also check using get_covers_dir() logic to match where files are actually saved
+        try:
+            from app.utils.image_processing import get_covers_dir
+            actual_covers_dir = get_covers_dir()
+            if actual_covers_dir.exists():
+                possible_paths.insert(0, actual_covers_dir)  # Prioritize the actual directory
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Could not get covers_dir from image_processing: {e}")
+        
         # Find the first existing directory or use the first one
         for path in possible_paths:
             if path.exists():
@@ -1076,6 +1087,11 @@ def create_app():
             # Use the first path and create it
             covers_dir = str(possible_paths[0])
             Path(covers_dir).mkdir(parents=True, exist_ok=True)
+        
+        # Debug: print which directory is being used
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"🔍 [SERVE_COVERS] Serving '{filename}' from covers_dir='{covers_dir}'")
 
         from flask import send_from_directory as _sfd, make_response
         try:
