@@ -1418,9 +1418,13 @@ class SimplifiedBookService:
 
             # Step 1: Find or create standalone book
             # This will raise BookAlreadyExistsError if duplicate is found
+            print(f"🔍 [ADD_BOOK] Calling find_or_create_book for '{book_data.title}'")
             book_id = await self.find_or_create_book(book_data)
+            print(f"🔍 [ADD_BOOK] find_or_create_book returned: {book_id}")
             if not book_id:
                 print(f"❌ [ADD_BOOK] find_or_create_book returned None for book '{book_data.title}'")
+                import logging
+                logger = logging.getLogger(__name__)
                 logger.error(f"❌ [ADD_BOOK] find_or_create_book returned None for book '{book_data.title}'")
                 return False
             
