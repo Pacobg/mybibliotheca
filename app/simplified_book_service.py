@@ -1411,6 +1411,9 @@ class SimplifiedBookService:
         This is the main entry point for the simplified architecture.
         Raises BookAlreadyExistsError if book already exists in communal library.
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"🚀 [ADD_BOOK] Starting add_book_to_user_library for '{book_data.title}' by '{book_data.author}'")
         print(f"🚀 [ADD_BOOK] Starting add_book_to_user_library for '{book_data.title}' by '{book_data.author}'")
         try:
             # Validate and set media_type on book_data BEFORE creating the book
@@ -1427,14 +1430,25 @@ class SimplifiedBookService:
 
             # Step 1: Find or create standalone book
             # This will raise BookAlreadyExistsError if duplicate is found
+            logger.info(f"🔍 [ADD_BOOK] Calling find_or_create_book for '{book_data.title}'")
             print(f"🔍 [ADD_BOOK] Calling find_or_create_book for '{book_data.title}'")
-            book_id = await self.find_or_create_book(book_data)
-            print(f"🔍 [ADD_BOOK] find_or_create_book returned: {book_id}")
+            try:
+                book_id = await self.find_or_create_book(book_data)
+                logger.info(f"🔍 [ADD_BOOK] find_or_create_book returned: {book_id}")
+                print(f"🔍 [ADD_BOOK] find_or_create_book returned: {book_id}")
+            except Exception as e:
+                import traceback
+                error_msg = f"Exception in find_or_create_book for '{book_data.title}': {e}"
+                logger.error(f"❌ [ADD_BOOK] {error_msg}")
+                logger.error(f"❌ [ADD_BOOK] Traceback: {traceback.format_exc()}")
+                print(f"❌ [ADD_BOOK] {error_msg}")
+                print(f"❌ [ADD_BOOK] Traceback: {traceback.format_exc()}")
+                raise
+            
             if not book_id:
-                print(f"❌ [ADD_BOOK] find_or_create_book returned None for book '{book_data.title}'")
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"❌ [ADD_BOOK] find_or_create_book returned None for book '{book_data.title}'")
+                error_msg = f"find_or_create_book returned None for book '{book_data.title}'"
+                logger.error(f"❌ [ADD_BOOK] {error_msg}")
+                print(f"❌ [ADD_BOOK] {error_msg}")
                 return False
             
             # If we get here, it's a new book, so we can proceed with the rest
@@ -1564,7 +1578,14 @@ class SimplifiedBookService:
             # Re-raise the duplicate error so it can be handled by the calling code
             raise
         except Exception as e:
-            print(f"Error in add_book_to_user_library: {e}")
+            import logging
+            import traceback
+            logger = logging.getLogger(__name__)
+            error_msg = f"Error in add_book_to_user_library for '{book_data.title}': {e}"
+            logger.error(f"❌ [ADD_BOOK] {error_msg}")
+            logger.error(f"❌ [ADD_BOOK] Traceback: {traceback.format_exc()}")
+            print(f"❌ [ADD_BOOK] {error_msg}")
+            print(f"❌ [ADD_BOOK] Traceback: {traceback.format_exc()}")
             return False
     
     def add_book_to_user_library_sync(self, book_data: SimplifiedBook, user_id: str, 
@@ -1580,6 +1601,9 @@ class SimplifiedBookService:
         Use this method from Flask routes and other sync contexts.
         Raises BookAlreadyExistsError if book already exists in communal library.
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"🔄 [ADD_BOOK_SYNC] Starting sync wrapper for '{book_data.title}'")
         print(f"🔄 [ADD_BOOK_SYNC] Starting sync wrapper for '{book_data.title}'")
         import asyncio
         
@@ -1615,30 +1639,39 @@ class SimplifiedBookService:
         try:
             if loop.is_running():
                 # If we're already in an async context, create a new thread
+                logger.info(f"🔄 [ADD_BOOK_SYNC] Loop is running, using ThreadPoolExecutor")
                 print(f"🔄 [ADD_BOOK_SYNC] Loop is running, using ThreadPoolExecutor")
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     def run_in_new_loop():
                         new_loop = asyncio.new_event_loop()
                         try:
+                            logger.info(f"🔄 [ADD_BOOK_SYNC] Running coroutine in new loop")
                             print(f"🔄 [ADD_BOOK_SYNC] Running coroutine in new loop")
                             result = new_loop.run_until_complete(coro)
+                            logger.info(f"🔄 [ADD_BOOK_SYNC] Coroutine completed, result={result}")
                             print(f"🔄 [ADD_BOOK_SYNC] Coroutine completed, result={result}")
                             return result
                         finally:
                             new_loop.close()
                     future = executor.submit(run_in_new_loop)
                     result = future.result()
+                    logger.info(f"🔄 [ADD_BOOK_SYNC] ThreadPoolExecutor returned: {result}")
                     print(f"🔄 [ADD_BOOK_SYNC] ThreadPoolExecutor returned: {result}")
                     return result
             else:
+                logger.info(f"🔄 [ADD_BOOK_SYNC] Loop not running, running coroutine directly")
                 print(f"🔄 [ADD_BOOK_SYNC] Loop not running, running coroutine directly")
                 result = loop.run_until_complete(coro)
+                logger.info(f"🔄 [ADD_BOOK_SYNC] Coroutine completed, result={result}")
                 print(f"🔄 [ADD_BOOK_SYNC] Coroutine completed, result={result}")
                 return result
         except Exception as e:
-            print(f"❌ [ADD_BOOK_SYNC] Error running coroutine: {e}")
             import traceback
+            error_msg = f"Error running coroutine for '{book_data.title}': {e}"
+            logger.error(f"❌ [ADD_BOOK_SYNC] {error_msg}")
+            logger.error(f"❌ [ADD_BOOK_SYNC] Traceback: {traceback.format_exc()}")
+            print(f"❌ [ADD_BOOK_SYNC] {error_msg}")
             traceback.print_exc()
             return False
     
