@@ -5132,6 +5132,36 @@ def add_book_manual():
             except Exception:
                 existing_id = None
             
+            # Try to update cover if new cover URL is provided and existing book might not have a valid cover
+            if existing_id and cover_url and cover_url.startswith('http'):
+                try:
+                    from app.services.kuzu_book_service import KuzuBookService
+                    from app.utils.image_processing import process_image_from_url
+                    from flask import has_app_context
+                    
+                    # Get existing book to check current cover
+                    book_service_instance = KuzuBookService()
+                    existing_book = book_service_instance.get_book_by_id_sync(existing_id)
+                    
+                    if existing_book:
+                        current_cover = getattr(existing_book, 'cover_url', None) or ''
+                        # If existing cover is a UUID-based path (likely missing file) or empty, try to update
+                        if (not current_cover or 
+                            (current_cover.startswith('/covers/') and len(current_cover.split('/')[-1].split('.')[0]) == 36)):
+                            # Existing cover is likely missing, try to download and cache new cover
+                            current_app.logger.info(f"🔄 [COVER_UPDATE] Existing book has missing/invalid cover, attempting to update with new cover URL")
+                            if has_app_context():
+                                try:
+                                    processed_cover = process_image_from_url(cover_url)
+                                    if processed_cover and processed_cover.startswith('/covers/'):
+                                        # Update book with new cover
+                                        book_service_instance.update_book_sync(existing_id, {'cover_url': processed_cover})
+                                        current_app.logger.info(f"✅ [COVER_UPDATE] Successfully updated cover for existing book {existing_id}")
+                                except Exception as cover_update_error:
+                                    current_app.logger.warning(f"⚠️ [COVER_UPDATE] Failed to update cover for existing book: {cover_update_error}")
+                except Exception as e:
+                    current_app.logger.warning(f"⚠️ [COVER_UPDATE] Error checking/updating cover for existing book: {e}")
+            
             # Check if request wants JSON response (AJAX or explicit header)
             wants_json = (
                 request.headers.get('Accept', '').find('application/json') != -1 or
