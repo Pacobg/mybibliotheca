@@ -402,7 +402,7 @@ class BibliomanProvider:
                     cursor.execute("SHOW COLUMNS FROM book")
                     book_columns = cursor.fetchall()
                     book_column_names = [col.get('Field') or col.get('field') for col in book_columns]
-                    builtins.print(f"🔍 [BIBLIOMAN][FORMAT] book table columns: {book_column_names}")
+                    logger.debug(f"Biblioman: book table columns: {book_column_names}")
                     
                     # Check if book has category_id or category field
                     if 'category_id' in book_column_names:
@@ -417,7 +417,7 @@ class BibliomanProvider:
                         result = cursor.fetchone()
                         if result and result.get('name'):
                             categories.append(result['name'])
-                            builtins.print(f"✅ [BIBLIOMAN][FORMAT] Found category from book.category_id: {result['name']}")
+                            logger.info(f"✅ [BIBLIOMAN][FORMAT] Found category from book.category_id: {result['name']}")
                     elif 'category' in book_column_names:
                         # Book has direct category field (might be name or ID)
                         sql = "SELECT category FROM book WHERE id = %s"
@@ -425,7 +425,7 @@ class BibliomanProvider:
                         result = cursor.fetchone()
                         if result and result.get('category'):
                             categories.append(str(result['category']))
-                            builtins.print(f"✅ [BIBLIOMAN][FORMAT] Found category from book.category: {result['category']}")
+                            logger.info(f"✅ [BIBLIOMAN][FORMAT] Found category from book.category: {result['category']}")
                 except Exception as book_error:
                     builtins.print(f"⚠️ [BIBLIOMAN][FORMAT] Could not check book table: {book_error}")
                 
@@ -435,7 +435,7 @@ class BibliomanProvider:
                         cursor.execute("SHOW COLUMNS FROM book_multi_field")
                         bmf_columns = cursor.fetchall()
                         bmf_column_names = [col.get('Field') or col.get('field') for col in bmf_columns]
-                        builtins.print(f"🔍 [BIBLIOMAN][FORMAT] book_multi_field table columns: {bmf_column_names}")
+                        logger.debug(f"Biblioman: book_multi_field table columns: {bmf_column_names}")
                         
                         # Find book and field columns
                         book_col = None
@@ -477,7 +477,7 @@ class BibliomanProvider:
                                         categories.append(str(cat_value))
                             
                             if categories:
-                                builtins.print(f"✅ [BIBLIOMAN][FORMAT] Found {len(categories)} categories from book_multi_field: {categories}")
+                                logger.info(f"✅ [BIBLIOMAN][FORMAT] Found {len(categories)} categories from book_multi_field: {categories}")
                         else:
                             builtins.print(f"⚠️ [BIBLIOMAN][FORMAT] book_multi_field missing expected columns. Columns: {bmf_column_names}")
                     except Exception as bmf_error:
