@@ -288,10 +288,13 @@ class SimplifiedBookService:
                 del book_node_data['series_order']
             
             # Enhanced debugging for ISBN fields
+            import logging
+            logger = logging.getLogger(__name__)
             description = book_node_data.get('description')
             # Only print basic info to reduce log noise
             if description:
                 print(f"📖 Creating: {book_node_data.get('title')} by {book_data.author}")
+            logger.info(f"📖 [CREATE_BOOK] Creating book '{book_data.title}' with cover_url='{book_data.cover_url}'")
             
             # 1. Create book node (SINGLE TRANSACTION) - Use explicit property syntax for KuzuDB
             # Handle optional fields that might be None
@@ -338,9 +341,9 @@ class SimplifiedBookService:
                 return None
             
             # 1.5. Download and cache cover image if cover_url is provided
-            final_cover_url = book_data.cover_url or ''
             import logging
             logger = logging.getLogger(__name__)
+            final_cover_url = book_data.cover_url or ''
             logger.info(f"🔍 [COVER_CHECK] Checking cover for '{book_data.title}': cover_url='{book_data.cover_url}', type={type(book_data.cover_url)}, starts_with_http={book_data.cover_url and book_data.cover_url.startswith('http') if book_data.cover_url else False}")
             if book_data.cover_url and book_data.cover_url.startswith('http'):
                 try:
