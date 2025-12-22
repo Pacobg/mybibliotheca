@@ -341,94 +341,152 @@ class SimplifiedBookService:
             final_cover_url = book_data.cover_url or ''
             if book_data.cover_url and book_data.cover_url.startswith('http'):
                 try:
-                    print(f"🖼️ [COVER_DOWNLOAD] Downloading cover for '{book_data.title}': {book_data.cover_url}")
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.info(f"🖼️ [COVER_DOWNLOAD] Processing cover for '{book_data.title}': {book_data.cover_url}")
                     
-                    # Use persistent covers directory in data folder (same logic as book_routes.py)
-                    from pathlib import Path
-                    import requests  # type: ignore
+                    # Use the existing process_image_from_url utility which handles:
+                    # - Download and caching
+                    # - Image processing and optimization
+                    # - Error handling
+                    # - Loopback detection
+                    from app.utils.image_processing import process_image_from_url
+                    from flask import has_app_context
                     
-                    # Try multiple paths to find the correct covers directory
-                    covers_dir = None
-                    possible_paths = [
-                        Path('/app/data/covers'),  # Docker path
-                        Path('./data/covers'),  # Relative path
-                    ]
-                    
-                    # Check for data directory from app config
-                    try:
-                        from flask import current_app
-                        data_dir = getattr(current_app.config, 'DATA_DIR', None)
-                        if data_dir:
-                            possible_paths.insert(0, Path(data_dir) / 'covers')
-                    except:
-                        pass
-                    
-                    # Last resort - use relative path from app root
-                    try:
-                        base_dir = Path(__file__).parent.parent.parent
-                        possible_paths.append(base_dir / 'data' / 'covers')
-                    except:
-                        pass
-                    
-                    # Find the first existing directory or use the first one
-                    for path in possible_paths:
-                        if path.exists():
-                            covers_dir = path
-                            break
-                    
-                    if not covers_dir:
-                        # Use the first path and create it
-                        covers_dir = possible_paths[0]
-                    
-                    covers_dir.mkdir(parents=True, exist_ok=True)
-                    
-                    # Generate new filename with UUID
-                    book_temp_id = str(uuid.uuid4())
-                    file_extension = '.jpg'
-                    if book_data.cover_url.lower().endswith('.png'):
-                        file_extension = '.png'
-                    elif book_data.cover_url.lower().endswith('.gif'):
-                        file_extension = '.gif'
-                    elif book_data.cover_url.lower().endswith('.webp'):
-                        file_extension = '.webp'
-                    
-                    filename = f"{book_temp_id}{file_extension}"
-                    filepath = covers_dir / filename
-                    
-                    # Download the image
-                    response = requests.get(book_data.cover_url, timeout=10, stream=True, 
-                                          headers={'User-Agent': 'Mozilla/5.0 (compatible; BookLibrary/1.0)'})
-                    response.raise_for_status()
-                    
-                    with open(filepath, 'wb') as f:
-                        for chunk in response.iter_content(chunk_size=8192):
-                            f.write(chunk)
-                    
-                    # Update the book node with the local cover URL
-                    final_cover_url = f"/covers/{filename}"
-                    
-                    # Update book record with local cover URL
-                    update_cover_result = safe_execute_kuzu_query(
-                        """
-                        MATCH (b:Book {id: $book_id})
-                        SET b.cover_url = $cover_url,
-                            b.updated_at = CASE WHEN $updated_at_str IS NULL OR $updated_at_str = '' THEN b.updated_at ELSE timestamp($updated_at_str) END
-                        RETURN b.id
-                        """,
-                        {
-                            "book_id": book_id,
-                            "cover_url": final_cover_url,
-                            "updated_at_str": datetime.now(timezone.utc).isoformat()
-                        }
-                    )
-                    
-                    if update_cover_result:
-                        print(f"✅ [COVER_DOWNLOAD] Successfully downloaded and cached cover: {final_cover_url}")
+                    # Check if we have Flask app context (required for process_image_from_url)
+                    if has_app_context():
+                        try:
+                            processed_cover = process_image_from_url(book_data.cover_url)
+                            if processed_cover and processed_cover.startswith('/covers/'):
+                                final_cover_url = processed_cover
+                                logger.info(f"✅ [COVER_DOWNLOAD] Successfully processed cover: {final_cover_url}")
+                                
+                                # Update book record with local cover URL
+                                update_cover_result = safe_execute_kuzu_query(
+                                    """
+                                    MATCH (b:Book {id: $book_id})
+                                    SET b.cover_url = $cover_url,
+                                        b.updated_at = CASE WHEN $updated_at_str IS NULL OR $updated_at_str = '' THEN b.updated_at ELSE timestamp($updated_at_str) END
+                                    RETURN b.id
+                                    """,
+                                    {
+                                        "book_id": book_id,
+                                        "cover_url": final_cover_url,
+                                        "updated_at_str": datetime.now(timezone.utc).isoformat()
+                                    }
+                                )
+                                
+                                if update_cover_result:
+                                    logger.info(f"✅ [COVER_DOWNLOAD] Updated book record with local cover URL: {final_cover_url}")
+                                else:
+                                    logger.warning(f"⚠️ [COVER_DOWNLOAD] Failed to update book record with local cover URL")
+                            else:
+                                logger.warning(f"⚠️ [COVER_DOWNLOAD] process_image_from_url returned unexpected format: {processed_cover}")
+                                final_cover_url = book_data.cover_url
+                        except Exception as process_error:
+                            logger.error(f"❌ [COVER_DOWNLOAD] Failed to process cover for '{book_data.title}': {process_error}", exc_info=True)
+                            final_cover_url = book_data.cover_url
                     else:
-                        print(f"❌ [COVER_DOWNLOAD] Failed to update book record with local cover URL")
+                        # Fallback: manual download if no Flask app context
+                        logger.warning(f"⚠️ [COVER_DOWNLOAD] No Flask app context, using fallback download method")
+                        from pathlib import Path
+                        import requests  # type: ignore
+                        
+                        # Try multiple paths to find the correct covers directory
+                        covers_dir = None
+                        possible_paths = [
+                            Path('/app/data/covers'),  # Docker path
+                            Path('./data/covers'),  # Relative path
+                        ]
+                        
+                        # Check for data directory from app config
+                        try:
+                            from flask import current_app
+                            data_dir = getattr(current_app.config, 'DATA_DIR', None)
+                            if data_dir:
+                                possible_paths.insert(0, Path(data_dir) / 'covers')
+                        except:
+                            pass
+                        
+                        # Last resort - use relative path from app root
+                        try:
+                            base_dir = Path(__file__).parent.parent.parent
+                            possible_paths.append(base_dir / 'data' / 'covers')
+                        except:
+                            pass
+                        
+                        # Find the first existing directory or use the first one
+                        for path in possible_paths:
+                            if path.exists():
+                                covers_dir = path
+                                break
+                        
+                        if not covers_dir:
+                            # Use the first path and create it
+                            covers_dir = possible_paths[0]
+                        
+                        covers_dir.mkdir(parents=True, exist_ok=True)
+                        
+                        # Generate new filename with UUID
+                        book_temp_id = str(uuid.uuid4())
+                        file_extension = '.jpg'
+                        if book_data.cover_url.lower().endswith('.png'):
+                            file_extension = '.png'
+                        elif book_data.cover_url.lower().endswith('.gif'):
+                            file_extension = '.gif'
+                        elif book_data.cover_url.lower().endswith('.webp'):
+                            file_extension = '.webp'
+                        
+                        filename = f"{book_temp_id}{file_extension}"
+                        filepath = covers_dir / filename
+                        
+                        # Download the image
+                        response = requests.get(book_data.cover_url, timeout=10, stream=True, 
+                                              headers={'User-Agent': 'Mozilla/5.0 (compatible; BookLibrary/1.0)'})
+                        response.raise_for_status()
+                        
+                        with open(filepath, 'wb') as f:
+                            for chunk in response.iter_content(chunk_size=8192):
+                                f.write(chunk)
+                        
+                        # Verify file was actually saved before updating database
+                        if filepath.exists() and filepath.stat().st_size > 0:
+                            # Update the book node with the local cover URL
+                            final_cover_url = f"/covers/{filename}"
+                            
+                            # Update book record with local cover URL
+                            update_cover_result = safe_execute_kuzu_query(
+                                """
+                                MATCH (b:Book {id: $book_id})
+                                SET b.cover_url = $cover_url,
+                                    b.updated_at = CASE WHEN $updated_at_str IS NULL OR $updated_at_str = '' THEN b.updated_at ELSE timestamp($updated_at_str) END
+                                RETURN b.id
+                                """,
+                                {
+                                    "book_id": book_id,
+                                    "cover_url": final_cover_url,
+                                    "updated_at_str": datetime.now(timezone.utc).isoformat()
+                                }
+                            )
+                            
+                            if update_cover_result:
+                                logger.info(f"✅ [COVER_DOWNLOAD] Successfully downloaded and cached cover: {final_cover_url}")
+                            else:
+                                logger.warning(f"⚠️ [COVER_DOWNLOAD] Failed to update book record with local cover URL")
+                                # Clean up the file if database update failed
+                                try:
+                                    filepath.unlink()
+                                except:
+                                    pass
+                                final_cover_url = book_data.cover_url
+                        else:
+                            logger.error(f"❌ [COVER_DOWNLOAD] File was not saved correctly: {filepath}")
+                            final_cover_url = book_data.cover_url
                         
                 except Exception as cover_error:
-                    print(f"⚠️ [COVER_DOWNLOAD] Failed to download cover for '{book_data.title}': {cover_error}")
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"❌ [COVER_DOWNLOAD] Failed to download cover for '{book_data.title}': {cover_error}", exc_info=True)
                     # Continue with original cover URL if download fails
                     final_cover_url = book_data.cover_url
             

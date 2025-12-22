@@ -994,6 +994,13 @@ def create_app():
         docker_path = os.path.join(docker_static_dir, filename)
         pkg_path = os.path.join(package_static_dir, filename)
 
+        # Fallback: if bookshelf.png is requested but doesn't exist, try bookshelf.webp
+        fallback_filename = None
+        if filename == 'bookshelf.png':
+            fallback_filename = 'bookshelf.webp'
+            docker_fallback_path = os.path.join(docker_static_dir, fallback_filename)
+            pkg_fallback_path = os.path.join(package_static_dir, fallback_filename)
+
         from flask import make_response
         def _with_cache_headers(resp):
             try:
@@ -1007,6 +1014,13 @@ def create_app():
             return _with_cache_headers(send_from_directory(docker_static_dir, filename))
         if os.path.exists(pkg_path):
             return _with_cache_headers(send_from_directory(package_static_dir, filename))
+
+        # Try fallback if requested file doesn't exist
+        if fallback_filename:
+            if os.path.exists(docker_fallback_path):
+                return _with_cache_headers(send_from_directory(docker_static_dir, fallback_filename))
+            if os.path.exists(pkg_fallback_path):
+                return _with_cache_headers(send_from_directory(package_static_dir, fallback_filename))
 
         # If neither exists, fall back to whichever directory exists to preserve
         # prior behavior (will 404 from send_from_directory)
