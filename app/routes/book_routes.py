@@ -3832,13 +3832,10 @@ def replace_cover(uid):
                 new_cover_url = normalize_cover_url(new_cover_url)
             except Exception:
                 pass
-            print(f"🔄 [REPLACE_COVER] START uid={uid} src={new_cover_url}")
             current_app.logger.info(f"[COVER][REPLACE] START uid={uid} src={new_cover_url}")
             if not isinstance(new_cover_url, str):
                 return jsonify({'success': False, 'error': 'Invalid cover URL'}), 400
-            print(f"🔄 [REPLACE_COVER] Calling process_image_from_url with: {new_cover_url}")
             new_cached_cover_url = process_image_from_url(new_cover_url)
-            print(f"🔄 [REPLACE_COVER] process_image_from_url returned: {new_cached_cover_url}")
             abs_cover_url = new_cached_cover_url
             if new_cached_cover_url.startswith('/'):
                 abs_cover_url = request.host_url.rstrip('/') + new_cached_cover_url
@@ -5029,7 +5026,6 @@ def add_book_manual():
                 pass
         language = (request.form.get('language') or 'en').strip() or 'en'
         cover_url = (request.form.get('cover_url') or '').strip()
-        print(f"📝 [ADD_BOOK_MANUAL] Processing book: title='{title}', cover_url='{cover_url}'")
         published_date = (request.form.get('published_date') or '').strip()
         series = (request.form.get('series') or '').strip()
         series_volume = (request.form.get('series_volume') or '').strip()
@@ -5136,11 +5132,11 @@ def add_book_manual():
             except Exception:
                 existing_id = None
             
-            print(f"🔄 [DUPLICATE] Book already exists: existing_id={existing_id}, cover_url='{cover_url}'")
+            current_app.logger.info(f"[DUPLICATE] Book already exists: existing_id={existing_id}, cover_url='{cover_url}'")
             
             # Try to update cover if new cover URL is provided and existing book might not have a valid cover
             if existing_id and cover_url and cover_url.startswith('http'):
-                print(f"🔄 [COVER_UPDATE] Attempting to update cover for existing book {existing_id} with cover_url='{cover_url}'")
+                current_app.logger.info(f"[COVER_UPDATE] Attempting to update cover for existing book {existing_id} with cover_url='{cover_url}'")
                 try:
                     from app.services.kuzu_book_service import KuzuBookService
                     from app.utils.image_processing import process_image_from_url

@@ -127,7 +127,7 @@ def process_image_bytes_and_store(image_bytes: bytes, filename_hint: str | None 
             save_kwargs.update(dict(optimize=True))
 
         img_prepared.save(out_path, format=out_fmt, **save_kwargs)
-        print(f"✅ [PROCESS_IMAGE] Saved cover to: {out_path}, exists={out_path.exists()}, size={out_path.stat().st_size if out_path.exists() else 0}")
+        current_app.logger.debug(f"[COVER][SAVE] Saved cover to: {out_path}, size={out_path.stat().st_size if out_path.exists() else 0}")
 
     return f"/covers/{filename}"
 
@@ -167,7 +167,6 @@ def process_image_from_url(
     ensure_safe_remote_image_url(url)
 
     start_total = time.perf_counter()
-    print(f"🔄 [PROCESS_IMAGE] Starting download from url={url}")
     current_app.logger.info(f"[COVER][DL] Start url={url}")
     dl_start = time.perf_counter()
     # Shorter timeout to avoid long hangs; retries could be added later
@@ -176,9 +175,7 @@ def process_image_from_url(
         request_kwargs["auth"] = auth
     if headers:
         request_kwargs["headers"] = headers
-    print(f"🔄 [PROCESS_IMAGE] Making request to {url}")
     resp = requests.get(url, **request_kwargs)
-    print(f"🔄 [PROCESS_IMAGE] Response status: {resp.status_code}")
     resp.raise_for_status()
     content_length = resp.headers.get('Content-Length')
     if content_length:
