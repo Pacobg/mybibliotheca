@@ -397,19 +397,91 @@ class BibliomanProvider:
             try:
                 cursor = self.db.cursor(dictionary=True)
                 
-                # First, list all tables to find potential junction tables
+                # First, check if book table has a direct category field
                 try:
-                    cursor.execute("SHOW TABLES")
-                    all_tables = cursor.fetchall()
-                    table_names = [list(table.values())[0] for table in all_tables]
-                    builtins.print(f"🔍 [BIBLIOMAN][FORMAT] Available tables: {table_names}")
+                    cursor.execute("SHOW COLUMNS FROM book")
+                    book_columns = cursor.fetchall()
+                    book_column_names = [col.get('Field') or col.get('field') for col in book_columns]
+                    builtins.print(f"🔍 [BIBLIOMAN][FORMAT] book table columns: {book_column_names}")
                     
-                    # Filter tables that might be junction tables (contain 'book' and 'label' or 'category')
-                    potential_tables = [t for t in table_names if 'book' in t.lower() and ('label' in t.lower() or 'category' in t.lower() or 'tag' in t.lower())]
-                    builtins.print(f"🔍 [BIBLIOMAN][FORMAT] Potential junction tables: {potential_tables}")
-                except Exception as list_error:
-                    builtins.print(f"⚠️ [BIBLIOMAN][FORMAT] Could not list tables: {list_error}")
-                    potential_tables = ['book_label', 'book_category', 'book_label_rel', 'book_category_rel', 'book_tag', 'book_tag_rel']
+                    # Check if book has category_id or category field
+                    if 'category_id' in book_column_names:
+                        # Book has direct category_id field
+                        sql = """
+                            SELECT bc.name 
+                            FROM book b
+                            JOIN book_category bc ON b.category_id = bc.id
+                            WHERE b.id = %s
+                        """
+                        cursor.execute(sql, (book_id,))
+                        result = cursor.fetchone()
+                        if result and result.get('name'):
+                            categories.append(result['name'])
+                            builtins.print(f"✅ [BIBLIOMAN][FORMAT] Found category from book.category_id: {result['name']}")
+                    elif 'category' in book_column_names:
+                        # Book has direct category field (might be name or ID)
+                        sql = "SELECT category FROM book WHERE id = %s"
+                        cursor.execute(sql, (book_id,))
+                        result = cursor.fetchone()
+                        if result and result.get('category'):
+                            categories.append(str(result['category']))
+                            builtins.print(f"✅ [BIBLIOMAN][FORMAT] Found category from book.category: {result['category']}")
+                except Exception as book_error:
+                    builtins.print(f"⚠️ [BIBLIOMAN][FORMAT] Could not check book table: {book_error}")
+                
+                # If no direct category, check book_multi_field table (might be for many-to-many relationships)
+                if not categories:
+                    try:
+                        cursor.execute("SHOW COLUMNS FROM book_multi_field")
+                        bmf_columns = cursor.fetchall()
+                        bmf_column_names = [col.get('Field') or col.get('field') for col in bmf_columns]
+                        builtins.print(f"🔍 [BIBLIOMAN][FORMAT] book_multi_field table columns: {bmf_column_names}")
+                        
+                        # Find book and field columns
+                        book_col = None
+                        field_col = None
+                        value_col = None
+                        
+                        for col in bmf_column_names:
+                            col_lower = col.lower()
+                            if 'book' in col_lower and book_col is None:
+                                book_col = col
+                            if 'field' in col_lower and field_col is None:
+                                field_col = col
+                            if 'value' in col_lower or 'label' in col_lower or 'category' in col_lower:
+                                value_col = col
+                        
+                        if book_col and field_col:
+                            # Try to find categories in book_multi_field
+                            sql = f"""
+                                SELECT {value_col or field_col} as category_value
+                                FROM book_multi_field
+                                WHERE {book_col} = %s 
+                                AND ({field_col} LIKE '%category%' OR {field_col} LIKE '%label%' OR {field_col} LIKE '%genre%')
+                            """
+                            cursor.execute(sql, (book_id,))
+                            results = cursor.fetchall()
+                            for result in results:
+                                cat_value = result.get('category_value') or result.get(list(result.keys())[0])
+                                if cat_value:
+                                    # Try to get name from book_category if it's an ID
+                                    try:
+                                        sql2 = "SELECT name FROM book_category WHERE id = %s"
+                                        cursor.execute(sql2, (cat_value,))
+                                        cat_result = cursor.fetchone()
+                                        if cat_result and cat_result.get('name'):
+                                            categories.append(cat_result['name'])
+                                        else:
+                                            categories.append(str(cat_value))
+                                    except:
+                                        categories.append(str(cat_value))
+                            
+                            if categories:
+                                builtins.print(f"✅ [BIBLIOMAN][FORMAT] Found {len(categories)} categories from book_multi_field: {categories}")
+                        else:
+                            builtins.print(f"⚠️ [BIBLIOMAN][FORMAT] book_multi_field missing expected columns. Columns: {bmf_column_names}")
+                    except Exception as bmf_error:
+                        builtins.print(f"⚠️ [BIBLIOMAN][FORMAT] Could not check book_multi_field table: {bmf_error}")
                 
                 # Try each potential table
                 for table_name in potential_tables:
