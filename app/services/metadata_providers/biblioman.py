@@ -483,79 +483,11 @@ class BibliomanProvider:
                     except Exception as bmf_error:
                         builtins.print(f"⚠️ [BIBLIOMAN][FORMAT] Could not check book_multi_field table: {bmf_error}")
                 
-                # Try each potential table
-                for table_name in potential_tables:
-                    try:
-                        cursor.execute(f"SHOW COLUMNS FROM {table_name}")
-                        columns = cursor.fetchall()
-                        column_names = [col.get('Field') or col.get('field') for col in columns]
-                        builtins.print(f"🔍 [BIBLIOMAN][FORMAT] {table_name} table columns: {column_names}")
-                        
-                        # Find book column and label/category column
-                        book_col = None
-                        label_col = None
-                        
-                        for col in column_names:
-                            col_lower = col.lower()
-                            if 'book' in col_lower and book_col is None:
-                                book_col = col
-                            if ('label' in col_lower or 'category' in col_lower or 'tag' in col_lower) and label_col is None:
-                                label_col = col
-                        
-                        if book_col and label_col:
-                            # Try to query categories using this table
-                            # Try joining with 'label' table first
-                            try:
-                                sql = f"""
-                                    SELECT l.name 
-                                    FROM {table_name} bl
-                                    JOIN label l ON bl.{label_col} = l.id
-                                    WHERE bl.{book_col} = %s
-                                """
-                                cursor.execute(sql, (book_id,))
-                                results = cursor.fetchall()
-                                for result in results:
-                                    if result and result.get('name'):
-                                        categories.append(result['name'])
-                                
-                                if categories:
-                                    builtins.print(f"✅ [BIBLIOMAN][FORMAT] Found {len(categories)} categories using {table_name}({book_col}, {label_col}) with label table: {categories}")
-                                    logger.debug(f"Biblioman: Found {len(categories)} categories using {table_name}({book_col}, {label_col})")
-                                    break  # Success, stop trying other tables
-                            except Exception as join_error:
-                                builtins.print(f"⚠️ [BIBLIOMAN][FORMAT] Failed to join with label table: {join_error}")
-                                # Try joining with book_category table instead
-                                try:
-                                    sql = f"""
-                                        SELECT bc.name 
-                                        FROM {table_name} bl
-                                        JOIN book_category bc ON bl.{label_col} = bc.id
-                                        WHERE bl.{book_col} = %s
-                                    """
-                                    cursor.execute(sql, (book_id,))
-                                    results = cursor.fetchall()
-                                    for result in results:
-                                        if result and result.get('name'):
-                                            categories.append(result['name'])
-                                    
-                                    if categories:
-                                        builtins.print(f"✅ [BIBLIOMAN][FORMAT] Found {len(categories)} categories using {table_name}({book_col}, {label_col}) with book_category table: {categories}")
-                                        logger.debug(f"Biblioman: Found {len(categories)} categories using {table_name}({book_col}, {label_col})")
-                                        break  # Success, stop trying other tables
-                                except Exception as join_error2:
-                                    builtins.print(f"⚠️ [BIBLIOMAN][FORMAT] Failed to join with book_category table: {join_error2}")
-                        else:
-                            builtins.print(f"⚠️ [BIBLIOMAN][FORMAT] {table_name} exists but missing book/label columns. Columns: {column_names}")
-                    except Exception as table_error:
-                        # Table doesn't exist or error accessing it, try next
-                        builtins.print(f"⚠️ [BIBLIOMAN][FORMAT] Could not access {table_name}: {table_error}")
-                        continue
-                
                 cursor.close()
                     
             except Exception as e:
-                builtins.print(f"❌ [BIBLIOMAN][FORMAT] Error checking junction tables: {e}")
-                logger.debug(f"Biblioman: Error checking junction tables: {e}")
+                builtins.print(f"❌ [BIBLIOMAN][FORMAT] Error checking book and book_multi_field tables: {e}")
+                logger.debug(f"Biblioman: Error checking book and book_multi_field tables: {e}")
                 # Fallback: try category_id field
                 try:
                     category_id = book.get('category_id')
