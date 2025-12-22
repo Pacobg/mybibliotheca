@@ -4979,6 +4979,8 @@ def add_book_manual():
     try:
         submit_action = request.form.get('submit_action', 'save')
         title = (request.form.get('title') or '').strip()
+        cover_url = (request.form.get('cover_url') or '').strip()
+        print(f"📝 [ADD_BOOK_MANUAL] Starting add_book_manual: title='{title}', cover_url='{cover_url}'")
         if not title:
             if wants_json:
                 return jsonify({'success': False, 'message': 'Title is required'}), 400
@@ -5132,8 +5134,11 @@ def add_book_manual():
             except Exception:
                 existing_id = None
             
+            print(f"🔄 [DUPLICATE] Book already exists: existing_id={existing_id}, cover_url='{cover_url}'")
+            
             # Try to update cover if new cover URL is provided and existing book might not have a valid cover
             if existing_id and cover_url and cover_url.startswith('http'):
+                print(f"🔄 [COVER_UPDATE] Attempting to update cover for existing book {existing_id} with cover_url='{cover_url}'")
                 try:
                     from app.services.kuzu_book_service import KuzuBookService
                     from app.utils.image_processing import process_image_from_url
