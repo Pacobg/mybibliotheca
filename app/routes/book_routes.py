@@ -5026,6 +5026,7 @@ def add_book_manual():
                 pass
         language = (request.form.get('language') or 'en').strip() or 'en'
         cover_url = (request.form.get('cover_url') or '').strip()
+        print(f"📝 [ROUTE] Processing book data: title='{title}', cover_url='{cover_url}', categories={categories}")
         published_date = (request.form.get('published_date') or '').strip()
         series = (request.form.get('series') or '').strip()
         series_volume = (request.form.get('series_volume') or '').strip()
