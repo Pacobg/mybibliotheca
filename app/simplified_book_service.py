@@ -1119,7 +1119,13 @@ class SimplifiedBookService:
             # Re-raise duplicate error
             raise
         except Exception as e:
-            print(f"Error in find_or_create_book: {e}")
+            import traceback
+            error_msg = f"Error in find_or_create_book for '{book_data.title}': {e}"
+            print(f"❌ [FIND_OR_CREATE] {error_msg}")
+            print(f"❌ [FIND_OR_CREATE] Traceback: {traceback.format_exc()}")
+            logger = logging.getLogger(__name__)
+            logger.error(f"❌ [FIND_OR_CREATE] {error_msg}")
+            logger.error(f"❌ [FIND_OR_CREATE] Traceback: {traceback.format_exc()}")
             return None
     
     def build_book_data_from_row(self, row, mappings, book_meta_map=None, author_meta_map=None):
@@ -1414,6 +1420,8 @@ class SimplifiedBookService:
             # This will raise BookAlreadyExistsError if duplicate is found
             book_id = await self.find_or_create_book(book_data)
             if not book_id:
+                print(f"❌ [ADD_BOOK] find_or_create_book returned None for book '{book_data.title}'")
+                logger.error(f"❌ [ADD_BOOK] find_or_create_book returned None for book '{book_data.title}'")
                 return False
             
             # If we get here, it's a new book, so we can proceed with the rest
