@@ -339,10 +339,11 @@ class SimplifiedBookService:
             
             # 1.5. Download and cache cover image if cover_url is provided
             final_cover_url = book_data.cover_url or ''
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"🔍 [COVER_CHECK] Checking cover for '{book_data.title}': cover_url='{book_data.cover_url}', type={type(book_data.cover_url)}, starts_with_http={book_data.cover_url and book_data.cover_url.startswith('http') if book_data.cover_url else False}")
             if book_data.cover_url and book_data.cover_url.startswith('http'):
                 try:
-                    import logging
-                    logger = logging.getLogger(__name__)
                     logger.info(f"🖼️ [COVER_DOWNLOAD] Processing cover for '{book_data.title}': {book_data.cover_url}")
                     
                     # Use the existing process_image_from_url utility which handles:
