@@ -931,6 +931,14 @@ class SimplifiedBookService:
             return book_id
             
         except Exception as e:
+            import logging
+            import traceback
+            logger = logging.getLogger(__name__)
+            error_msg = f"Error creating standalone book '{book_data.title if book_data else 'Unknown'}': {e}"
+            logger.error(f"❌ [CREATE_STANDALONE_BOOK] {error_msg}")
+            logger.error(f"❌ [CREATE_STANDALONE_BOOK] Traceback: {traceback.format_exc()}")
+            print(f"❌ [CREATE_STANDALONE_BOOK] {error_msg}")
+            print(f"❌ [CREATE_STANDALONE_BOOK] Traceback: {traceback.format_exc()}")
             return None
     
     def create_user_annotation(self, annotation: UserBookAnnotation) -> bool:

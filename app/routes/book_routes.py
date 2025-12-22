@@ -5111,6 +5111,7 @@ def add_book_manual():
             series=series,
             series_volume=series_volume,
             categories=categories,
+            raw_categories=raw_categories,
             additional_authors=additional_authors,
             editor=editor,
             translator=translator,
