@@ -5207,6 +5207,25 @@ def add_book_manual():
                 if existing_id:
                     return redirect(url_for('book.view_book_enhanced', uid=existing_id))
                 return redirect(url_for('main.library'))
+        except Exception as e:
+            # Catch any other exceptions during book addition
+            import traceback
+            error_msg = f"Exception while adding book '{title}': {str(e)}"
+            current_app.logger.error(f"[ADD_BOOK] {error_msg}")
+            current_app.logger.error(f"[ADD_BOOK] Traceback: {traceback.format_exc()}")
+            
+            wants_json = (
+                request.headers.get('Accept', '').find('application/json') != -1 or
+                request.headers.get('X-Requested-With') == 'XMLHttpRequest' or
+                request.args.get('format') == 'json'
+            )
+            
+            if wants_json:
+                return jsonify({'success': False, 'message': error_msg}), 500
+            else:
+                flash(f'Error adding book: {str(e)}', 'danger')
+                return redirect(url_for('main.library'))
+        
         if not added:
             # Log the error for debugging
             import traceback
