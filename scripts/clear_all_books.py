@@ -19,22 +19,28 @@ import sys
 # Add the app directory to the path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-def check_dev_mode():
+def check_dev_mode(force=False):
     """Check if we're in development mode"""
+    if force:
+        return True
+    
     flask_env = os.getenv('FLASK_ENV', '').lower()
-    debug = os.getenv('FLASK_DEBUG', '').lower() in ('1', 'true', 'on', 'yes')
+    flask_debug = os.getenv('FLASK_DEBUG', '').lower() in ('1', 'true', 'on', 'yes')
+    mybibliotheca_debug = os.getenv('MYBIBLIOTHECA_DEBUG', '').lower() in ('1', 'true', 'on', 'yes')
     
     # Check config if available
     try:
         from config import Config
         is_dev = (
             flask_env == 'development' or 
-            debug or 
+            flask_debug or 
+            mybibliotheca_debug or
             (hasattr(Config, 'DEBUG') and Config.DEBUG) or
+            (hasattr(Config, 'DEBUG_MODE') and Config.DEBUG_MODE) or
             (hasattr(Config, 'FLASK_ENV') and Config.FLASK_ENV == 'development')
         )
     except:
-        is_dev = flask_env == 'development' or debug
+        is_dev = flask_env == 'development' or flask_debug or mybibliotheca_debug
     
     return is_dev
 
@@ -93,21 +99,36 @@ def delete_all_books():
 
 def main():
     """Main function"""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Clear all books from the database (dev only)')
+    parser.add_argument('--force', action='store_true', 
+                       help='Force execution even if not in development mode (USE WITH CAUTION!)')
+    args = parser.parse_args()
+    
     print("=" * 60)
     print("MyBibliotheca - Clear All Books (Dev Script)")
     print("=" * 60)
     print()
     
     # Check if we're in development mode
-    if not check_dev_mode():
+    if not check_dev_mode(force=args.force):
         print("❌ ERROR: This script can only be run in development mode!")
         print()
         print("To enable development mode, set one of:")
         print("  - FLASK_ENV=development")
         print("  - FLASK_DEBUG=1")
-        print("  - DEBUG=True in config.py")
+        print("  - MYBIBLIOTHECA_DEBUG=1")
+        print()
+        print("Or use --force flag (USE WITH CAUTION!):")
+        print("  python scripts/clear_all_books.py --force")
         print()
         sys.exit(1)
+    
+    if args.force:
+        print("⚠️  WARNING: Running with --force flag!")
+        print("   This bypasses development mode check.")
+        print()
     
     print("✅ Development mode detected")
     print()
