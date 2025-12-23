@@ -256,6 +256,15 @@ function updateProgress() {
                 // For listening-only jobs we usually don't have a meaningful total; keep 0 unless provided
                 totalForProgress = (typeof data.total === 'number') ? data.total : 0;
                 document.getElementById('totalCount').textContent = totalForProgress;
+            } else {
+                // For Biblioman and other imports, use data.total if available
+                const isBibliomanImport = data.import_type === 'biblioman_csv' || window.location.pathname.includes('biblioman');
+                if (isBibliomanImport || data.total) {
+                    if (data.total && typeof data.total === 'number') {
+                        totalForProgress = data.total;
+                        document.getElementById('totalCount').textContent = totalForProgress;
+                    }
+                }
             }
             
             // Derive counters with fallbacks for reading history payloads
