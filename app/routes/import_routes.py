@@ -4785,8 +4785,9 @@ async def process_biblioman_csv_import(import_config):
     Process Biblioman CSV import with Biblioman enrichment as primary source.
     Uses Biblioman DB as the base/authority for metadata.
     """
-    from app.simplified_book_service import SimplifiedBookService
+    from app.simplified_book_service import SimplifiedBookService, BookAlreadyExistsError
     from app.services.metadata_providers.biblioman import BibliomanProvider
+    from app.services.kuzu_book_service import KuzuBookService
     
     task_id = import_config['task_id']
     csv_file_path = import_config['csv_file_path']
@@ -4850,21 +4851,97 @@ async def process_biblioman_csv_import(import_config):
                         simplified_book.reading_status = ''
                     
                     # Add to library
-                    result = await simplified_service.add_book_to_user_library(
-                        book_data=simplified_book,
-                        user_id=user_id,
-                        reading_status=simplified_book.reading_status,
-                        ownership_status='owned',
-                        media_type=default_media_type
-                    )
-                    
-                    processed_count += 1
-                    if result:
-                        success_count += 1
-                        status_value = 'success'
-                    else:
-                        error_count += 1
-                        status_value = 'error'
+                    try:
+                        result = await simplified_service.add_book_to_user_library(
+                            book_data=simplified_book,
+                            user_id=user_id,
+                            reading_status=simplified_book.reading_status,
+                            ownership_status='owned',
+                            media_type=default_media_type
+                        )
+                        
+                        processed_count += 1
+                        if result:
+                            success_count += 1
+                            status_value = 'success'
+                        else:
+                            error_count += 1
+                            status_value = 'error'
+                    except BookAlreadyExistsError as bae:
+                        # Book already exists - try to enrich it and add to user library if not already there
+                        processed_count += 1
+                        existing_book_id = bae.book_id
+                        logger.info(f"ℹ️ [BIBLIOMAN_IMPORT] Book '{simplified_book.title}' already exists (ID: {existing_book_id}), attempting to enrich and add to library")
+                        
+                        # Try to enrich existing book with Biblioman data if we have it
+                        if biblioman_data:
+                            try:
+                                kuzu_book_service = KuzuBookService(user_id=user_id)
+                                existing_book = await kuzu_book_service.get_book_by_id(existing_book_id)
+                                if existing_book:
+                                    # Merge Biblioman data into existing book
+                                    updates = {}
+                                    
+                                    # Update fields only if they're missing or Biblioman has better data
+                                    if biblioman_data.get('description'):
+                                        if not existing_book.description or len(biblioman_data['description']) > len(existing_book.description or ''):
+                                            updates['description'] = biblioman_data['description']
+                                    
+                                    if biblioman_data.get('cover_url') or biblioman_data.get('chitanka_cover_url'):
+                                        cover_url = biblioman_data.get('chitanka_cover_url') or biblioman_data.get('cover_url')
+                                        if cover_url and (not existing_book.cover_url or 'biblioman' in str(existing_book.cover_url).lower()):
+                                            updates['cover_url'] = cover_url
+                                    
+                                    if biblioman_data.get('publisher') and not existing_book.publisher:
+                                        updates['publisher'] = biblioman_data['publisher']
+                                    
+                                    if biblioman_data.get('published_date') and not existing_book.published_date:
+                                        updates['published_date'] = biblioman_data['published_date']
+                                    
+                                    if biblioman_data.get('page_count') and not existing_book.page_count:
+                                        updates['page_count'] = biblioman_data['page_count']
+                                    
+                                    # Merge categories
+                                    if biblioman_data.get('categories'):
+                                        existing_cats = existing_book.categories or []
+                                        biblioman_cats = biblioman_data['categories']
+                                        if isinstance(biblioman_cats, list):
+                                            seen = set(c.lower() for c in existing_cats if c)
+                                            for cat in biblioman_cats:
+                                                if cat and cat.lower() not in seen:
+                                                    existing_cats.append(cat)
+                                                    seen.add(cat.lower())
+                                            updates['categories'] = existing_cats
+                                    
+                                    if updates:
+                                        await kuzu_book_service.update_book(existing_book_id, updates)
+                                        enriched_count += 1
+                                        logger.info(f"✅ [BIBLIOMAN_IMPORT] Enriched existing book '{simplified_book.title}' (ID: {existing_book_id})")
+                            except Exception as enrich_ex:
+                                logger.warning(f"⚠️ [BIBLIOMAN_IMPORT] Failed to enrich existing book '{simplified_book.title}': {enrich_ex}")
+                        
+                        # Add book to user's library (will merge if already exists)
+                        try:
+                            from app.infrastructure.kuzu_repositories import KuzuUserBookRepository
+                            user_book_repo = KuzuUserBookRepository(user_id=user_id)
+                            added = await user_book_repo.add_book_to_library(
+                                user_id=user_id,
+                                book_id=existing_book_id,
+                                reading_status=simplified_book.reading_status or '',
+                                ownership_status='owned',
+                                media_type=default_media_type
+                            )
+                            if added:
+                                success_count += 1
+                                status_value = 'success'
+                                logger.info(f"✅ [BIBLIOMAN_IMPORT] Added existing book '{simplified_book.title}' to user library")
+                            else:
+                                skipped_count += 1
+                                status_value = 'skipped'
+                        except Exception as add_ex:
+                            logger.warning(f"⚠️ [BIBLIOMAN_IMPORT] Failed to add existing book to library: {add_ex}")
+                            skipped_count += 1
+                            status_value = 'skipped'
                     
                     progress_entry = {'title': simplified_book.title or 'Untitled', 'status': status_value}
                     pending_processed_entries.append(progress_entry)
