@@ -1,6 +1,41 @@
-# Default Import Templates
+# MyBibliotheca Scripts
 
-This directory contains scripts and functionality for managing default import templates in MyBibliotheca.
+This directory contains utility scripts for managing and maintaining MyBibliotheca.
+
+## Available Scripts
+
+### Development Scripts
+
+#### `clear_all_books.py`
+**⚠️ DEV ONLY - Deletes all books from the database**
+
+A development script to clear all books from the database for testing purposes.
+
+**Usage:**
+```bash
+python scripts/clear_all_books.py
+```
+
+**Requirements:**
+- Must be run in development mode (FLASK_ENV=development or DEBUG=True)
+- Requires explicit confirmation: type 'DELETE ALL BOOKS'
+
+**What it does:**
+- Deletes all Book nodes and their relationships
+- Removes all book-related data (personal metadata, reading logs, etc.)
+- Preserves Users, Locations, Categories, Series, and other metadata
+
+**Safety:**
+- Only works in development mode
+- Requires explicit confirmation
+- Shows count before deletion
+- Verifies deletion was successful
+
+---
+
+## Default Import Templates
+
+This directory also contains scripts and functionality for managing default import templates in MyBibliotheca.
 
 ## Overview
 
