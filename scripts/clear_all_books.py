@@ -44,32 +44,49 @@ def check_dev_mode(force=False):
     
     return is_dev
 
+def _convert_query_result_to_list(result):
+    """Convert KuzuDB QueryResult to list format"""
+    if result is None:
+        return []
+    
+    rows = []
+    try:
+        if hasattr(result, 'has_next') and hasattr(result, 'get_next'):
+            while result.has_next():
+                row = result.get_next()
+                if isinstance(row, (list, tuple)):
+                    rows.append({'col_0': row[0] if row else None})
+                elif isinstance(row, dict):
+                    rows.append(row)
+        elif isinstance(result, list):
+            return result
+    except Exception as e:
+        print(f"Warning: Error converting result: {e}")
+    
+    return rows
+
 def get_book_count():
     """Get total number of books in the database"""
     try:
         from app.infrastructure.kuzu_graph import safe_execute_kuzu_query
-        from app.utils.kuzu_async_helper import run_async
         
         query = "MATCH (b:Book) RETURN COUNT(b) as count"
         result = safe_execute_kuzu_query(query, {})
         
         # Convert result to list
-        if hasattr(result, 'has_next') and result.has_next():
-            row = result.get_next()
-            if isinstance(row, (list, tuple)) and row:
-                return int(row[0])
-            elif isinstance(row, dict):
-                return int(row.get('count') or row.get('col_0') or 0)
-        elif isinstance(result, list) and result:
-            first = result[0]
+        rows = _convert_query_result_to_list(result)
+        
+        if rows:
+            first = rows[0]
             if isinstance(first, dict):
-                return int(first.get('count') or first.get('col_0') or 0)
-            elif isinstance(first, (list, tuple)) and first:
-                return int(first[0])
+                count_val = first.get('count') or first.get('col_0') or 0
+                return int(count_val) if count_val is not None else 0
         
         return 0
     except Exception as e:
         print(f"❌ Error getting book count: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def delete_all_books():
