@@ -361,10 +361,12 @@ def main():
     
     if args.dry_run:
         confirmation = input("Type 'YES' to proceed with dry run: ")
+        confirmation_ok = confirmation.strip().upper() == 'YES'
     else:
         confirmation = input("Type 'CLEANUP CATEGORIES' to confirm cleanup: ")
+        confirmation_ok = confirmation.strip().upper() == 'CLEANUP CATEGORIES'
 
-    if (args.dry_run and confirmation == 'YES') or (not args.dry_run and confirmation == 'CLEANUP CATEGORIES'):
+    if confirmation_ok:
         logger.info("🔄 Starting category cleanup...")
         try:
             run_async(cleanup_all_categories_async(dry_run=args.dry_run))
