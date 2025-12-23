@@ -3346,6 +3346,32 @@ def view_book_enhanced(uid):
     user_book = book_service.get_book_by_uid_sync(uid, str(current_user.id))
     
     if not user_book:
+        # Try to get book without user overlay (might exist but not in user's library)
+        try:
+            from app.services.kuzu_book_service import KuzuBookService
+            kuzu_book_service = KuzuBookService(user_id=str(current_user.id))
+            book_without_overlay = kuzu_book_service.get_book_by_id_sync(uid)
+            if book_without_overlay:
+                # Book exists but not in user's library - add it
+                current_app.logger.info(f"Book {uid} exists but not in user {current_user.id} library, adding it")
+                from app.infrastructure.kuzu_repositories import KuzuUserBookRepository
+                user_book_repo = KuzuUserBookRepository()
+                from app.services.kuzu_async_helper import run_async
+                added = run_async(user_book_repo.add_book_to_library(
+                    user_id=str(current_user.id),
+                    book_id=uid,
+                    reading_status='',
+                    ownership_status='owned',
+                    media_type=getattr(book_without_overlay, 'media_type', None) or 'physical'
+                ))
+                if added:
+                    # Retry getting the book
+                    user_book = book_service.get_book_by_uid_sync(uid, str(current_user.id))
+        except Exception as e:
+            current_app.logger.error(f"Error checking/adding book {uid} to library: {e}", exc_info=True)
+    
+    if not user_book:
+        current_app.logger.error(f"Book {uid} not found for user {current_user.id}")
         abort(404)
 
     title = user_book.get('title', 'Unknown Title') if isinstance(user_book, dict) else getattr(user_book, 'title', 'Unknown Title')
