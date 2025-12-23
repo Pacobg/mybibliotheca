@@ -180,14 +180,15 @@ class SimplifiedBookService:
     
     def _filter_invalid_categories(self, categories, author_name=None):
         """
-        Filter out invalid categories like author names, generic terms, etc.
+        Filter out invalid categories like author names, generic terms, custom tags, etc.
+        Also removes duplicates (case-insensitive).
         
         Args:
             categories: List of category strings
             author_name: Author name to filter out if present in categories
         
         Returns:
-            Filtered list of valid categories
+            Filtered list of valid categories (deduplicated)
         """
         if not categories:
             return []
@@ -202,22 +203,65 @@ class SimplifiedBookService:
             # Generic terms
             'fiction', 'non-fiction', 'nonfiction', 'literature', 'general',
             'juvenile', 'adult', 'young adult', 'large print',
+            # Custom tags (not real genres)
+            'books-i-own', 'i-own', 'own', 'to-read', 'to read', 'read', 'reading',
+            'want-to-read', 'want to read', 'currently-reading', 'currently reading',
+            'favorites', 'favourites', 'favorite', 'favourite',
+            'library', 'my-library', 'my library', 'personal-library', 'personal library',
+            'collection', 'my-collection', 'my collection',
+            'wishlist', 'wish-list', 'wish list',
+            'ebook', 'e-book', 'e book', 'audiobook', 'audio-book', 'audio book',
+            'physical', 'hardcover', 'hard-cover', 'hard cover', 'paperback', 'paper-back', 'paper back',
         }
         
+        # Patterns to exclude (custom tags, status indicators, etc.)
+        import re
+        exclude_patterns = [
+            r'^books?-i-own$',  # "books-i-own", "book-i-own"
+            r'^i-own$',  # "i-own"
+            r'^own$',  # "own"
+            r'^to-?read$',  # "to-read", "toread"
+            r'^want-?to-?read$',  # "want-to-read", "wanttoread"
+            r'^currently-?reading$',  # "currently-reading", "currentlyreading"
+            r'^my-?library$',  # "my-library", "mylibrary"
+            r'^personal-?library$',  # "personal-library", "personallibrary"
+            r'^my-?collection$',  # "my-collection", "mycollection"
+            r'^wish-?list$',  # "wish-list", "wishlist"
+            r'^[0-9]+$',  # Pure numbers
+            r'^[^a-zA-Zа-яА-Я0-9]+$',  # Only special characters (no letters/numbers)
+        ]
+        
         valid_categories = []
+        seen_lower = set()  # Track seen categories (case-insensitive deduplication)
+        
         for cat in categories:
             if not cat or not isinstance(cat, str):
                 continue
             
-            cat_lower = cat.strip().lower()
+            cat_original = cat.strip()
+            cat_lower = cat_original.lower()
             
             # Skip empty or too short categories
             if len(cat_lower) < 3:
                 continue
             
+            # Skip if already seen (case-insensitive deduplication)
+            if cat_lower in seen_lower:
+                continue
+            
             # Skip generic terms
             if cat_lower in exclude_terms:
                 continue
+            
+            # Skip patterns matching exclude patterns
+            if any(re.match(pattern, cat_lower) for pattern in exclude_patterns):
+                continue
+            
+            # Skip if contains common custom tag indicators
+            if any(tag in cat_lower for tag in ['-i-', '-my-', '-own', '-read', '-library', '-collection']):
+                # But allow legitimate genres that might contain these (e.g., "library science")
+                if not any(legit in cat_lower for legit in ['science', 'studies', 'fiction', 'literature', 'history']):
+                    continue
             
             # Skip if matches author name parts
             if author_parts:
@@ -231,11 +275,12 @@ class SimplifiedBookService:
                     continue
             
             # Skip hyphenated lowercase patterns (likely author names like "levine-paul")
-            import re
             if re.match(r'^[a-z]+-[a-z]+$', cat_lower):
                 continue
             
-            valid_categories.append(cat.strip())
+            # All checks passed - add to valid categories
+            valid_categories.append(cat_original)
+            seen_lower.add(cat_lower)
         
         return valid_categories
     
