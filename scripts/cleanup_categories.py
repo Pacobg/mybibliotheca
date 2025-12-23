@@ -25,13 +25,41 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
     from app import create_app
-    from app.infrastructure.kuzu_graph import safe_execute_kuzu_query, _convert_query_result_to_list
+    from app.infrastructure.kuzu_graph import safe_execute_kuzu_query
     from app.services.kuzu_async_helper import run_async
     from config import Config
 except ImportError as e:
     print(f"❌ Error importing application modules: {e}")
     print("🔧 Make sure you're running this from the MyBibliotheca directory")
     sys.exit(1)
+
+
+def _convert_query_result_to_list(result):
+    """Convert KuzuDB QueryResult to list format"""
+    if result is None:
+        return []
+    
+    rows = []
+    try:
+        if hasattr(result, 'has_next') and hasattr(result, 'get_next'):
+            while result.has_next():
+                row = result.get_next()
+                if isinstance(row, (list, tuple)):
+                    if len(row) == 1:
+                        rows.append({'col_0': row[0], 'result': row[0]})
+                    else:
+                        row_dict = {}
+                        for i, value in enumerate(row):
+                            row_dict[f'col_{i}'] = value
+                        rows.append(row_dict)
+                elif isinstance(row, dict):
+                    rows.append(row)
+        elif isinstance(result, list):
+            return result
+    except Exception as e:
+        logger.warning(f"Warning: Error converting result: {e}")
+    
+    return rows
 
 # Configure basic logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
