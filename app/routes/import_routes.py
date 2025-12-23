@@ -4637,3 +4637,433 @@ async def process_reading_history_import(import_config):
     finally:
         # Note: Don't clean up temp file yet - we need it for final processing
         pass
+
+@import_bp.route('/import-biblioman-csv', methods=['GET', 'POST'])
+@login_required
+def import_biblioman_csv():
+    """
+    Specialized CSV import for Biblioman enrichment.
+    This route is specifically designed for importing CSV files from other applications
+    and enriching them with Biblioman DB data (using Biblioman as the primary source).
+    
+    Features:
+    - Supports up to 200 books per upload
+    - Automatically enriches books with Biblioman metadata
+    - Uses Biblioman as the base/authority for metadata
+    - Handles missing covers and descriptions from Biblioman
+    """
+    if request.method == 'GET':
+        return render_template('import_biblioman_csv.html')
+    
+    # Handle POST request
+    try:
+        # Check for file upload
+        if 'csv_file' not in request.files:
+            flash('Моля, изберете CSV файл за качване', 'error')
+            return redirect(request.url)
+        
+        file = request.files['csv_file']
+        if file.filename == '':
+            flash('Моля, изберете CSV файл за качване', 'error')
+            return redirect(request.url)
+        
+        if not file.filename or not file.filename.lower().endswith('.csv'):
+            flash('Моля, качете CSV файл (.csv)', 'error')
+            return redirect(request.url)
+        
+        # Save file temporarily
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.csv', prefix=f'biblioman_import_{current_user.id}_')
+        file.save(temp_file.name)
+        temp_path = temp_file.name
+        
+        # Count rows to check limit (600 books max for Biblioman import)
+        row_count = 0
+        try:
+            with open(temp_path, 'r', encoding='utf-8') as csvfile:
+                reader = csv.DictReader(csvfile)
+                row_count = sum(1 for _ in reader)
+        except Exception as e:
+            flash(f'Грешка при четене на CSV файла: {str(e)}', 'error')
+            try:
+                os.unlink(temp_path)
+            except:
+                pass
+            return redirect(request.url)
+        
+        if row_count > 600:
+            flash(f'Файлът съдържа {row_count} книги. Максималният брой е 600 книги на импорт. Моля, разделете файла на по-малки части.', 'error')
+            try:
+                os.unlink(temp_path)
+            except:
+                pass
+            return redirect(request.url)
+        
+        if row_count == 0:
+            flash('CSV файлът е празен или няма данни', 'error')
+            try:
+                os.unlink(temp_path)
+            except:
+                pass
+            return redirect(request.url)
+        
+        # Detect CSV format and get field mappings
+        format_type, confidence = detect_csv_format(temp_path)
+        
+        # Try to detect common CSV formats (HandyLib format support)
+        mappings = {}
+        with open(temp_path, 'r', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            headers = reader.fieldnames or []
+            
+            # Auto-detect common field mappings (HandyLib format support)
+            for header in headers:
+                header_lower = header.lower().strip()
+                if 'title' in header_lower or 'заглавие' in header_lower or 'название' in header_lower:
+                    mappings[header] = 'title'
+                elif 'author' in header_lower or 'автор' in header_lower:
+                    mappings[header] = 'author'
+                elif 'isbn' in header_lower:
+                    if '13' in header_lower:
+                        mappings[header] = 'isbn13'
+                    elif '10' in header_lower:
+                        mappings[header] = 'isbn10'
+                    else:
+                        mappings[header] = 'isbn'  # Will be auto-detected as ISBN13 or ISBN10
+                elif 'summary' in header_lower or 'description' in header_lower or 'описание' in header_lower or 'аннотация' in header_lower:
+                    mappings[header] = 'description'
+                elif 'publisher' in header_lower or 'издателство' in header_lower or 'издательство' in header_lower:
+                    mappings[header] = 'publisher'
+                elif 'published date' in header_lower or 'published_date' in header_lower:
+                    mappings[header] = 'published_date'
+                elif 'year' in header_lower or 'година' in header_lower or 'год' in header_lower:
+                    mappings[header] = 'published_date'
+                elif 'pages' in header_lower or 'страници' in header_lower or 'страницы' in header_lower:
+                    mappings[header] = 'page_count'
+                elif 'image url' in header_lower or 'image_url' in header_lower or 'cover' in header_lower or 'корица' in header_lower or 'photo path' in header_lower:
+                    mappings[header] = 'cover_url'
+                elif 'icon path' in header_lower or 'icon_path' in header_lower:
+                    # Icon Path can also be used as cover if Image Url is not available
+                    if 'Image Url' not in mappings and 'image url' not in mappings:
+                        mappings[header] = 'cover_url'
+                elif 'series' in header_lower or 'серия' in header_lower:
+                    mappings[header] = 'series'
+                elif 'volume' in header_lower or 'том' in header_lower:
+                    mappings[header] = 'series_volume'
+                elif 'genres' in header_lower or 'genre' in header_lower or 'категории' in header_lower or 'жанр' in header_lower:
+                    mappings[header] = 'categories'
+                elif 'language' in header_lower or 'език' in header_lower or 'язык' in header_lower:
+                    mappings[header] = 'language'
+        
+        # Create import job
+        task_id = str(uuid.uuid4())
+        job_data = {
+            'task_id': task_id,
+            'user_id': str(current_user.id),
+            'csv_file_path': temp_path,
+            'field_mappings': mappings,
+            'import_type': 'biblioman_csv',
+            'enable_biblioman_enrichment': True,
+            'biblioman_as_primary': True,
+            'status': 'pending'
+        }
+        
+        safe_create_import_job(str(current_user.id), task_id, job_data)
+        
+        # Start async processing
+        from app.services.kuzu_async_helper import run_async
+        run_async(process_biblioman_csv_import(job_data))
+        
+        return redirect(url_for('import.import_books_progress', task_id=task_id))
+        
+    except Exception as e:
+        logger.error(f"Error in Biblioman CSV import: {e}", exc_info=True)
+        flash(f'Грешка при импорта: {str(e)}', 'error')
+        return redirect(request.url)
+
+async def process_biblioman_csv_import(import_config):
+    """
+    Process Biblioman CSV import with Biblioman enrichment as primary source.
+    Uses Biblioman DB as the base/authority for metadata.
+    """
+    from app.simplified_book_service import SimplifiedBookService
+    from app.services.metadata_providers.biblioman import BibliomanProvider
+    
+    task_id = import_config['task_id']
+    csv_file_path = import_config['csv_file_path']
+    mappings = import_config['field_mappings']
+    user_id = import_config['user_id']
+    
+    simplified_service = SimplifiedBookService()
+    biblioman_provider = BibliomanProvider()
+    default_media_type = get_default_book_format()
+    
+    processed_count = success_count = error_count = skipped_count = enriched_count = 0
+    last_progress_emit = time.perf_counter()
+    pending_processed_entries: List[dict] = []
+    
+    try:
+        source_filename = os.path.basename(csv_file_path)
+        
+        with open(csv_file_path, 'r', encoding='utf-8') as fh:
+            reader = csv.DictReader(fh)
+            for row_num, row in enumerate(reader, 1):
+                try:
+                    # Build book data from CSV row
+                    simplified_book = simplified_service.build_book_data_from_row(row, mappings)
+                    
+                    if not simplified_book or (not simplified_book.title and not (simplified_book.isbn13 or simplified_book.isbn10)):
+                        processed_count += 1
+                        skipped_count += 1
+                        raw_title = row.get('Title') or row.get('title') or row.get('Заглавие') or 'Untitled'
+                        _update_import_progress(user_id, task_id, processed_book={'title': raw_title, 'status': 'skipped'})
+                        continue
+                    
+                    # Enrich with Biblioman data (Biblioman as primary source)
+                    # IMPORTANT: Always try Biblioman enrichment, but don't fail if not found
+                    biblioman_data = None
+                    
+                    # Try to find in Biblioman DB
+                    if biblioman_provider.is_enabled():
+                        try:
+                            # Priority: ISBN > Title+Author > Title only
+                            isbn = simplified_book.isbn13 or simplified_book.isbn10
+                            biblioman_data = biblioman_provider.search_metadata(
+                                title=simplified_book.title,
+                                author=simplified_book.author,
+                                isbn=isbn
+                            )
+                        except Exception as enrich_error:
+                            logger.warning(f"⚠️ [BIBLIOMAN_IMPORT] Biblioman enrichment failed for '{simplified_book.title}': {enrich_error}")
+                            biblioman_data = None
+                    
+                    if biblioman_data:
+                        # Merge Biblioman data as primary source
+                        simplified_book = merge_biblioman_data_into_book(simplified_book, biblioman_data)
+                        enriched_count += 1
+                        logger.info(f"✅ [BIBLIOMAN_IMPORT] Enriched book '{simplified_book.title}' with Biblioman data")
+                    else:
+                        # Even if Biblioman enrichment failed, continue with CSV data
+                        logger.debug(f"ℹ️ [BIBLIOMAN_IMPORT] No Biblioman data found for '{simplified_book.title}', using CSV data only")
+                    
+                    # Set default reading status if not provided
+                    if not simplified_book.reading_status:
+                        simplified_book.reading_status = ''
+                    
+                    # Add to library
+                    result = await simplified_service.add_book_to_user_library(
+                        book_data=simplified_book,
+                        user_id=user_id,
+                        reading_status=simplified_book.reading_status,
+                        ownership_status='owned',
+                        media_type=default_media_type
+                    )
+                    
+                    processed_count += 1
+                    if result:
+                        success_count += 1
+                        status_value = 'success'
+                    else:
+                        error_count += 1
+                        status_value = 'error'
+                    
+                    progress_entry = {'title': simplified_book.title or 'Untitled', 'status': status_value}
+                    pending_processed_entries.append(progress_entry)
+                    
+                    progress_update = {
+                        'processed': processed_count,
+                        'success': success_count,
+                        'errors': error_count,
+                        'skipped': skipped_count,
+                        'enriched': enriched_count,
+                        'current_book': simplified_book.title,
+                    }
+                    
+                    elapsed = time.perf_counter() - last_progress_emit
+                    if elapsed >= PROGRESS_EMIT_INTERVAL:
+                        _update_import_progress(
+                            user_id,
+                            task_id,
+                            updates=progress_update,
+                            processed_book=pending_processed_entries,
+                        )
+                        pending_processed_entries.clear()
+                        last_progress_emit = time.perf_counter()
+                    
+                    if processed_count % 5 == 0:
+                        update_job_in_kuzu(task_id, progress_update)
+                        
+                except Exception as ex:
+                    processed_count += 1
+                    error_count += 1
+                    raw_title = row.get('Title') or row.get('title') or row.get('Заглавие') or 'Untitled'
+                    error_payload = {
+                        'row_number': row_num,
+                        'title': raw_title,
+                        'author': row.get('Author') or row.get('author') or '',
+                        'isbn': row.get('ISBN13') or row.get('ISBN') or '',
+                        'file_name': source_filename,
+                        'error_type': 'exception',
+                        'message': str(ex)[:500],
+                    }
+                    progress_entry = {'title': raw_title, 'status': 'error'}
+                    pending_processed_entries.append(progress_entry)
+                    progress_update = {
+                        'processed': processed_count,
+                        'success': success_count,
+                        'errors': error_count,
+                        'skipped': skipped_count,
+                        'enriched': enriched_count,
+                        'current_book': raw_title,
+                    }
+                    _update_import_progress(
+                        user_id,
+                        task_id,
+                        updates=progress_update,
+                        processed_book=pending_processed_entries,
+                        error_message=error_payload,
+                    )
+                    pending_processed_entries.clear()
+                    last_progress_emit = time.perf_counter()
+                    continue
+        
+        # Final update
+        if pending_processed_entries:
+            progress_update = {
+                'processed': processed_count,
+                'success': success_count,
+                'errors': error_count,
+                'skipped': skipped_count,
+                'enriched': enriched_count,
+            }
+            _update_import_progress(
+                user_id,
+                task_id,
+                updates=progress_update,
+                processed_book=pending_processed_entries,
+            )
+            pending_processed_entries.clear()
+        
+        final_activity = f"Импортът завърши! {success_count} нови книги, {enriched_count} обогатени с Biblioman данни, {error_count} грешки, {skipped_count} пропуснати"
+        completion_updates = {
+            'status': 'completed',
+            'processed': processed_count,
+            'success': success_count,
+            'errors': error_count,
+            'skipped': skipped_count,
+            'enriched': enriched_count,
+            'current_book': None,
+            'recent_activity': [final_activity],
+        }
+        _update_import_progress(user_id, task_id, updates=completion_updates)
+        update_job_in_kuzu(task_id, completion_updates)
+        
+        logger.info(f"🎉 [BIBLIOMAN_IMPORT] Completed: {success_count} success, {error_count} errors, {enriched_count} enriched")
+        
+    except Exception as e:
+        logger.error(f"Error processing Biblioman CSV import: {e}", exc_info=True)
+        err = {'status': 'failed', 'error_messages': [str(e)]}
+        update_job_in_kuzu(task_id, err)
+        safe_update_import_job(user_id, task_id, err)
+    finally:
+        try:
+            if os.path.exists(csv_file_path):
+                os.unlink(csv_file_path)
+        except Exception:
+            pass
+
+def merge_biblioman_data_into_book(simplified_book, biblioman_data):
+    """
+    Merge Biblioman metadata into SimplifiedBook object.
+    Uses Biblioman as the primary/authoritative source for metadata.
+    Strategy: Biblioman data replaces CSV data, but only if Biblioman has the field.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    # Title: Use Biblioman if available (more accurate for Bulgarian books)
+    if biblioman_data.get('title'):
+        simplified_book.title = biblioman_data['title']
+    
+    # Authors: Prefer Biblioman authors
+    if biblioman_data.get('authors'):
+        authors_str = biblioman_data['authors']
+        if isinstance(authors_str, str):
+            authors_list = [a.strip() for a in authors_str.split(',') if a.strip()]
+            if authors_list:
+                simplified_book.author = authors_list[0]
+                if len(authors_list) > 1:
+                    simplified_book.additional_authors = ', '.join(authors_list[1:])
+        elif isinstance(biblioman_data.get('authors_list'), list):
+            authors_list = biblioman_data['authors_list']
+            if authors_list:
+                simplified_book.author = authors_list[0]
+                if len(authors_list) > 1:
+                    simplified_book.additional_authors = ', '.join(authors_list[1:])
+    
+    # Description: Use Biblioman if CSV doesn't have one OR Biblioman has longer/better description
+    if biblioman_data.get('description'):
+        biblioman_desc = biblioman_data['description']
+        csv_desc = simplified_book.description or ''
+        # Prefer Biblioman if CSV is empty or Biblioman is significantly longer
+        if not csv_desc or (len(biblioman_desc) > len(csv_desc) + 50):
+            simplified_book.description = biblioman_desc
+    
+    # Cover: ALWAYS prefer Biblioman cover (usually better quality for Bulgarian books)
+    # Even if CSV has a cover, Biblioman cover is preferred
+    if biblioman_data.get('cover_url') or biblioman_data.get('chitanka_cover_url'):
+        cover_url = biblioman_data.get('chitanka_cover_url') or biblioman_data.get('cover_url')
+        if cover_url:
+            simplified_book.cover_url = cover_url
+            simplified_book.global_custom_metadata['cover_source'] = 'Biblioman'
+            logger.debug(f"🖼️ [BIBLIOMAN_MERGE] Using Biblioman cover for '{simplified_book.title}': {cover_url}")
+    elif not simplified_book.cover_url:
+        # If Biblioman doesn't have cover but CSV does, keep CSV cover
+        logger.debug(f"🖼️ [BIBLIOMAN_MERGE] No Biblioman cover, keeping CSV cover for '{simplified_book.title}'")
+    
+    # ISBN: Use Biblioman ISBNs if available (more accurate)
+    if biblioman_data.get('isbn13'):
+        simplified_book.isbn13 = biblioman_data['isbn13']
+    if biblioman_data.get('isbn10'):
+        simplified_book.isbn10 = biblioman_data['isbn10']
+    
+    # Publisher: Use Biblioman if CSV doesn't have one OR Biblioman has Cyrillic content
+    if biblioman_data.get('publisher'):
+        biblioman_pub = biblioman_data['publisher']
+        csv_pub = simplified_book.publisher or ''
+        # Prefer Biblioman if CSV is empty or Biblioman has Cyrillic (more accurate for Bulgarian books)
+        if not csv_pub or any('\u0400' <= char <= '\u04FF' for char in biblioman_pub):
+            simplified_book.publisher = biblioman_pub
+    
+    # Published date: Use Biblioman if CSV doesn't have one
+    if biblioman_data.get('published_date') and not simplified_book.published_date:
+        simplified_book.published_date = biblioman_data['published_date']
+    
+    # Page count: Use Biblioman if CSV doesn't have one
+    if biblioman_data.get('page_count') and not simplified_book.page_count:
+        simplified_book.page_count = biblioman_data['page_count']
+    
+    # Categories: Merge Biblioman categories with CSV categories (avoid duplicates)
+    if biblioman_data.get('categories'):
+        existing_cats = simplified_book.categories or []
+        biblioman_cats = biblioman_data['categories']
+        if isinstance(biblioman_cats, list):
+            # Merge categories, avoiding duplicates
+            seen = set(c.lower() for c in existing_cats if c)
+            for cat in biblioman_cats:
+                if cat and cat.lower() not in seen:
+                    existing_cats.append(cat)
+                    seen.add(cat.lower())
+            simplified_book.categories = existing_cats
+    
+    # Series: Use Biblioman if CSV doesn't have one
+    if biblioman_data.get('series') and not simplified_book.series:
+        simplified_book.series = biblioman_data['series']
+    
+    # Store Biblioman IDs for future reference
+    if biblioman_data.get('biblioman_id'):
+        simplified_book.global_custom_metadata['biblioman_id'] = biblioman_data['biblioman_id']
+    if biblioman_data.get('chitanka_id'):
+        simplified_book.global_custom_metadata['chitanka_id'] = biblioman_data['chitanka_id']
+    if biblioman_data.get('chitanka_url'):
+        simplified_book.global_custom_metadata['chitanka_url'] = biblioman_data['chitanka_url']
+    
+    return simplified_book

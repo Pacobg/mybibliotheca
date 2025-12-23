@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Импорт от CSV с Biblioman обогатяване{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-book-half me-2"></i>
+                        Импорт от CSV с Biblioman обогатяване
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading"><i class="bi bi-info-circle me-2"></i>За този импорт</h5>
+                        <p class="mb-2">Този импорт е специално създаден за CSV файлове от други приложения, където книгите може да нямат пълна информация.</p>
+                        <ul class="mb-0">
+                            <li><strong>Максимум 600 книги</strong> на импорт</li>
+                            <li><strong>Автоматично обогатяване</strong> с данни от Biblioman DB</li>
+                            <li><strong>Biblioman като основа</strong> - данните от Biblioman имат приоритет</li>
+                            <li><strong>Автоматично попълване</strong> на липсващи корици и описания</li>
+                            <li><strong>Импорт дори без обогатяване</strong> - ако не се намери в Biblioman, книгата се импортира с данните от CSV</li>
+                        </ul>
+                    </div>
+
+                    <form method="POST" enctype="multipart/form-data" id="importForm">
+                        <div class="mb-4">
+                            <label for="csv_file" class="form-label">
+                                <strong>Изберете CSV файл</strong>
+                            </label>
+                            <input 
+                                class="form-control" 
+                                type="file" 
+                                id="csv_file" 
+                                name="csv_file" 
+                                accept=".csv" 
+                                required
+                            >
+                            <div class="form-text">
+                                Поддържани формати: CSV файлове с заглавки. Автоматично разпознаване на полета като Заглавие, Автор, ISBN и др.
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <h6 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Важно</h6>
+                            <p class="mb-0">
+                                След импорта, всяка книга ще бъде проверена в Biblioman DB и ще бъде обогатена с данни от там.
+                                Ако книгата има липсваща корица или описание, те ще бъдат попълнени от Biblioman, ако са налични.
+                            </p>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success" id="submitBtn">
+                                <i class="bi bi-upload me-2"></i>
+                                Качи и импортирай
+                            </button>
+                            <a href="{{ url_for('import.import_books') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>
+                                Обратно към основния импорт
+                            </a>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="bi bi-question-circle me-2"></i>Как работи?</h5>
+                            <ol>
+                                <li>Качете CSV файл с вашите книги</li>
+                                <li>Системата автоматично разпознава полетата</li>
+                                <li>Всяка книга се импортира в библиотеката ви</li>
+                                <li>След това всяка книга се проверява в Biblioman DB</li>
+                                <li>Липсващите данни се попълват от Biblioman</li>
+                                <li>Biblioman данните имат приоритет над CSV данните</li>
+                            </ol>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="bi bi-lightbulb me-2"></i>Препоръки</h5>
+                            <ul>
+                                <li>CSV файлът трябва да има заглавки в първия ред</li>
+                                <li>Поне полето "Заглавие" или "Title" трябва да е попълнено</li>
+                                <li>ISBN номерата помагат за по-точно обогатяване</li>
+                                <li>Ако имате много книги, разделете ги на по-малки файлове (до 200 книги)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('importForm').addEventListener('submit', function(e) {
+    const fileInput = document.getElementById('csv_file');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    if (fileInput.files.length === 0) {
+        e.preventDefault();
+        alert('Моля, изберете CSV файл');
+        return false;
+    }
+    
+    // Disable submit button to prevent double submission
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Обработване...';
+    
+    return true;
+});
+</script>
+{% endblock %}
+
