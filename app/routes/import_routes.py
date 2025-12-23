@@ -5060,6 +5060,67 @@ async def process_biblioman_csv_import(import_config):
         except Exception:
             pass
 
+def _filter_invalid_categories(categories, author_name=None):
+    """
+    Filter out invalid categories like author names, generic terms, etc.
+    
+    Args:
+        categories: List of category strings
+        author_name: Author name to filter out if present in categories
+    
+    Returns:
+        Filtered list of valid categories
+    """
+    if not categories:
+        return []
+    
+    # Normalize author name for comparison
+    author_parts = []
+    if author_name:
+        # Split author name into parts (first name, last name, etc.)
+        author_parts = [part.strip().lower() for part in author_name.replace(',', ' ').split() if part.strip()]
+    
+    exclude_terms = {
+        # Generic terms
+        'fiction', 'non-fiction', 'nonfiction', 'literature', 'general',
+        'juvenile', 'adult', 'young adult', 'large print',
+    }
+    
+    valid_categories = []
+    for cat in categories:
+        if not cat or not isinstance(cat, str):
+            continue
+        
+        cat_lower = cat.strip().lower()
+        
+        # Skip empty or too short categories
+        if len(cat_lower) < 3:
+            continue
+        
+        # Skip generic terms
+        if cat_lower in exclude_terms:
+            continue
+        
+        # Skip if matches author name parts
+        if author_parts:
+            # Check if category contains author name parts
+            cat_words = cat_lower.replace('-', ' ').replace('_', ' ').split()
+            if any(part in cat_words for part in author_parts if len(part) > 2):
+                continue
+            # Check if category is similar to author name (e.g., "levine-paul" vs "Paul Levine")
+            author_normalized = '-'.join(author_parts)
+            if author_normalized in cat_lower or cat_lower in author_normalized:
+                continue
+        
+        # Skip hyphenated lowercase patterns (likely author names like "levine-paul")
+        import re
+        if re.match(r'^[a-z]+-[a-z]+$', cat_lower):
+            continue
+        
+        valid_categories.append(cat.strip())
+    
+    return valid_categories
+
 def merge_biblioman_data_into_book(simplified_book, biblioman_data):
     """
     Merge Biblioman metadata into SimplifiedBook object.
@@ -5131,17 +5192,27 @@ def merge_biblioman_data_into_book(simplified_book, biblioman_data):
         simplified_book.page_count = biblioman_data['page_count']
     
     # Categories: Merge Biblioman categories with CSV categories (avoid duplicates)
+    # Filter out invalid categories like author names
     if biblioman_data.get('categories'):
         existing_cats = simplified_book.categories or []
         biblioman_cats = biblioman_data['categories']
         if isinstance(biblioman_cats, list):
+            # Filter invalid categories (author names, etc.)
+            author_name = simplified_book.author or biblioman_data.get('authors', '')
+            filtered_biblioman_cats = _filter_invalid_categories(biblioman_cats, author_name)
+            
             # Merge categories, avoiding duplicates
             seen = set(c.lower() for c in existing_cats if c)
-            for cat in biblioman_cats:
+            for cat in filtered_biblioman_cats:
                 if cat and cat.lower() not in seen:
                     existing_cats.append(cat)
                     seen.add(cat.lower())
             simplified_book.categories = existing_cats
+    
+    # Also filter existing CSV categories to remove author names
+    if simplified_book.categories:
+        author_name = simplified_book.author or ''
+        simplified_book.categories = _filter_invalid_categories(simplified_book.categories, author_name)
     
     # Series: Use Biblioman if CSV doesn't have one
     if biblioman_data.get('series') and not simplified_book.series:

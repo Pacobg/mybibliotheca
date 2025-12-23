@@ -178,6 +178,67 @@ class SimplifiedBookService:
         self.custom_field_service = KuzuCustomFieldService()
         # Using global safe_execute_kuzu_query for thread-safe database access
     
+    def _filter_invalid_categories(self, categories, author_name=None):
+        """
+        Filter out invalid categories like author names, generic terms, etc.
+        
+        Args:
+            categories: List of category strings
+            author_name: Author name to filter out if present in categories
+        
+        Returns:
+            Filtered list of valid categories
+        """
+        if not categories:
+            return []
+        
+        # Normalize author name for comparison
+        author_parts = []
+        if author_name:
+            # Split author name into parts (first name, last name, etc.)
+            author_parts = [part.strip().lower() for part in author_name.replace(',', ' ').split() if part.strip()]
+        
+        exclude_terms = {
+            # Generic terms
+            'fiction', 'non-fiction', 'nonfiction', 'literature', 'general',
+            'juvenile', 'adult', 'young adult', 'large print',
+        }
+        
+        valid_categories = []
+        for cat in categories:
+            if not cat or not isinstance(cat, str):
+                continue
+            
+            cat_lower = cat.strip().lower()
+            
+            # Skip empty or too short categories
+            if len(cat_lower) < 3:
+                continue
+            
+            # Skip generic terms
+            if cat_lower in exclude_terms:
+                continue
+            
+            # Skip if matches author name parts
+            if author_parts:
+                # Check if category contains author name parts
+                cat_words = cat_lower.replace('-', ' ').replace('_', ' ').split()
+                if any(part in cat_words for part in author_parts if len(part) > 2):
+                    continue
+                # Check if category is similar to author name (e.g., "levine-paul" vs "Paul Levine")
+                author_normalized = '-'.join(author_parts)
+                if author_normalized in cat_lower or cat_lower in author_normalized:
+                    continue
+            
+            # Skip hyphenated lowercase patterns (likely author names like "levine-paul")
+            import re
+            if re.match(r'^[a-z]+-[a-z]+$', cat_lower):
+                continue
+            
+            valid_categories.append(cat.strip())
+        
+        return valid_categories
+    
     def _convert_to_date(self, date_value):
         """Convert various date formats to a format suitable for KuzuDB DATE type."""
         from datetime import date, datetime
@@ -1372,12 +1433,16 @@ class SimplifiedBookService:
                     # Handle categories field - ensure it's always a list
                     if value:
                         if isinstance(value, list):
-                            book_data['categories'] = value
+                            categories_list = value
                         elif isinstance(value, str):
                             # Split comma-separated categories and clean them
-                            book_data['categories'] = [cat.strip() for cat in value.split(',') if cat.strip()]
+                            categories_list = [cat.strip() for cat in value.split(',') if cat.strip()]
                         else:
-                            book_data['categories'] = [str(value)]
+                            categories_list = [str(value)]
+                        
+                        # Filter out invalid categories (author names, etc.)
+                        author_name = book_data.get('author', '')
+                        book_data['categories'] = self._filter_invalid_categories(categories_list, author_name)
                     else:
                         book_data['categories'] = []
                 elif book_field not in ['ignore', 'reading_status', 'rating', 'finish_date', 'personal_notes']:
