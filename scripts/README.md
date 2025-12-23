@@ -33,6 +33,47 @@ python scripts/clear_all_books.py
 
 ---
 
+#### `cleanup_categories.py`
+**Cleanup Invalid Categories from Books**
+
+A script to clean up invalid and duplicate categories from all books in the database.
+
+**Usage:**
+```bash
+# Dry run (see what would be changed without making changes)
+python scripts/cleanup_categories.py --dry-run
+
+# Actually cleanup categories
+python scripts/cleanup_categories.py
+```
+
+**Requirements:**
+- Must be run in development mode (FLASK_ENV=development or DEBUG=True)
+- Requires explicit confirmation: type 'CLEANUP CATEGORIES' (or 'YES' for dry run)
+
+**What it does:**
+- Removes custom tags like "Books-i-own", "to-read", "my-library", etc.
+- Removes duplicate categories (case-insensitive)
+- Removes author names from categories
+- Removes generic terms like "fiction", "literature", etc.
+- Updates books with cleaned categories
+
+**What gets removed:**
+- Custom tags: "Books-i-own", "i-own", "own", "to-read", "want-to-read", etc.
+- Status indicators: "currently-reading", "read", "favorites", etc.
+- Library tags: "my-library", "personal-library", "my-collection", etc.
+- Media type tags: "ebook", "audiobook", "physical", "hardcover", "paperback", etc.
+- Author names that appear as categories
+- Duplicate categories (case-insensitive)
+
+**Safety:**
+- Only works in development mode
+- Requires explicit confirmation
+- Shows progress and summary
+- Supports dry-run mode to preview changes
+
+---
+
 ## Default Import Templates
 
 This directory also contains scripts and functionality for managing default import templates in MyBibliotheca.
