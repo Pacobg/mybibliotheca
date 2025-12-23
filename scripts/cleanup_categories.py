@@ -72,20 +72,23 @@ def check_dev_mode():
     flask_debug = os.getenv('FLASK_DEBUG', '').lower() in ('1', 'true', 'on', 'yes')
     mybibliotheca_debug = os.getenv('MYBIBLIOTHECA_DEBUG', '').lower() in ('1', 'true', 'on', 'yes')
     
+    # First check environment variables
+    if flask_env == 'development' or flask_debug or mybibliotheca_debug:
+        return True
+    
+    # Then check config if available
     try:
         app = create_app()
         with app.app_context():
             is_dev = (
-                flask_env == 'development' or 
-                flask_debug or 
-                mybibliotheca_debug or
                 (hasattr(Config, 'DEBUG') and Config.DEBUG) or
+                (hasattr(Config, 'DEBUG_MODE') and Config.DEBUG_MODE) or
                 (hasattr(Config, 'FLASK_ENV') and Config.FLASK_ENV == 'development')
             )
-    except Exception:
-        is_dev = flask_env == 'development' or flask_debug or mybibliotheca_debug
-    
-    return is_dev
+            return is_dev
+    except Exception as e:
+        logger.debug(f"Could not check config: {e}")
+        return False
 
 
 def _filter_invalid_categories(categories, author_name=None):
