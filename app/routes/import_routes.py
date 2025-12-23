@@ -5133,21 +5133,110 @@ def merge_biblioman_data_into_book(simplified_book, biblioman_data):
     if biblioman_data.get('title'):
         simplified_book.title = biblioman_data['title']
     
-    # Authors: Prefer Biblioman authors
+    # Authors: Prefer Biblioman authors, prioritize Bulgarian (Cyrillic) names
     if biblioman_data.get('authors'):
         authors_str = biblioman_data['authors']
         if isinstance(authors_str, str):
-            authors_list = [a.strip() for a in authors_str.split(',') if a.strip()]
+            # Split by comma or semicolon (some formats use semicolon)
+            authors_list = []
+            if ';' in authors_str:
+                authors_list = [a.strip() for a in authors_str.split(';') if a.strip()]
+            else:
+                authors_list = [a.strip() for a in authors_str.split(',') if a.strip()]
+            
             if authors_list:
-                simplified_book.author = authors_list[0]
-                if len(authors_list) > 1:
-                    simplified_book.additional_authors = ', '.join(authors_list[1:])
+                # Find Bulgarian (Cyrillic) author name if available
+                bulgarian_author = None
+                english_author = None
+                
+                for author in authors_list:
+                    # Check if author name contains Cyrillic characters
+                    has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in author)
+                    if has_cyrillic:
+                        bulgarian_author = author
+                    elif not english_author:
+                        english_author = author
+                
+                # Prioritize Bulgarian author, fallback to English
+                if bulgarian_author:
+                    simplified_book.author = bulgarian_author
+                    # Add English author as additional if different
+                    if english_author and english_author != bulgarian_author:
+                        simplified_book.additional_authors = english_author
+                        # Add any other authors
+                        other_authors = [a for a in authors_list if a != bulgarian_author and a != english_author]
+                        if other_authors:
+                            if simplified_book.additional_authors:
+                                simplified_book.additional_authors += ', ' + ', '.join(other_authors)
+                            else:
+                                simplified_book.additional_authors = ', '.join(other_authors)
+                    else:
+                        # Add other authors (excluding the Bulgarian one)
+                        other_authors = [a for a in authors_list if a != bulgarian_author]
+                        if other_authors:
+                            simplified_book.additional_authors = ', '.join(other_authors)
+                elif english_author:
+                    simplified_book.author = english_author
+                    # Add other authors
+                    other_authors = [a for a in authors_list if a != english_author]
+                    if other_authors:
+                        simplified_book.additional_authors = ', '.join(other_authors)
+                else:
+                    # Fallback: use first author
+                    simplified_book.author = authors_list[0]
+                    if len(authors_list) > 1:
+                        simplified_book.additional_authors = ', '.join(authors_list[1:])
         elif isinstance(biblioman_data.get('authors_list'), list):
             authors_list = biblioman_data['authors_list']
             if authors_list:
-                simplified_book.author = authors_list[0]
-                if len(authors_list) > 1:
-                    simplified_book.additional_authors = ', '.join(authors_list[1:])
+                # Find Bulgarian (Cyrillic) author name if available
+                bulgarian_author = None
+                english_author = None
+                
+                for author in authors_list:
+                    author_str = author if isinstance(author, str) else str(author)
+                    # Check if author name contains Cyrillic characters
+                    has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in author_str)
+                    if has_cyrillic:
+                        bulgarian_author = author_str
+                    elif not english_author:
+                        english_author = author_str
+                
+                # Prioritize Bulgarian author, fallback to English
+                if bulgarian_author:
+                    simplified_book.author = bulgarian_author
+                    # Add English author as additional if different
+                    if english_author and english_author != bulgarian_author:
+                        simplified_book.additional_authors = english_author
+                        # Add any other authors
+                        other_authors = [a if isinstance(a, str) else str(a) for a in authors_list 
+                                       if (a if isinstance(a, str) else str(a)) != bulgarian_author 
+                                       and (a if isinstance(a, str) else str(a)) != english_author]
+                        if other_authors:
+                            if simplified_book.additional_authors:
+                                simplified_book.additional_authors += ', ' + ', '.join(other_authors)
+                            else:
+                                simplified_book.additional_authors = ', '.join(other_authors)
+                    else:
+                        # Add other authors (excluding the Bulgarian one)
+                        other_authors = [a if isinstance(a, str) else str(a) for a in authors_list 
+                                       if (a if isinstance(a, str) else str(a)) != bulgarian_author]
+                        if other_authors:
+                            simplified_book.additional_authors = ', '.join(other_authors)
+                elif english_author:
+                    simplified_book.author = english_author
+                    # Add other authors
+                    other_authors = [a if isinstance(a, str) else str(a) for a in authors_list 
+                                   if (a if isinstance(a, str) else str(a)) != english_author]
+                    if other_authors:
+                        simplified_book.additional_authors = ', '.join(other_authors)
+                else:
+                    # Fallback: use first author
+                    first_author = authors_list[0] if isinstance(authors_list[0], str) else str(authors_list[0])
+                    simplified_book.author = first_author
+                    if len(authors_list) > 1:
+                        other_authors = [a if isinstance(a, str) else str(a) for a in authors_list[1:]]
+                        simplified_book.additional_authors = ', '.join(other_authors)
     
     # Description: Use Biblioman if CSV doesn't have one OR Biblioman has longer/better description
     if biblioman_data.get('description'):
