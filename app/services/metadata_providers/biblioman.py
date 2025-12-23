@@ -361,25 +361,35 @@ class BibliomanProvider:
                     logger.debug(f"Biblioman: Using existing full URL: {cover_url}")
                 else:
                     # It's just a filename, generate full URL
-                    # Format: {chitanka_id}-{hash}.jpg -> convert to full URL
+                    # Format: {id}-{hash}.jpg -> convert to full URL
+                    # IMPORTANT: cover_field might contain book_id instead of chitanka_id
+                    # We need to use chitanka_id in the URL, not book_id
                     cover_filename = cover_field.strip()
                     logger.debug(f"Biblioman: Generating URL from filename: {cover_filename}")
                     if '-' in cover_filename and '.' in cover_filename:
-                        # Extract chitanka_id from filename (format: {chitanka_id}-{hash}.jpg)
-                        # For chitanka_id=16516, last 4 digits are 6516 -> path: 6/5/1/6
-                        chitanka_str = str(chitanka_id)
-                        if len(chitanka_str) >= 4:
-                            # Take last 4 digits and split them individually
-                            last_four = chitanka_str[-4:]
-                            digits_path = '/'.join(list(last_four))
-                            # Use the filename from database, but ensure .1000.jpg extension
-                            base_filename = cover_filename.replace('.jpg', '').replace('.jpeg', '')
-                            cover_url = f"https://biblioman.chitanka.info/thumb/covers/{digits_path}/{base_filename}.1000.jpg"
-                            logger.debug(f"Biblioman: Generated cover URL: {cover_url}")
+                        # Extract hash from filename (format: {id}-{hash}.jpg)
+                        # The hash is the part after the first dash
+                        parts = cover_filename.split('-', 1)
+                        if len(parts) == 2:
+                            hash_part = parts[1].replace('.jpg', '').replace('.jpeg', '')
+                            # Use chitanka_id (not book_id) to build the filename
+                            chitanka_str = str(chitanka_id)
+                            if len(chitanka_str) >= 4:
+                                # Take last 4 digits and split them individually
+                                last_four = chitanka_str[-4:]
+                                digits_path = '/'.join(list(last_four))
+                                # Build filename using chitanka_id + hash from cover_field
+                                base_filename = f"{chitanka_id}-{hash_part}"
+                                cover_url = f"https://biblioman.chitanka.info/thumb/covers/{digits_path}/{base_filename}.1000.jpg"
+                                logger.debug(f"Biblioman: Generated cover URL using chitanka_id={chitanka_id}: {cover_url}")
+                            else:
+                                # Fallback: use simple format
+                                cover_url = f"https://biblioman.chitanka.info/books/{chitanka_id}/cover"
+                                logger.debug(f"Biblioman: Using fallback cover URL (chitanka_id too short): {cover_url}")
                         else:
                             # Fallback: use simple format
                             cover_url = f"https://biblioman.chitanka.info/books/{chitanka_id}/cover"
-                            logger.debug(f"Biblioman: Using fallback cover URL (chitanka_id too short): {cover_url}")
+                            logger.debug(f"Biblioman: Using fallback cover URL (invalid filename format): {cover_url}")
                     else:
                         # Fallback: use simple format
                         cover_url = f"https://biblioman.chitanka.info/books/{chitanka_id}/cover"
