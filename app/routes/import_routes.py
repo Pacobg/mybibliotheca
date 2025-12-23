@@ -4806,9 +4806,46 @@ async def process_biblioman_csv_import(import_config):
     try:
         source_filename = os.path.basename(csv_file_path)
         
+        # Batch processing configuration
+        BATCH_SIZE = 200  # Process 200 books per batch
+        BATCH_DELAY = 1.0  # Delay between batches in seconds (to avoid database overload)
+        
+        # Step 1: Read all rows into memory
+        logger.info(f"📖 [BIBLIOMAN_IMPORT] Reading CSV file: {source_filename}")
+        all_rows = []
         with open(csv_file_path, 'r', encoding='utf-8') as fh:
             reader = csv.DictReader(fh)
-            for row_num, row in enumerate(reader, 1):
+            for row in reader:
+                all_rows.append(row)
+        
+        total_rows = len(all_rows)
+        logger.info(f"📊 [BIBLIOMAN_IMPORT] Total rows to process: {total_rows}")
+        
+        # Update total in job data
+        safe_update_import_job(user_id, task_id, {'total': total_rows})
+        
+        # Step 2: Process in batches
+        total_batches = (total_rows + BATCH_SIZE - 1) // BATCH_SIZE  # Ceiling division
+        logger.info(f"🔄 [BIBLIOMAN_IMPORT] Processing {total_rows} books in {total_batches} batches of {BATCH_SIZE}")
+        
+        for batch_num in range(total_batches):
+            batch_start = batch_num * BATCH_SIZE
+            batch_end = min(batch_start + BATCH_SIZE, total_rows)
+            batch_rows = all_rows[batch_start:batch_end]
+            
+            logger.info(f"📦 [BIBLIOMAN_IMPORT] Processing batch {batch_num + 1}/{total_batches} (rows {batch_start + 1}-{batch_end})")
+            
+            # Update progress with batch info
+            safe_update_import_job(user_id, task_id, {
+                'status': 'processing',
+                'current_batch': batch_num + 1,
+                'total_batches': total_batches,
+                'recent_activity': [f'Processing batch {batch_num + 1} of {total_batches} ({len(batch_rows)} books)...']
+            })
+            
+            # Process each row in the current batch
+            for row_num_offset, row in enumerate(batch_rows):
+                row_num = batch_start + row_num_offset + 1  # 1-based row number
                 try:
                     # Build book data from CSV row
                     simplified_book = simplified_service.build_book_data_from_row(row, mappings)
@@ -5034,6 +5071,33 @@ async def process_biblioman_csv_import(import_config):
                     pending_processed_entries.clear()
                     last_progress_emit = time.perf_counter()
                     continue
+            
+            # Batch completed - update progress and add delay before next batch
+            batch_progress_update = {
+                'processed': processed_count,
+                'success': success_count,
+                'errors': error_count,
+                'skipped': skipped_count,
+                'enriched': enriched_count,
+                'covers_downloaded': covers_downloaded,
+                'descriptions_improved': descriptions_improved,
+                'not_found_count': not_found_count,
+                'current_batch': batch_num + 1,
+                'total_batches': total_batches,
+            }
+            _update_import_progress(
+                user_id,
+                task_id,
+                updates=batch_progress_update,
+                processed_book=pending_processed_entries,
+            )
+            update_job_in_kuzu(task_id, batch_progress_update)
+            pending_processed_entries.clear()
+            
+            # Add delay between batches to avoid database overload (except for last batch)
+            if batch_num < total_batches - 1:
+                logger.info(f"⏸️ [BIBLIOMAN_IMPORT] Batch {batch_num + 1} completed. Waiting {BATCH_DELAY}s before next batch...")
+                await asyncio.sleep(BATCH_DELAY)
         
         # Final update
         if pending_processed_entries:

@@ -171,6 +171,7 @@
                     <ul class="list-unstyled small">
                         <li><strong>Started:</strong> <span id="startTime">{{ start_time }}</span></li>
                         <li><strong>Status:</strong> <span id="jobStatus" class="badge bg-primary">Running</span></li>
+                        <li id="batchInfo" style="display: none;"><strong>Batch:</strong> <span id="batchProgress">-</span></li>
                     </ul>
                     
                     <hr>
@@ -352,6 +353,19 @@ function updateProgress() {
                 });
             }
 
+            // Show batch information for Biblioman imports
+            const isBibliomanImport = data.import_type === 'biblioman_csv' || window.location.pathname.includes('biblioman');
+            const batchInfoElement = document.getElementById('batchInfo');
+            const batchProgressElement = document.getElementById('batchProgress');
+            if (isBibliomanImport && data.current_batch && data.total_batches) {
+                if (batchInfoElement) batchInfoElement.style.display = 'block';
+                if (batchProgressElement) {
+                    batchProgressElement.textContent = `${data.current_batch} / ${data.total_batches}`;
+                }
+            } else if (batchInfoElement) {
+                batchInfoElement.style.display = 'none';
+            }
+            
             // Update counters
             if (isReadingHistory) {
                 // Remap tiles to reading history semantics
