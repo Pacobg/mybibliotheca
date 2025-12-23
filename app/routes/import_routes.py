@@ -4903,14 +4903,26 @@ async def process_biblioman_csv_import(import_config):
                                     
                                     # Merge categories
                                     if biblioman_data.get('categories'):
-                                        existing_cats = existing_book.categories or []
+                                        # Convert existing categories to strings (they might be Category objects)
+                                        existing_cats = []
+                                        if existing_book.categories:
+                                            for cat in existing_book.categories:
+                                                if isinstance(cat, str):
+                                                    existing_cats.append(cat)
+                                                elif hasattr(cat, 'name'):
+                                                    existing_cats.append(cat.name)
+                                                else:
+                                                    existing_cats.append(str(cat))
+                                        
                                         biblioman_cats = biblioman_data['categories']
                                         if isinstance(biblioman_cats, list):
+                                            # Convert to lowercase for comparison
                                             seen = set(c.lower() for c in existing_cats if c)
                                             for cat in biblioman_cats:
-                                                if cat and cat.lower() not in seen:
-                                                    existing_cats.append(cat)
-                                                    seen.add(cat.lower())
+                                                cat_str = cat if isinstance(cat, str) else str(cat)
+                                                if cat_str and cat_str.lower() not in seen:
+                                                    existing_cats.append(cat_str)
+                                                    seen.add(cat_str.lower())
                                             updates['categories'] = existing_cats
                                     
                                     if updates:
@@ -4923,7 +4935,7 @@ async def process_biblioman_csv_import(import_config):
                         # Add book to user's library (will merge if already exists)
                         try:
                             from app.infrastructure.kuzu_repositories import KuzuUserBookRepository
-                            user_book_repo = KuzuUserBookRepository(user_id=user_id)
+                            user_book_repo = KuzuUserBookRepository()
                             added = await user_book_repo.add_book_to_library(
                                 user_id=user_id,
                                 book_id=existing_book_id,

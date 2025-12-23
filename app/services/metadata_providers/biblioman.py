@@ -332,16 +332,22 @@ class BibliomanProvider:
         import builtins
         
         # Extract chitanka_id from cover field if chitanka_id is NULL
-        # Cover format: {chitanka_id}-{hash}.jpg (e.g., "16516-61e2e079eca99.jpg")
+        # Cover format: {id}-{hash}.jpg (e.g., "16516-61e2e079eca99.jpg")
+        # NOTE: cover_field might contain book_id instead of chitanka_id
+        # We should NOT extract chitanka_id from cover_field if we already have chitanka_id
+        # Only extract if chitanka_id is missing
         if not chitanka_id and cover_field and isinstance(cover_field, str):
-            # Try to extract chitanka_id from cover filename
+            # Try to extract potential ID from cover filename
+            # But be careful - this might be book_id, not chitanka_id
             cover_filename = cover_field.strip()
             if '-' in cover_filename:
                 try:
                     potential_id = cover_filename.split('-')[0]
                     if potential_id.isdigit():
+                        # Only use this as chitanka_id if we don't have one
+                        # This is a fallback, but might not always be correct
                         chitanka_id = int(potential_id)
-                        builtins.print(f"🔍 [BIBLIOMAN][FORMAT] Extracted chitanka_id={chitanka_id} from cover field: {cover_field}")
+                        builtins.print(f"🔍 [BIBLIOMAN][FORMAT] Extracted potential chitanka_id={chitanka_id} from cover field: {cover_field} (WARNING: might be book_id)")
                 except (ValueError, IndexError):
                     pass
         
@@ -382,6 +388,15 @@ class BibliomanProvider:
                                 base_filename = f"{chitanka_id}-{hash_part}"
                                 cover_url = f"https://biblioman.chitanka.info/thumb/covers/{digits_path}/{base_filename}.1000.jpg"
                                 logger.debug(f"Biblioman: Generated cover URL using chitanka_id={chitanka_id}: {cover_url}")
+                                
+                                # If the first part of cover_filename matches book_id (not chitanka_id),
+                                # the hash might be wrong. Try alternative: use cover_field as-is if it looks like chitanka_id format
+                                first_part = parts[0]
+                                if first_part.isdigit() and int(first_part) != chitanka_id:
+                                    # cover_field starts with book_id, not chitanka_id
+                                    # Try using the original cover_filename format but with chitanka_id path
+                                    # This is a fallback - the hash might still work
+                                    logger.debug(f"Biblioman: cover_field starts with book_id={first_part}, but chitanka_id={chitanka_id}, using chitanka_id-based URL")
                             else:
                                 # Fallback: use simple format
                                 cover_url = f"https://biblioman.chitanka.info/books/{chitanka_id}/cover"
