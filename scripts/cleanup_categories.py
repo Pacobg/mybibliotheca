@@ -256,14 +256,20 @@ async def cleanup_book_categories_async(book_id, filtered_categories):
 
 async def cleanup_all_categories_async(dry_run=False):
     """Cleanup categories for all books"""
-    logger.info("📚 Fetching all books with categories...")
-    books = get_all_books_with_categories()
-    
-    if not books:
-        logger.info("✅ No books found in the database.")
-        return True
-    
-    logger.info(f"📊 Found {len(books)} books to process.")
+    try:
+        logger.info("📚 Fetching all books with categories...")
+        books = get_all_books_with_categories()
+        
+        if not books:
+            logger.info("✅ No books found in the database.")
+            return True
+        
+        logger.info(f"📊 Found {len(books)} books to process.")
+    except Exception as e:
+        logger.error(f"❌ Error fetching books: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
     
     total_removed = 0
     total_kept = 0
@@ -369,8 +375,9 @@ def main():
     if confirmation_ok:
         logger.info("🔄 Starting category cleanup...")
         try:
-            run_async(cleanup_all_categories_async(dry_run=args.dry_run))
-            logger.info("✅ Category cleanup process completed.")
+            logger.info("📋 Calling cleanup function...")
+            result = run_async(cleanup_all_categories_async(dry_run=args.dry_run))
+            logger.info(f"✅ Category cleanup process completed. Result: {result}")
         except Exception as e:
             logger.error(f"❌ An unexpected error occurred during cleanup: {e}")
             import traceback
