@@ -297,16 +297,26 @@ function updateProgress() {
             progressBar.setAttribute('aria-valuenow', percentage);
             progressBar.textContent = percentage + '%';
             
-            // Update progress info (processed / total)
+            // Update progress info (processed / total) - always show if we have data
             const progressInfoEl = document.getElementById('progressInfo');
             const progressTextEl = document.getElementById('progressText');
             if (totalForProgress > 0 && progressInfoEl && progressTextEl) {
                 progressInfoEl.style.display = 'block';
                 progressTextEl.textContent = `${processedCount} / ${totalForProgress}`;
+            } else if (data.total && progressInfoEl && progressTextEl) {
+                // Fallback to data.total if totalForProgress is not set
+                const total = data.total || 0;
+                progressInfoEl.style.display = 'block';
+                progressTextEl.textContent = `${processedCount} / ${total}`;
+                totalForProgress = total; // Update for later calculations
             }
             
             // Calculate and display remaining books, speed, and ETA
-            if (totalForProgress > 0 && processedCount > 0 && (data.status === 'processing' || data.status === 'running' || data.status === 'pending')) {
+            // Show for Biblioman imports and other imports when processing
+            const isBibliomanImport = data.import_type === 'biblioman_csv' || window.location.pathname.includes('biblioman');
+            const shouldShowProgress = isBibliomanImport || (totalForProgress > 0 && processedCount > 0 && (data.status === 'processing' || data.status === 'running' || data.status === 'pending'));
+            
+            if (shouldShowProgress && totalForProgress > 0) {
                 const remaining = totalForProgress - processedCount;
                 const remainingInfoEl = document.getElementById('remainingInfo');
                 const remainingCountEl = document.getElementById('remainingCount');
