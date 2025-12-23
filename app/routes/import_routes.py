@@ -4799,6 +4799,7 @@ async def process_biblioman_csv_import(import_config):
     default_media_type = get_default_book_format()
     
     processed_count = success_count = error_count = skipped_count = enriched_count = 0
+    covers_downloaded = descriptions_improved = not_found_count = 0
     last_progress_emit = time.perf_counter()
     pending_processed_entries: List[dict] = []
     
@@ -4838,11 +4839,27 @@ async def process_biblioman_csv_import(import_config):
                             biblioman_data = None
                     
                     if biblioman_data:
+                        # Track what was improved before merging
+                        had_description_before = bool(simplified_book.description)
+                        description_length_before = len(simplified_book.description or '')
+                        had_cover_before = bool(simplified_book.cover_url)
+                        
                         # Merge Biblioman data as primary source
                         simplified_book = merge_biblioman_data_into_book(simplified_book, biblioman_data)
                         enriched_count += 1
+                        
+                        # Track improvements
+                        if biblioman_data.get('cover_url') or biblioman_data.get('chitanka_cover_url'):
+                            covers_downloaded += 1
+                        if biblioman_data.get('description'):
+                            description_length_after = len(simplified_book.description or '')
+                            if not had_description_before or description_length_after > description_length_before:
+                                descriptions_improved += 1
+                        
                         logger.info(f"✅ [BIBLIOMAN_IMPORT] Enriched book '{simplified_book.title}' with Biblioman data")
                     else:
+                        # Track books not found in Biblioman
+                        not_found_count += 1
                         # Even if Biblioman enrichment failed, continue with CSV data
                         logger.debug(f"ℹ️ [BIBLIOMAN_IMPORT] No Biblioman data found for '{simplified_book.title}', using CSV data only")
                     
@@ -4964,6 +4981,9 @@ async def process_biblioman_csv_import(import_config):
                         'errors': error_count,
                         'skipped': skipped_count,
                         'enriched': enriched_count,
+                        'covers_downloaded': covers_downloaded,
+                        'descriptions_improved': descriptions_improved,
+                        'not_found_count': not_found_count,
                         'current_book': simplified_book.title,
                     }
                     
@@ -5040,6 +5060,9 @@ async def process_biblioman_csv_import(import_config):
             'errors': error_count,
             'skipped': skipped_count,
             'enriched': enriched_count,
+            'covers_downloaded': covers_downloaded,
+            'descriptions_improved': descriptions_improved,
+            'not_found_count': not_found_count,
             'current_book': None,
             'recent_activity': [final_activity],
         }

@@ -455,9 +455,42 @@ function updateProgress() {
                         `<i class=\"fas fa-check-circle\"></i> Listening sync completed.`;
                     document.getElementById('statusMessage').className = 'alert alert-success';
                 } else {
+                    // Build detailed statistics message
+                    let statsParts = [];
+                    statsParts.push(`✅ ${data.success || 0} книги импортирани`);
+                    
+                    // Biblioman enrichment stats (for Biblioman CSV imports)
+                    if (data.enriched !== undefined && data.enriched > 0) {
+                        statsParts.push(`📚 ${data.enriched} обогатени с Biblioman данни`);
+                    }
+                    if (data.covers_downloaded !== undefined && data.covers_downloaded > 0) {
+                        statsParts.push(`🖼️ ${data.covers_downloaded} корици изтеглени`);
+                    }
+                    if (data.descriptions_improved !== undefined && data.descriptions_improved > 0) {
+                        statsParts.push(`📖 ${data.descriptions_improved} описания подобрени`);
+                    }
+                    if (data.not_found_count !== undefined && data.not_found_count > 0) {
+                        statsParts.push(`⚠️ ${data.not_found_count} не намерени в Biblioman`);
+                    }
+                    
+                    // Errors and skipped
+                    if (data.errors && data.errors > 0) {
+                        statsParts.push(`❌ ${data.errors} грешки`);
+                    }
+                    if (data.skipped && data.skipped > 0) {
+                        statsParts.push(`⏭️ ${data.skipped} пропуснати`);
+                    }
+                    
+                    const statusIcon = (data.errors && data.errors > 0) ? 
+                        '<i class="fas fa-exclamation-triangle"></i>' : 
+                        '<i class="fas fa-check-circle"></i>';
+                    const alertClass = (data.errors && data.errors > 0) ? 
+                        'alert alert-warning' : 
+                        'alert alert-success';
+                    
                     document.getElementById('statusMessage').innerHTML = 
-                        `<i class="fas fa-check-circle"></i> Import completed! Successfully imported ${data.success} books.`;
-                    document.getElementById('statusMessage').className = 'alert alert-success';
+                        `${statusIcon} Импортът завърши!<br><div class="mt-2">${statsParts.join('<br>')}</div>`;
+                    document.getElementById('statusMessage').className = alertClass;
                     document.getElementById('completionButtons').classList.remove('d-none');
                     const errorsBtn = document.getElementById('downloadErrorsBtn');
                     if (errorsBtn) {
