@@ -375,9 +375,12 @@ def main():
     if confirmation_ok:
         logger.info("🔄 Starting category cleanup...")
         try:
-            logger.info("📋 Calling cleanup function...")
-            result = run_async(cleanup_all_categories_async(dry_run=args.dry_run))
-            logger.info(f"✅ Category cleanup process completed. Result: {result}")
+            # Create app context to ensure database connections work
+            app = create_app()
+            with app.app_context():
+                logger.info("📋 Calling cleanup function...")
+                result = run_async(cleanup_all_categories_async(dry_run=args.dry_run))
+                logger.info(f"✅ Category cleanup process completed. Result: {result}")
         except Exception as e:
             logger.error(f"❌ An unexpected error occurred during cleanup: {e}")
             import traceback
