@@ -172,6 +172,10 @@
                         <li><strong>Started:</strong> <span id="startTime">{{ start_time }}</span></li>
                         <li><strong>Status:</strong> <span id="jobStatus" class="badge bg-primary">Running</span></li>
                         <li id="batchInfo" style="display: none;"><strong>Batch:</strong> <span id="batchProgress">-</span></li>
+                        <li id="progressInfo" style="display: none;"><strong>Progress:</strong> <span id="progressText">-</span></li>
+                        <li id="remainingInfo" style="display: none;"><strong>Remaining:</strong> <span id="remainingCount">-</span> books</li>
+                        <li id="speedInfo" style="display: none;"><strong>Speed:</strong> <span id="currentSpeed">-</span> books/min</li>
+                        <li id="etaInfo" style="display: none;"><strong>ETA:</strong> <span id="estimatedTime">-</span></li>
                     </ul>
                     
                     <hr>
@@ -194,6 +198,10 @@ let startTime = new Date('{{ start_time }}');
 const statusBuckets = {success: [], merged: [], errors: [], skipped: [], unmatched: []};
 // Global label map (updated dynamically for reading history relabeling)
 let labelMap = {processed:'Processed', success:'Success', merged:'Merged', errors:'Errors', skipped:'Skipped', unmatched:'Unmatched'};
+// ETA calculation variables
+let lastUpdateTime = new Date();
+let lastProcessedCount = 0;
+let speedHistory = []; // Keep last 5 speed measurements for averaging
 
 function toggleStatusDetails(statusKey, label){
     const container = document.getElementById('statusDetails');
@@ -288,6 +296,91 @@ function updateProgress() {
             progressBar.style.width = percentage + '%';
             progressBar.setAttribute('aria-valuenow', percentage);
             progressBar.textContent = percentage + '%';
+            
+            // Update progress info (processed / total)
+            const progressInfoEl = document.getElementById('progressInfo');
+            const progressTextEl = document.getElementById('progressText');
+            if (totalForProgress > 0 && progressInfoEl && progressTextEl) {
+                progressInfoEl.style.display = 'block';
+                progressTextEl.textContent = `${processedCount} / ${totalForProgress}`;
+            }
+            
+            // Calculate and display remaining books, speed, and ETA
+            if (totalForProgress > 0 && processedCount > 0 && (data.status === 'processing' || data.status === 'running' || data.status === 'pending')) {
+                const remaining = totalForProgress - processedCount;
+                const remainingInfoEl = document.getElementById('remainingInfo');
+                const remainingCountEl = document.getElementById('remainingCount');
+                if (remainingInfoEl && remainingCountEl) {
+                    remainingInfoEl.style.display = 'block';
+                    remainingCountEl.textContent = remaining;
+                }
+                
+                // Calculate speed (books per minute)
+                const now = new Date();
+                const elapsedMinutes = (now - lastUpdateTime) / (1000 * 60);
+                const processedSinceLastUpdate = processedCount - lastProcessedCount;
+                
+                if (elapsedMinutes > 0 && processedSinceLastUpdate > 0) {
+                    const currentSpeed = processedSinceLastUpdate / elapsedMinutes;
+                    
+                    // Add to speed history (keep last 5 measurements)
+                    speedHistory.push(currentSpeed);
+                    if (speedHistory.length > 5) {
+                        speedHistory.shift();
+                    }
+                    
+                    // Calculate average speed
+                    const avgSpeed = speedHistory.reduce((a, b) => a + b, 0) / speedHistory.length;
+                    const speedRounded = Math.round(avgSpeed * 10) / 10; // Round to 1 decimal
+                    
+                    // Display speed
+                    const speedInfoEl = document.getElementById('speedInfo');
+                    const currentSpeedEl = document.getElementById('currentSpeed');
+                    if (speedInfoEl && currentSpeedEl) {
+                        speedInfoEl.style.display = 'block';
+                        currentSpeedEl.textContent = speedRounded.toFixed(1);
+                    }
+                    
+                    // Calculate ETA
+                    if (avgSpeed > 0 && remaining > 0) {
+                        const estimatedMinutes = remaining / avgSpeed;
+                        const etaInfoEl = document.getElementById('etaInfo');
+                        const estimatedTimeEl = document.getElementById('estimatedTime');
+                        if (etaInfoEl && estimatedTimeEl) {
+                            etaInfoEl.style.display = 'block';
+                            
+                            if (estimatedMinutes < 1) {
+                                estimatedTimeEl.textContent = '< 1 min';
+                            } else if (estimatedMinutes < 60) {
+                                estimatedTimeEl.textContent = `${Math.round(estimatedMinutes)} min`;
+                            } else {
+                                const hours = Math.floor(estimatedMinutes / 60);
+                                const minutes = Math.round(estimatedMinutes % 60);
+                                if (minutes === 0) {
+                                    estimatedTimeEl.textContent = `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+                                } else {
+                                    estimatedTimeEl.textContent = `${hours}h ${minutes}m`;
+                                }
+                            }
+                        }
+                    }
+                    
+                    lastUpdateTime = now;
+                    lastProcessedCount = processedCount;
+                } else if (lastProcessedCount === 0) {
+                    // First update - initialize
+                    lastUpdateTime = now;
+                    lastProcessedCount = processedCount;
+                }
+            } else if (data.status === 'completed' || data.status === 'completed_with_errors') {
+                // Hide ETA info when completed
+                const remainingInfoEl = document.getElementById('remainingInfo');
+                const speedInfoEl = document.getElementById('speedInfo');
+                const etaInfoEl = document.getElementById('etaInfo');
+                if (remainingInfoEl) remainingInfoEl.style.display = 'none';
+                if (speedInfoEl) speedInfoEl.style.display = 'none';
+                if (etaInfoEl) etaInfoEl.style.display = 'none';
+            }
 
             // If reading_history reports processed >= total but status hasn't flipped, treat as completed to avoid hanging UI
             if (
