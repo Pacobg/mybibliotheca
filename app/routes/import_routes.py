@@ -4647,7 +4647,7 @@ def import_biblioman_csv():
     and enriching them with Biblioman DB data (using Biblioman as the primary source).
     
     Features:
-    - Supports up to 200 books per upload
+    - Supports up to 2000 books per upload (processed in batches of 200)
     - Automatically enriches books with Biblioman metadata
     - Uses Biblioman as the base/authority for metadata
     - Handles missing covers and descriptions from Biblioman
@@ -4676,7 +4676,9 @@ def import_biblioman_csv():
         file.save(temp_file.name)
         temp_path = temp_file.name
         
-        # Count rows to check limit (600 books max for Biblioman import)
+        # Count rows to check limit (2000 books max for Biblioman import)
+        # Note: Files are processed in batches of 200 to avoid database overload
+        MAX_BIBLIOMAN_IMPORT_ROWS = 2000
         row_count = 0
         try:
             with open(temp_path, 'r', encoding='utf-8') as csvfile:
@@ -4690,8 +4692,8 @@ def import_biblioman_csv():
                 pass
             return redirect(request.url)
         
-        if row_count > 600:
-            flash(f'Файлът съдържа {row_count} книги. Максималният брой е 600 книги на импорт. Моля, разделете файла на по-малки части.', 'error')
+        if row_count > MAX_BIBLIOMAN_IMPORT_ROWS:
+            flash(f'Файлът съдържа {row_count} книги. Максималният брой е {MAX_BIBLIOMAN_IMPORT_ROWS} книги на импорт. Моля, разделете файла на по-малки части.', 'error')
             try:
                 os.unlink(temp_path)
             except:
