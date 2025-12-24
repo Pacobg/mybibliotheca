@@ -461,10 +461,8 @@ class KuzuBookService:
                     if (value is None or (isinstance(value, str) and not value.strip())) and current_cover:
                         # Skip adding blank cover_url to update statement
                         continue
-                    if hasattr(book, field):
-                        book_dict[field] = getattr(book, field)
-                    else:
-                        book_dict[field] = value
+                    # Always use the new value from updates, not the old value from book object
+                    book_dict[field] = value
                 elif hasattr(book, field):
                     # Get the updated value from the book object
                     book_dict[field] = getattr(book, field)
