@@ -872,6 +872,7 @@ class EnrichmentCommand:
                         
                         # Only try to download if URL is accessible
                         if url_is_accessible:
+                            logger.info(f"🔍 [_save_enriched_books] Starting cover download for '{book['title']}': {new_cover_url[:80]}...")
                             try:
                                 # Use process_image_from_url to download and cache the cover locally
                                 # This will save the image to /covers/ directory and return a local path like /covers/uuid.jpg
@@ -883,22 +884,25 @@ class EnrichmentCommand:
                                     from flask import has_app_context, current_app
                                     if has_app_context():
                                         # Already in app context - use it directly
-                                        logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
+                                        logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}... (has app context)")
                                         local_cover_path = process_image_from_url(new_cover_url)
+                                        logger.info(f"🔍 [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
                                     else:
                                         # No app context - create one
+                                        logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}... (creating app context)")
                                         from app import create_app
                                         app = create_app()
                                         with app.app_context():
-                                            logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
                                             local_cover_path = process_image_from_url(new_cover_url)
-                                except RuntimeError:
+                                            logger.info(f"🔍 [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
+                                except RuntimeError as e:
                                     # No app context available - create one
+                                    logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}... (RuntimeError, creating app context): {e}")
                                     from app import create_app
                                     app = create_app()
                                     with app.app_context():
-                                        logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
                                         local_cover_path = process_image_from_url(new_cover_url)
+                                        logger.info(f"🔍 [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
                                 
                                 if local_cover_path and local_cover_path.startswith('/covers/'):
                                     # Successfully downloaded and cached locally

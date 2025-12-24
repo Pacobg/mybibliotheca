@@ -32790,14 +32790,47 @@ _**Agent (model composer-1, mode Agent)**_
 ---
 
 
+Логиката вече работи:
+
+```
+🔍 [_save_enriched_books] Description lengths: existing=526, new=525, diff=-1
+🔍 [_save_enriched_books] Should update description for 'The Secret History': True
+✅ [_save_enriched_books] Added description to updates for 'The Secret History'
+```
+
+И cover URL-ът е валидиран:
+```
+✅ Cover URL is accessible: https://covers.openlibrary.org/b/isbn/9780140167771-L.jpg...
+```
+
+Логовете спират тук. Проверявам дали има проблем с записването или просто не са показани. Добавям логиране след записването, за да видим резултата:
+
 
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="read_file">
-<details>
-<summary>Tool use: **read_file**</summary>
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
 
-Status: **loading**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Saved.*enriched|update_book|saved_count" in "scripts/enrich_books.py" • 6 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `logger.info(f"💾 Saved \{saved\} enriched books to database")` | L221 |
+| `scripts/enrich_books.py` | `saved_count = 0` | L692 |
+| `scripts/enrich_books.py` | `# Update book using the service's update_book method` | L982 |
+| `scripts/enrich_books.py` | `updated_book = await book_update_service.update_book(book['id'], updates)` | L983 |
+| `scripts/enrich_books.py` | `saved_count += 1` | L986 |
+| `scripts/enrich_books.py` | `return saved_count` | L1196 |
 
 
 </details>
@@ -32810,20 +32843,55 @@ Status: **loading**
 ---
 
 
-
----
-
+Добавям по-подробно логиране преди и след `update_book`, за да видим какво се случва:
 
 
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="read_file">
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+The string to replace was not found in the file.
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
 <details>
-<summary>Tool use: **read_file**</summary>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
 
-Status: **loading**
+- `scripts/enrich_books.py`
+
+Lint results
 
 
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add detailed logging before and after update_book to debug why books are not being saved" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add detailed logging before and after update_book to debug why books are not being saved" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 9de371b] Add detailed logging before and after update_book to debug why books are not being saved
+ 1 file changed, 226 insertions(+)
+To https://github.com/Pacobg/mybibliotheca.git
+   ba7c44a..9de371b  main -&gt; main
+
+```
 </details>
 </tool-use>
 
@@ -32834,6 +32902,81 @@ Status: **loading**
 ---
 
 
+Проверявам текущото състояние на файла:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 4, lines removed: undefined
+
+```diff
+@@ -979,7 +979,11 @@
+                          from app.services.kuzu_book_service import KuzuBookService
+                          book_update_service = KuzuBookService(user_id='system')
++                         
++                         logger.info(f"🔍 [_save_enriched_books] Calling update_book for '{book['title']}' (ID: {book['id']}) with {len(updates)} fields: {list(updates.keys())}")
+                          
+                          # Update book using the service's update_book method
+                          updated_book = await book_update_service.update_book(book['id'], updates)
++                         
++                         logger.info(f"🔍 [_save_enriched_books] update_book returned: {type(updated_book).__name__ if updated_book else 'None'}")
+                          
+                          if updated_book:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add logging for update_book call and return value to debug saving issue" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add logging for update_book call and return value to debug saving issue" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 04b36c7] Add logging for update_book call and return value to debug saving issue
+ 2 files changed, 191 insertions(+)
+To https://github.com/Pacobg/mybibliotheca.git
+   9de371b..04b36c7  main -&gt; main
+
+```
+</details>
+</tool-use>
 
 ---
 
@@ -32842,6 +32985,18 @@ Status: **loading**
 ---
 
 
+Добавих допълнително логиране преди и след `update_book`. При следващото изпълнение ще видим:
+
+1. Какви полета се опитват да се обновят
+2. Какво връща `update_book`
+3. Дали книгата е записана успешно
+
+От предишните логове виждам, че:
+- Описанието се добавя към `updates` успешно (`Should update description: True`)
+- Cover URL-ът е валидиран и е достъпен
+- Но логовете спират преди да видим дали книгата е записана
+
+С новото логиране ще видим точно какво се случва при записването. Стартирайте обогатяването отново и споделете логовете — ще видим дали има проблем с `update_book` или нещо друго.
 
 ---
 
