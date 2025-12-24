@@ -151,12 +151,14 @@ class PerplexityEnricher:
 ВАЖНО: Ако знаеш автора на тази книга, включи го в отговора!
 """
         
-        if isbn:
-            query += f"ISBN: {isbn}\n"
-        if publisher:
-            query += f"ИЗДАТЕЛСТВО: {publisher}\n"
-        
-        query += """
+        if has_cyrillic:
+            # Bulgarian book query
+            if isbn:
+                query += f"ISBN: {isbn}\n"
+            if publisher:
+                query += f"ИЗДАТЕЛСТВО: {publisher}\n"
+            
+            query += """
 
 ВАЖНО: Търся ИЗКЛЮЧИТЕЛНО БЪЛГАРСКОТО издание на тази книга!
 - Ако книгата е превод, търси българския превод
@@ -206,6 +208,62 @@ JSON ФОРМАТ (задължително):
 - Ако НЕ НАМЕРИШ някое поле, използвай null (не празен string!)
 - Не измисляй информация - само точни данни от надеждни източници!
 - JSON-ът трябва да е валиден и да може да се parse-не директно с json.loads()!
+"""
+        else:
+            # English book query
+            if isbn:
+                query += f"ISBN: {isbn}\n"
+            if publisher:
+                query += f"PUBLISHER: {publisher}\n"
+            
+            query += """
+
+IMPORTANT: I'm looking for the ENGLISH edition of this book!
+- If the book is a translation, find the English original
+- If the book is originally English, find the English edition
+- DO NOT search for translations in other languages!
+
+I NEED THE FOLLOWING INFORMATION:
+
+1. **Exact title** in English (may have subtitle)
+2. **Author** - ONE main author in English (e.g., "Donna Tartt" not "Тарт, Дона" or other variants!)
+3. **Publisher** - English/American publisher
+4. **Publication year** in English-speaking country
+5. **ISBN number** (ISBN-10 or ISBN-13)
+6. **Page count**
+7. **Genres/Categories** (2-4 categories)
+8. **Description** - 3-4 sentences in English about what the book is about
+9. **Cover URL** - direct link to image (JPG/PNG)
+
+IMPORTANT:
+- I'm looking for the ENGLISH edition, NOT translations!
+- Cover should be from the English edition
+- If there are multiple editions, prefer the newer one
+- Check sources like: Amazon, Goodreads, Google Books, OpenLibrary
+
+CRITICALLY IMPORTANT: RESPOND ONLY WITH A VALID JSON OBJECT! No markdown code blocks, no text before or after the JSON!
+
+JSON FORMAT (required):
+{{
+    "title": "Exact title",
+    "subtitle": "Subtitle if any",
+    "author": "First Last",
+    "publisher": "Publisher name",
+    "year": "2024",
+    "isbn": "978-0-xxx-xxx-x",
+    "pages": 384,
+    "genres": ["Genre1", "Genre2", "Genre3"],
+    "description": "Description in English...",
+    "cover_url": "https://direct-url-to-cover.jpg",
+    "confidence": 0.95,
+    "sources": ["url1", "url2"]
+}}
+
+RULES:
+- ALWAYS include "title" and "author" fields (required!)
+- If you CANNOT FIND a field, use null (not empty string!)
+- Don't make up information - only accurate data from reliable sources!
+- JSON must be valid and parseable directly with json.loads()!
 """
         
         return query

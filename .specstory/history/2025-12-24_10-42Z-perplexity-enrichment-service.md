@@ -13388,28 +13388,77 @@ Lines added: 22, lines removed: 8
 
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="search_replace">
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 19, lines removed: 5
+
+```diff
+@@ -482,17 +482,31 @@
+                      # Check if existing description has citations
+                      has_citations = bool(re.search(r'\[\d+\]', existing_desc))
++                     
++                     # Check if description language matches title language
++                     title = book.get('title', '') or enriched.get('title', '')
++                     has_cyrillic_title = any('\u0400' &lt;= char &lt;= '\u04FF' for char in title)
++                     desc_has_cyrillic = any('\u0400' &lt;= char &lt;= '\u04FF' for char in description)
++                     desc_matches_title = (has_cyrillic_title and desc_has_cyrillic) or (not has_cyrillic_title and not desc_has_cyrillic)
++                     
++                     existing_desc_has_cyrillic = any('\u0400' &lt;= char &lt;= '\u04FF' for char in existing_desc) if existing_desc else False
++                     existing_desc_matches_title = (has_cyrillic_title and existing_desc_has_cyrillic) or (not has_cyrillic_title and not existing_desc_has_cyrillic)
+                      
+                      # Update if:
+                      # 1. No existing description, OR
+                      # 2. Force flag is set, OR
+                      # 3. Existing has citations (needs cleaning), OR
+-                     # 4. New description is significantly longer
++                     # 4. New description matches title language AND (existing doesn't match OR new is significantly longer)
+                      if (not existing_desc or 
+                          self.args.force or 
+                          has_citations or 
+-                         len(description) &gt; len(existing_desc) + 50):
+-                         updates['description'] = description
+-                         if has_citations:
+-                             logger.info(f"🧹 Cleaning description citations for: {book['title']}")
++                         (desc_matches_title and (not existing_desc_matches_title or len(description) &gt; len(existing_desc) + 50))):
++                         if desc_matches_title or not existing_desc:
++                             updates['description'] = description
++                             if has_citations:
++                                 logger.info(f"🧹 Cleaning description citations for: {book['title']}")
++                             if not desc_matches_title and existing_desc:
++                                 logger.warning(f"⚠️  Description language doesn't match title for '{book['title']}' - but updating anyway (no existing or force)")
++                         else:
++                             logger.warning(f"🚫 Rejecting description for '{book['title']}': language doesn't match title (title is {'Bulgarian' if has_cyrillic_title else 'English'}, desc is {'Bulgarian' if desc_has_cyrillic else 'English'})")
+                  
+                  # Update cover_url if missing or force update
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
 <details>
-<summary>Tool use: **search_replace**</summary>
+<summary>Tool use: **grep** • Grep for "if.*updates|if updates|len\(updates\)" in "scripts/enrich_books.py" • 1 match</summary>
+
+Output mode: content
 
 
-Parameters:
-
-```json
-{
-  "relativeWorkspacePath": "scripts/enrich_books.py"
-}
-```
-Additional data:
-
-```json
-{
-  "codeblockId": "95dd31ed-6e94-4b51-8f25-2649e712a539"
-}
-```
-User decision: **accepted**
-
-Status: **loading**
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `if updates:` | L580 |
 
 
 </details>
@@ -13417,7 +13466,137 @@ Status: **loading**
 
 ---
 
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
 
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам защо корицата не се записва. Добавям по-подробно логване и проверявам дали `updates` съдържа `cover_url`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 5, lines removed: undefined
+
+```diff
+@@ -580,4 +580,9 @@
+                  if updates:
+                      try:
++                         # Log what we're about to update
++                         logger.debug(f"📝 Updating book '{book['title']}' with fields: {list(updates.keys())}")
++                         if 'cover_url' in updates:
++                             logger.info(f"🖼️  Will update cover_url to: {updates['cover_url']}")
++                         
+                          # Use book_service directly (not facade) for simpler updates
+                          from app.services.kuzu_book_service import KuzuBookService
+```
+
+**Chunk 2**
+Lines added: 3, lines removed: 1
+
+```diff
+@@ -590,5 +595,7 @@
+                              saved_count += 1
+                              logger.info(f"✅ Saved: {book['title']}")
+-                             logger.debug(f"   Updated fields: {', '.join(updates.keys())}")
++                             logger.info(f"   Updated fields: {', '.join(updates.keys())}")
++                             if 'cover_url' in updates:
++                                 logger.info(f"   Cover URL updated to: {updates['cover_url']}")
+                          else:
+                              logger.warning(f"⚠️  Failed to save: {book['title']}")
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 2 files</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+- `app/services/enrichment_service.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix: reject descriptions that don't match title language, improve cover URL logging" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix: reject descriptions that don't match title language, improve cover URL logging" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 2d91f35] Fix: reject descriptions that don't match title language, improve cover URL logging
+ 3 files changed, 722 insertions(+), 17 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   342c633..2d91f35  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправих логиката за описанието. Сега тя:
+- Отхвърля описания, които не съответстват на езика на заглавието
+- Използва описанието само ако съответства на езика на заглавието
+
+За корицата: логът показва "Updating cover URL", но в базата все още е локалният път. Вероятно проблемът е в `update_book`. Добавих по-подробно логване, за да видим какво се случва.
+
+На сървъра изпълнете:
+
+```bash
+git pull origin main
+
+# Опитайте отново
+python scripts/enrich_books.py --no-cover-only --limit 5 --quality-min 0.3 -y
+```
+
+Новите логове ще покажат:
+- Какви полета се обновяват
+- Дали `cover_url` е в `updates`
+- Какво връща `update_book`
+
+Споделете логовете, за да поправим проблема с корицата.
 
 ---
 
