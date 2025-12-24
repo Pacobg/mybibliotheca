@@ -274,19 +274,27 @@ class EnrichmentCommand:
                         
                         # Include books even if they don't have authors (we'll enrich them)
                         if book_dict['title']:
-                            # Check if it's a Bulgarian book
-                            # Bulgarian books have Cyrillic characters in title OR language='bg'
-                            has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in title)
-                            is_bg_language = book_dict.get('language') == 'bg'
-                            
-                            if has_cyrillic or is_bg_language:
+                            # If --no-cover-only is set, include all books (not just Bulgarian)
+                            if hasattr(self.args, 'no_cover_only') and self.args.no_cover_only:
                                 books.append(book_dict)
                                 if book_dict['author'] == 'Unknown':
-                                    logger.debug(f"✅ Added Bulgarian book without author: {title}")
+                                    logger.debug(f"✅ Added book without cover and author: {title}")
                                 else:
-                                    logger.debug(f"✅ Added Bulgarian book: {title}")
+                                    logger.debug(f"✅ Added book without cover: {title}")
                             else:
-                                logger.debug(f"⏭️  Skipping non-Bulgarian book: {title} (language: {language})")
+                                # Check if it's a Bulgarian book
+                                # Bulgarian books have Cyrillic characters in title OR language='bg'
+                                has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in title)
+                                is_bg_language = book_dict.get('language') == 'bg'
+                                
+                                if has_cyrillic or is_bg_language:
+                                    books.append(book_dict)
+                                    if book_dict['author'] == 'Unknown':
+                                        logger.debug(f"✅ Added Bulgarian book without author: {title}")
+                                    else:
+                                        logger.debug(f"✅ Added Bulgarian book: {title}")
+                                else:
+                                    logger.debug(f"⏭️  Skipping non-Bulgarian book: {title} (language: {language})")
             
             logger.info(f"✅ Found {len(books)} books to enrich")
             return books
