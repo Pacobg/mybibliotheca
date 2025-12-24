@@ -270,6 +270,9 @@ class PerplexityEnricher:
             # Extract AI response
             content = response['choices'][0]['message']['content']
             
+            # Debug: log first 500 chars of response
+            logger.debug(f"Raw API response (first 500 chars): {content[:500]}")
+            
             # Get citations (source URLs) - may be in different places in response
             citations = []
             if 'citations' in response:
@@ -287,7 +290,23 @@ class PerplexityEnricher:
             
             if not metadata:
                 logger.warning("Could not extract JSON from response")
+                logger.debug(f"Full response content: {content}")
                 return None
+            
+            # Debug: log parsed metadata
+            logger.debug(f"Parsed metadata keys: {list(metadata.keys())}")
+            
+            # If title is missing but we have content, try to extract it
+            if not metadata.get('title') and title:
+                # Use original title as fallback
+                metadata['title'] = title
+                logger.debug(f"Using original title as fallback: {title}")
+            
+            # If author is missing but we have content, try to extract it
+            if not metadata.get('author') and author:
+                # Use original author as fallback
+                metadata['author'] = author
+                logger.debug(f"Using original author as fallback: {author}")
             
             # Add citations if available
             if citations and 'sources' not in metadata:
