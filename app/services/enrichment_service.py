@@ -146,7 +146,9 @@ class EnrichmentService:
         
         # Check if book already has good data (unless force)
         if not force:
+            logger.info(f"🔍 Checking if '{title}' needs enrichment (force={force}, require_cover={require_cover})")
             has_sufficient = self._has_sufficient_data(book_data, require_cover=require_cover)
+            logger.info(f"🔍 _has_sufficient_data returned: {has_sufficient} for '{title}'")
             if has_sufficient:
                 logger.info(f"⏭️  Skipping {title} - already has sufficient data")
                 return None

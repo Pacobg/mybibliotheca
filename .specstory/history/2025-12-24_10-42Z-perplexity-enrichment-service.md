@@ -22603,3 +22603,296 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 17:40:52,328 [INFO] ============================================================
+2025-12-24 17:40:52,328 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 17:40:52,328 [INFO] ============================================================
+2025-12-24 17:40:52,328 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 17:40:52] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 17:40:52,377 [INFO] 192.168.1.9 - - [24/Dec/2025 17:40:52] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 17:40:52,400 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 17:40:52,400 [INFO] ⚙️  Configuration:
+2025-12-24 17:40:52,400 [INFO]    Limit: 5
+2025-12-24 17:40:52,400 [INFO]    Force: False
+2025-12-24 17:40:52,400 [INFO]    Dry run: False
+2025-12-24 17:40:52,401 [INFO]    Min quality: 0.3
+2025-12-24 17:40:52,401 [INFO]    No cover only: True (only books without covers)
+2025-12-24 17:40:52,401 [INFO] 📖 Querying database for books...
+2025-12-24 17:40:52,458 [INFO] ✅ Found 5 books to enrich
+2025-12-24 17:40:52,458 [INFO]
+📚 Found 5 books to enrich
+2025-12-24 17:40:52,458 [INFO]
+🚀 Starting enrichment...
+2025-12-24 17:40:52,458 [INFO]    Estimated time: ~0.2 minutes
+2025-12-24 17:40:52,458 [INFO]    Estimated cost: ~$0.00
+2025-12-24 17:40:52,459 [WARNING] [1/5] ❌ The Secret History - No metadata found
+2025-12-24 17:40:53,460 [WARNING] [2/5] ❌ The Secret Garden - No metadata found
+2025-12-24 17:40:54,462 [WARNING] [3/5] ❌ The Priory of the Orange Tree (The Roots of Chaos, #1) - No metadata found
+2025-12-24 17:40:55,464 [WARNING] [4/5] ❌ The Familiar - No metadata found
+2025-12-24 17:40:56,466 [WARNING] [5/5] ❌ The Costume History - No metadata found
+2025-12-24 17:40:56,467 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 17:40:56,469 [INFO] 📊 Tracked 0 enriched and 0 skipped books
+2025-12-24 17:40:56,469 [INFO]
+============================================================
+2025-12-24 17:40:56,469 [INFO] ENRICHMENT REPORT
+2025-12-24 17:40:56,470 [INFO] ============================================================
+2025-12-24 17:40:56,470 [INFO] 📊 Statistics:
+2025-12-24 17:40:56,470 [INFO]    Books checked: 5
+2025-12-24 17:40:56,471 [INFO]    Books enriched: 0
+2025-12-24 17:40:56,471 [INFO]    Books failed: 5
+2025-12-24 17:40:56,471 [INFO]    Success rate: 0.0%
+2025-12-24 17:40:56,471 [INFO]
+📝 Content:
+2025-12-24 17:40:56,471 [INFO]    Covers found: 0
+2025-12-24 17:40:56,471 [INFO]    Descriptions added: 0
+ .env файла е в основната директория и има ключ в него 
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Perplexity е инициализиран, но не виждам логове от `enrich_single_book` (например "🔍 Enriching:"). Проверявам дали се извиква и защо не се логва:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "_progress_callback|progress_callback|No metadata found" in "scripts/enrich_books.py" • 3 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `progress_callback=self._progress_callback` | L211 |
+| `scripts/enrich_books.py` | `async def _progress_callback(` | L914 |
+| `scripts/enrich_books.py` | `f"- No metadata found"` | L958 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "\[.*\] ❌.*No metadata found" in "scripts/enrich_books.py" • 0 matches</summary>
+
+Output mode: content
+
+
+_No matches found_
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "logger\.info.*Enriching|logger\.info.*Searching for" in "app/services/enrichment_service.py" • 3 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 Enriching: \{title\} - \{author\}")` | L157 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 Searching for: \{title\} - \{author or ''\}")` | L158 |
+| `app/services/enrichment_service.py` | `logger.info(f"🖼️  Searching for cover: \{title\}")` | L216 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Perplexity е инициализиран, но не виждам логове от `enrich_single_book` (например "🔍 Enriching:"). Вероятно книгите се пропускат от `_has_sufficient_data` преди обогатяване. Променям `logger.debug` на `logger.info` и добавям повече логиране:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -152,5 +152,5 @@
+                  return None
+              else:
+-                 logger.debug(f"🔍 Book '{title}' needs enrichment (has_sufficient_data=False, require_cover={require_cover})")
++                 logger.info(f"🔍 Book '{title}' needs enrichment (has_sufficient_data=False, require_cover={require_cover})")
+          
+          try:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -172,5 +172,5 @@
+              if self.perplexity:
+                  try:
+-                     logger.debug(f"📡 Calling Perplexity API for: {title}")
++                     logger.info(f"📡 Calling Perplexity API for: {title} by {author or 'unknown author'}")
+                      metadata = await self.perplexity.enrich_book(
+                          title=title,
+```
+
+**Chunk 2**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -179,7 +179,7 @@
+                      )
+                      if metadata:
+-                         logger.info(f"✅ Perplexity returned metadata for {title}")
++                         logger.info(f"✅ Perplexity returned metadata for {title} (quality: {metadata.get('quality_score', 0):.2f})")
+                      else:
+-                         logger.warning(f"⚠️  Perplexity returned None for {title}")
++                         logger.warning(f"⚠️  Perplexity returned None for {title} - no metadata found")
+                  except Exception as e:
+                      logger.error(f"❌ Perplexity enrichment failed for {title}: {e}", exc_info=True)
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `app/services/enrichment_service.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Change debug logs to info level to see enrichment process details" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Change debug logs to info level to see enrichment process details" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 95c3498] Change debug logs to info level to see enrichment process details
+ 2 files changed, 302 insertions(+), 4 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   8e97a23..95c3498  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Променил съм `logger.debug` на `logger.info`, за да виждаме логовете. При следващото изпълнение ще видим:
+
+- "🔍 Book '...' needs enrichment" — ако книгата не се пропуска
+- "🔍 Enriching: ..." — когато започва обогатяването
+- "📡 Calling Perplexity API for: ..." — когато се прави API заявка
+- "✅ Perplexity returned metadata" или "⚠️ Perplexity returned None" — резултатът
+
+Това ще покаже къде е проблемът. Промените са качени в git main. Опитайте отново и споделете логовете.
+
+---
+
