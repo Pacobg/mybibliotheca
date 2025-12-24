@@ -3509,6 +3509,9 @@ def view_book_enhanced(uid):
         isbn_generic = getattr(user_book, 'isbn', None)
         cover_url = getattr(user_book, 'cover_url', None)
         
+        # Log cover URL for debugging
+        current_app.logger.info(f"[VIEW_BOOK_ENHANCED] Book {uid} cover_url: {cover_url}")
+        
         
         # FINAL NORMALIZATION: Ensure ISBN fields are available for template
         if not isbn13 and not isbn10 and isbn_generic:

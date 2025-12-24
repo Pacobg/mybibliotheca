@@ -28133,3 +28133,216 @@ Output mode: content
 
 ---
 
+
+
+---
+
+
+Проверявам как се сравняват данните след `merge_metadata_into_book`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проблемът е в логиката за обновяване на `cover_url`: тя не проверява дали текущият URL е валиден. За "The Costume History" текущият URL е невалиден (cache URL с ISBN в пътя), но не се обновява, защото не е локален път. Добавям проверка за валидност на текущия URL и обновяване, ако е невалиден:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "How to check if a cover URL is valid using the same logic as _has_sufficient_data?" • **15** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `scripts/probe_abs_listening.py` | L42-131 |
+| `scripts/adjust_cover_logging.py` | L19 |
+| `scripts/migrations/validate_migration.py` | L12-79 |
+| `scripts/migrations/validate_migration.py` | L68 |
+| `scripts/export_postgres_single_user_to_sqlite.py` | L106-132 |
+| `scripts/probe_abs_listening.py` | L59-131 |
+| `scripts/probe_abs_listening.py` | L49-131 |
+| `scripts/install_ocr.sh` | L59-115 |
+| `scripts/migrations/validate_migration.py` | L81-137 |
+| `scripts/detect_migration.py` | L15-91 |
+| `scripts/migrations/validate_migration.py` | L52-101 |
+| `scripts/setup_data_dir.py` | L9-103 |
+| `scripts/probe_abs_listening.py` | L59-135 |
+| `scripts/probe_abs_listening.py` | L39 |
+| `scripts/detect_migration.py` | L88 |
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавям логика за валидация на текущия `cover_url`, използвайки същата логика като в `_has_sufficient_data`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 43, lines removed: 6
+
+```diff
+@@ -731,18 +731,55 @@
+                      current_is_local = current_cover_url.startswith('/covers/') if current_cover_url else True
+                      
+-                     logger.debug(f"🔍 Cover check for '{book['title']}': current='{current_cover_url}' (local={current_is_local}), new='{new_cover_url}' (valid={is_valid_url})")
++                     # Check if current cover URL is valid (using same logic as _has_sufficient_data)
++                     current_is_valid = False
++                     if current_cover_url:
++                         if current_cover_url.startswith('http://') or current_cover_url.startswith('https://'):
++                             # Check if it ends with image extension or contains one before query params
++                             image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
++                             ends_with_extension = any(current_cover_url.lower().endswith(ext) for ext in image_extensions)
++                             contains_extension = any(f'.{ext}' in current_cover_url.lower().split('?')[0] for ext in ['jpg', 'jpeg', 'png', 'webp', 'gif'])
++                             
++                             if '/cache/' in current_cover_url:
++                                 # Cache URLs must end with extension AND not contain suspicious patterns
++                                 import re
++                                 # Check for ISBN in path (can be between / or at end before extension)
++                                 has_isbn_in_path = bool(re.search(r'/(978|979)\d{10}(/|\.)', current_cover_url))
++                                 
++                                 # Also check if filename itself is an ISBN (13 digits)
++                                 path_after_cache = current_cover_url.split('/cache/')[-1] if '/cache/' in current_cover_url else ''
++                                 path_segments = [s for s in path_after_cache.split('/') if s]
++                                 if path_segments:
++                                     # Remove extension from last segment
++                                     last_seg = path_segments[-1]
++                                     for ext in image_extensions:
++                                         if last_seg.lower().endswith(ext):
++                                             last_seg = last_seg[:-len(ext)]
++                                             break
++                                     filename_is_isbn = bool(re.match(r'^(978|979)\d{10}$', last_seg))
++                                 else:
++                                     filename_is_isbn = False
++                                 
++                                 # Check if path segments are mostly single digits (suspicious pattern like /9/7/9783836555401)
++                                 has_numeric_path = len(path_segments) &gt; 2 and all(len(seg) &lt;= 2 and seg.isdigit() for seg in path_segments[:-1])
++                                 
++                                 current_is_valid = ends_with_extension and not has_isbn_in_path and not has_numeric_path and not filename_is_isbn
++                             else:
++                                 # Non-cache URLs: check if ends with extension or contains it before query params
++                                 current_is_valid = ends_with_extension or contains_extension
++                     
++                     logger.info(f"🔍 Cover check for '{book['title']}': current='{current_cover_url[:80] if current_cover_url else 'None'}...' (valid={current_is_valid}), new='{new_cover_url[:80] if new_cover_url else 'None'}...' (valid={is_valid_url})")
+                      
+                      # Update if:
+                      # 1. No current cover, OR
+-                     # 2. Current is local path and new is valid URL, OR
++                     # 2. Current cover is invalid (local path or broken cache URL), OR
+                      # 3. Force flag is set
+-                     if (not current_cover_url or (current_is_local and is_valid_url) or self.args.force):
++                     if (not current_cover_url or not current_is_valid or self.args.force):
+                          if is_valid_url:
+                              updates['cover_url'] = new_cover_url
+-                             logger.info(f"🖼️  Updating cover URL for: {book['title']} -&gt; {new_cover_url}")
++                             logger.info(f"🖼️  Updating cover URL for: {book['title']} -&gt; {new_cover_url[:80]}...")
+                          else:
+                              logger.warning(f"⚠️  Skipping invalid cover URL for '{book['title']}': {new_cover_url} (not http/https)")
+-                     elif current_cover_url and not current_is_local:
+-                         logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url}")
++                     elif current_cover_url and current_is_valid:
++                         logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
+                  
+                  # Publisher is handled separately as a relationship
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix cover URL update logic: check if current URL is valid (including broken cache URLs) before skipping update" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix cover URL update logic: check if current URL is valid (including broken cache URLs) before skipping update" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main cb6437f] Fix cover URL update logic: check if current URL is valid (including broken cache URLs) before skipping update
+ 2 files changed, 270 insertions(+), 20 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   ebe8b63..cb6437f  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправих логиката за обновяване на `cover_url`. Сега тя проверява дали текущият URL е валиден (използвайки същата логика като в `_has_sufficient_data`). Ако текущият URL е невалиден (например счупен cache URL с ISBN в пътя като "The Costume History"), ще се обнови с новия валиден URL от Perplexity.
+
+Промените са качени в git main. При следващо обогатяване системата трябва да:
+1. Идентифицира "The Costume History" като книга с невалиден cover URL
+2. Да я обогати с правилния cover URL от Perplexity
+3. Да добави новия валиден cover URL към `updates` дикшънъри
+4. Да запази промените в базата данни
+
+Опитайте отново с бутона "Обогатяване на книги без обложки - до 5 бр. (тест)" — сега трябва да работи правилно и да запазва обогатените данни.
+
+---
+
