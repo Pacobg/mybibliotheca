@@ -504,6 +504,8 @@ class EnrichmentCommand:
                     current_cover_url = book.get('cover_url', '')
                     current_is_local = current_cover_url.startswith('/covers/') if current_cover_url else True
                     
+                    logger.debug(f"🔍 Cover check for '{book['title']}': current='{current_cover_url}' (local={current_is_local}), new='{new_cover_url}' (valid={is_valid_url})")
+                    
                     # Update if:
                     # 1. No current cover, OR
                     # 2. Current is local path and new is valid URL, OR
@@ -511,9 +513,11 @@ class EnrichmentCommand:
                     if (not current_cover_url or (current_is_local and is_valid_url) or self.args.force):
                         if is_valid_url:
                             updates['cover_url'] = new_cover_url
-                            logger.info(f"🖼️  Updating cover URL for: {book['title']}")
+                            logger.info(f"🖼️  Updating cover URL for: {book['title']} -> {new_cover_url}")
                         else:
-                            logger.debug(f"⚠️  Skipping local cover path: {new_cover_url}")
+                            logger.warning(f"⚠️  Skipping invalid cover URL for '{book['title']}': {new_cover_url} (not http/https)")
+                    elif current_cover_url and not current_is_local:
+                        logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url}")
                 
                 # Publisher is handled separately as a relationship
                 publisher_name = enriched.get('publisher')
@@ -633,8 +637,8 @@ class EnrichmentCommand:
                             # Bulgarian title but English author - try to find Bulgarian version
                             logger.debug(f"⚠️  Bulgarian book '{title}' has English author '{ai_author}' - keeping for now")
                         elif not has_cyrillic_title and has_cyrillic_author:
-                            # English title but Bulgarian author - skip update
-                            logger.debug(f"⚠️  Skipping Bulgarian author '{ai_author}' for English book '{title}'")
+                            # English title but Bulgarian author - skip update, keep original English author
+                            logger.info(f"⚠️  Skipping Bulgarian author '{ai_author}' for English book '{title}' - keeping original author")
                             ai_author = None
                 
                 if ai_author:

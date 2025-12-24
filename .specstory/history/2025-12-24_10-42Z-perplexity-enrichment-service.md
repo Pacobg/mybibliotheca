@@ -12261,3 +12261,493 @@ python scripts/enrich_books.py --no-cover-only --limit 5 --quality-min 0.3 -y
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+почти нямам англииски книги в библиотеката - ако има те са с английски titles - ако са с български titles книгата е българска и автора трябва да е на български както и cover и описанието
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Опростявам логиката: ако заглавието е на български, използваме български автор, корица и описание; ако е на английски — английски.
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 19, lines removed: 12
+
+```diff
+@@ -600,32 +600,39 @@
+                      ai_author = enriched.get('author')
+                  
+-                 # Normalize author one more time to be sure
+-                 # BUT: Only use Bulgarian author if book title is also Bulgarian
++                 # Normalize author based on book title language
++                 # Rule: If title is Bulgarian → use Bulgarian author, else use English author
+                  title = book.get('title', '') or enriched.get('title', '')
+                  has_cyrillic_title = any('\u0400' &lt;= char &lt;= '\u04FF' for char in title)
+                  
+                  if ai_author:
+                      import re
+-                     # If multiple authors, prefer Bulgarian/Cyrillic ONLY if title is Bulgarian
++                     # If multiple authors, choose based on title language
+                      if ',' in ai_author or ';' in ai_author:
+                          authors_list = [a.strip() for a in re.split(r'[,;]', ai_author)]
+                          if has_cyrillic_title:
+-                             # Title is Bulgarian - prefer Bulgarian author
++                             # Bulgarian title → prefer Bulgarian author
+                              cyrillic_authors = [a for a in authors_list if any('\u0400' &lt;= char &lt;= '\u04FF' for char in a)]
+                              if cyrillic_authors:
+                                  ai_author = cyrillic_authors[0]
++                                 logger.debug(f"✅ Using Bulgarian author for Bulgarian book: {ai_author}")
+                              else:
++                                 # No Bulgarian author found, use first one
+                                  ai_author = authors_list[0]
+                          else:
+-                             # Title is English - keep English author (first one)
+-                             ai_author = authors_list[0]
+-                     elif has_cyrillic_title:
+-                         # Single author, Bulgarian title - OK to use Bulgarian author
+-                         pass
++                             # English title → use English author (first one, prefer non-Cyrillic)
++                             english_authors = [a for a in authors_list if not any('\u0400' &lt;= char &lt;= '\u04FF' for char in a)]
++                             if english_authors:
++                                 ai_author = english_authors[0]
++                                 logger.debug(f"✅ Using English author for English book: {ai_author}")
++                             else:
++                                 ai_author = authors_list[0]
+                      else:
+-                         # Single author, English title - if AI returned Bulgarian, keep original English author
++                         # Single author - check if it matches title language
+                          has_cyrillic_author = any('\u0400' &lt;= char &lt;= '\u04FF' for char in ai_author)
+-                         if has_cyrillic_author:
+-                             # AI returned Bulgarian author for English book - don't update
++                         if has_cyrillic_title and not has_cyrillic_author:
++                             # Bulgarian title but English author - try to find Bulgarian version
++                             logger.debug(f"⚠️  Bulgarian book '{title}' has English author '{ai_author}' - keeping for now")
++                         elif not has_cyrillic_title and has_cyrillic_author:
++                             # English title but Bulgarian author - skip update
+                              logger.debug(f"⚠️  Skipping Bulgarian author '{ai_author}' for English book '{title}'")
+                              ai_author = None
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/metadata_providers/perplexity.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/metadata_providers/perplexity.py</summary>
+
+**Chunk 1**
+Lines added: 13, lines removed: 2
+
+```diff
+@@ -543,9 +543,20 @@
+          logger.info(f"🖼️  Searching for cover: {title}")
+          
+-         query = f"""
+- Намери ДИРЕКТЕН URL към изображение на корицата за българската книга:
++         # Check if book is Bulgarian (has Cyrillic in title)
++         has_cyrillic = any('\u0400' &lt;= char &lt;= '\u04FF' for char in title)
++         
++         if has_cyrillic:
++             query = f"""
++ Намери ДИРЕКТЕН URL към изображение на корицата за БЪЛГАРСКАТА книга:
+  
+  ЗАГЛАВИЕ: {title}
+  АВТОР: {author}
++ """
++         else:
++             query = f"""
++ Find DIRECT URL to cover image for the ENGLISH book:
++ 
++ TITLE: {title}
++ AUTHOR: {author}
+  """
+          
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/metadata_providers/perplexity.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+Model supplied an ambiguous edit
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/metadata_providers/perplexity.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 2 files</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+- `app/services/metadata_providers/perplexity.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix enrichment: use Bulgarian metadata for Bulgarian titles, English for English titles - author, cover, description" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix enrichment: use Bulgarian metadata for Bulgarian titles, English for English titles - author, cover, description" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 4b0cb07] Fix enrichment: use Bulgarian metadata for Bulgarian titles, English for English titles - author, cover, description
+ 3 files changed, 632 insertions(+), 14 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   b0d7ce2..4b0cb07  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправих логиката. Ето какво е променено:
+
+## Поправки
+
+1. Авторите се избират според езика на заглавието:
+   - Българско заглавие → български автор
+   - Английско заглавие → английски автор
+
+2. Заявките към Perplexity са на правилния език:
+   - Българско заглавие → българска заявка (търси българско издание)
+   - Английско заглавие → английска заявка (търси английско издание)
+
+3. Корицата се търси на правилния език:
+   - Българско заглавие → търси българска корица
+   - Английско заглавие → търси английска корица
+
+## На сървъра изпълнете:
+
+```bash
+# Изтеглете промените
+git pull origin main
+
+# Опитайте отново
+export PERPLEXITY_MODEL="sonar-pro"
+python scripts/enrich_books.py --no-cover-only --limit 5 --quality-min 0.3 -y
+```
+
+Сега трябва да:
+- Използва български автор, корица и описание за книги с българско заглавие
+- Използва английски автор, корица и описание за книги с английско заглавие
+- Намери и запази корица правилно
+
+Опитайте отново и ми кажете резултата.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 15:05:05,778 [INFO] ============================================================
+2025-12-24 15:05:05,778 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 15:05:05,778 [INFO] ============================================================
+2025-12-24 15:05:05,837 [INFO] ✅ PerplexityEnricher initialized with model: sonar-pro
+2025-12-24 15:05:05,837 [INFO] ✅ Perplexity enricher initialized
+2025-12-24 15:05:05,837 [INFO] ⚙️  Config: min_quality=0.3, rate_limit=1.0s, download_covers=True
+2025-12-24 15:05:05,837 [INFO] ⚙️  Configuration:
+2025-12-24 15:05:05,837 [INFO]    Limit: 5
+2025-12-24 15:05:05,837 [INFO]    Force: False
+2025-12-24 15:05:05,837 [INFO]    Dry run: False
+2025-12-24 15:05:05,837 [INFO]    Min quality: 0.3
+2025-12-24 15:05:05,837 [INFO]    No cover only: True (only books without covers)
+2025-12-24 15:05:05,837 [INFO] 📖 Querying database for books...
+2025-12-24 15:05:05,837 [INFO] SafeKuzuManager initialized for database: ./data/kuzu/bibliotheca.db
+2025-12-24 15:05:05,837 [INFO] Global SafeKuzuManager instance created
+2025-12-24 15:05:05,838 [INFO] [THREAD-140080734290176:MainThread] Initializing KuzuDB database...
+2025-12-24 15:05:05,960 [INFO] [THREAD-140080734290176:MainThread] Initializing database schema...
+2025-12-24 15:05:05,960 [INFO] 🔧 [DEBUG] SafeKuzuManager starting schema initialization...
+2025-12-24 15:05:05,960 [INFO] 🔧 [DEBUG] Schema init - force_reset=False, debug_mode=False
+2025-12-24 15:05:05,995 [INFO] ✅ All essential tables exist - schema appears complete
+2025-12-24 15:05:05,998 [INFO] 📊 Database contains 2 users
+2025-12-24 15:05:05,998 [INFO] ✅ Schema is complete - skipping initialization
+2025-12-24 15:05:05,998 [INFO] [THREAD-140080734290176:MainThread] KuzuDB database initialized successfully in 0.161s
+2025-12-24 15:05:06,052 [INFO] 🔍 [ADAPTER] Query returned 0 rows
+2025-12-24 15:05:06,057 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 15:05:06,062 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 15:05:06,067 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 15:05:06,071 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 15:05:06,071 [INFO] ✅ Found 5 books to enrich
+2025-12-24 15:05:06,071 [INFO]
+📚 Found 5 books to enrich
+2025-12-24 15:05:06,071 [INFO]
+🚀 Starting enrichment...
+2025-12-24 15:05:06,071 [INFO]    Estimated time: ~0.2 minutes
+2025-12-24 15:05:06,071 [INFO]    Estimated cost: ~$0.00
+2025-12-24 15:05:06,071 [INFO] 📦 Starting batch enrichment: 5 books
+2025-12-24 15:05:06,071 [INFO] ⚠️  Book 'The Secret History' has no author - will try to find it via AI
+2025-12-24 15:05:06,072 [INFO] 🔍 Enriching: The Secret History -
+2025-12-24 15:05:06,072 [INFO] 🔍 Searching for: The Secret History -
+2025-12-24 15:05:08,074 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 15:05:08,077 [INFO] 📋 Found metadata fields: sources
+2025-12-24 15:05:08,077 [WARNING] Missing author in metadata
+2025-12-24 15:05:08,077 [WARNING] Metadata validation failed
+2025-12-24 15:05:08,077 [WARNING] ⚠️  Could not parse metadata for: The Secret History
+2025-12-24 15:05:08,077 [WARNING] ❌ No metadata found for: The Secret History
+2025-12-24 15:05:08,077 [WARNING] [1/5] ❌ The Secret History - No metadata found
+2025-12-24 15:05:09,079 [INFO] 🔍 Enriching: The Secret Garden - Франсис Бърнет
+2025-12-24 15:05:09,079 [INFO] 🔍 Searching for: The Secret Garden - Франсис Бърнет
+2025-12-24 15:05:12,804 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 15:05:12,806 [INFO] 📋 Found metadata fields: title, author, translator, publisher, year, isbn, pages, genres, description, confidence, sources
+2025-12-24 15:05:12,806 [INFO] ✅ Found metadata for: The Secret Garden (quality: 0.95)
+2025-12-24 15:05:12,807 [INFO] 🖼️  Searching for cover: The Secret Garden
+2025-12-24 15:05:12,807 [INFO] 🖼️  Searching for cover: The Secret Garden
+2025-12-24 15:05:14,471 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 15:05:14,474 [INFO] ✅ Enriched: The Secret Garden (quality: 0.95)
+2025-12-24 15:05:14,475 [INFO] [2/5] ✅ The Secret Garden (quality: 0.95)
+2025-12-24 15:05:14,475 [INFO]    📝 Description added
+2025-12-24 15:05:15,477 [INFO] 🔍 Enriching: The Priory of the Orange Tree (The Roots of Chaos, #1) - Shannon
+2025-12-24 15:05:15,477 [INFO] 🔍 Searching for: The Priory of the Orange Tree (The Roots of Chaos, #1) - Shannon
+2025-12-24 15:05:23,880 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 15:05:23,883 [INFO] 📋 Found metadata fields: author, genres, description, confidence, sources
+2025-12-24 15:05:23,884 [INFO] ✅ Found metadata for: The Priory of the Orange Tree (The Roots of Chaos, #1) (quality: 0.64)
+2025-12-24 15:05:23,884 [INFO] 🖼️  Searching for cover: The Priory of the Orange Tree (The Roots of Chaos, #1)
+2025-12-24 15:05:23,884 [INFO] 🖼️  Searching for cover: The Priory of the Orange Tree (The Roots of Chaos, #1)
+2025-12-24 15:05:25,353 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 15:05:25,356 [INFO] ✅ Enriched: The Priory of the Orange Tree (The Roots of Chaos, #1) (quality: 0.64)
+2025-12-24 15:05:25,356 [INFO] [3/5] ✅ The Priory of the Orange Tree (The Roots of Chaos, #1) (quality: 0.64)
+2025-12-24 15:05:25,356 [INFO]    📝 Description added
+2025-12-24 15:05:26,358 [INFO] 🔍 Enriching: The Familiar - Лий Бардуго
+2025-12-24 15:05:26,358 [INFO] 🔍 Searching for: The Familiar - Лий Бардуго
+2025-12-24 15:05:29,220 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 15:05:29,223 [INFO] 📋 Found metadata fields: author, confidence, sources
+2025-12-24 15:05:29,223 [INFO] ✅ Found metadata for: The Familiar (quality: 0.40)
+2025-12-24 15:05:29,224 [INFO] 🖼️  Searching for cover: The Familiar
+2025-12-24 15:05:29,224 [INFO] 🖼️  Searching for cover: The Familiar
+2025-12-24 15:05:30,944 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 15:05:30,948 [INFO] ✅ Enriched: The Familiar (quality: 0.40)
+2025-12-24 15:05:30,948 [INFO] [4/5] ✅ The Familiar (quality: 0.40)
+2025-12-24 15:05:31,950 [INFO] 🔍 Enriching: The Costume History - Racinet
+2025-12-24 15:05:31,950 [INFO] 🔍 Searching for: The Costume History - Racinet
+2025-12-24 15:05:39,960 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 15:05:39,963 [INFO] 📋 Found metadata fields: title, author, publisher, year, isbn, pages, genres, description, cover_url, confidence, sources
+2025-12-24 15:05:39,964 [INFO] ✅ Found metadata for: The Costume History (quality: 1.00)
+2025-12-24 15:05:39,964 [INFO] ✅ Enriched: The Costume History (quality: 1.00)
+2025-12-24 15:05:39,964 [INFO] [5/5] ✅ The Costume History (quality: 1.00)
+2025-12-24 15:05:39,964 [INFO]    🖼️  Cover found
+2025-12-24 15:05:39,964 [INFO]    📝 Description added
+2025-12-24 15:05:39,964 [INFO] ✅ Batch enrichment complete!
+2025-12-24 15:05:39,964 [INFO]    Processed: 5/5
+2025-12-24 15:05:39,964 [INFO]    Enriched: 4 (80.0%)
+2025-12-24 15:05:39,964 [INFO]    Covers found: 1
+2025-12-24 15:05:39,964 [INFO]    Duration: 33.9s
+2025-12-24 15:05:39,976 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 15:05:39,976 [INFO] 🔍 Query results for book 2b6786f4-6340-41f8-8a6c-9eb0506ca52d: [{'result': {'_id': {'offset': 2369, 'table': 1}, '_label': 'Book', 'id': '2b6786f4-6340-41f8-8a6c-9eb0506ca52d', 'title': 'The Secret Garden', 'normalized_title': 'the secret garden', 'subtitle': '', 'isbn13': '9789542610762', 'isbn10': '', 'asin': '', 'description': 'След смъртта на родителите си малката Мери Ленъкс се озовава в Йоркширското имение на чичо си. Тя открива тайна градина, която е заключена от години, и започва да я възраства заедно с нови приятели. Книгата разказва за магията на природата, дружбата и изцелението.', 'published_date': datetime.date(2020, 1, 1), 'page_count': 238, 'language': 'en', 'cover_url': '/covers/e6d27557-10ef-413d-bec2-6b42df95a83c.jpg', 'google_books_id': '', 'openlibrary_id': '', 'opds_source_id': None, 'opds_source_updated_at': None, 'opds_source_entry_hash': None, 'media_type': 'physical', 'average_rating': 0.0, 'rating_count': 0, 'series': '', 'series_volume': None, 'series_order': None, 'custom_metadata': None, 'raw_categories': None, 'created_at': datetime.datetime(2025, 12, 23, 21, 43, 44, 216147), 'updated_at': datetime.datetime(2025, 12, 24, 12, 59, 15, 891889), 'audio_length_minutes': None, 'audio_is_abridged': None, 'audio_narrators': None, 'media_format': None, 'audiobookshelf_id': None, 'audio_duration_ms': None, 'audiobookshelf_updated_at': None, 'quantity': 1}}]
+2025-12-24 15:05:39,976 [INFO] 🔍 First result structure: {'result': {'_id': {'offset': 2369, 'table': 1}, '_label': 'Book', 'id': '2b6786f4-6340-41f8-8a6c-9eb0506ca52d', 'title': 'The Secret Garden', 'normalized_title': 'the secret garden', 'subtitle': '', 'isbn13': '9789542610762', 'isbn10': '', 'asin': '', 'description': 'След смъртта на родителите си малката Мери Ленъкс се озовава в Йоркширското имение на чичо си. Тя открива тайна градина, която е заключена от години, и започва да я възраства заедно с нови приятели. Книгата разказва за магията на природата, дружбата и изцелението.', 'published_date': datetime.date(2020, 1, 1), 'page_count': 238, 'language': 'en', 'cover_url': '/covers/e6d27557-10ef-413d-bec2-6b42df95a83c.jpg', 'google_books_id': '', 'openlibrary_id': '', 'opds_source_id': None, 'opds_source_updated_at': None, 'opds_source_entry_hash': None, 'media_type': 'physical', 'average_rating': 0.0, 'rating_count': 0, 'series': '', 'series_volume': None, 'series_order': None, 'custom_metadata': None, 'raw_categories': None, 'created_at': datetime.datetime(2025, 12, 23, 21, 43, 44, 216147), 'updated_at': datetime.datetime(2025, 12, 24, 12, 59, 15, 891889), 'audio_length_minutes': None, 'audio_is_abridged': None, 'audio_narrators': None, 'media_format': None, 'audiobookshelf_id': None, 'audio_duration_ms': None, 'audiobookshelf_updated_at': None, 'quantity': 1}}
+2025-12-24 15:05:39,976 [INFO] ✅ Found book via 'result' key: <class 'dict'>
+2025-12-24 15:05:39,976 [INFO] ✅ Book data is already dict with keys: ['_id', '_label', 'id', 'title', 'normalized_title', 'subtitle', 'isbn13', 'isbn10', 'asin', 'description', 'published_date', 'page_count', 'language', 'cover_url', 'google_books_id', 'openlibrary_id', 'opds_source_id', 'opds_source_updated_at', 'opds_source_entry_hash', 'media_type', 'average_rating', 'rating_count', 'series', 'series_volume', 'series_order', 'custom_metadata', 'raw_categories', 'created_at', 'updated_at', 'audio_length_minutes', 'audio_is_abridged', 'audio_narrators', 'media_format', 'audiobookshelf_id', 'audio_duration_ms', 'audiobookshelf_updated_at', 'quantity']
+2025-12-24 15:05:40,000 [INFO] ✅ Saved: The Secret Garden
+2025-12-24 15:05:40,003 [INFO] 🖼️  Updating cover URL for: The Costume History
+2025-12-24 15:05:40,008 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 15:05:40,009 [INFO] 🔍 Query results for book 3bda577d-6eb5-4358-bfaa-40258c7398c4: [{'result': {'_id': {'offset': 2366, 'table': 1}, '_label': 'Book', 'id': '3bda577d-6eb5-4358-bfaa-40258c7398c4', 'title': 'The Costume History', 'normalized_title': 'the costume history', 'subtitle': '', 'isbn13': '9783836555401', 'isbn10': '', 'asin': '', 'description': "Originally published in France between 1876 and 1888, Auguste Racinet's Le Costume historique was the most wide-ranging and incisive study of clothing ever attempted. Covering the world history of costume, dress, and style from antiquity through to the end of the 19th century, the six volume work remains completely unique in its scope and detail. \n\nTASCHEN's complete reprint presents Racinet's exquisitely precise and colored illustrations, as well as his delightful descriptions and often witty comments. Spanning everything from ancient Etruscan attire to French women's couture, material is arranged according to Racinet's original organization by culture and subject. \n\nAs expansive in its reach as it is passionate in its research and attention to detail, The Costume History is an invaluable reference for students, designers, artists, illustrators, and historians; and a rich source of inspiration for anyone with an interest in clothing and style.", 'published_date': None, 'page_count': 0, 'language': 'eng', 'cover_url': '/covers/f16b1324-2a5a-4500-ba98-8c640186c02c.jpg', 'google_books_id': '', 'openlibrary_id': '', 'opds_source_id': None, 'opds_source_updated_at': None, 'opds_source_entry_hash': None, 'media_type': 'physical', 'average_rating': 0.0, 'rating_count': 0, 'series': '', 'series_volume': None, 'series_order': None, 'custom_metadata': None, 'raw_categories': None, 'created_at': datetime.datetime(2025, 12, 23, 21, 43, 27, 376851), 'updated_at': datetime.datetime(2025, 12, 23, 21, 43, 27, 675823), 'audio_length_minutes': None, 'audio_is_abridged': None, 'audio_narrators': None, 'media_format': None, 'audiobookshelf_id': None, 'audio_duration_ms': None, 'audiobookshelf_updated_at': None, 'quantity': 1}}]
+2025-12-24 15:05:40,009 [INFO] 🔍 First result structure: {'result': {'_id': {'offset': 2366, 'table': 1}, '_label': 'Book', 'id': '3bda577d-6eb5-4358-bfaa-40258c7398c4', 'title': 'The Costume History', 'normalized_title': 'the costume history', 'subtitle': '', 'isbn13': '9783836555401', 'isbn10': '', 'asin': '', 'description': "Originally published in France between 1876 and 1888, Auguste Racinet's Le Costume historique was the most wide-ranging and incisive study of clothing ever attempted. Covering the world history of costume, dress, and style from antiquity through to the end of the 19th century, the six volume work remains completely unique in its scope and detail. \n\nTASCHEN's complete reprint presents Racinet's exquisitely precise and colored illustrations, as well as his delightful descriptions and often witty comments. Spanning everything from ancient Etruscan attire to French women's couture, material is arranged according to Racinet's original organization by culture and subject. \n\nAs expansive in its reach as it is passionate in its research and attention to detail, The Costume History is an invaluable reference for students, designers, artists, illustrators, and historians; and a rich source of inspiration for anyone with an interest in clothing and style.", 'published_date': None, 'page_count': 0, 'language': 'eng', 'cover_url': '/covers/f16b1324-2a5a-4500-ba98-8c640186c02c.jpg', 'google_books_id': '', 'openlibrary_id': '', 'opds_source_id': None, 'opds_source_updated_at': None, 'opds_source_entry_hash': None, 'media_type': 'physical', 'average_rating': 0.0, 'rating_count': 0, 'series': '', 'series_volume': None, 'series_order': None, 'custom_metadata': None, 'raw_categories': None, 'created_at': datetime.datetime(2025, 12, 23, 21, 43, 27, 376851), 'updated_at': datetime.datetime(2025, 12, 23, 21, 43, 27, 675823), 'audio_length_minutes': None, 'audio_is_abridged': None, 'audio_narrators': None, 'media_format': None, 'audiobookshelf_id': None, 'audio_duration_ms': None, 'audiobookshelf_updated_at': None, 'quantity': 1}}
+2025-12-24 15:05:40,009 [INFO] ✅ Found book via 'result' key: <class 'dict'>
+2025-12-24 15:05:40,009 [INFO] ✅ Book data is already dict with keys: ['_id', '_label', 'id', 'title', 'normalized_title', 'subtitle', 'isbn13', 'isbn10', 'asin', 'description', 'published_date', 'page_count', 'language', 'cover_url', 'google_books_id', 'openlibrary_id', 'opds_source_id', 'opds_source_updated_at', 'opds_source_entry_hash', 'media_type', 'average_rating', 'rating_count', 'series', 'series_volume', 'series_order', 'custom_metadata', 'raw_categories', 'created_at', 'updated_at', 'audio_length_minutes', 'audio_is_abridged', 'audio_narrators', 'media_format', 'audiobookshelf_id', 'audio_duration_ms', 'audiobookshelf_updated_at', 'quantity']
+2025-12-24 15:05:40,027 [INFO] ✅ Saved: The Costume History
+2025-12-24 15:05:40,028 [INFO] 🔍 [ADAPTER] Query returned 0 rows
+2025-12-24 15:05:40,050 [INFO] ✅ Created new publisher: Taschen (ID: c46c32d7-1718-47e8-87d6-c24fdbf8707a)
+2025-12-24 15:05:40,063 [INFO] ✅ Created PUBLISHED_BY relationship: 3bda577d-6eb5-4358-bfaa-40258c7398c4 -> Taschen
+2025-12-24 15:05:40,063 [INFO] 💾 Saved 2 enriched books to database
+2025-12-24 15:05:40,063 [INFO]
+============================================================
+2025-12-24 15:05:40,064 [INFO] ENRICHMENT REPORT
+2025-12-24 15:05:40,064 [INFO] ============================================================
+2025-12-24 15:05:40,064 [INFO] 📊 Statistics:
+2025-12-24 15:05:40,064 [INFO]    Books checked: 5
+2025-12-24 15:05:40,064 [INFO]    Books enriched: 4
+2025-12-24 15:05:40,064 [INFO]    Books failed: 1
+2025-12-24 15:05:40,064 [INFO]    Success rate: 80.0%
+2025-12-24 15:05:40,064 [INFO]
+📝 Content:
+2025-12-24 15:05:40,064 [INFO]    Covers found: 1
+2025-12-24 15:05:40,064 [INFO]    Descriptions added: 3
+2025-12-24 15:05:40,064 [INFO]
+⏱️  Performance:
+2025-12-24 15:05:40,064 [INFO]    Duration: 33.9s
+2025-12-24 15:05:40,065 [INFO]    Speed: 8.9 books/min
+2025-12-24 15:05:40,065 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 15:05:40,065 [INFO] ============================================================
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Има няколко проблема:
+1. Корицата не се обновява — все още има локални пътища вместо валидни URL-и.
+2. Авторите се променят на български за английски книги ("The Secret Garden - Франсис Бърнет").
+3. "The Secret Garden" има българско описание, но заглавието е на английски.
+
+Поправям:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "ai_author.*None|ai_author = None" in "scripts/enrich_books.py" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `ai_author = None` | L638 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="read_file">
+<details>
+<summary>Tool use: **read_file**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+

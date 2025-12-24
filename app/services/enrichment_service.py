@@ -300,29 +300,33 @@ class EnrichmentService:
         if not merged.get('author') and ai_metadata.get('author'):
             merged['author'] = ai_metadata['author']
         
-        # Description - use AI if better (prefer Bulgarian descriptions)
+        # Description - use AI if better, matching book title language
         if ai_metadata.get('description'):
             ai_desc = ai_metadata['description']
             existing_desc = merged.get('description', '')
             
-            # Check if existing description is in English (has Latin chars but no Cyrillic)
-            existing_is_english = (
-                existing_desc and 
-                any(c.isalpha() and ord(c) < 128 for c in existing_desc) and
-                not any('\u0400' <= char <= '\u04FF' for char in existing_desc)
-            )
+            # Check book title language
+            title = merged.get('title', '') or ai_metadata.get('title', '')
+            has_cyrillic_title = any('\u0400' <= char <= '\u04FF' for char in title)
             
-            # Check if AI description is in Bulgarian (has Cyrillic)
-            ai_is_bulgarian = any('\u0400' <= char <= '\u04FF' for char in ai_desc)
+            # Check if existing description matches title language
+            existing_has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in existing_desc) if existing_desc else False
+            existing_matches_title = (has_cyrillic_title and existing_has_cyrillic) or (not has_cyrillic_title and not existing_has_cyrillic)
+            
+            # Check if AI description matches title language
+            ai_has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in ai_desc)
+            ai_matches_title = (has_cyrillic_title and ai_has_cyrillic) or (not has_cyrillic_title and not ai_has_cyrillic)
             
             # Use AI description if:
             # 1. No existing description, OR
-            # 2. Existing is English and AI is Bulgarian (prefer Bulgarian), OR
-            # 3. AI description is significantly longer (50+ chars)
+            # 2. AI description matches title language AND (existing doesn't match OR AI is longer), OR
+            # 3. AI description is significantly longer (100+ chars) and matches title language
             if (not existing_desc or 
-                (existing_is_english and ai_is_bulgarian) or 
-                len(ai_desc) > len(existing_desc) + 50):
+                (ai_matches_title and (not existing_matches_title or len(ai_desc) > len(existing_desc) + 50)) or
+                (ai_matches_title and len(ai_desc) > len(existing_desc) + 100)):
                 merged['description'] = ai_desc
+                if not ai_matches_title:
+                    logger.debug(f"⚠️  Description language doesn't match title language for '{title}'")
         
         # Cover - always prefer AI if available
         if ai_metadata.get('cover_url'):
