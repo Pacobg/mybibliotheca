@@ -119,11 +119,25 @@ class PerplexityEnricher:
         # Check if book title contains Cyrillic (Bulgarian)
         has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in title)
         
+        # Normalize author - if multiple authors, try to find the main one
+        # For Bulgarian books, prefer Bulgarian name format
+        import re
+        author_normalized = author
+        if ',' in author or ';' in author:
+            # Multiple authors - try to extract main author
+            authors_list = [a.strip() for a in re.split(r'[,;]', author)]
+            # For Bulgarian books, prefer Cyrillic name
+            cyrillic_authors = [a for a in authors_list if any('\u0400' <= char <= '\u04FF' for char in a)]
+            if cyrillic_authors:
+                author_normalized = cyrillic_authors[0]  # Use first Bulgarian name
+            else:
+                author_normalized = authors_list[0]  # Use first author
+        
         query = f"""
 Намери детайлна информация за българската книга:
 
 ЗАГЛАВИЕ: {title}
-АВТОР: {author}
+АВТОР: {author_normalized}
 """
         
         if isbn:
@@ -141,7 +155,7 @@ class PerplexityEnricher:
 ТЪРСЯ СЛЕДНАТА ИНФОРМАЦИЯ:
 
 1. **Точно заглавие** на български (може да има подзаглавие)
-2. **Автор(и)** - пълно име на български (не английско!)
+2. **Автор** - ЕДИН основен автор на български (не английско!). Ако книгата е от Агата Кристи, авторът е "Агата Кристи" (не "Christie, Agatha" или други варианти!)
 3. **Преводач** (ако книгата е превод)
 4. **Издателство** - българско издателство
 5. **Година на издаване** в България
@@ -313,11 +327,33 @@ JSON ФОРМАТ (задължително):
                 metadata['title'] = title
                 logger.debug(f"Using original title as fallback: {title}")
             
+            # Normalize author - ensure single main author
+            if metadata.get('author'):
+                author_from_ai = metadata['author']
+                # If multiple authors separated by comma/semicolon, take the first/main one
+                if ',' in author_from_ai or ';' in author_from_ai:
+                    authors_list = [a.strip() for a in re.split(r'[,;]', author_from_ai)]
+                    # For Bulgarian books, prefer Cyrillic name
+                    cyrillic_authors = [a for a in authors_list if any('\u0400' <= char <= '\u04FF' for char in a)]
+                    if cyrillic_authors:
+                        metadata['author'] = cyrillic_authors[0]
+                    else:
+                        metadata['author'] = authors_list[0]
+                    logger.debug(f"Normalized author from '{author_from_ai}' to '{metadata['author']}'")
+            
             # If author is missing but we have content, try to extract it
             if not metadata.get('author') and author:
-                # Use original author as fallback
-                metadata['author'] = author
-                logger.debug(f"Using original author as fallback: {author}")
+                # Normalize original author too
+                if ',' in author or ';' in author:
+                    authors_list = [a.strip() for a in re.split(r'[,;]', author)]
+                    cyrillic_authors = [a for a in authors_list if any('\u0400' <= char <= '\u04FF' for char in a)]
+                    if cyrillic_authors:
+                        metadata['author'] = cyrillic_authors[0]
+                    else:
+                        metadata['author'] = authors_list[0]
+                else:
+                    metadata['author'] = author
+                logger.debug(f"Using normalized original author as fallback: {metadata['author']}")
             
             # Add citations if available
             if citations and 'sources' not in metadata:

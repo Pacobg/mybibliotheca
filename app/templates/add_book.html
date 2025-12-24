@@ -1298,7 +1298,7 @@ function selectBookFromSearch(bookIndex) {
                 // Populate form with the intelligently merged data
                 try {
                     console.log('📝 [SELECT_BOOK] Populating form with merged data...');
-                    populateFormWithBookData(mergedData);
+                populateFormWithBookData(mergedData);
                     console.log('✅ [SELECT_BOOK] Form populated successfully');
                 } catch (populateError) {
                     console.error('❌ [SELECT_BOOK] Error populating form:', populateError);
@@ -1310,7 +1310,7 @@ function selectBookFromSearch(bookIndex) {
                 // Check for ISBN mismatch warnings
                 if (apiResp.isbn_mismatch && apiResp.warnings && apiResp.warnings.length > 0) {
                     if (typeof showIsbnMismatchWarning === 'function') {
-                        showIsbnMismatchWarning(apiResp.warnings);
+                    showIsbnMismatchWarning(apiResp.warnings);
                     }
                 } else {
                     console.log('✅ [SELECT_BOOK] Showing success message');
@@ -1346,9 +1346,9 @@ function selectBookFromSearch(bookIndex) {
                 // Fall back to using just the search result data
                 try {
                     console.log('📝 [SELECT_BOOK] Populating form with search data (no ISBN lookup)...');
-                    populateFormWithBookData(fullData);
+                populateFormWithBookData(fullData);
                     console.log('✅ [SELECT_BOOK] Form populated with search data');
-                    showMessage(`Selected "${fullData.title}" - Form populated with available details!`, 'success');
+                showMessage(`Selected "${fullData.title}" - Form populated with available details!`, 'success');
                 } catch (populateError) {
                     console.error('❌ [SELECT_BOOK] Error populating form with search data:', populateError);
                     // Last resort: just set title and ISBN
@@ -1599,7 +1599,7 @@ function populateFormWithBookData(bookData) {
         bookData.authors.forEach(author => {
             try {
                 if (typeof addContributor === 'function') {
-                    addContributor('authored', author, null);
+            addContributor('authored', author, null);
                 } else {
                     console.warn('addContributor function not found, skipping author:', author);
                 }
@@ -1661,7 +1661,7 @@ function populateFormWithBookData(bookData) {
         // Defer slightly so DOM updates settle
         // Try to fetch cover candidates if function exists
         if (typeof fetchAndShowCoverCandidates === 'function') {
-            setTimeout(() => fetchAndShowCoverCandidates({isbn, title, authors}), 250);
+        setTimeout(() => fetchAndShowCoverCandidates({isbn, title, authors}), 250);
         }
     } catch (_) {}
     
@@ -2190,7 +2190,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Collect contributors and categories before submit
             try {
                 console.log('📝 [FORM_SUBMIT] Collecting contributors and categories...');
-                collectContributorsAndCategories();
+            collectContributorsAndCategories();
                 console.log('✅ [FORM_SUBMIT] Contributors and categories collected successfully');
             } catch (collectError) {
                 console.error('❌ [FORM_SUBMIT] Error collecting contributors/categories:', collectError);

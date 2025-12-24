@@ -126,6 +126,7 @@ class EnrichmentService:
     async def enrich_batch(
         self, 
         books: List[Dict],
+        force: bool = False,
         progress_callback: Optional[callable] = None
     ) -> Dict:
         """
@@ -155,8 +156,8 @@ class EnrichmentService:
         
         for i, book in enumerate(books, 1):
             try:
-                # Enrich book
-                metadata = await self.enrich_single_book(book)
+                # Enrich book (pass force flag)
+                metadata = await self.enrich_single_book(book, force=force)
                 
                 stats['processed'] += 1
                 
@@ -227,10 +228,21 @@ class EnrichmentService:
         has_publisher = bool(book_data.get('publisher'))
         has_isbn = bool(book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10'))
         
-        # Need at least 3 out of 4
-        score = sum([has_description, has_cover, has_publisher, has_isbn])
+        # For Bulgarian books, cover is critical - don't skip if missing cover
+        title = book_data.get('title', '')
+        is_bulgarian = any('\u0400' <= char <= '\u04FF' for char in title) or book_data.get('language') == 'bg'
         
-        return score >= 3
+        if is_bulgarian:
+            # Bulgarian books MUST have cover - it's critical
+            if not has_cover:
+                return False
+            # Need at least 3 out of 4 including cover
+            score = sum([has_description, has_cover, has_publisher, has_isbn])
+            return score >= 3
+        else:
+            # For non-Bulgarian books, need at least 3 out of 4
+            score = sum([has_description, has_cover, has_publisher, has_isbn])
+            return score >= 3
     
     def merge_metadata_into_book(
         self, 
@@ -266,15 +278,28 @@ class EnrichmentService:
         if not merged.get('author') and ai_metadata.get('author'):
             merged['author'] = ai_metadata['author']
         
-        # Description - use AI if better
+        # Description - use AI if better (prefer Bulgarian descriptions)
         if ai_metadata.get('description'):
             ai_desc = ai_metadata['description']
             existing_desc = merged.get('description', '')
             
+            # Check if existing description is in English (has Latin chars but no Cyrillic)
+            existing_is_english = (
+                existing_desc and 
+                any(c.isalpha() and ord(c) < 128 for c in existing_desc) and
+                not any('\u0400' <= char <= '\u04FF' for char in existing_desc)
+            )
+            
+            # Check if AI description is in Bulgarian (has Cyrillic)
+            ai_is_bulgarian = any('\u0400' <= char <= '\u04FF' for char in ai_desc)
+            
             # Use AI description if:
             # 1. No existing description, OR
-            # 2. AI description is significantly longer (50+ chars)
-            if not existing_desc or len(ai_desc) > len(existing_desc) + 50:
+            # 2. Existing is English and AI is Bulgarian (prefer Bulgarian), OR
+            # 3. AI description is significantly longer (50+ chars)
+            if (not existing_desc or 
+                (existing_is_english and ai_is_bulgarian) or 
+                len(ai_desc) > len(existing_desc) + 50):
                 merged['description'] = ai_desc
         
         # Cover - always prefer AI if available

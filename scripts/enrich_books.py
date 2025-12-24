@@ -147,6 +147,7 @@ class EnrichmentCommand:
         # Enrich books
         results = await self.service.enrich_batch(
             books=books,
+            force=self.args.force,
             progress_callback=self._progress_callback
         )
         

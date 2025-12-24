@@ -673,23 +673,23 @@ def merge_and_rank_results(search_title: str, google_results: List[Dict],
                 else:
                     existing['source'] = 'Biblioman + OpenLibrary'
             else:
-                # Merge OpenLibrary ID
-                existing['openlibrary_id'] = result.get('openlibrary_id')
-                
-                # Smart merge publication date information
-                best_date, best_year = select_best_publication_date(
-                    existing.get('published_date', ''),
-                    result.get('published_date', ''),
-                    existing.get('publication_year'),
-                    result.get('publication_year')
-                )
-                existing['published_date'] = best_date
-                existing['publication_year'] = best_year
-                
-                # Fill in missing data from OpenLibrary (except dates which we handled above)
-                for key, value in result.items():
-                    if key not in ['published_date', 'publication_year'] and (key not in existing or not existing[key]):
-                        existing[key] = value
+            # Merge OpenLibrary ID
+            existing['openlibrary_id'] = result.get('openlibrary_id')
+            
+            # Smart merge publication date information
+            best_date, best_year = select_best_publication_date(
+                existing.get('published_date', ''),
+                result.get('published_date', ''),
+                existing.get('publication_year'),
+                result.get('publication_year')
+            )
+            existing['published_date'] = best_date
+            existing['publication_year'] = best_year
+            
+            # Fill in missing data from OpenLibrary (except dates which we handled above)
+            for key, value in result.items():
+                if key not in ['published_date', 'publication_year'] and (key not in existing or not existing[key]):
+                    existing[key] = value
 
             incoming_candidates = result.get('cover_candidates') or []
             if incoming_candidates:
@@ -767,15 +767,15 @@ def search_books_by_title(title: str, max_results: int = 10, author: Optional[st
     # Check if this is a Cyrillic search - if so, bypass cache to ensure Biblioman is included
     from app.utils.text_utils import is_cyrillic
     has_cyrillic = is_cyrillic(title) or (author_arg and is_cyrillic(author_arg))
-    
+
     cache_key = (title.lower(), (author_arg or '').lower(), int(max_results))
     cached = None
     if not has_cyrillic:
         # Only use cache for non-Cyrillic searches (to avoid stale results without Biblioman)
-        cached = _search_cache_get(cache_key)
-        if cached is not None:
+    cached = _search_cache_get(cache_key)
+    if cached is not None:
             builtins.print(f"💾 [BOOK_SEARCH] Cache hit for '{title}'")
-            return cached
+        return cached
     else:
         builtins.print(f"🔤 [BOOK_SEARCH] Cyrillic detected - bypassing cache to ensure Biblioman results are included")
 
@@ -861,10 +861,10 @@ def search_books_by_title(title: str, max_results: int = 10, author: Optional[st
     if remaining_budget <= 0:
         print("⏱️ [BOOK_SEARCH] Skipping Google Books due to global timeout budget")
     else:
-        try:
-            google_results = search_google_books(title, max_results * 2, author_arg)
-        except Exception as exc:
-            print(f"❌ [BOOK_SEARCH] Google search failed: {exc}")
+    try:
+        google_results = search_google_books(title, max_results * 2, author_arg)
+    except Exception as exc:
+        print(f"❌ [BOOK_SEARCH] Google search failed: {exc}")
 
     openlibrary_results: List[Dict[str, Any]] = []
     elapsed = time.perf_counter() - start_time
