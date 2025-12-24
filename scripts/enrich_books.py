@@ -462,6 +462,38 @@ class EnrichmentCommand:
                                         # Non-cache URLs: check if ends with extension or contains it before query params
                                         has_valid_cover = ends_with_extension or contains_extension
                                         logger.info(f"🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover={has_valid_cover}")
+                                        
+                                        # If --no-cover-only is active, also check if URL is accessible
+                                        if has_valid_cover and hasattr(self.args, 'no_cover_only') and self.args.no_cover_only:
+                                            # Quick accessibility check (timeout 3 seconds)
+                                            try:
+                                                import httpx
+                                                with httpx.Client(timeout=3.0, follow_redirects=True) as client:
+                                                    response = client.head(cover_url)
+                                                    if response.status_code == 200:
+                                                        content_type = response.headers.get('content-type', '').lower()
+                                                        if 'image' not in content_type:
+                                                            has_valid_cover = False
+                                                            logger.info(f"🔍 [_get_books_to_enrich] Non-cache URL returned non-image content-type: {content_type} - marking as INVALID")
+                                                    elif response.status_code in [301, 302, 303, 307, 308]:
+                                                        # Redirect - try GET to final URL
+                                                        final_url = response.headers.get('location', cover_url)
+                                                        get_response = client.get(final_url, timeout=3.0)
+                                                        if get_response.status_code != 200:
+                                                            has_valid_cover = False
+                                                            logger.info(f"🔍 [_get_books_to_enrich] Non-cache URL redirect failed with status {get_response.status_code} - marking as INVALID")
+                                                        else:
+                                                            content_type = get_response.headers.get('content-type', '').lower()
+                                                            if 'image' not in content_type:
+                                                                has_valid_cover = False
+                                                                logger.info(f"🔍 [_get_books_to_enrich] Non-cache URL redirect returned non-image content-type: {content_type} - marking as INVALID")
+                                                    else:
+                                                        has_valid_cover = False
+                                                        logger.info(f"🔍 [_get_books_to_enrich] Non-cache URL returned status {response.status_code} - marking as INVALID")
+                                            except Exception as e:
+                                                # If accessibility check fails, still consider URL valid if it has image extension
+                                                # (might be temporary network issue)
+                                                logger.debug(f"🔍 [_get_books_to_enrich] Could not verify accessibility of {cover_url[:60]}...: {e} - assuming valid based on extension")
                                 
                                 # Double-check: only add books WITHOUT valid covers
                                 if not has_valid_cover:
