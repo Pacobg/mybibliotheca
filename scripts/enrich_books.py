@@ -874,47 +874,52 @@ class EnrichmentCommand:
                         if url_is_accessible:
                             logger.info(f"🔍 [_save_enriched_books] Starting cover download for '{book['title']}': {new_cover_url[:80]}...")
                             try:
-                                # Use process_image_from_url to download and cache the cover locally
-                                # This will save the image to /covers/ directory and return a local path like /covers/uuid.jpg
-                                from app.utils.image_processing import process_image_from_url
+                                # Download and save cover image directly using requests
+                                # This avoids Flask app context issues
+                                import requests
+                                import uuid
+                                from pathlib import Path
                                 
-                                # Create Flask app context for image processing
-                                # Check if we're already in an app context
-                                local_cover_path = None
-                                try:
-                                    from flask import has_app_context, current_app
-                                    if has_app_context():
-                                        # Already in app context - use it directly
-                                        logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}... (has app context)")
-                                        local_cover_path = process_image_from_url(new_cover_url)
-                                        logger.info(f"✅ [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
-                                    else:
-                                        # No app context - create one
-                                        logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}... (creating app context)")
-                                        from app import create_app
-                                        app = create_app()
-                                        logger.info(f"📥 App created, entering app context...")
-                                        with app.app_context():
-                                            logger.info(f"📥 Inside app context, calling process_image_from_url for '{book['title']}'...")
-                                            try:
-                                                local_cover_path = process_image_from_url(new_cover_url)
-                                                logger.info(f"✅ [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
-                                            except Exception as inner_e:
-                                                logger.error(f"❌ Exception in process_image_from_url for '{book['title']}': {inner_e}", exc_info=True)
-                                                raise
-                                        logger.info(f"📥 Exited app context for '{book['title']}'")
-                                except RuntimeError as e:
-                                    # No app context available - create one
-                                    logger.warning(f"⚠️  RuntimeError when checking app context: {e}, creating new app context")
-                                    from app import create_app
-                                    app = create_app()
-                                    with app.app_context():
-                                        logger.info(f"📥 Inside app context (after RuntimeError), calling process_image_from_url...")
-                                        local_cover_path = process_image_from_url(new_cover_url)
-                                        logger.info(f"✅ [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
-                                except Exception as e:
-                                    logger.error(f"❌ Error in process_image_from_url for '{book['title']}': {e}", exc_info=True)
+                                # Get the covers directory
+                                covers_dir = Path('covers')
+                                if not covers_dir.exists():
+                                    covers_dir.mkdir(parents=True, exist_ok=True)
+                                    logger.info(f"📁 Created covers directory: {covers_dir.absolute()}")
+                                
+                                # Download the image
+                                logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
+                                response = requests.get(new_cover_url, timeout=10, stream=True)
+                                response.raise_for_status()
+                                
+                                # Check content type
+                                content_type = response.headers.get('content-type', '').lower()
+                                if 'image' not in content_type:
+                                    logger.warning(f"⚠️  URL returned non-image content-type: {content_type}")
                                     local_cover_path = None
+                                else:
+                                    # Determine file extension from content type
+                                    if 'jpeg' in content_type or 'jpg' in content_type:
+                                        ext = '.jpg'
+                                    elif 'png' in content_type:
+                                        ext = '.png'
+                                    elif 'webp' in content_type:
+                                        ext = '.webp'
+                                    elif 'gif' in content_type:
+                                        ext = '.gif'
+                                    else:
+                                        ext = '.jpg'  # Default
+                                    
+                                    # Generate unique filename
+                                    filename = f"{uuid.uuid4()}{ext}"
+                                    local_path = covers_dir / filename
+                                    
+                                    # Save the image
+                                    with open(local_path, 'wb') as f:
+                                        for chunk in response.iter_content(chunk_size=8192):
+                                            f.write(chunk)
+                                    
+                                    local_cover_path = f"/covers/{filename}"
+                                    logger.info(f"✅ Cover downloaded and saved: {local_cover_path} (from {new_cover_url[:60]}...)")
                                 
                                 if local_cover_path and local_cover_path.startswith('/covers/'):
                                     # Successfully downloaded and cached locally
