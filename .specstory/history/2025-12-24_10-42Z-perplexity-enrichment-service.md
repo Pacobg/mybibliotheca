@@ -27887,28 +27887,241 @@ Output mode: content
 
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="search_replace">
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: undefined, lines removed: 2
+
+```diff
+@@ -804,6 +804,4 @@
+                          # Update book using the service's update_book method
+                          updated_book = await book_update_service.update_book(book['id'], updates)
+-                 else:
+-                     logger.warning(f"⚠️  [_save_enriched_books] No updates to save for '{book['title']}' - updates dictionary is empty")
+                          
+                          if updated_book:
+```
+
+**Chunk 2**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -867,4 +865,6 @@
+                      except Exception as e:
+                          logger.error(f"❌ Error updating book {book['id']}: {e}", exc_info=True)
++                 else:
++                     logger.warning(f"⚠️  [_save_enriched_books] No updates to save for '{book['title']}' - updates dictionary is empty")
+                  
+                  # Handle publisher separately (it's a relationship, not a property)
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
 <details>
-<summary>Tool use: **search_replace**</summary>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
 
 
-Parameters:
+**No lint errors found**
+</details>
+</tool-use>
 
-```json
-{
-  "relativeWorkspacePath": "scripts/enrich_books.py"
-}
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix syntax error: properly structure try/except/else blocks in _save_enriched_books" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix syntax error: properly structure try/except/else blocks in _save_enriched_books" && git push origin main
 ```
-Additional data:
 
-```json
-{
-  "codeblockId": "38e23ada-1f10-498b-9e28-f730153d31f8"
-}
 ```
-User decision: **accepted**
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main ebe8b63] Fix syntax error: properly structure try/except/else blocks in _save_enriched_books
+ 2 files changed, 287 insertions(+), 2 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   288f0af..ebe8b63  main -&gt; main
 
-Status: **loading**
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправих синтактичната грешка: кодът след `updated_book = await book_update_service.update_book(...)` беше в `else:` блока вместо в `try:` блока. Сега структурата е правилна:
+
+```python
+if updates:
+    try:
+        # код за обновяване
+        updated_book = await book_update_service.update_book(book['id'], updates)
+        
+        if updated_book:
+            # код за успешно обновяване
+        else:
+            # код за неуспешно обновяване
+    except Exception as e:
+        # обработка на грешки
+else:
+    logger.warning(...)
+```
+
+Промените са качени в git main. Опитайте отново — кодът трябва да работи правилно и да запазва обогатените книги в базата данни.
+
+След поправката системата трябва да:
+1. Идентифицира "The Costume History" като книга без валиден cover URL
+2. Да я обогати с правилния cover URL от Perplexity
+3. Да запази промените в базата данни
+4. Да покаже логове за запазените книги
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+025-12-24 19:18:05,211 [INFO] ✅ Loaded .env from: /home/pacovw/mybibliotheca/.env
+2025-12-24 19:18:05,211 [INFO] ✅ PERPLEXITY_API_KEY found (length: 53)
+2025-12-24 19:18:05,233 [INFO] ✅ Successfully initialized KuzuBookRepository (attempt 1)
+2025-12-24 19:18:05,233 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 19:18:05] "POST /metadata/enrichment/start HTTP/1.1" 200 -
+2025-12-24 19:18:05,234 [INFO] 192.168.1.9 - - [24/Dec/2025 19:18:05] "POST /metadata/enrichment/start HTTP/1.1" 200 -
+2025-12-24 19:18:05,234 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 19:18:05,234 [INFO] ============================================================
+2025-12-24 19:18:05,234 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 19:18:05] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:18:05,273 [INFO] 192.168.1.9 - - [24/Dec/2025 19:18:05] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:18:05,297 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 19:18:05,297 [INFO] ⚙️  Configuration:
+2025-12-24 19:18:05,297 [INFO]    Limit: 5
+2025-12-24 19:18:05,298 [INFO]    Force: False
+2025-12-24 19:18:05,298 [INFO]    Dry run: False
+2025-12-24 19:18:05,298 [INFO]    Min quality: 0.3
+2025-12-24 19:18:05,298 [INFO]    No cover only: True (only books without covers)
+2025-12-24 19:18:05,298 [INFO] 📖 Querying database for books...
+2025-12-24 19:18:05,298 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 19:18:05,298 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 19:18:05,307 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 19:18:05,310 [INFO] 🔍 [_get_books_to_enrich] 'The Secret History': cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:18:05,310 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:18:05,310 [INFO] ⏭️  Skipping book with valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+2025-12-24 19:18:05,314 [INFO] 🔍 [_get_books_to_enrich] 'The Secret Garden': cover_url='https://knigabg.com/pix/28162.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:18:05,314 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:18:05,314 [INFO] ⏭️  Skipping book with valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 19:18:05,317 [INFO] 🔍 [_get_books_to_enrich] 'The Priory of the Orange Tree (The Roots of Chaos, #1)': cover_url='https://images.thenile.io/r1000/9781408883358.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:18:05,317 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:18:05,317 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 19:18:05,322 [INFO] 🔍 [_get_books_to_enrich] 'The Familiar': cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:18:05,322 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:18:05,322 [INFO] ⏭️  Skipping book with valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 19:18:05,325 [INFO] 🔍 [_get_books_to_enrich] 'The Costume History': cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401...', is_cache_url=True, ends_with_extension=True, contains_extension=False
+2025-12-24 19:18:05,325 [INFO] 🔍 [_get_books_to_enrich] Cache URL analysis: has_isbn_in_path=True, has_numeric_path=False, filename_is_isbn=True, path_segments=['9', '7', '9783836555401']
+2025-12-24 19:18:05,325 [INFO] 🔍 [_get_books_to_enrich] ❌ Cache URL invalid: 'https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401...' - ends_with_extension=True, has_isbn_in_path=True, has_numeric_path=False, filename_is_isbn=True - marking as INVALID
+2025-12-24 19:18:05,325 [INFO] ✅ Added book without valid cover: The Costume History (cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f...')
+2025-12-24 19:18:05,326 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 19:18:05,326 [INFO] 📊 Statistics: 4 books WITH valid cover URLs (skipped)
+2025-12-24 19:18:05,326 [INFO] 📊 Statistics: 1 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 19:18:05,326 [INFO] ✅ Found 1 books to enrich
+2025-12-24 19:18:05,326 [INFO]
+📚 Found 1 books to enrich
+2025-12-24 19:18:05,326 [INFO]
+🚀 Starting enrichment...
+2025-12-24 19:18:05,326 [INFO]    Estimated time: ~0.0 minutes
+2025-12-24 19:18:05,326 [INFO]    Estimated cost: ~$0.00
+192.168.1.9 - - [24/Dec/2025 19:18:10] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:18:10,326 [INFO] 192.168.1.9 - - [24/Dec/2025 19:18:10] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:18:13,071 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 19:18:13,074 [INFO] 🔍 [_progress_callback] Book 1/1: 'The Costume History', metadata=found
+2025-12-24 19:18:13,074 [INFO] [1/1] ✅ The Costume History (quality: 1.00)
+2025-12-24 19:18:13,074 [INFO]    🖼️  Cover found
+2025-12-24 19:18:13,074 [INFO]    📝 Description added
+2025-12-24 19:18:13,074 [INFO] 🔍 [_save_enriched_books] Processing 1 books for saving...
+2025-12-24 19:18:13,074 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Costume History'
+2025-12-24 19:18:13,074 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata']
+2025-12-24 19:18:13,074 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: True
+2025-12-24 19:18:13,077 [INFO] 🔍 [_save_enriched_books] Updates dictionary for 'The Costume History': [] (count: 0)
+2025-12-24 19:18:13,077 [WARNING] ⚠️  [_save_enriched_books] No updates to save for 'The Costume History' - updates dictionary is empty
+2025-12-24 19:18:13,080 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 19:18:13,081 [INFO] 📊 Tracked 0 enriched and 0 skipped books
+2025-12-24 19:18:13,081 [INFO]
+============================================================
+2025-12-24 19:18:13,081 [INFO] ENRICHMENT REPORT
+2025-12-24 19:18:13,081 [INFO] ============================================================
+2025-12-24 19:18:13,081 [INFO] 📊 Statistics:
+2025-12-24 19:18:13,081 [INFO]    Books checked: 1
+2025-12-24 19:18:13,081 [INFO]    Books enriched: 1
+2025-12-24 19:18:13,081 [INFO]    Books failed: 0
+2025-12-24 19:18:13,081 [INFO]    Success rate: 100.0%
+2025-12-24 19:18:13,081 [INFO]
+📝 Content:
+2025-12-24 19:18:13,081 [INFO]    Covers found: 1
+2025-12-24 19:18:13,081 [INFO]    Descriptions added: 1
+2025-12-24 19:18:13,081 [INFO]
+⏱️  Performance:
+2025-12-24 19:18:13,081 [INFO]    Duration: 7.7s
+2025-12-24 19:18:13,082 [INFO]    Speed: 7.7 books/min
+2025-12-24 19:18:13,082 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 19:18:13,082 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 19:18:15] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:18:15,368 [INFO] 192.168.1.9 - - [24/Dec/2025 19:18:15] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Обогатяването работи (quality: 1.00, cover found, description added), но `updates` е празен (`count: 0`). Това означава, че `merge_metadata_into_book` не добавя полетата към `updates` правилно. Проверявам какво точно връща `merge_metadata_into_book` и как се използва:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "def merge_metadata_into_book|return.*updates|updates\[" in "app/services/enrichment_service.py" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `def merge_metadata_into_book(` | L450 |
 
 
 </details>

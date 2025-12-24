@@ -730,20 +730,57 @@ class EnrichmentCommand:
                     current_cover_url = book.get('cover_url', '')
                     current_is_local = current_cover_url.startswith('/covers/') if current_cover_url else True
                     
-                    logger.debug(f"🔍 Cover check for '{book['title']}': current='{current_cover_url}' (local={current_is_local}), new='{new_cover_url}' (valid={is_valid_url})")
+                    # Check if current cover URL is valid (using same logic as _has_sufficient_data)
+                    current_is_valid = False
+                    if current_cover_url:
+                        if current_cover_url.startswith('http://') or current_cover_url.startswith('https://'):
+                            # Check if it ends with image extension or contains one before query params
+                            image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+                            ends_with_extension = any(current_cover_url.lower().endswith(ext) for ext in image_extensions)
+                            contains_extension = any(f'.{ext}' in current_cover_url.lower().split('?')[0] for ext in ['jpg', 'jpeg', 'png', 'webp', 'gif'])
+                            
+                            if '/cache/' in current_cover_url:
+                                # Cache URLs must end with extension AND not contain suspicious patterns
+                                import re
+                                # Check for ISBN in path (can be between / or at end before extension)
+                                has_isbn_in_path = bool(re.search(r'/(978|979)\d{10}(/|\.)', current_cover_url))
+                                
+                                # Also check if filename itself is an ISBN (13 digits)
+                                path_after_cache = current_cover_url.split('/cache/')[-1] if '/cache/' in current_cover_url else ''
+                                path_segments = [s for s in path_after_cache.split('/') if s]
+                                if path_segments:
+                                    # Remove extension from last segment
+                                    last_seg = path_segments[-1]
+                                    for ext in image_extensions:
+                                        if last_seg.lower().endswith(ext):
+                                            last_seg = last_seg[:-len(ext)]
+                                            break
+                                    filename_is_isbn = bool(re.match(r'^(978|979)\d{10}$', last_seg))
+                                else:
+                                    filename_is_isbn = False
+                                
+                                # Check if path segments are mostly single digits (suspicious pattern like /9/7/9783836555401)
+                                has_numeric_path = len(path_segments) > 2 and all(len(seg) <= 2 and seg.isdigit() for seg in path_segments[:-1])
+                                
+                                current_is_valid = ends_with_extension and not has_isbn_in_path and not has_numeric_path and not filename_is_isbn
+                            else:
+                                # Non-cache URLs: check if ends with extension or contains it before query params
+                                current_is_valid = ends_with_extension or contains_extension
+                    
+                    logger.info(f"🔍 Cover check for '{book['title']}': current='{current_cover_url[:80] if current_cover_url else 'None'}...' (valid={current_is_valid}), new='{new_cover_url[:80] if new_cover_url else 'None'}...' (valid={is_valid_url})")
                     
                     # Update if:
                     # 1. No current cover, OR
-                    # 2. Current is local path and new is valid URL, OR
+                    # 2. Current cover is invalid (local path or broken cache URL), OR
                     # 3. Force flag is set
-                    if (not current_cover_url or (current_is_local and is_valid_url) or self.args.force):
+                    if (not current_cover_url or not current_is_valid or self.args.force):
                         if is_valid_url:
                             updates['cover_url'] = new_cover_url
-                            logger.info(f"🖼️  Updating cover URL for: {book['title']} -> {new_cover_url}")
+                            logger.info(f"🖼️  Updating cover URL for: {book['title']} -> {new_cover_url[:80]}...")
                         else:
                             logger.warning(f"⚠️  Skipping invalid cover URL for '{book['title']}': {new_cover_url} (not http/https)")
-                    elif current_cover_url and not current_is_local:
-                        logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url}")
+                    elif current_cover_url and current_is_valid:
+                        logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
                 
                 # Publisher is handled separately as a relationship
                 publisher_name = enriched.get('publisher')
