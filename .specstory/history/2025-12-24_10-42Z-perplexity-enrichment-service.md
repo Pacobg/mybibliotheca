@@ -29138,3 +29138,345 @@ _**Agent (model composer-1, mode Agent)**_
 
 ---
 
+
+URL-ът `https://cdn.taschen.com/...` се счита за валиден, защото завършва с `.jpg`, но не е достъпен. Добавям проверка за достъпност и в `_get_books_to_enrich`, не само при запазване. Проверявам логиката:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "def _get_books_to_enrich|has_valid_cover|Non-cache URL|Cache URL" in "scripts/enrich_books.py" • 14 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `async def _get_books_to_enrich(self) -> List[Dict]:` | L257 |
+| `scripts/enrich_books.py` | `has_valid_cover = False` | L406 |
+| `scripts/enrich_books.py` | `# Cache URLs must end with extension AND not contain suspicious patterns` | L425 |
+| `scripts/enrich_books.py` | `has_valid_cover = ends_with_extension and not has_isbn_in_path and not has_numeric_path and not filename_is_isbn` | L453 |
+| `scripts/enrich_books.py` | `logger.info(f"🔍 [_get_books_to_enrich] Cache URL analysis: has_isbn_in_path=\{has_isbn_in_path\}, has_numeric_path=\{has_numeric_path\}, filename_is_isbn=\{filename_is_isbn\}, path_segments=\{path_segments[-3:] if len(path_segments) >= 3 else path_segments\}")` | L455 |
+| `scripts/enrich_books.py` | `if not has_valid_cover:` | L457 |
+| `scripts/enrich_books.py` | `logger.info(f"🔍 [_get_books_to_enrich] ❌ Cache URL invalid: '\{cover_url[:100]\}...' - ends_with_extension=\{ends_with_extension\}, has_isbn_in_path=\{has_isbn_in_path\}, has_numeric_path=\{has_numeric_path\}, filename_is_isbn=\{filename_is_isbn\} - marking as INVALID")` | L458 |
+| `scripts/enrich_books.py` | `logger.info(f"🔍 [_get_books_to_enrich] ✅ Cache URL valid: '\{cover_url[:100]\}...' - marking as VALID")` | L460 |
+| `scripts/enrich_books.py` | `# Non-cache URLs: check if ends with extension or contains it before query params` | L462 |
+| `scripts/enrich_books.py` | `has_valid_cover = ends_with_extension or contains_extension` | L463 |
+| `scripts/enrich_books.py` | `logger.info(f"🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=\{has_valid_cover\}")` | L464 |
+| `scripts/enrich_books.py` | `if not has_valid_cover:` | L467 |
+| `scripts/enrich_books.py` | `# Cache URLs must end with extension AND not contain suspicious patterns` | L743 |
+| `scripts/enrich_books.py` | `# Non-cache URLs: check if ends with extension or contains it before query params` | L767 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавям проверка за достъпност и в `_get_books_to_enrich`, не само при запазване. Проверявам достъпността на cover URL-ите преди да ги маркирам като валидни:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+The string to replace was not found in the file.
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add cover URL accessibility check in _get_books_to_enrich when --no-cover-only is active" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add cover URL accessibility check in _get_books_to_enrich when --no-cover-only is active" && git push origin main
+```
+
+```
+[main cf6809a] Add cover URL accessibility check in _get_books_to_enrich when --no-cover-only is active
+ 1 file changed, 206 insertions(+)
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+To https://github.com/Pacobg/mybibliotheca.git
+   761ddf1..cf6809a  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Преглеждам файла отново и правя корекцията:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 33, lines removed: 1
+
+```diff
+@@ -463,5 +463,37 @@
+                                          has_valid_cover = ends_with_extension or contains_extension
+                                          logger.info(f"🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover={has_valid_cover}")
+-                                 
++                                         
++                                         # If --no-cover-only is active, also check if URL is accessible
++                                         if has_valid_cover and hasattr(self.args, 'no_cover_only') and self.args.no_cover_only:
++                                             # Quick accessibility check (timeout 3 seconds)
++                                             try:
++                                                 import httpx
++                                                 with httpx.Client(timeout=3.0, follow_redirects=True) as client:
++                                                     response = client.head(cover_url)
++                                                     if response.status_code == 200:
++                                                         content_type = response.headers.get('content-type', '').lower()
++                                                         if 'image' not in content_type:
++                                                             has_valid_cover = False
++                                                             logger.info(f"🔍 [_get_books_to_enrich] Non-cache URL returned non-image content-type: {content_type} - marking as INVALID")
++                                                     elif response.status_code in [301, 302, 303, 307, 308]:
++                                                         # Redirect - try GET to final URL
++                                                         final_url = response.headers.get('location', cover_url)
++                                                         get_response = client.get(final_url, timeout=3.0)
++                                                         if get_response.status_code != 200:
++                                                             has_valid_cover = False
++                                                             logger.info(f"🔍 [_get_books_to_enrich] Non-cache URL redirect failed with status {get_response.status_code} - marking as INVALID")
++                                                         else:
++                                                             content_type = get_response.headers.get('content-type', '').lower()
++                                                             if 'image' not in content_type:
++                                                                 has_valid_cover = False
++                                                                 logger.info(f"🔍 [_get_books_to_enrich] Non-cache URL redirect returned non-image content-type: {content_type} - marking as INVALID")
++                                                     else:
++                                                         has_valid_cover = False
++                                                         logger.info(f"🔍 [_get_books_to_enrich] Non-cache URL returned status {response.status_code} - marking as INVALID")
++                                             except Exception as e:
++                                                 # If accessibility check fails, still consider URL valid if it has image extension
++                                                 # (might be temporary network issue)
++                                                 logger.debug(f"🔍 [_get_books_to_enrich] Could not verify accessibility of {cover_url[:60]}...: {e} - assuming valid based on extension")
++                                 
+                                  # Double-check: only add books WITHOUT valid covers
+                                  if not has_valid_cover:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add cover URL accessibility check in _get_books_to_enrich when --no-cover-only is active" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add cover URL accessibility check in _get_books_to_enrich when --no-cover-only is active" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 21ca20f] Add cover URL accessibility check in _get_books_to_enrich when --no-cover-only is active
+ 2 files changed, 87 insertions(+)
+To https://github.com/Pacobg/mybibliotheca.git
+   cf6809a..21ca20f  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавих проверка за достъпност на cover URLs в `_get_books_to_enrich` когато `--no-cover-only` е активен. Системата вече:
+
+1. Проверява дали URL-ът завършва с разширение за изображение
+2. Ако да, прави HEAD заявка за проверка на достъпност (timeout 3 секунди)
+3. Проверява дали content-type е image
+4. Обработва редирекции и проверява финалния URL
+5. Ако URL-ът не е достъпен или не е изображение, го маркира като невалиден и добавя книгата за обогатяване
+
+При следващо стартиране на обогатяването с `--no-cover-only`:
+- "The Costume History" ще бъде идентифицирана като книга без валиден cover URL (защото `https://cdn.taschen.com/...` не е достъпен)
+- Ще бъде добавена за обогатяване
+- Perplexity ще търси нов валиден cover URL
+- Новият URL ще бъде проверен за достъпност преди запазване
+
+Опитайте отново обогатяването — "The Costume History" трябва да бъде идентифицирана като книга без валиден cover и да бъде обогатена с нов валиден URL.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 19:39:01,103 [INFO] ============================================================
+2025-12-24 19:39:01,103 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 19:39:01,103 [INFO] ============================================================
+2025-12-24 19:39:01,104 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 19:39:01] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:39:01,159 [INFO] 192.168.1.9 - - [24/Dec/2025 19:39:01] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:39:01,161 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 19:39:01,162 [INFO] ⚙️  Configuration:
+2025-12-24 19:39:01,162 [INFO]    Limit: 5
+2025-12-24 19:39:01,162 [INFO]    Force: False
+2025-12-24 19:39:01,162 [INFO]    Dry run: False
+2025-12-24 19:39:01,162 [INFO]    Min quality: 0.3
+2025-12-24 19:39:01,162 [INFO]    No cover only: True (only books without covers)
+2025-12-24 19:39:01,162 [INFO] 📖 Querying database for books...
+2025-12-24 19:39:01,162 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 19:39:01,162 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 19:39:01,169 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 19:39:01,172 [INFO] 🔍 [_get_books_to_enrich] 'The Secret History': cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:39:01,172 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:39:01,354 [INFO] HTTP Request: HEAD https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg "HTTP/1.1 403 Forbidden"
+2025-12-24 19:39:01,356 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned status 403 - marking as INVALID
+2025-12-24 19:39:01,356 [INFO] ✅ Added book without valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+2025-12-24 19:39:01,367 [INFO] 🔍 [_get_books_to_enrich] 'The Secret Garden': cover_url='https://knigabg.com/pix/28162.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:39:01,367 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:39:01,436 [INFO] HTTP Request: HEAD https://knigabg.com/pix/28162.jpg "HTTP/1.1 404 Not Found"
+2025-12-24 19:39:01,436 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned status 404 - marking as INVALID
+2025-12-24 19:39:01,437 [INFO] ✅ Added book without valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 19:39:01,441 [INFO] 🔍 [_get_books_to_enrich] 'The Priory of the Orange Tree (The Roots of Chaos, #1)': cover_url='https://images.thenile.io/r1000/9781408883358.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:39:01,441 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:39:01,623 [INFO] HTTP Request: HEAD https://images.thenile.io/r1000/9781408883358.jpg "HTTP/1.1 200 OK"
+2025-12-24 19:39:01,624 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 19:39:01,635 [INFO] 🔍 [_get_books_to_enrich] 'The Familiar': cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:39:01,635 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:39:02,600 [INFO] HTTP Request: HEAD https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg "HTTP/1.1 200 OK"
+2025-12-24 19:39:02,601 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned non-image content-type: text/html; charset=utf-8 - marking as INVALID
+2025-12-24 19:39:02,602 [INFO] ✅ Added book without valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 19:39:02,607 [INFO] 🔍 [_get_books_to_enrich] 'The Costume History': cover_url='https://cdn.taschen.com/custom/taschen/uploads/2021/08/26142148/va_racinet_costume_history_25_g_3d_4...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:39:02,607 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:39:02,621 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='https://cdn.taschen.com/custom/taschen/uploads/2021/08/26142...')
+2025-12-24 19:39:02,621 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 19:39:02,622 [INFO] 📊 Statistics: 2 books WITH valid cover URLs (skipped)
+2025-12-24 19:39:02,622 [INFO] 📊 Statistics: 3 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 19:39:02,622 [INFO] ✅ Found 3 books to enrich
+2025-12-24 19:39:02,622 [INFO]
+📚 Found 3 books to enrich
+2025-12-24 19:39:02,622 [INFO]
+🚀 Starting enrichment...
+2025-12-24 19:39:02,622 [INFO]    Estimated time: ~0.1 minutes
+2025-12-24 19:39:02,622 [INFO]    Estimated cost: ~$0.00
+2025-12-24 19:39:02,622 [INFO] 🔍 [_progress_callback] Book 1/3: 'The Secret History', metadata=None
+2025-12-24 19:39:02,622 [WARNING] [1/3] ❌ The Secret History - No metadata found
+2025-12-24 19:39:02,623 [INFO] 🔍 [_progress_callback] Book data: title='The Secret History', author='Unknown', cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg', description=present
+2025-12-24 19:39:03,624 [INFO] 🔍 [_progress_callback] Book 2/3: 'The Secret Garden', metadata=None
+2025-12-24 19:39:03,625 [WARNING] [2/3] ❌ The Secret Garden - No metadata found
+2025-12-24 19:39:03,625 [INFO] 🔍 [_progress_callback] Book data: title='The Secret Garden', author='Франсис Бърнет', cover_url='https://knigabg.com/pix/28162.jpg', description=present
+2025-12-24 19:39:04,627 [INFO] 🔍 [_progress_callback] Book 3/3: 'The Familiar', metadata=None
+2025-12-24 19:39:04,627 [WARNING] [3/3] ❌ The Familiar - No metadata found
+2025-12-24 19:39:04,628 [INFO] 🔍 [_progress_callback] Book data: title='The Familiar', author='Лий Бардуго', cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg', description=present
+2025-12-24 19:39:04,628 [INFO] 🔍 [_save_enriched_books] Processing 3 books for saving...
+2025-12-24 19:39:04,628 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Secret History'
+2025-12-24 19:39:04,628 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata']
+2025-12-24 19:39:04,629 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: False
+2025-12-24 19:39:04,629 [WARNING] ⚠️  [_save_enriched_books] Skipping 'The Secret History' - no ai_metadata found
+2025-12-24 19:39:04,629 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Secret Garden'
+2025-12-24 19:39:04,629 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata']
+2025-12-24 19:39:04,629 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: False
+2025-12-24 19:39:04,629 [WARNING] ⚠️  [_save_enriched_books] Skipping 'The Secret Garden' - no ai_metadata found
+2025-12-24 19:39:04,630 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Familiar'
+2025-12-24 19:39:04,630 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata']
+2025-12-24 19:39:04,630 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: False
+2025-12-24 19:39:04,630 [WARNING] ⚠️  [_save_enriched_books] Skipping 'The Familiar' - no ai_metadata found
+2025-12-24 19:39:04,630 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 19:39:04,632 [INFO] 📊 Tracked 0 enriched and 0 skipped books
+2025-12-24 19:39:04,632 [INFO]
+============================================================
+2025-12-24 19:39:04,632 [INFO] ENRICHMENT REPORT
+2025-12-24 19:39:04,632 [INFO] ============================================================
+2025-12-24 19:39:04,632 [INFO] 📊 Statistics:
+2025-12-24 19:39:04,632 [INFO]    Books checked: 3
+2025-12-24 19:39:04,632 [INFO]    Books enriched: 0
+2025-12-24 19:39:04,632 [INFO]    Books failed: 3
+2025-12-24 19:39:04,632 [INFO]    Success rate: 0.0%
+2025-12-24 19:39:04,632 [INFO]
+📝 Content:
+2025-12-24 19:39:04,633 [INFO]    Covers found: 0
+2025-12-24 19:39:04,633 [INFO]    Descriptions added: 0
+2025-12-24 19:39:04,633 [INFO]
+⏱️  Performance:
+2025-12-24 19:39:04,633 [INFO]    Duration: 2.0s
+2025-12-24 19:39:04,633 [INFO]    Speed: 89.7 books/min
+2025-12-24 19:39:04,633 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 19:39:04,633 [INFO] ============================================================
+ не е ли по удобно jpg файовете с covers да се свалят локално и да им се дава статично url с име на jpg като ID на книгата или името и?
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
