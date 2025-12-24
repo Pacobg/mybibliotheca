@@ -52,7 +52,8 @@ class EnrichmentService:
     async def enrich_single_book(
         self, 
         book_data: Dict,
-        force: bool = False
+        force: bool = False,
+        require_cover: bool = False
     ) -> Optional[Dict]:
         """
         Enrich a single book with AI metadata
@@ -60,6 +61,7 @@ class EnrichmentService:
         Args:
             book_data: Dictionary with book data (must have 'title' and 'author')
             force: Force enrichment even if book already has data
+            require_cover: If True, book must have valid cover URL to be considered sufficient
             
         Returns:
             Enriched metadata dictionary or None
