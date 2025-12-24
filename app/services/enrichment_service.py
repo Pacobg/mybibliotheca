@@ -127,33 +127,37 @@ class EnrichmentService:
             Enriched metadata dictionary or None
         """
         
+        logger.info(f"🔍 [ENRICH_SINGLE_BOOK] Called for book_data keys: {list(book_data.keys())}")
+        
         # Check if any provider is available
         if not self.perplexity and not self.openai_enricher:
-            logger.error("No enrichment providers available - cannot enrich")
+            logger.error("❌ [ENRICH_SINGLE_BOOK] No enrichment providers available - cannot enrich")
             return None
         
         title = book_data.get('title')
         author = book_data.get('author') or book_data.get('author', 'Unknown')
         
+        logger.info(f"🔍 [ENRICH_SINGLE_BOOK] Title: '{title}', Author: '{author}'")
+        
         if not title:
-            logger.error("Missing title - cannot enrich")
+            logger.error("❌ [ENRICH_SINGLE_BOOK] Missing title - cannot enrich")
             return None
         
         # If author is Unknown or missing, try to enrich anyway (AI might find it)
         if not author or author == 'Unknown':
-            logger.info(f"⚠️  Book '{title}' has no author - will try to find it via AI")
+            logger.info(f"⚠️  [ENRICH_SINGLE_BOOK] Book '{title}' has no author - will try to find it via AI")
             author = ''  # Empty author - AI will try to find it
         
         # Check if book already has good data (unless force)
         if not force:
-            logger.info(f"🔍 Checking if '{title}' needs enrichment (force={force}, require_cover={require_cover})")
+            logger.info(f"🔍 [ENRICH_SINGLE_BOOK] Checking if '{title}' needs enrichment (force={force}, require_cover={require_cover})")
             has_sufficient = self._has_sufficient_data(book_data, require_cover=require_cover)
-            logger.info(f"🔍 _has_sufficient_data returned: {has_sufficient} for '{title}'")
+            logger.info(f"🔍 [ENRICH_SINGLE_BOOK] _has_sufficient_data returned: {has_sufficient} for '{title}'")
             if has_sufficient:
-                logger.info(f"⏭️  Skipping {title} - already has sufficient data")
+                logger.info(f"⏭️  [ENRICH_SINGLE_BOOK] Skipping {title} - already has sufficient data")
                 return None
             else:
-                logger.info(f"🔍 Book '{title}' needs enrichment (has_sufficient_data=False, require_cover={require_cover})")
+                logger.info(f"🔍 [ENRICH_SINGLE_BOOK] Book '{title}' needs enrichment (has_sufficient_data=False, require_cover={require_cover})")
         
         try:
             logger.info(f"🔍 Enriching: {title} - {author}")

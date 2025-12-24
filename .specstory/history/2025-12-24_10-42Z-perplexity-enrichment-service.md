@@ -22896,3 +22896,112 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 17:48:00,248 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 17:48:00,248 [INFO] ============================================================
+2025-12-24 17:48:00,248 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 17:48:00] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 17:48:00,291 [INFO] 192.168.1.9 - - [24/Dec/2025 17:48:00] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 17:48:00,311 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 17:48:00,311 [INFO] ⚙️  Configuration:
+2025-12-24 17:48:00,311 [INFO]    Limit: 5
+2025-12-24 17:48:00,311 [INFO]    Force: False
+2025-12-24 17:48:00,311 [INFO]    Dry run: False
+2025-12-24 17:48:00,311 [INFO]    Min quality: 0.3
+2025-12-24 17:48:00,311 [INFO]    No cover only: True (only books without covers)
+2025-12-24 17:48:00,311 [INFO] 📖 Querying database for books...
+2025-12-24 17:48:00,373 [INFO] ✅ Found 5 books to enrich
+2025-12-24 17:48:00,373 [INFO]
+📚 Found 5 books to enrich
+2025-12-24 17:48:00,373 [INFO]
+🚀 Starting enrichment...
+2025-12-24 17:48:00,373 [INFO]    Estimated time: ~0.2 minutes
+2025-12-24 17:48:00,373 [INFO]    Estimated cost: ~$0.00
+2025-12-24 17:48:00,373 [WARNING] [1/5] ❌ The Secret History - No metadata found
+2025-12-24 17:48:01,375 [WARNING] [2/5] ❌ The Secret Garden - No metadata found
+2025-12-24 17:48:02,377 [WARNING] [3/5] ❌ The Priory of the Orange Tree (The Roots of Chaos, #1) - No metadata found
+2025-12-24 17:48:03,379 [WARNING] [4/5] ❌ The Familiar - No metadata found
+2025-12-24 17:48:04,381 [WARNING] [5/5] ❌ The Costume History - No metadata found
+2025-12-24 17:48:04,381 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 17:48:04,383 [INFO] 📊 Tracked 0 enriched and 0 skipped books
+2025-12-24 17:48:04,383 [INFO]
+============================================================
+2025-12-24 17:48:04,383 [INFO] ENRICHMENT REPORT
+2025-12-24 17:48:04,384 [INFO] ============================================================
+2025-12-24 17:48:04,384 [INFO] 📊 Statistics:
+2025-12-24 17:48:04,384 [INFO]    Books checked: 5
+2025-12-24 17:48:04,384 [INFO]    Books enriched: 0
+2025-12-24 17:48:04,385 [INFO]    Books failed: 5
+2025-12-24 17:48:04,385 [INFO]    Success rate: 0.0%
+2025-12-24 17:48:04,385 [INFO]
+📝 Content:
+2025-12-24 17:48:04,385 [INFO]    Covers found: 0
+2025-12-24 17:48:04,385 [INFO]    Descriptions added: 0
+2025-12-24 17:48:04,385 [INFO]
+⏱️  Performance:
+2025-12-24 17:48:04,386 [INFO]    Duration: 4.0s
+2025-12-24 17:48:04,386 [INFO]    Speed: 74.9 books/min
+2025-12-24 17:48:04,386 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 17:48:04,386 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 17:48:05] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="read_file">
+<details>
+<summary>Tool use: **read_file**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
