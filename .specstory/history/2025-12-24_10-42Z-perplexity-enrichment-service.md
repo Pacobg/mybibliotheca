@@ -23967,3 +23967,414 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 18:03:45,520 [INFO] ============================================================
+2025-12-24 18:03:45,520 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 18:03:45,520 [INFO] ============================================================
+2025-12-24 18:03:45,520 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 18:03:45] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:03:45,562 [INFO] 192.168.1.9 - - [24/Dec/2025 18:03:45] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:03:45,583 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 18:03:45,583 [INFO] ⚙️  Configuration:
+2025-12-24 18:03:45,583 [INFO]    Limit: 5
+2025-12-24 18:03:45,583 [INFO]    Force: False
+2025-12-24 18:03:45,584 [INFO]    Dry run: False
+2025-12-24 18:03:45,584 [INFO]    Min quality: 0.3
+2025-12-24 18:03:45,584 [INFO]    No cover only: True (only books without covers)
+2025-12-24 18:03:45,584 [INFO] 📖 Querying database for books...
+2025-12-24 18:03:45,630 [INFO] ✅ Found 5 books to enrich
+2025-12-24 18:03:45,631 [INFO]
+📚 Found 5 books to enrich
+2025-12-24 18:03:45,631 [INFO]
+🚀 Starting enrichment...
+2025-12-24 18:03:45,631 [INFO]    Estimated time: ~0.2 minutes
+2025-12-24 18:03:45,631 [INFO]    Estimated cost: ~$0.00
+2025-12-24 18:03:45,631 [INFO] 🔍 [_progress_callback] Book 1/5: 'The Secret History', metadata=None
+2025-12-24 18:03:45,631 [WARNING] [1/5] ❌ The Secret History - No metadata found
+2025-12-24 18:03:45,631 [INFO] 🔍 [_progress_callback] Book data: title='The Secret History', author='Unknown', cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg', description=present
+2025-12-24 18:03:46,633 [INFO] 🔍 [_progress_callback] Book 2/5: 'The Secret Garden', metadata=None
+2025-12-24 18:03:46,633 [WARNING] [2/5] ❌ The Secret Garden - No metadata found
+2025-12-24 18:03:46,633 [INFO] 🔍 [_progress_callback] Book data: title='The Secret Garden', author='Франсис Бърнет', cover_url='https://knigabg.com/pix/28162.jpg', description=present
+2025-12-24 18:03:47,635 [INFO] 🔍 [_progress_callback] Book 3/5: 'The Priory of the Orange Tree (The Roots of Chaos, #1)', metadata=None
+2025-12-24 18:03:47,636 [WARNING] [3/5] ❌ The Priory of the Orange Tree (The Roots of Chaos, #1) - No metadata found
+2025-12-24 18:03:47,636 [INFO] 🔍 [_progress_callback] Book data: title='The Priory of the Orange Tree (The Roots of Chaos, #1)', author='Unknown', cover_url='https://images.thenile.io/r1000/9781408883358.jpg', description=present
+2025-12-24 18:03:48,638 [INFO] 🔍 [_progress_callback] Book 4/5: 'The Familiar', metadata=None
+2025-12-24 18:03:48,638 [WARNING] [4/5] ❌ The Familiar - No metadata found
+2025-12-24 18:03:48,639 [INFO] 🔍 [_progress_callback] Book data: title='The Familiar', author='Лий Бардуго', cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg', description=present
+2025-12-24 18:03:49,640 [INFO] 🔍 [_progress_callback] Book 5/5: 'The Costume History', metadata=None
+2025-12-24 18:03:49,641 [WARNING] [5/5] ❌ The Costume History - No metadata found
+2025-12-24 18:03:49,641 [INFO] 🔍 [_progress_callback] Book data: title='The Costume History', author='Racinet', cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401.jpg', description=present
+2025-12-24 18:03:49,641 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 18:03:49,643 [INFO] 📊 Tracked 0 enriched and 0 skipped books
+2025-12-24 18:03:49,643 [INFO]
+============================================================
+2025-12-24 18:03:49,643 [INFO] ENRICHMENT REPORT
+2025-12-24 18:03:49,643 [INFO] ============================================================
+2025-12-24 18:03:49,644 [INFO] 📊 Statistics:
+2025-12-24 18:03:49,644 [INFO]    Books checked: 5
+2025-12-24 18:03:49,644 [INFO]    Books enriched: 0
+2025-12-24 18:03:49,645 [INFO]    Books failed: 5
+2025-12-24 18:03:49,645 [INFO]    Success rate: 0.0%
+2025-12-24 18:03:49,645 [INFO]
+📝 Content:
+2025-12-24 18:03:49,645 [INFO]    Covers found: 0
+2025-12-24 18:03:49,645 [INFO]    Descriptions added: 0
+2025-12-24 18:03:49,646 [INFO]
+⏱️  Performance:
+2025-12-24 18:03:49,646 [INFO]    Duration: 4.0s
+2025-12-24 18:03:49,646 [INFO]    Speed: 74.8 books/min
+2025-12-24 18:03:49,646 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 18:03:49,646 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 18:03:50] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:03:50,623 [INFO] 192.168.1.9 - - [24/Dec/2025 18:03:50] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Виждам, че всички книги имат валидни `cover_url` (http/https) и description. Това означава, че заявката в `_get_books_to_enrich` не филтрира правилно или данните в базата са различни от очакваното.
+
+Не виждам логове от `enrich_batch` или `enrich_single_book` с новите префикси — вероятно кодът не е обновен на сървъра или има проблем с кеша.
+
+Проверявам заявката и логиката:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проблемът е, че заявката филтрира книги без валидни cover URLs, но тези книги имат валидни cover URLs. Вероятно `_has_sufficient_data` връща `True` за тях (имат cover и description), затова се пропускат.
+
+Не виждам логове от `enrich_single_book` с префикса `[ENRICH_SINGLE_BOOK]` — вероятно кодът не е обновен на сървъра. Добавям логове директно в началото на `enrich_single_book`, за да видим дали се извиква:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 8, lines removed: 1
+
+```diff
+@@ -128,5 +128,12 @@
+          """
+          
+-         logger.info(f"🔍 [ENRICH_SINGLE_BOOK] Called for book_data keys: {list(book_data.keys())}")
++         title = book_data.get('title', 'Unknown')
++         author = book_data.get('author', 'Unknown')
++         cover_url = book_data.get('cover_url', 'None')
++         has_description = bool(book_data.get('description'))
++         
++         logger.info(f"🔍 [ENRICH_SINGLE_BOOK] CALLED for '{title}'")
++         logger.info(f"🔍 [ENRICH_SINGLE_BOOK] Book data: author='{author}', cover_url='{cover_url[:80] if cover_url != 'None' else 'None'}...', has_description={has_description}")
++         logger.info(f"🔍 [ENRICH_SINGLE_BOOK] Parameters: force={force}, require_cover={require_cover}")
+          
+          # Check if any provider is available
+```
+
+**Chunk 2**
+Lines added: 1, lines removed: 6
+
+```diff
+@@ -135,10 +142,5 @@
+              return None
+          
+-         title = book_data.get('title')
+-         author = book_data.get('author') or book_data.get('author', 'Unknown')
+-         
+-         logger.info(f"🔍 [ENRICH_SINGLE_BOOK] Title: '{title}', Author: '{author}'")
+-         
+-         if not title:
++         if not title or title == 'Unknown':
+              logger.error("❌ [ENRICH_SINGLE_BOOK] Missing title - cannot enrich")
+              return None
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `app/services/enrichment_service.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix enrich_single_book logging - ensure it's called and logs are visible" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix enrich_single_book logging - ensure it's called and logs are visible" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 53f3515] Fix enrich_single_book logging - ensure it's called and logs are visible
+ 2 files changed, 532 insertions(+), 7 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   079dcb2..53f3515  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Виждам, че всички книги имат валидни `cover_url` и `description`. Вероятно `_has_sufficient_data` връща `True` за тях (имат cover и description), затова се пропускат преди обогатяване.
+
+Проблемът е в логиката: когато `require_cover=True`, трябва да обогатяваме само книги без валидни cover URLs, но тези книги имат валидни cover URLs. Това означава, че заявката в `_get_books_to_enrich` не филтрира правилно или данните в базата са различни.
+
+Проверявам логиката в `_has_sufficient_data`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проблемът е в логиката на `_has_sufficient_data`: когато `require_cover=True` и книгата има валиден cover URL, не се пропуска. При `--no-cover-only` трябва да обогатяваме само книги без валидни cover URLs; ако има валиден cover URL, трябва да я пропуснем. Коригирам логиката:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 9, lines removed: 4
+
+```diff
+@@ -375,8 +375,13 @@
+          logger.info(f"🔍 [_has_sufficient_data] Checking '{title}': require_cover={require_cover}, has_description={has_description}, has_cover={has_cover} (cover_url='{cover_url[:50] if cover_url else 'None'}...'), has_publisher={has_publisher}, has_isbn={has_isbn}")
+          
+-         # If cover is required (e.g., --no-cover-only mode), don't skip if missing valid cover
+-         if require_cover and not has_cover:
+-             logger.info(f"🔍 [_has_sufficient_data] '{title}' needs enrichment: require_cover=True but has_cover=False")
+-             return False
++         # If cover is required (e.g., --no-cover-only mode), only enrich books WITHOUT valid covers
++         # If book has valid cover, skip it (it's sufficient)
++         if require_cover:
++             if has_cover:
++                 logger.info(f"🔍 [_has_sufficient_data] '{title}' has sufficient data: require_cover=True and has_cover=True - SKIPPING")
++                 return True  # Book has cover, skip it
++             else:
++                 logger.info(f"🔍 [_has_sufficient_data] '{title}' needs enrichment: require_cover=True but has_cover=False - WILL ENRICH")
++                 return False  # Book needs cover, enrich it
+          
+          # For Bulgarian books, cover is critical - don't skip if missing cover
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `app/services/enrichment_service.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix _has_sufficient_data logic: when require_cover=True, skip books WITH covers, enrich books WITHOUT covers" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix _has_sufficient_data logic: when require_cover=True, skip books WITH covers, enrich books WITHOUT covers" && git push origin main
+```
+
+```
+[main 5494d47] Fix _has_sufficient_data logic: when require_cover=True, skip books WITH covers, enrich books WITHOUT covers
+ 1 file changed, 9 insertions(+), 4 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   53f3515..5494d47  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправих логиката. Сега когато `require_cover=True`:
+- Ако книгата има валиден cover URL → пропускаме я (`True`)
+- Ако книгата няма валиден cover URL → обогатяваме я (`False`)
+
+Все още има проблем: заявката в `_get_books_to_enrich` филтрира книги без валидни cover URLs, но тези книги имат валидни cover URLs. Това означава, че заявката не работи правилно или данните в базата са различни.
+
+Проверявам заявката — може да има проблем с `NOT (b.cover_url STARTS WITH 'http://' OR b.cover_url STARTS WITH 'https://')`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 1
+
+```diff
+@@ -295,5 +295,6 @@
+                      MATCH (b:Book)
+                      OPTIONAL MATCH (b)-[:PUBLISHED_BY]-&gt;(p:Publisher)
+-                     WHERE (b.cover_url IS NULL OR b.cover_url = '' OR NOT (b.cover_url STARTS WITH 'http://' OR b.cover_url STARTS WITH 'https://'))
++                     WHERE (b.cover_url IS NULL OR b.cover_url = '' OR 
++                            (NOT b.cover_url STARTS WITH 'http://' AND NOT b.cover_url STARTS WITH 'https://'))
+                      RETURN b.id as id, b.title as title, b.description as description,
+                             b.cover_url as cover_url, p.name as publisher,
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix SQL query for --no-cover-only: use AND instead of OR in NOT condition" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix SQL query for --no-cover-only: use AND instead of OR in NOT condition" && git push origin main
+```
+
+```
+[main f4880ec] Fix SQL query for --no-cover-only: use AND instead of OR in NOT condition
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   5494d47..f4880ec  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправих два проблема:
+
+1. **Логика в `_has_sufficient_data`**: Когато `require_cover=True` (режим `--no-cover-only`):
+   - Ако книгата има валиден cover URL → пропускаме я (`True`)
+   - Ако книгата няма валиден cover URL → обогатяваме я (`False`)
+
+2. **SQL заявка**: Променил съм `NOT (b.cover_url STARTS WITH 'http://' OR b.cover_url STARTS WITH 'https://')` на `(NOT b.cover_url STARTS WITH 'http://' AND NOT b.cover_url STARTS WITH 'https://')` за правилна логика.
+
+Промените са качени в git main. Опитайте отново и споделете резултатите. Сега системата трябва да:
+- Пропуска книги с валидни cover URLs (дори и да нямат други данни)
+- Обогатява само книги без валидни cover URLs
+
+Ако все още виждате книги с валидни cover URLs в резултата, вероятно заявката не филтрира правилно или има проблем с данните в базата.
+
+---
+

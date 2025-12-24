@@ -388,11 +388,16 @@ class EnrichmentCommand:
                         if book_dict['title']:
                             # If --no-cover-only is set, include all books (not just Bulgarian)
                             if hasattr(self.args, 'no_cover_only') and self.args.no_cover_only:
-                                books.append(book_dict)
-                                if book_dict['author'] == 'Unknown':
-                                    logger.debug(f"✅ Added book without cover and author: {title}")
+                                cover_url = book_dict.get('cover_url', '')
+                                has_valid_cover = cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://'))
+                                logger.info(f"🔍 [_get_books_to_enrich] Book '{title}': cover_url='{cover_url[:60] if cover_url else 'None'}...', has_valid_cover={has_valid_cover}")
+                                
+                                # Double-check: only add books WITHOUT valid covers
+                                if not has_valid_cover:
+                                    books.append(book_dict)
+                                    logger.info(f"✅ Added book without valid cover: {title}")
                                 else:
-                                    logger.debug(f"✅ Added book without cover: {title}")
+                                    logger.info(f"⏭️  Skipping book with valid cover: {title} (cover_url='{cover_url[:60]}...')")
                             else:
                                 # Check if it's a Bulgarian book
                                 # Bulgarian books have Cyrillic characters in title OR language='bg'
