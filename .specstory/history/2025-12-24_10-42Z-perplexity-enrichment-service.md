@@ -30249,3 +30249,422 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 19:49:09,050 [INFO] ============================================================
+2025-12-24 19:49:09,050 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 19:49:09,050 [INFO] ============================================================
+2025-12-24 19:49:09,050 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 19:49:09] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:49:09,093 [INFO] 192.168.1.9 - - [24/Dec/2025 19:49:09] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:49:09,112 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 19:49:09,113 [INFO] ⚙️  Configuration:
+2025-12-24 19:49:09,113 [INFO]    Limit: 5
+2025-12-24 19:49:09,113 [INFO]    Force: False
+2025-12-24 19:49:09,113 [INFO]    Dry run: False
+2025-12-24 19:49:09,113 [INFO]    Min quality: 0.3
+2025-12-24 19:49:09,113 [INFO]    No cover only: True (only books without covers)
+2025-12-24 19:49:09,113 [INFO] 📖 Querying database for books...
+2025-12-24 19:49:09,113 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 19:49:09,113 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 19:49:09,119 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 19:49:09,122 [INFO] 🔍 [_get_books_to_enrich] 'The Secret History': cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:49:09,122 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:49:09,160 [INFO] HTTP Request: HEAD https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg "HTTP/1.1 403 Forbidden"
+2025-12-24 19:49:09,161 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned status 403 - marking as INVALID
+2025-12-24 19:49:09,162 [INFO] ✅ Added book without valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+2025-12-24 19:49:09,171 [INFO] 🔍 [_get_books_to_enrich] 'The Secret Garden': cover_url='https://knigabg.com/pix/28162.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:49:09,172 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:49:09,208 [INFO] HTTP Request: HEAD https://knigabg.com/pix/28162.jpg "HTTP/1.1 404 Not Found"
+2025-12-24 19:49:09,209 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned status 404 - marking as INVALID
+2025-12-24 19:49:09,209 [INFO] ✅ Added book without valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 19:49:09,212 [INFO] 🔍 [_get_books_to_enrich] 'The Priory of the Orange Tree (The Roots of Chaos, #1)': cover_url='https://images.thenile.io/r1000/9781408883358.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:49:09,212 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:49:09,255 [INFO] HTTP Request: HEAD https://images.thenile.io/r1000/9781408883358.jpg "HTTP/1.1 200 OK"
+2025-12-24 19:49:09,256 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 19:49:09,260 [INFO] 🔍 [_get_books_to_enrich] 'The Familiar': cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:49:09,261 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:49:10,228 [INFO] HTTP Request: HEAD https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg "HTTP/1.1 200 OK"
+2025-12-24 19:49:10,229 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned non-image content-type: text/html; charset=utf-8 - marking as INVALID
+2025-12-24 19:49:10,230 [INFO] ✅ Added book without valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 19:49:10,233 [INFO] 🔍 [_get_books_to_enrich] 'The Costume History': cover_url='https://cdn.taschen.com/custom/taschen/uploads/2021/08/26142148/va_racinet_costume_history_25_g_3d_4...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:49:10,233 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:49:10,247 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='https://cdn.taschen.com/custom/taschen/uploads/2021/08/26142...')
+2025-12-24 19:49:10,247 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 19:49:10,247 [INFO] 📊 Statistics: 2 books WITH valid cover URLs (skipped)
+2025-12-24 19:49:10,247 [INFO] 📊 Statistics: 3 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 19:49:10,248 [INFO] ✅ Found 3 books to enrich
+2025-12-24 19:49:10,248 [INFO]
+📚 Found 3 books to enrich
+2025-12-24 19:49:10,248 [INFO]
+🚀 Starting enrichment...
+2025-12-24 19:49:10,248 [INFO]    Estimated time: ~0.1 minutes
+2025-12-24 19:49:10,248 [INFO]    Estimated cost: ~$0.00
+2025-12-24 19:49:10,277 [INFO] HTTP Request: HEAD https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg "HTTP/1.1 403 Forbidden"
+2025-12-24 19:49:13,240 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 19:49:13,243 [INFO] 🔍 [_progress_callback] Book 1/3: 'The Secret History', metadata=found
+2025-12-24 19:49:13,243 [INFO] [1/3] ✅ The Secret History (quality: 1.00)
+2025-12-24 19:49:13,243 [INFO]    🖼️  Cover found
+2025-12-24 19:49:13,243 [INFO]    📝 Description added
+192.168.1.9 - - [24/Dec/2025 19:49:14] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:49:14,154 [INFO] 192.168.1.9 - - [24/Dec/2025 19:49:14] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:49:17,266 [INFO] 🔍 [_progress_callback] Book 2/3: 'The Secret Garden', metadata=None
+2025-12-24 19:49:17,267 [WARNING] [2/3] ❌ The Secret Garden - No metadata found
+2025-12-24 19:49:17,267 [INFO] 🔍 [_progress_callback] Book data: title='The Secret Garden', author='Франсис Бърнет', cover_url='https://knigabg.com/pix/28162.jpg', description=present
+192.168.1.9 - - [24/Dec/2025 19:49:19] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:49:19,360 [INFO] 192.168.1.9 - - [24/Dec/2025 19:49:19] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:49:19,370 [INFO] HTTP Request: HEAD https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg "HTTP/1.1 200 OK"
+192.168.1.9 - - [24/Dec/2025 19:49:24] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:49:24,408 [INFO] 192.168.1.9 - - [24/Dec/2025 19:49:24] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:49:27,123 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 19:49:27,126 [INFO] 🔍 [_progress_callback] Book 3/3: 'The Familiar', metadata=found
+2025-12-24 19:49:27,126 [INFO] [3/3] ✅ The Familiar (quality: 1.00)
+2025-12-24 19:49:27,127 [INFO]    🖼️  Cover found
+2025-12-24 19:49:27,127 [INFO]    📝 Description added
+2025-12-24 19:49:27,127 [INFO] 🔍 [_save_enriched_books] Processing 3 books for saving...
+2025-12-24 19:49:27,127 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Secret History'
+2025-12-24 19:49:27,127 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata']
+2025-12-24 19:49:27,127 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: True
+2025-12-24 19:49:27,128 [ERROR] ❌ Error downloading cover image for 'The Secret History': Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+Traceback (most recent call last):
+  File "/home/pacovw/mybibliotheca/scripts/enrich_books.py", line 820, in _save_enriched_books
+    with app.app_context():
+         ^^^^^^^^^^^^^^^
+  File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/werkzeug/local.py", line 318, in __get__
+    obj = instance._get_current_object()
+  File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/werkzeug/local.py", line 519, in _get_current_object
+    raise RuntimeError(unbound_message) from None
+RuntimeError: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+2025-12-24 19:49:27,575 [INFO] HTTP Request: HEAD https://images.gr-assets.com/books/1358270651m/29044.jpg "HTTP/1.1 403 Forbidden"
+2025-12-24 19:49:27,581 [INFO] 🔍 [_save_enriched_books] Updates dictionary for 'The Secret History': [] (count: 0)
+2025-12-24 19:49:27,581 [WARNING] ⚠️  [_save_enriched_books] No updates to save for 'The Secret History' - updates dictionary is empty
+2025-12-24 19:49:27,584 [INFO] 📝 Updating authors from [] to [Donna Tartt]
+2025-12-24 19:49:27,611 [INFO] ✅ Updated author to: Donna Tartt
+2025-12-24 19:49:27,611 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Secret Garden'
+2025-12-24 19:49:27,611 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata']
+2025-12-24 19:49:27,611 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: False
+2025-12-24 19:49:27,611 [WARNING] ⚠️  [_save_enriched_books] Skipping 'The Secret Garden' - no ai_metadata found
+2025-12-24 19:49:27,611 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Familiar'
+2025-12-24 19:49:27,611 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata']
+2025-12-24 19:49:27,612 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: True
+2025-12-24 19:49:27,612 [ERROR] ❌ Error downloading cover image for 'The Familiar': Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+Traceback (most recent call last):
+  File "/home/pacovw/mybibliotheca/scripts/enrich_books.py", line 820, in _save_enriched_books
+    with app.app_context():
+         ^^^^^^^^^^^^^^^
+  File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/werkzeug/local.py", line 318, in __get__
+    obj = instance._get_current_object()
+  File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/werkzeug/local.py", line 519, in _get_current_object
+    raise RuntimeError(unbound_message) from None
+RuntimeError: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+2025-12-24 19:49:27,683 [INFO] HTTP Request: HEAD https://images.macmillan.com/folio-assets/macmillan_us_frontbookcovers_1000H/9781250884251.jpg "HTTP/1.1 403 Forbidden"
+2025-12-24 19:49:27,690 [INFO] 🔍 [_save_enriched_books] Updates dictionary for 'The Familiar': ['published_date'] (count: 1)
+2025-12-24 19:49:27,690 [INFO] 📝 Updating book 'The Familiar' with fields: ['published_date']
+2025-12-24 19:49:27,730 [INFO] ✅ Saved: The Familiar
+2025-12-24 19:49:27,730 [INFO]    Updated fields: published_date
+2025-12-24 19:49:27,741 [INFO] 📝 Updating authors from ['Лий Бардуго'] to [Leigh Bardugo]
+192.168.1.9 - - [24/Dec/2025 19:49:29] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:49:29,459 [INFO] 192.168.1.9 - - [24/Dec/2025 19:49:29] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:49:29,500 [INFO] 💾 Saved 1 enriched books to database
+2025-12-24 19:49:29,501 [INFO] 📊 Tracked 1 enriched and 0 skipped books
+2025-12-24 19:49:29,501 [INFO]
+============================================================
+2025-12-24 19:49:29,501 [INFO] ENRICHMENT REPORT
+2025-12-24 19:49:29,501 [INFO] ============================================================
+2025-12-24 19:49:29,501 [INFO] 📊 Statistics:
+2025-12-24 19:49:29,501 [INFO]    Books checked: 3
+2025-12-24 19:49:29,501 [INFO]    Books enriched: 2
+2025-12-24 19:49:29,501 [INFO]    Books failed: 1
+2025-12-24 19:49:29,502 [INFO]    Success rate: 66.7%
+2025-12-24 19:49:29,502 [INFO]
+📝 Content:
+2025-12-24 19:49:29,502 [INFO]    Covers found: 2
+2025-12-24 19:49:29,502 [INFO]    Descriptions added: 2
+2025-12-24 19:49:29,502 [INFO]
+⏱️  Performance:
+2025-12-24 19:49:29,502 [INFO]    Duration: 16.9s
+2025-12-24 19:49:29,502 [INFO]    Speed: 10.7 books/min
+2025-12-24 19:49:29,502 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 19:49:29,502 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 19:49:34] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:49:34,526 [INFO] 192.168.1.9 - - [24/Dec/2025 19:49:34] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Грешката е `RuntimeError: Working outside of application context`. `process_image_from_url()` изисква Flask app context, но скриптът се изпълнява извън него. Създавам app context преди извикването:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "create_app|app_context|from app import|Flask" in "scripts" • 36 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts\enrich_books.py` | `logger.error("💡 Tip: Make sure Flask app is not running or wait a few seconds and try again")` | L111 |
+| `scripts\enrich_books.py` | `from flask import Flask` | L808 |
+| `scripts\enrich_books.py` | `# Create a minimal Flask app context if needed` | L810 |
+| `scripts\enrich_books.py` | `from app import create_app` | L817 |
+| `scripts\enrich_books.py` | `app = create_app()` | L818 |
+| `scripts\enrich_books.py` | `with app.app_context():` | L820 |
+| `scripts\cleanup_categories.py` | `from app import create_app` | L27 |
+| `scripts\cleanup_categories.py` | `app = create_app()` | L81 |
+| `scripts\cleanup_categories.py` | `with app.app_context():` | L82 |
+| `scripts\cleanup_categories.py` | `app = create_app()` | L379 |
+| `scripts\cleanup_categories.py` | `with app.app_context():` | L380 |
+| `scripts\README.md` | `Default templates are automatically created when the application starts if they don't already exist. This happens during the Flask app initialization process.` | L115 |
+| `scripts\create_default_templates.py` | `# Set up minimal Flask app context for services` | L15 |
+| `scripts\create_default_templates.py` | `from app import create_app` | L19 |
+| `scripts\create_default_templates.py` | `# Create Flask app context` | L151 |
+| `scripts\create_default_templates.py` | `app = create_app()` | L152 |
+| `scripts\create_default_templates.py` | `with app.app_context():` | L153 |
+| `scripts\admin_tools.py` | `from app import create_app` | L24 |
+| `scripts\admin_tools.py` | `app = create_app()` | L83 |
+| `scripts\admin_tools.py` | `with app.app_context():` | L85 |
+| `scripts\admin_tools.py` | `app = create_app()` | L127 |
+| `scripts\admin_tools.py` | `with app.app_context():` | L129 |
+| `scripts\admin_tools.py` | `app = create_app()` | L231 |
+| `scripts\admin_tools.py` | `with app.app_context():` | L233 |
+| `scripts\admin_tools.py` | `app = create_app()` | L314 |
+| `scripts\admin_tools.py` | `with app.app_context():` | L316 |
+| `scripts\admin_tools.py` | `app = create_app()` | L349 |
+| `scripts\admin_tools.py` | `with app.app_context():` | L351 |
+| `scripts\admin_tools.py` | `app = create_app()` | L385 |
+| `scripts\admin_tools.py` | `with app.app_context():` | L387 |
+| `scripts\migrations\validate_migration.py` | `# Check for migration logic in create_app` | L38 |
+| `scripts\migrations\validate_migration.py` | `print("✅ Backup logic found in create_app")` | L40 |
+| `scripts\migrations\validate_migration.py` | `print("❌ Backup logic missing from create_app")` | L42 |
+| `scripts\migrations\migrate_to_multi_user.py` | `from app import create_app` | L20 |
+| `scripts\migrations\migrate_to_multi_user.py` | `app = create_app()` | L136 |
+| `scripts\migrations\migrate_to_multi_user.py` | `with app.app_context():` | L138 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "How to create Flask app context in a standalone script to use process_image_from_url?" • **15** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `scripts/create_default_templates.py` | L69 |
+| `scripts/create_default_templates.py` | L72-167 |
+| `scripts/run_postgres_export.sh` | L54 |
+| `scripts/migrations/migrate_to_multi_user.py` | L98-198 |
+| `scripts/adjust_cover_logging.py` | L19 |
+| `scripts/export_postgres_single_user_to_sqlite.py` | L62 |
+| `scripts/setup_data_dir.bat` | L36 |
+| `scripts/setup_data_dir.py` | L100 |
+| `scripts/migrations/migrate_to_multi_user.py` | L60 |
+| `scripts/detect_migration.py` | L88 |
+| `scripts/install_ocr.sh` | L59-115 |
+| `scripts/admin_tools.py` | L62 |
+| `scripts/admin_tools.py` | L346-494 |
+| `scripts/admin_tools.py` | L124-309 |
+| `scripts/setup_data_dir.py` | L9-103 |
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправям създаването на Flask app context — трябва да създам app инстанция преди да използвам `current_app`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 36, lines removed: 28
+
+```diff
+@@ -806,35 +806,43 @@
+                              # This will save the image to /covers/ directory and return a local path like /covers/uuid.jpg
+                              from app.utils.image_processing import process_image_from_url
+-                             from flask import Flask
+-                             
+-                             # Create a minimal Flask app context if needed
+-                             app = None
+-                             try:
+-                                 from flask import current_app
+-                                 app = current_app
++                             
++                             # Create Flask app context for image processing
++                             # Check if we're already in an app context
++                             try:
++                                 from flask import has_app_context, current_app
++                                 if has_app_context():
++                                     # Already in app context - use it directly
++                                     logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
++                                     local_cover_path = process_image_from_url(new_cover_url)
++                                 else:
++                                     # No app context - create one
++                                     from app import create_app
++                                     app = create_app()
++                                     with app.app_context():
++                                         logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
++                                         local_cover_path = process_image_from_url(new_cover_url)
+                              except RuntimeError:
+-                                 # No app context - create a minimal one for image processing
++                                 # No app context available - create one
+                                  from app import create_app
+                                  app = create_app()
+-                             
+-                             with app.app_context():
+-                                 logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
+-                                 local_cover_path = process_image_from_url(new_cover_url)
+-                                 
+-                                 if local_cover_path and local_cover_path.startswith('/covers/'):
+-                                     # Successfully downloaded and cached locally
+-                                     logger.info(f"✅ Cover downloaded and cached locally: {local_cover_path}")
+-                                     
+-                                     # Update if:
+-                                     # 1. No current cover, OR
+-                                     # 2. Current cover is invalid (local path or broken cache URL), OR
+-                                     # 3. Force flag is set
+-                                     if (not current_cover_url or not current_is_valid or self.args.force):
+-                                         updates['cover_url'] = local_cover_path
+-                                         logger.info(f"🖼️  Updating cover URL for: {book['title']} -&gt; {local_cover_path}")
+-                                     elif current_cover_url and current_is_valid:
+-                                         logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
+-                                 else:
+-                                     logger.warning(f"⚠️  Failed to download cover image for '{book['title']}': {local_cover_path}")
++                                 with app.app_context():
++                                     logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
++                                     local_cover_path = process_image_from_url(new_cover_url)
++                             
++                             if local_cover_path and local_cover_path.startswith('/covers/'):
++                                 # Successfully downloaded and cached locally
++                                 logger.info(f"✅ Cover downloaded and cached locally: {local_cover_path}")
++                                 
++                                 # Update if:
++                                 # 1. No current cover, OR
++                                 # 2. Current cover is invalid (local path or broken cache URL), OR
++                                 # 3. Force flag is set
++                                 if (not current_cover_url or not current_is_valid or self.args.force):
++                                     updates['cover_url'] = local_cover_path
++                                     logger.info(f"🖼️  Updating cover URL for: {book['title']} -&gt; {local_cover_path}")
++                                 elif current_cover_url and current_is_valid:
++                                     logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
++                             else:
++                                 logger.warning(f"⚠️  Failed to download cover image for '{book['title']}': {local_cover_path}")
+                          except Exception as e:
+                              logger.error(f"❌ Error downloading cover image for '{book['title']}': {e}", exc_info=True)
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix Flask app context creation for process_image_from_url - check if already in context before creating new one" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix Flask app context creation for process_image_from_url - check if already in context before creating new one" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main a073957] Fix Flask app context creation for process_image_from_url - check if already in context before creating new one
+ 2 files changed, 379 insertions(+), 27 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   36227d7..a073957  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправих създаването на Flask app context. Кодът проверява дали вече сме в app context преди да създаде нов. При следващо обогатяване:
+
+1. Cover изображенията ще се свалят локално чрез `process_image_from_url()`
+2. Ще се запазят в `/covers/` директорията с UUID име
+3. В базата данни ще се запише локалният път `/covers/uuid.jpg` вместо външния URL
+4. Изображенията ще се сервират статично чрез Flask route `/covers/<filename>`
+
+Опитайте отново обогатяването — трябва да работи правилно и да сваля cover изображенията локално.
+
+---
+

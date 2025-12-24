@@ -801,64 +801,90 @@ class EnrichmentCommand:
                     
                     # Download and cache cover image locally instead of saving external URL
                     if is_valid_url:
+                        # First, validate that the URL is accessible before trying to download
+                        url_is_accessible = False
                         try:
-                            # Use process_image_from_url to download and cache the cover locally
-                            # This will save the image to /covers/ directory and return a local path like /covers/uuid.jpg
-                            from app.utils.image_processing import process_image_from_url
-                            
-                            # Create Flask app context for image processing
-                            # Check if we're already in an app context
-                            try:
-                                from flask import has_app_context, current_app
-                                if has_app_context():
-                                    # Already in app context - use it directly
-                                    logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
-                                    local_cover_path = process_image_from_url(new_cover_url)
+                            import httpx
+                            logger.info(f"🔍 Validating cover URL accessibility for '{book['title']}': {new_cover_url[:80]}...")
+                            with httpx.Client(timeout=5.0, follow_redirects=True) as client:
+                                response = client.head(new_cover_url)
+                                if response.status_code == 200:
+                                    content_type = response.headers.get('content-type', '').lower()
+                                    if 'image' in content_type:
+                                        url_is_accessible = True
+                                        logger.info(f"✅ Cover URL is accessible: {new_cover_url[:80]}... (content-type: {content_type})")
+                                    else:
+                                        logger.warning(f"⚠️  Cover URL returned non-image content-type: {content_type}")
+                                elif response.status_code in [301, 302, 303, 307, 308]:
+                                    # Redirect - try GET to final URL
+                                    final_url = response.headers.get('location', new_cover_url)
+                                    get_response = client.get(final_url, timeout=5.0)
+                                    if get_response.status_code == 200:
+                                        content_type = get_response.headers.get('content-type', '').lower()
+                                        if 'image' in content_type:
+                                            url_is_accessible = True
+                                            new_cover_url = final_url  # Use final URL after redirect
+                                            logger.info(f"✅ Cover URL is accessible after redirect: {final_url[:80]}...")
+                                    else:
+                                        logger.warning(f"⚠️  Cover URL redirect failed with status {get_response.status_code}")
                                 else:
-                                    # No app context - create one
+                                    logger.warning(f"⚠️  Cover URL returned status {response.status_code}: {new_cover_url[:80]}...")
+                        except Exception as e:
+                            logger.warning(f"⚠️  Could not validate cover URL accessibility: {e}")
+                            # If validation fails, assume URL might be accessible (might be temporary network issue)
+                            # But we'll still try to download it
+                            url_is_accessible = True  # Try anyway
+                        
+                        # Only try to download if URL is accessible
+                        if url_is_accessible:
+                            try:
+                                # Use process_image_from_url to download and cache the cover locally
+                                # This will save the image to /covers/ directory and return a local path like /covers/uuid.jpg
+                                from app.utils.image_processing import process_image_from_url
+                                
+                                # Create Flask app context for image processing
+                                # Check if we're already in an app context
+                                try:
+                                    from flask import has_app_context, current_app
+                                    if has_app_context():
+                                        # Already in app context - use it directly
+                                        logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
+                                        local_cover_path = process_image_from_url(new_cover_url)
+                                    else:
+                                        # No app context - create one
+                                        from app import create_app
+                                        app = create_app()
+                                        with app.app_context():
+                                            logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
+                                            local_cover_path = process_image_from_url(new_cover_url)
+                                except RuntimeError:
+                                    # No app context available - create one
                                     from app import create_app
                                     app = create_app()
                                     with app.app_context():
                                         logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
                                         local_cover_path = process_image_from_url(new_cover_url)
-                            except RuntimeError:
-                                # No app context available - create one
-                                from app import create_app
-                                app = create_app()
-                                with app.app_context():
-                                    logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
-                                    local_cover_path = process_image_from_url(new_cover_url)
-                            
-                            if local_cover_path and local_cover_path.startswith('/covers/'):
-                                # Successfully downloaded and cached locally
-                                logger.info(f"✅ Cover downloaded and cached locally: {local_cover_path}")
                                 
-                                # Update if:
-                                # 1. No current cover, OR
-                                # 2. Current cover is invalid (local path or broken cache URL), OR
-                                # 3. Force flag is set
-                                if (not current_cover_url or not current_is_valid or self.args.force):
-                                    updates['cover_url'] = local_cover_path
-                                    logger.info(f"🖼️  Updating cover URL for: {book['title']} -> {local_cover_path}")
-                                elif current_cover_url and current_is_valid:
-                                    logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
-                            else:
-                                logger.warning(f"⚠️  Failed to download cover image for '{book['title']}': {local_cover_path}")
-                        except Exception as e:
-                            logger.error(f"❌ Error downloading cover image for '{book['title']}': {e}", exc_info=True)
-                            # Fallback: if download fails, still try to save the external URL if it's accessible
-                            try:
-                                import httpx
-                                with httpx.Client(timeout=5.0, follow_redirects=True) as client:
-                                    response = client.head(new_cover_url)
-                                    if response.status_code == 200:
-                                        content_type = response.headers.get('content-type', '').lower()
-                                        if 'image' in content_type:
-                                            if (not current_cover_url or not current_is_valid or self.args.force):
-                                                updates['cover_url'] = new_cover_url
-                                                logger.info(f"🖼️  Fallback: Using external URL (download failed): {new_cover_url[:80]}...")
-                            except Exception as fallback_error:
-                                logger.warning(f"⚠️  Fallback validation also failed: {fallback_error}")
+                                if local_cover_path and local_cover_path.startswith('/covers/'):
+                                    # Successfully downloaded and cached locally
+                                    logger.info(f"✅ Cover downloaded and cached locally: {local_cover_path}")
+                                    
+                                    # Update if:
+                                    # 1. No current cover, OR
+                                    # 2. Current cover is invalid (local path or broken cache URL), OR
+                                    # 3. Force flag is set
+                                    if (not current_cover_url or not current_is_valid or self.args.force):
+                                        updates['cover_url'] = local_cover_path
+                                        logger.info(f"🖼️  Updating cover URL for: {book['title']} -> {local_cover_path}")
+                                    elif current_cover_url and current_is_valid:
+                                        logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
+                                else:
+                                    logger.warning(f"⚠️  Failed to download cover image for '{book['title']}': {local_cover_path}")
+                            except Exception as e:
+                                logger.error(f"❌ Error downloading cover image for '{book['title']}': {e}")
+                                # Don't fallback to inaccessible URL - just skip it
+                        else:
+                            logger.warning(f"⚠️  Skipping inaccessible cover URL for '{book['title']}': {new_cover_url[:80]}... (not accessible)")
                     else:
                         logger.warning(f"⚠️  Skipping invalid cover URL for '{book['title']}': {new_cover_url} (not http/https)")
                 
