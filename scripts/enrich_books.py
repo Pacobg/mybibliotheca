@@ -835,6 +835,8 @@ class EnrichmentCommand:
                             # But we'll still try to download it
                             url_is_accessible = True  # Try anyway
                         
+                        logger.info(f"🔍 [_save_enriched_books] Cover URL validation result for '{book['title']}': url_is_accessible={url_is_accessible}, new_cover_url='{new_cover_url[:80] if new_cover_url else 'None'}...'")
+                        
                         # Only try to download if URL is accessible
                         if url_is_accessible:
                             try:
