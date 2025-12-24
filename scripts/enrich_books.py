@@ -220,7 +220,7 @@ class EnrichmentCommand:
                            b.cover_url as cover_url, p.name as publisher,
                            b.isbn13 as isbn13, b.isbn10 as isbn10,
                            b.page_count as page_count, b.published_date as published_date,
-                           b.language as language
+                           b.language as language, b.custom_metadata as custom_metadata
                     ORDER BY b.created_at DESC
                     """
                 else:
@@ -259,8 +259,28 @@ class EnrichmentCommand:
                         author_names = [a.get('name', '') for a in authors if a.get('name')]
                         author = ', '.join(author_names) if author_names else 'Unknown'
                         
-                        # Handle both old (9 columns) and new (10 columns) query formats
+                        # Handle both old (9 columns) and new (10+ columns) query formats
                         language = row[9] if len(row) > 9 else None
+                        custom_metadata_raw = row[10] if len(row) > 10 else None
+                        
+                        # Parse custom_metadata to check enrichment tracking
+                        custom_metadata = {}
+                        if custom_metadata_raw:
+                            try:
+                                custom_metadata = json.loads(custom_metadata_raw) if isinstance(custom_metadata_raw, str) else custom_metadata_raw
+                            except:
+                                custom_metadata = {}
+                        
+                        # Check if book was recently enriched (within 24 hours) - skip if so
+                        last_enriched_at = custom_metadata.get('last_enriched_at')
+                        if last_enriched_at:
+                            try:
+                                enriched_time = datetime.fromisoformat(last_enriched_at.replace('Z', '+00:00'))
+                                if datetime.now(enriched_time.tzinfo) - enriched_time < timedelta(hours=24):
+                                    logger.debug(f"⏭️  Skipping {title} - enriched recently ({last_enriched_at})")
+                                    continue
+                            except Exception as e:
+                                logger.debug(f"Could not parse enrichment timestamp: {e}")
                         
                         book_dict = {
                             'id': book_id,
@@ -274,6 +294,7 @@ class EnrichmentCommand:
                             'page_count': row[7],
                             'published_date': row[8],
                             'language': language,
+                            'custom_metadata': custom_metadata,
                         }
                         
                         # Include books even if they don't have authors (we'll enrich them)
