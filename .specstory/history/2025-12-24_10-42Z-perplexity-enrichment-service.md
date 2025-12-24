@@ -25781,6 +25781,8 @@ git add -A && git commit -m "Improve cover URL validation: require image extensi
 warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
 [main 948c5de] Improve cover URL validation: require image extension and exclude broken cache URLs
  3 files changed, 322 insertions(+), 3 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   a313d57..948c5de  main -&gt; main
 
 ```
 </details>
@@ -25793,6 +25795,220 @@ warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity
 ---
 
 
+Подобрих валидацията на cover URLs. Сега системата:
+
+1. Проверява дали URL-ът започва с `http://` или `https://`
+2. Проверява дали URL-ът завършва с разширение на изображение (`.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`) или съдържа такова разширение преди query параметри
+3. Изключва подозрителни cache URL-и, които съдържат `/cache/` но не завършват с правилно разширение
+
+Това означава, че URL-и като `https://www.ciela.com/media/catalog/product/cache/926507dc7f...` ще бъдат идентифицирани като невалидни, защото не завършват с разширение на изображение, докато правилният URL `https://www.ciela.com/media/catalog/product/cache/32bb0748c82325b02c55df3c2a9a9856/t/h/the_costume_history.jpg` ще бъде идентифициран като валиден.
+
+Промените са качени в git main. Опитайте отново и споделете резултатите — сега системата трябва да идентифицира книгите с невалидни cover URLs (като "The Costume History") и да ги обогати с правилни cover URLs от Perplexity.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+2025-12-24 18:38:45,585 [INFO] ============================================================
+2025-12-24 18:38:45,585 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 18:38:45,585 [INFO] ============================================================
+2025-12-24 18:38:45,585 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 18:38:45] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:38:45,630 [INFO] 192.168.1.9 - - [24/Dec/2025 18:38:45] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:38:45,651 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 18:38:45,651 [INFO] ⚙️  Configuration:
+2025-12-24 18:38:45,651 [INFO]    Limit: 5
+2025-12-24 18:38:45,652 [INFO]    Force: False
+2025-12-24 18:38:45,652 [INFO]    Dry run: False
+2025-12-24 18:38:45,652 [INFO]    Min quality: 0.3
+2025-12-24 18:38:45,652 [INFO]    No cover only: True (only books without covers)
+2025-12-24 18:38:45,652 [INFO] 📖 Querying database for books...
+2025-12-24 18:38:45,652 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 18:38:45,652 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 18:38:45,663 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 18:38:45,670 [INFO] ⏭️  Skipping book with valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+2025-12-24 18:38:45,675 [INFO] ⏭️  Skipping book with valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 18:38:45,678 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 18:38:45,683 [INFO] ⏭️  Skipping book with valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 18:38:45,686 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f...')
+2025-12-24 18:38:45,686 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 18:38:45,686 [INFO] 📊 Statistics: 5 books WITH valid cover URLs (skipped)
+2025-12-24 18:38:45,686 [INFO] 📊 Statistics: 0 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 18:38:45,686 [WARNING] ⚠️  No books found without valid cover URLs.
+2025-12-24 18:38:45,686 [WARNING] ⚠️  All 5 checked books have valid http/https cover URLs.
+2025-12-24 18:38:45,686 [INFO] 💡 Tip: Use --force flag to force enrichment of all books, or add books without covers to the database.
+2025-12-24 18:38:45,687 [INFO] ✅ Found 0 books to enrich
+2025-12-24 18:38:45,687 [INFO] ✅ No books need enrichment!
+192.168.1.9 - - [24/Dec/2025 18:38:50] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:38:50,677 [INFO] 192.168.1.9 - - [24/Dec/2025 18:38:50] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Системата все още идентифицира "The Costume History" като валидна, въпреки че URL-ът не завършва с разширение. Подобрявам логиката, за да разпознава URL-и с `/cache/`, които не завършват с разширение, като невалидни:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 16, lines removed: 7
+
+```diff
+@@ -403,15 +403,24 @@
+                                  # 2. Must end with image extension (.jpg, .jpeg, .png, .webp, .gif) OR
+                                  #    contain image extension in path (for URLs with query params)
++                                 # 3. Exclude cache URLs that don't end with proper extension (broken cache URLs)
+                                  has_valid_cover = False
+                                  if cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')):
+-                                     # Check if URL ends with image extension or contains it in path
+                                      cover_url_lower = cover_url.lower()
+                                      image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+-                                     # Check if URL ends with extension or contains it before query params
+-                                     if any(cover_url_lower.endswith(ext) or f'{ext}?' in cover_url_lower or f'{ext}&amp;' in cover_url_lower for ext in image_extensions):
+-                                         # Additional check: exclude suspicious cache URLs that don't end with proper extension
+-                                         # These are often broken cache URLs like "cache/926507dc7f..."
+-                                         if not ('/cache/' in cover_url and not any(cover_url_lower.endswith(ext) for ext in image_extensions)):
+-                                             has_valid_cover = True
++                                     
++                                     # Check if URL ends with image extension
++                                     ends_with_extension = any(cover_url_lower.endswith(ext) for ext in image_extensions)
++                                     
++                                     # Check if URL contains image extension before query params
++                                     contains_extension = any(f'{ext}?' in cover_url_lower or f'{ext}&amp;' in cover_url_lower for ext in image_extensions)
++                                     
++                                     # Special case: cache URLs must end with extension to be valid
++                                     # Broken cache URLs like "cache/926507dc7f..." are invalid
++                                     if '/cache/' in cover_url:
++                                         # Cache URLs must end with extension
++                                         has_valid_cover = ends_with_extension
++                                     else:
++                                         # Non-cache URLs: check if ends with extension or contains it before query params
++                                         has_valid_cover = ends_with_extension or contains_extension
+                                  
+                                  # Double-check: only add books WITHOUT valid covers
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 15, lines removed: 7
+
+```diff
+@@ -370,13 +370,21 @@
+          has_cover = False
+          if cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')):
+-             # Check if URL ends with image extension or contains it in path
+              cover_url_lower = cover_url.lower()
+              image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+-             # Check if URL ends with extension or contains it before query params
+-             if any(cover_url_lower.endswith(ext) or f'{ext}?' in cover_url_lower or f'{ext}&amp;' in cover_url_lower for ext in image_extensions):
+-                 # Additional check: exclude suspicious cache URLs that don't end with proper extension
+-                 # These are often broken cache URLs like "cache/926507dc7f..."
+-                 if not ('/cache/' in cover_url and not any(cover_url_lower.endswith(ext) for ext in image_extensions)):
+-                     has_cover = True
++             
++             # Check if URL ends with image extension
++             ends_with_extension = any(cover_url_lower.endswith(ext) for ext in image_extensions)
++             
++             # Check if URL contains image extension before query params
++             contains_extension = any(f'{ext}?' in cover_url_lower or f'{ext}&amp;' in cover_url_lower for ext in image_extensions)
++             
++             # Special case: cache URLs must end with extension to be valid
++             # Broken cache URLs like "cache/926507dc7f..." are invalid
++             if '/cache/' in cover_url:
++                 # Cache URLs must end with extension
++                 has_cover = ends_with_extension
++             else:
++                 # Non-cache URLs: check if ends with extension or contains it before query params
++                 has_cover = ends_with_extension or contains_extension
+          
+          has_publisher = bool(book_data.get('publisher'))
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 2 files</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+- `app/services/enrichment_service.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix cover URL validation: cache URLs must end with image extension to be valid" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix cover URL validation: cache URLs must end with image extension to be valid" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 95e9aac] Fix cover URL validation: cache URLs must end with image extension to be valid
+ 3 files changed, 236 insertions(+), 14 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   948c5de..95e9aac  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Подобрих логиката за валидация на cover URLs. Сега системата:
+
+1. **За cache URL-и** (които съдържат `/cache/`): изисква да завършват с разширение на изображение (`.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`)
+2. **За не-cache URL-и**: проверява дали завършват с разширение или съдържат разширение преди query параметри
+
+Това означава, че URL-и като `https://www.ciela.com/media/catalog/product/cache/926507dc7f...` ще бъдат идентифицирани като невалидни, защото съдържат `/cache/` но не завършват с разширение на изображение.
+
+Промените са качени в git main. Опитайте отново и споделете резултатите — сега системата трябва да идентифицира "The Costume History" като книга без валиден cover URL и да я обогати с правилния cover URL от Perplexity.
 
 ---
 
