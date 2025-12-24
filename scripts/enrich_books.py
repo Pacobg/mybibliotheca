@@ -880,29 +880,35 @@ class EnrichmentCommand:
                                 
                                 # Create Flask app context for image processing
                                 # Check if we're already in an app context
+                                local_cover_path = None
                                 try:
                                     from flask import has_app_context, current_app
                                     if has_app_context():
                                         # Already in app context - use it directly
                                         logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}... (has app context)")
                                         local_cover_path = process_image_from_url(new_cover_url)
-                                        logger.info(f"🔍 [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
+                                        logger.info(f"✅ [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
                                     else:
                                         # No app context - create one
                                         logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}... (creating app context)")
                                         from app import create_app
                                         app = create_app()
                                         with app.app_context():
+                                            logger.info(f"📥 Inside app context, calling process_image_from_url...")
                                             local_cover_path = process_image_from_url(new_cover_url)
-                                            logger.info(f"🔍 [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
+                                            logger.info(f"✅ [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
                                 except RuntimeError as e:
                                     # No app context available - create one
-                                    logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}... (RuntimeError, creating app context): {e}")
+                                    logger.warning(f"⚠️  RuntimeError when checking app context: {e}, creating new app context")
                                     from app import create_app
                                     app = create_app()
                                     with app.app_context():
+                                        logger.info(f"📥 Inside app context (after RuntimeError), calling process_image_from_url...")
                                         local_cover_path = process_image_from_url(new_cover_url)
-                                        logger.info(f"🔍 [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
+                                        logger.info(f"✅ [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
+                                except Exception as e:
+                                    logger.error(f"❌ Error in process_image_from_url for '{book['title']}': {e}", exc_info=True)
+                                    local_cover_path = None
                                 
                                 if local_cover_path and local_cover_path.startswith('/covers/'):
                                     # Successfully downloaded and cached locally
