@@ -893,10 +893,16 @@ class EnrichmentCommand:
                                         logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}... (creating app context)")
                                         from app import create_app
                                         app = create_app()
+                                        logger.info(f"📥 App created, entering app context...")
                                         with app.app_context():
-                                            logger.info(f"📥 Inside app context, calling process_image_from_url...")
-                                            local_cover_path = process_image_from_url(new_cover_url)
-                                            logger.info(f"✅ [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
+                                            logger.info(f"📥 Inside app context, calling process_image_from_url for '{book['title']}'...")
+                                            try:
+                                                local_cover_path = process_image_from_url(new_cover_url)
+                                                logger.info(f"✅ [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
+                                            except Exception as inner_e:
+                                                logger.error(f"❌ Exception in process_image_from_url for '{book['title']}': {inner_e}", exc_info=True)
+                                                raise
+                                        logger.info(f"📥 Exited app context for '{book['title']}'")
                                 except RuntimeError as e:
                                     # No app context available - create one
                                     logger.warning(f"⚠️  RuntimeError when checking app context: {e}, creating new app context")

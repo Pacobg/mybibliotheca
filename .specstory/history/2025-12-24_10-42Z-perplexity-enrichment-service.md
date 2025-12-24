@@ -33241,3 +33241,297 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 21:11:08,833 [INFO] ============================================================
+2025-12-24 21:11:08,833 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 21:11:08,833 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 21:11:08] "POST /metadata/enrichment/start HTTP/1.1" 200 -
+2025-12-24 21:11:08,833 [INFO] 192.168.1.9 - - [24/Dec/2025 21:11:08] "POST /metadata/enrichment/start HTTP/1.1" 200 -
+2025-12-24 21:11:08,834 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 21:11:08] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:11:08,873 [INFO] 192.168.1.9 - - [24/Dec/2025 21:11:08] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:11:08,896 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 21:11:08,896 [INFO] ⚙️  Configuration:
+2025-12-24 21:11:08,897 [INFO]    Limit: 5
+2025-12-24 21:11:08,897 [INFO]    Force: False
+2025-12-24 21:11:08,897 [INFO]    Dry run: False
+2025-12-24 21:11:08,897 [INFO]    Min quality: 0.3
+2025-12-24 21:11:08,897 [INFO]    No cover only: True (only books without covers)
+2025-12-24 21:11:08,897 [INFO] 📖 Querying database for books...
+2025-12-24 21:11:08,897 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 21:11:08,897 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 21:11:08,906 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 21:11:08,909 [INFO] 🔍 [_get_books_to_enrich] 'The Secret History': cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 21:11:08,909 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 21:11:08,937 [INFO] HTTP Request: HEAD https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg "HTTP/1.1 403 Forbidden"
+2025-12-24 21:11:08,938 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned status 403 - marking as INVALID
+2025-12-24 21:11:08,938 [INFO] ✅ Added book without valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+2025-12-24 21:11:08,941 [INFO] 🔍 [_get_books_to_enrich] 'The Secret Garden': cover_url='https://knigabg.com/pix/28162.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 21:11:08,941 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 21:11:08,974 [INFO] HTTP Request: HEAD https://knigabg.com/pix/28162.jpg "HTTP/1.1 404 Not Found"
+2025-12-24 21:11:08,974 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned status 404 - marking as INVALID
+2025-12-24 21:11:08,975 [INFO] ✅ Added book without valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 21:11:08,978 [INFO] 🔍 [_get_books_to_enrich] 'The Priory of the Orange Tree (The Roots of Chaos, #1)': cover_url='https://images.thenile.io/r1000/9781408883358.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 21:11:08,978 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 21:11:09,023 [INFO] HTTP Request: HEAD https://images.thenile.io/r1000/9781408883358.jpg "HTTP/1.1 200 OK"
+2025-12-24 21:11:09,023 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 21:11:09,026 [INFO] 🔍 [_get_books_to_enrich] 'The Familiar': cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 21:11:09,026 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 21:11:10,107 [INFO] HTTP Request: HEAD https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg "HTTP/1.1 200 OK"
+2025-12-24 21:11:10,108 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned non-image content-type: text/html; charset=utf-8 - marking as INVALID
+2025-12-24 21:11:10,108 [INFO] ✅ Added book without valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 21:11:10,113 [INFO] 🔍 [_get_books_to_enrich] 'The Costume History': cover_url='http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 21:11:10,113 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+192.168.1.51 - - [24/Dec/2025 21:11:10] "HEAD /covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg HTTP/1.1" 200 -
+2025-12-24 21:11:10,131 [INFO] 192.168.1.51 - - [24/Dec/2025 21:11:10] "HEAD /covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg HTTP/1.1" 200 -
+2025-12-24 21:11:10,131 [INFO] HTTP Request: HEAD http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg "HTTP/1.1 200 OK"
+2025-12-24 21:11:10,132 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750...')
+2025-12-24 21:11:10,132 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 21:11:10,132 [INFO] 📊 Statistics: 2 books WITH valid cover URLs (skipped)
+2025-12-24 21:11:10,132 [INFO] 📊 Statistics: 3 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 21:11:10,132 [INFO] ✅ Found 3 books to enrich
+2025-12-24 21:11:10,132 [INFO]
+📚 Found 3 books to enrich
+2025-12-24 21:11:10,132 [INFO]
+🚀 Starting enrichment...
+2025-12-24 21:11:10,132 [INFO]    Estimated time: ~0.1 minutes
+2025-12-24 21:11:10,132 [INFO]    Estimated cost: ~$0.00
+2025-12-24 21:11:10,164 [INFO] HTTP Request: HEAD https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg "HTTP/1.1 403 Forbidden"
+192.168.1.9 - - [24/Dec/2025 21:11:14] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:11:14,235 [INFO] 192.168.1.9 - - [24/Dec/2025 21:11:14] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:11:15,142 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 21:11:15,145 [INFO] 🔍 [_progress_callback] Book 1/3: 'The Secret History', metadata=found
+2025-12-24 21:11:15,145 [INFO] [1/3] ✅ The Secret History (quality: 1.00)
+2025-12-24 21:11:15,145 [INFO]    🖼️  Cover found
+2025-12-24 21:11:15,145 [INFO]    📝 Description added
+2025-12-24 21:11:16,183 [INFO] HTTP Request: HEAD https://knigabg.com/pix/28162.jpg "HTTP/1.1 404 Not Found"
+192.168.1.9 - - [24/Dec/2025 21:11:19] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:11:19,297 [INFO] 192.168.1.9 - - [24/Dec/2025 21:11:19] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:11:21,926 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 21:11:21,929 [INFO] 🔍 [_progress_callback] Book 2/3: 'The Secret Garden', metadata=found
+2025-12-24 21:11:21,929 [INFO] [2/3] ✅ The Secret Garden (quality: 1.00)
+2025-12-24 21:11:21,930 [INFO]    🖼️  Cover found
+2025-12-24 21:11:21,930 [INFO]    📝 Description added
+2025-12-24 21:11:23,913 [INFO] HTTP Request: HEAD https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg "HTTP/1.1 200 OK"
+192.168.1.9 - - [24/Dec/2025 21:11:24] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:11:24,347 [INFO] 192.168.1.9 - - [24/Dec/2025 21:11:24] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+192.168.1.9 - - [24/Dec/2025 21:11:29] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:11:29,388 [INFO] 192.168.1.9 - - [24/Dec/2025 21:11:29] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:11:30,837 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 21:11:30,841 [INFO] 🔍 [_progress_callback] Book 3/3: 'The Familiar', metadata=found
+2025-12-24 21:11:30,841 [INFO] [3/3] ✅ The Familiar (quality: 1.00)
+2025-12-24 21:11:30,841 [INFO]    🖼️  Cover found
+2025-12-24 21:11:30,841 [INFO]    📝 Description added
+2025-12-24 21:11:30,841 [INFO] 🔍 [_save_enriched_books] Processing 3 books for saving...
+2025-12-24 21:11:30,841 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Secret History'
+2025-12-24 21:11:30,841 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata']
+2025-12-24 21:11:30,841 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: True
+2025-12-24 21:11:30,841 [INFO] 🔍 [_save_enriched_books] Merging metadata for 'The Secret History'...
+2025-12-24 21:11:30,841 [INFO] 🔍 [_save_enriched_books] AI metadata keys: ['title', 'subtitle', 'author', 'publisher', 'year', 'isbn', 'pages', 'genres', 'description', 'cover_url', 'confidence', 'sources', 'enrichment_source', 'enrichment_model', 'enrichment_date', 'original_query', 'quality_score']
+2025-12-24 21:11:30,841 [INFO] 🔍 [_save_enriched_books] AI metadata description present: True
+2025-12-24 21:11:30,841 [INFO] 🔍 [_save_enriched_books] AI metadata description: The Secret History follows Richard Papen, a student from California who transfers to the elite Hampd...
+2025-12-24 21:11:30,841 [INFO] 🔍 [_save_enriched_books] After merge, enriched keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata', 'cover_source', 'raw_categories', 'ai_enrichment']
+2025-12-24 21:11:30,841 [INFO] 🔍 [_save_enriched_books] After merge, enriched description present: True
+2025-12-24 21:11:30,842 [INFO] 🔍 [_save_enriched_books] After merge, enriched description: The Secret History follows Richard Papen, a transfer student to an elite New England liberal arts co...
+2025-12-24 21:11:30,842 [INFO] 🔍 [_save_enriched_books] Found description for 'The Secret History': The Secret History follows Richard Papen, a transfer student to an elite New England liberal arts co...
+2025-12-24 21:11:30,842 [INFO] 🔍 [_save_enriched_books] Existing description for 'The Secret History': The Secret History follows Richard Papen, a transfer student to an elite New England liberal arts co...
+2025-12-24 21:11:30,842 [INFO] 🔍 [_save_enriched_books] Language check for 'The Secret History': title_has_cyrillic=False, desc_has_cyrillic=False, desc_matches_title=True, existing_desc_matches_title=True, has_citations=False, force=False
+2025-12-24 21:11:30,842 [INFO] 🔍 [_save_enriched_books] Description lengths: existing=595, new=595, diff=0
+2025-12-24 21:11:30,842 [INFO] 🔍 [_save_enriched_books] Should update description for 'The Secret History': True
+2025-12-24 21:11:30,842 [INFO] ✅ [_save_enriched_books] Added description to updates for 'The Secret History'
+2025-12-24 21:11:30,842 [INFO] 🔍 Validating cover URL accessibility for 'The Secret History': https://images.penguinrandomhouse.com/cover/9780140167771...
+2025-12-24 21:11:30,919 [INFO] HTTP Request: HEAD https://images.penguinrandomhouse.com/cover/9780140167771 "HTTP/1.1 200 OK"
+2025-12-24 21:11:30,920 [INFO] ✅ Cover URL is accessible: https://images.penguinrandomhouse.com/cover/9780140167771... (content-type: image/jpeg)
+2025-12-24 21:11:30,920 [INFO] 🔍 [_save_enriched_books] Cover URL validation result for 'The Secret History': url_is_accessible=True, new_cover_url='https://images.penguinrandomhouse.com/cover/9780140167771...'
+2025-12-24 21:11:30,921 [INFO] 🔍 [_save_enriched_books] Starting cover download for 'The Secret History': https://images.penguinrandomhouse.com/cover/9780140167771...
+2025-12-24 21:11:30,921 [INFO] 📥 Downloading cover image for 'The Secret History': https://images.penguinrandomhouse.com/cover/9780140167771... (creating app context)
+[APP] Flask app factory completed; application is ready to serve.
+[APP] Flask app factory completed; application is ready to serve.
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Логовете спират след "creating app context" и "Flask app factory completed", което означава, че `process_image_from_url` вероятно се изпълнява, но не виждаме резултата. Проверявам какво прави тази функция:
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "What does process_image_from_url do and how does it work?" • **14** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/utils/image_processing.py` | L108-208 |
+| `app/utils/image_processing.py` | L131-220 |
+| `app/utils/image_processing.py` | L134-220 |
+| `app/routes/book_routes.py` | L1065-1193 |
+| `app/simplified_book_service.py` | L167-1819 |
+| `app/utils/image_processing.py` | L81-208 |
+| `app/services/cover_service.py` | L105-359 |
+| `docs/BIBLIOMAN_COVER_FIX.md` | L45-92 |
+| `docs/BIBLIOMAN_COVER_FIX.md` | L51 |
+| `app/routes/book_routes.py` | L4986-6101 |
+| `app/services/cover_service.py` | L25 |
+| `app/routes/book_routes.py` | L1067-1303 |
+| `app/services/opds_sync_service.py` | L407-1081 |
+| `app/services/ai_service.py` | L10-413 |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "def process_image_from_url" in "app/utils" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/utils\image_processing.py` | `def process_image_from_url(` | L135 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+`process_image_from_url` използва `current_app.logger.info`, което може да не се показва в нашия logger. Добавям try/except около извикването и логване на резултата:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -881,4 +881,5 @@
+                                  # Create Flask app context for image processing
+                                  # Check if we're already in an app context
++                                 local_cover_path = None
+                                  try:
+                                      from flask import has_app_context, current_app
+```
+
+**Chunk 2**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -887,5 +888,5 @@
+                                          logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}... (has app context)")
+                                          local_cover_path = process_image_from_url(new_cover_url)
+-                                         logger.info(f"🔍 [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
++                                         logger.info(f"✅ [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
+                                      else:
+                                          # No app context - create one
+```
+
+**Chunk 3**
+Lines added: 8, lines removed: 3
+
+```diff
+@@ -894,14 +895,19 @@
+                                          app = create_app()
+                                          with app.app_context():
++                                             logger.info(f"📥 Inside app context, calling process_image_from_url...")
+                                              local_cover_path = process_image_from_url(new_cover_url)
+-                                             logger.info(f"🔍 [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
++                                             logger.info(f"✅ [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
+                                  except RuntimeError as e:
+                                      # No app context available - create one
+-                                     logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}... (RuntimeError, creating app context): {e}")
++                                     logger.warning(f"⚠️  RuntimeError when checking app context: {e}, creating new app context")
+                                      from app import create_app
+                                      app = create_app()
+                                      with app.app_context():
++                                         logger.info(f"📥 Inside app context (after RuntimeError), calling process_image_from_url...")
+                                          local_cover_path = process_image_from_url(new_cover_url)
+-                                         logger.info(f"🔍 [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
++                                         logger.info(f"✅ [_save_enriched_books] process_image_from_url returned: {local_cover_path}")
++                                 except Exception as e:
++                                     logger.error(f"❌ Error in process_image_from_url for '{book['title']}': {e}", exc_info=True)
++                                     local_cover_path = None
+                                  
+                                  if local_cover_path and local_cover_path.startswith('/covers/'):
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add better error handling and logging for process_image_from_url to debug cover download issue" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add better error handling and logging for process_image_from_url to debug cover download issue" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 58a7187] Add better error handling and logging for process_image_from_url to debug cover download issue
+ 2 files changed, 251 insertions(+), 4 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   aa24944..58a7187  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
