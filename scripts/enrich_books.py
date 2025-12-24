@@ -333,12 +333,16 @@ class EnrichmentCommand:
     async def _get_book_by_title(self, title_pattern: str) -> List[Dict]:
         """Get books by title pattern (partial match)"""
         try:
+            logger.debug(f"🔍 Searching for book with title pattern: '{title_pattern}'")
+            
             # Try multiple search patterns for better matching
+            # Use case-insensitive search like other parts of the codebase
             query = """
             MATCH (b:Book)
-            WHERE b.title CONTAINS $title_pattern
-               OR b.normalized_title CONTAINS $title_pattern
+            WHERE toLower(b.title) CONTAINS toLower($title_pattern)
+               OR toLower(b.normalized_title) CONTAINS toLower($title_pattern)
                OR b.title = $title_pattern
+               OR b.normalized_title = $title_pattern
             OPTIONAL MATCH (b)-[:PUBLISHED_BY]->(p:Publisher)
             RETURN b.id as id, b.title as title, b.description as description,
                    b.cover_url as cover_url, p.name as publisher,
@@ -349,6 +353,7 @@ class EnrichmentCommand:
             """
             
             result = safe_execute_kuzu_query(query, {"title_pattern": title_pattern})
+            logger.debug(f"🔍 Query returned result: {result}")
             
             books = []
             if result and hasattr(result, 'has_next'):
