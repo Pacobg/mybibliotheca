@@ -38,13 +38,24 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional
 
+# Setup logging FIRST before any logger usage
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('enrichment.log')
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Load environment variables
 try:
     from dotenv import load_dotenv
-    import os
     # Load .env from project root
     env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
     load_dotenv(env_path)
@@ -64,18 +75,6 @@ from app.services.enrichment_service import EnrichmentService
 from app.infrastructure.kuzu_repositories import KuzuBookRepository
 from app.infrastructure.kuzu_graph import safe_execute_kuzu_query
 from app.services import book_service
-
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('enrichment.log')
-    ]
-)
-
-logger = logging.getLogger(__name__)
 
 
 class EnrichmentCommand:

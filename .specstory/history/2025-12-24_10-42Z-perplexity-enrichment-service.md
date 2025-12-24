@@ -21342,3 +21342,311 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Грешка: `name 'logger' is not defined`. Проверявам къде липсва импорт на `logger`:
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "logger\.|logger =|import logging|from logging" in "app/metadata_routes.py" • 7 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/metadata_routes.py` | `current_app.logger.info(f"ℹ️ [METADATA_ROUTES] Received request to create custom field '\{name\}' for user \{current_user.id\}")` | L99 |
+| `app/metadata_routes.py` | `current_app.logger.info(f"ℹ️ [METADATA_ROUTES] Validation passed for custom field '\{name\}'. Creating definition.")` | L114 |
+| `app/metadata_routes.py` | `current_app.logger.info(f"ℹ️ [METADATA_ROUTES] Custom field definition for '\{name\}' created. Saving...")` | L160 |
+| `app/metadata_routes.py` | `current_app.logger.warning(f"⚠️ [METADATA_ROUTES] Custom field service is not implemented (stub service)")` | L165 |
+| `app/metadata_routes.py` | `current_app.logger.info(f"✅ [METADATA_ROUTES] Successfully saved custom field '\{name\}' for user \{current_user.id\}")` | L190 |
+| `app/metadata_routes.py` | `current_app.logger.error(f"❌ [METADATA_ROUTES] Failed to save custom field '\{name\}' for user \{current_user.id\}")` | L193 |
+| `app/metadata_routes.py` | `current_app.logger.error(f"❌ [METADATA_ROUTES] Unhandled exception in create_field: \{e\}", exc_info=True)` | L198 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "logger\.|logger =|import logging" in "app/metadata_routes.py" • 7 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/metadata_routes.py` | `current_app.logger.info(f"ℹ️ [METADATA_ROUTES] Received request to create custom field '\{name\}' for user \{current_user.id\}")` | L99 |
+| `app/metadata_routes.py` | `current_app.logger.info(f"ℹ️ [METADATA_ROUTES] Validation passed for custom field '\{name\}'. Creating definition.")` | L114 |
+| `app/metadata_routes.py` | `current_app.logger.info(f"ℹ️ [METADATA_ROUTES] Custom field definition for '\{name\}' created. Saving...")` | L160 |
+| `app/metadata_routes.py` | `current_app.logger.warning(f"⚠️ [METADATA_ROUTES] Custom field service is not implemented (stub service)")` | L165 |
+| `app/metadata_routes.py` | `current_app.logger.info(f"✅ [METADATA_ROUTES] Successfully saved custom field '\{name\}' for user \{current_user.id\}")` | L190 |
+| `app/metadata_routes.py` | `current_app.logger.error(f"❌ [METADATA_ROUTES] Failed to save custom field '\{name\}' for user \{current_user.id\}")` | L193 |
+| `app/metadata_routes.py` | `current_app.logger.error(f"❌ [METADATA_ROUTES] Unhandled exception in create_field: \{e\}", exc_info=True)` | L198 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "logger\.info|logger\.error|logger\.warning" in "app/metadata_routes.py" • 7 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/metadata_routes.py` | `current_app.logger.info(f"ℹ️ [METADATA_ROUTES] Received request to create custom field '\{name\}' for user \{current_user.id\}")` | L99 |
+| `app/metadata_routes.py` | `current_app.logger.info(f"ℹ️ [METADATA_ROUTES] Validation passed for custom field '\{name\}'. Creating definition.")` | L114 |
+| `app/metadata_routes.py` | `current_app.logger.info(f"ℹ️ [METADATA_ROUTES] Custom field definition for '\{name\}' created. Saving...")` | L160 |
+| `app/metadata_routes.py` | `current_app.logger.warning(f"⚠️ [METADATA_ROUTES] Custom field service is not implemented (stub service)")` | L165 |
+| `app/metadata_routes.py` | `current_app.logger.info(f"✅ [METADATA_ROUTES] Successfully saved custom field '\{name\}' for user \{current_user.id\}")` | L190 |
+| `app/metadata_routes.py` | `current_app.logger.error(f"❌ [METADATA_ROUTES] Failed to save custom field '\{name\}' for user \{current_user.id\}")` | L193 |
+| `app/metadata_routes.py` | `current_app.logger.error(f"❌ [METADATA_ROUTES] Unhandled exception in create_field: \{e\}", exc_info=True)` | L198 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам къде се използва `logger` без импорт:
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "logger\.info|logger\.error|logger\.warning|logger\.debug" in "app/services/enrichment_service.py" • 4 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `logger.debug("OpenAI enricher not available")` | L25 |
+| `app/services/enrichment_service.py` | `logger.info(f"✅ Perplexity enricher initialized with model: \{perplexity_model\}")` | L70 |
+| `app/services/enrichment_service.py` | `logger.warning("⚠️  PERPLEXITY_API_KEY not set - Perplexity enrichment disabled")` | L74 |
+| `app/services/enrichment_service.py` | `logger.info(f"✅ OpenAI/Ollama enricher initialized (provider: \{config_provider\})")` | L90 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "^import logging|^from logging|logger = logging" in "app/services/enrichment_service.py" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `import logging` | L10 |
+| `app/services/enrichment_service.py` | `logger = logging.getLogger(__name__)` | L17 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+The string to replace was not found in the file.
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `app/services/enrichment_service.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix logger import error in enrichment_service" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix logger import error in enrichment_service" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 3c17b54] Fix logger import error in enrichment_service
+ 1 file changed, 117 insertions(+), 5 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   58de8bf..3c17b54  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам къде точно е проблемът с `logger`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "logger\.|logger =" in "app/services/enrichment_service.py" • 46 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `logger = logging.getLogger(__name__)` | L17 |
+| `app/services/enrichment_service.py` | `logger.debug("OpenAI enricher not available")` | L25 |
+| `app/services/enrichment_service.py` | `logger.info(f"✅ Perplexity enricher initialized with model: \{perplexity_model\}")` | L70 |
+| `app/services/enrichment_service.py` | `logger.warning("⚠️  PERPLEXITY_API_KEY not set - Perplexity enrichment disabled")` | L74 |
+| `app/services/enrichment_service.py` | `logger.info(f"✅ OpenAI/Ollama enricher initialized (provider: \{config_provider\})")` | L90 |
+| `app/services/enrichment_service.py` | `logger.info(f"✅ OpenAI/Ollama enricher initialized (provider: \{config_provider\})")` | L94 |
+| `app/services/enrichment_service.py` | `logger.warning(f"⚠️  Requested provider '\{self.provider\}' but settings have '\{config_provider\}'")` | L96 |
+| `app/services/enrichment_service.py` | `logger.warning(f"⚠️  Failed to initialize OpenAI/Ollama enricher: \{e\}")` | L98 |
+| `app/services/enrichment_service.py` | `logger.warning("⚠️  No enrichment providers available - enrichment disabled")` | L101 |
+| `app/services/enrichment_service.py` | `logger.info(f"⚙️  Config: min_quality=\{self.min_quality_score\}, "` | L108 |
+| `app/services/enrichment_service.py` | `logger.error("No enrichment providers available - cannot enrich")` | L132 |
+| `app/services/enrichment_service.py` | `logger.error("Missing title - cannot enrich")` | L139 |
+| `app/services/enrichment_service.py` | `logger.info(f"⚠️  Book '\{title\}' has no author - will try to find it via AI")` | L144 |
+| `app/services/enrichment_service.py` | `logger.info(f"⏭️  Skipping \{title\} - already has sufficient data")` | L149 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 Enriching: \{title\} - \{author\}")` | L153 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 Searching for: \{title\} - \{author or ''\}")` | L154 |
+| `app/services/enrichment_service.py` | `logger.error(f"❌ No enrichment providers available for \{title\}")` | L158 |
+| `app/services/enrichment_service.py` | `logger.info(f"✅ Using Perplexity enricher (has web search)")` | L162 |
+| `app/services/enrichment_service.py` | `logger.info(f"⚠️  Using OpenAI/Ollama enricher (no web search)")` | L164 |
+| `app/services/enrichment_service.py` | `logger.debug(f"📡 Calling Perplexity API for: \{title\}")` | L170 |
+| `app/services/enrichment_service.py` | `logger.info(f"✅ Perplexity returned metadata for \{title\}")` | L177 |
+| `app/services/enrichment_service.py` | `logger.warning(f"⚠️  Perplexity returned None for \{title\}")` | L179 |
+| `app/services/enrichment_service.py` | `logger.error(f"❌ Perplexity enrichment failed for \{title\}: \{e\}", exc_info=True)` | L181 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔄 Trying OpenAI/Ollama enrichment (no web search)")` | L186 |
+| `app/services/enrichment_service.py` | `logger.info("✅ OpenAI/Ollama enrichment succeeded (limited - no web search)")` | L193 |
+| `app/services/enrichment_service.py` | `logger.warning(f"OpenAI/Ollama enrichment failed: \{e\}")` | L195 |
+| `app/services/enrichment_service.py` | `logger.warning(f"❌ No metadata found for: \{title\}")` | L198 |
+| `app/services/enrichment_service.py` | `logger.warning(` | L204 |
+| `app/services/enrichment_service.py` | `logger.info(f"🖼️  Searching for cover: \{title\}")` | L212 |
+| `app/services/enrichment_service.py` | `logger.warning(f"Perplexity cover search failed: \{e\}")` | L225 |
+| `app/services/enrichment_service.py` | `logger.debug("OpenAI/Ollama cannot search for covers (no web search capability)")` | L229 |
+| `app/services/enrichment_service.py` | `logger.info(f"✅ Enriched: \{title\} (quality: \{quality:.2f\})")` | L234 |
+| `app/services/enrichment_service.py` | `logger.error(f"❌ Error enriching \{title\}: \{e\}", exc_info=True)` | L238 |
+| `app/services/enrichment_service.py` | `logger.info(f"📦 Starting batch enrichment: \{len(books)\} books")` | L276 |
+| `app/services/enrichment_service.py` | `logger.error(f"Error in batch processing: \{e\}")` | L313 |
+| `app/services/enrichment_service.py` | `logger.info(f"✅ Batch enrichment complete!")` | L324 |
+| `app/services/enrichment_service.py` | `logger.info(f"   Processed: \{stats['processed']\}/\{stats['total']\}")` | L325 |
+| `app/services/enrichment_service.py` | `logger.info(f"   Enriched: \{stats['enriched']\} (\{stats['success_rate']:.1f\}%)")` | L326 |
+| `app/services/enrichment_service.py` | `logger.info(f"   Covers found: \{stats['covers_found']\}")` | L327 |
+| `app/services/enrichment_service.py` | `logger.info(f"   Duration: \{stats['duration']:.1f\}s")` | L328 |
+| `app/services/enrichment_service.py` | `logger.warning(f"⚠️  Using description that doesn't match title language for '\{title\}' (no existing description)")` | L434 |
+| `app/services/enrichment_service.py` | `logger.debug(f"✅ Using description matching title language for '\{title\}'")` | L439 |
+| `app/services/enrichment_service.py` | `logger.debug(f"⏭️  Keeping existing description for '\{title\}' (AI not significantly better)")` | L441 |
+| `app/services/enrichment_service.py` | `logger.warning(f"🚫 Rejecting description that doesn't match title language for '\{title\}': AI is \{'Bulgarian' if ai_has_cyrillic else 'English'\}, title is \{'Bulgarian' if has_cyrillic_title else 'English'\}")` | L444 |
+| `app/services/enrichment_service.py` | `logger.debug(f"✅ Keeping existing description matching title language")` | L447 |
+| `app/services/enrichment_service.py` | `logger.warning(f"⚠️  Using mismatched description for '\{title\}' (no better option)")` | L451 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
