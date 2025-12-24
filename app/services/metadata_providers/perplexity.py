@@ -1,0 +1,557 @@
+"""
+Perplexity AI Web Search Enricher
+Използва Perplexity AI за търсене и извличане на metadata от интернет
+
+Author: MyBibliotheca Team
+Created: 2025-12-23
+"""
+
+import httpx
+import json
+import re
+import logging
+from typing import Optional, Dict, List
+from datetime import datetime
+import asyncio
+
+logger = logging.getLogger(__name__)
+
+
+class PerplexityEnricher:
+    """
+    Use Perplexity AI for web-based metadata enrichment
+    
+    Perplexity specializes in web search + AI reasoning, making it ideal
+    for finding accurate metadata about Bulgarian books from internet sources.
+    """
+    
+    API_URL = "https://api.perplexity.ai/chat/completions"
+    
+    # Perplexity models
+    MODEL_LARGE = "llama-3.1-sonar-large-128k-online"  # Best quality
+    MODEL_SMALL = "llama-3.1-sonar-small-128k-online"  # Faster, cheaper
+    
+    def __init__(self, api_key: str, model: str = None):
+        """
+        Initialize Perplexity enricher
+        
+        Args:
+            api_key: Perplexity API key
+            model: Model to use (default: LARGE for best quality)
+        """
+        self.api_key = api_key
+        self.model = model or self.MODEL_LARGE
+        self.client = httpx.AsyncClient(timeout=30.0)
+        
+        logger.info(f"✅ PerplexityEnricher initialized with model: {self.model}")
+    
+    async def enrich_book(
+        self, 
+        title: str, 
+        author: str,
+        existing_data: Optional[Dict] = None
+    ) -> Optional[Dict]:
+        """
+        Search web for book metadata using Perplexity
+        
+        Args:
+            title: Book title
+            author: Book author
+            existing_data: Existing book data (optional, for better queries)
+            
+        Returns:
+            Dictionary with enriched metadata or None if failed
+        """
+        
+        try:
+            logger.info(f"🔍 Searching for: {title} - {author}")
+            
+            # Build search query
+            query = self._build_metadata_query(title, author, existing_data)
+            
+            # Execute search
+            response = await self._search(query)
+            
+            if not response:
+                logger.warning(f"❌ No response from Perplexity for: {title}")
+                return None
+            
+            # Parse response
+            metadata = self._parse_response(response, title, author)
+            
+            if metadata:
+                logger.info(
+                    f"✅ Found metadata for: {title} "
+                    f"(quality: {metadata.get('quality_score', 0):.2f})"
+                )
+            else:
+                logger.warning(f"⚠️  Could not parse metadata for: {title}")
+            
+            return metadata
+            
+        except Exception as e:
+            logger.error(f"❌ Error enriching {title}: {e}", exc_info=True)
+            return None
+    
+    def _build_metadata_query(
+        self, 
+        title: str, 
+        author: str,
+        existing_data: Optional[Dict] = None
+    ) -> str:
+        """
+        Build optimized search query for metadata
+        """
+        
+        # Check if we have partial data to guide search
+        isbn = existing_data.get('isbn') if existing_data else None
+        if not isbn:
+            isbn = existing_data.get('isbn13') if existing_data else None
+        if not isbn:
+            isbn = existing_data.get('isbn10') if existing_data else None
+        publisher = existing_data.get('publisher') if existing_data else None
+        
+        query = f"""
+Намери детайлна информация за българската книга:
+
+ЗАГЛАВИЕ: {title}
+АВТОР: {author}
+"""
+        
+        if isbn:
+            query += f"ISBN: {isbn}\n"
+        if publisher:
+            query += f"ИЗДАТЕЛСТВО: {publisher}\n"
+        
+        query += """
+
+ТЪРСЯ СЛЕДНАТА ИНФОРМАЦИЯ:
+
+1. **Точно заглавие** на български (може да има подзаглавие)
+2. **Автор(и)** - пълно име на български (не английско!)
+3. **Преводач** (ако книгата е превод)
+4. **Издателство** - българско издателство
+5. **Година на издаване** в България
+6. **ISBN номер** (ISBN-10 или ISBN-13)
+7. **Брой страници**
+8. **Жанр/Категории** (2-4 категории)
+9. **Описание** - 3-4 изречения на български за какво е книгата
+10. **URL на корица** - директен линк към изображение (JPG/PNG)
+
+ВАЖНО:
+- Търся БЪЛГАРСКОТО издание, НЕ оригинала!
+- Корицата трябва да е от българското издание
+- Ако има няколко издания, предпочитай по-новото
+- Проверявай в: chitanka.info, biblioman, ciela.com, helikon.bg
+
+ОТГОВОРИ САМО В JSON ФОРМАТ (без markdown, само чист JSON):
+{{
+    "title": "Точно заглавие",
+    "subtitle": "Подзаглавие ако има",
+    "author": "Име Фамилия",
+    "translator": "Име на преводач ако има",
+    "publisher": "Име на издателство",
+    "year": "2024",
+    "isbn": "978-954-xxx-xxx-x",
+    "pages": 384,
+    "genres": ["Жанр1", "Жанр2", "Жанр3"],
+    "description": "Описание на български...",
+    "cover_url": "https://direkten-url-kam-korica.jpg",
+    "confidence": 0.95,
+    "sources": ["url1", "url2"]
+}}
+
+Ако НЕ НАМЕРИШ някое поле, остави го празно или null.
+Не измисляй информация - само точни данни от надеждни източници!
+"""
+        
+        return query
+    
+    async def _search(self, query: str) -> Optional[Dict]:
+        """
+        Execute Perplexity search
+        
+        Args:
+            query: Search query
+            
+        Returns:
+            API response dictionary or None
+        """
+        
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "model": self.model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": (
+                        "Ти си експерт по българска литература и книжен пазар. "
+                        "Намираш ТОЧНА информация за български книги от интернет. "
+                        "Винаги цитираш източници и не измисляш данни. "
+                        "Отговаряш САМО в JSON формат, без допълнителен текст."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": query
+                }
+            ],
+            "temperature": 0.1,  # Very low for factual accuracy
+            "max_tokens": 1500,
+            "return_citations": True,  # Get source URLs
+            "search_recency_filter": "month"  # Prefer recent info
+        }
+        
+        try:
+            response = await self.client.post(
+                self.API_URL,
+                headers=headers,
+                json=payload
+            )
+            
+            response.raise_for_status()
+            return response.json()
+            
+        except httpx.HTTPError as e:
+            logger.error(f"HTTP error calling Perplexity: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Error calling Perplexity: {e}")
+            return None
+    
+    def _parse_response(
+        self, 
+        response: Dict, 
+        title: str, 
+        author: str
+    ) -> Optional[Dict]:
+        """
+        Parse Perplexity response and extract metadata
+        
+        Args:
+            response: Raw API response
+            title: Original title (for fallback)
+            author: Original author (for fallback)
+            
+        Returns:
+            Structured metadata dictionary or None
+        """
+        
+        try:
+            # Extract AI response
+            content = response['choices'][0]['message']['content']
+            
+            # Get citations (source URLs)
+            citations = response.get('citations', [])
+            
+            # Try to parse as JSON
+            metadata = self._extract_json(content)
+            
+            if not metadata:
+                logger.warning("Could not extract JSON from response")
+                return None
+            
+            # Add citations
+            if citations and 'sources' not in metadata:
+                metadata['sources'] = citations
+            
+            # Add enrichment metadata
+            metadata['enrichment_source'] = 'perplexity'
+            metadata['enrichment_model'] = self.model
+            metadata['enrichment_date'] = datetime.now().isoformat()
+            metadata['original_query'] = {
+                'title': title, 
+                'author': author
+            }
+            
+            # Calculate quality score
+            metadata['quality_score'] = self._calculate_quality(metadata)
+            
+            # Validate metadata
+            if not self._validate_metadata(metadata):
+                logger.warning("Metadata validation failed")
+                return None
+            
+            return metadata
+            
+        except Exception as e:
+            logger.error(f"Failed to parse Perplexity response: {e}")
+            return None
+    
+    def _extract_json(self, content: str) -> Optional[Dict]:
+        """
+        Extract JSON from response (may have markdown wrapping)
+        
+        Args:
+            content: Response content
+            
+        Returns:
+            Parsed JSON dictionary or None
+        """
+        
+        # Clean up common issues
+        content = content.strip()
+        
+        try:
+            # Try 1: Direct JSON parse
+            return json.loads(content)
+        except json.JSONDecodeError:
+            pass
+        
+        try:
+            # Try 2: Find JSON in markdown code block
+            json_match = re.search(
+                r'```(?:json)?\s*(\{.*?\})\s*```', 
+                content, 
+                re.DOTALL | re.IGNORECASE
+            )
+            if json_match:
+                return json.loads(json_match.group(1))
+        except json.JSONDecodeError:
+            pass
+        
+        try:
+            # Try 3: Find any JSON object
+            json_match = re.search(r'\{.*\}', content, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group(0))
+        except json.JSONDecodeError:
+            pass
+        
+        logger.warning(f"Could not extract JSON from content: {content[:200]}")
+        return None
+    
+    def _calculate_quality(self, metadata: Dict) -> float:
+        """
+        Calculate quality score based on completeness and confidence
+        
+        Args:
+            metadata: Parsed metadata
+            
+        Returns:
+            Quality score from 0.0 to 1.0
+        """
+        
+        score = 0.0
+        
+        # Critical fields (0.6 total)
+        if metadata.get('title'): 
+            score += 0.20
+        if metadata.get('author'): 
+            score += 0.20
+        if metadata.get('description') and len(metadata['description']) > 50: 
+            score += 0.20
+        
+        # Important fields (0.3 total)
+        if metadata.get('publisher'): 
+            score += 0.10
+        if metadata.get('isbn'): 
+            score += 0.10
+        if metadata.get('cover_url'): 
+            score += 0.10
+        
+        # Nice-to-have fields (0.1 total)
+        if metadata.get('year'): 
+            score += 0.03
+        if metadata.get('pages'): 
+            score += 0.03
+        if metadata.get('genres') and len(metadata['genres']) > 0: 
+            score += 0.04
+        
+        # AI confidence boost (if provided)
+        ai_confidence = metadata.get('confidence', 0.5)
+        if ai_confidence > 0.8:
+            score *= 1.05  # 5% bonus for high confidence
+        
+        # Source quality boost
+        sources = metadata.get('sources', [])
+        if any('chitanka' in s for s in sources):
+            score *= 1.05  # 5% bonus for Chitanka source
+        
+        return min(1.0, score)
+    
+    def _validate_metadata(self, metadata: Dict) -> bool:
+        """
+        Validate that metadata meets minimum requirements
+        
+        Args:
+            metadata: Parsed metadata
+            
+        Returns:
+            True if valid, False otherwise
+        """
+        
+        # Must have at least title and author
+        if not metadata.get('title'):
+            logger.warning("Missing title in metadata")
+            return False
+        
+        if not metadata.get('author'):
+            logger.warning("Missing author in metadata")
+            return False
+        
+        # Quality score must be above threshold
+        quality = metadata.get('quality_score', 0)
+        if quality < 0.4:
+            logger.warning(f"Quality score too low: {quality}")
+            return False
+        
+        return True
+    
+    async def find_cover_image(
+        self, 
+        title: str, 
+        author: str,
+        isbn: Optional[str] = None
+    ) -> Optional[str]:
+        """
+        Specific query for finding cover image URL
+        
+        Args:
+            title: Book title
+            author: Book author
+            isbn: ISBN if available
+            
+        Returns:
+            Direct URL to cover image or None
+        """
+        
+        logger.info(f"🖼️  Searching for cover: {title}")
+        
+        query = f"""
+Намери ДИРЕКТЕН URL към изображение на корицата за българската книга:
+
+ЗАГЛАВИЕ: {title}
+АВТОР: {author}
+"""
+        
+        if isbn:
+            query += f"ISBN: {isbn}\n"
+        
+        query += """
+
+ВАЖНО:
+- Търся ВИСОКО КАЧЕСТВО изображение на корицата
+- URL трябва да сочи ДИРЕКТНО към изображение (.jpg, .png, .webp)
+- Предпочитай формат като:
+  * https://biblioman.chitanka.info/thumb/covers/.../xxx.1000.jpg
+  * https://chitanka.info/thumb/book/xxx.250.jpg
+  * https://ciela.com/media/catalog/product/.../xxx.jpg
+
+ИЗТОЧНИЦИ ЗА ПРОВЕРКА (по приоритет):
+1. biblioman.chitanka.info
+2. chitanka.info  
+3. ciela.com
+4. helikon.bg
+5. publishers websites (Колибри, Изток-Запад, Хермес, Бард)
+
+ОТГОВОРИ САМО С URL или "NOT_FOUND":
+https://direkten-url-kam-izobrajenie.jpg
+
+Ако не намериш качествена корица, отговори: NOT_FOUND
+"""
+        
+        try:
+            response = await self._search(query)
+            
+            if not response:
+                return None
+            
+            content = response['choices'][0]['message']['content'].strip()
+            
+            # Extract URL from response
+            url = self._extract_image_url(content)
+            
+            if url and url != "NOT_FOUND":
+                # Verify URL is accessible
+                if await self._verify_image_url(url):
+                    logger.info(f"✅ Found cover: {url}")
+                    return url
+                else:
+                    logger.warning(f"⚠️  Cover URL not accessible: {url}")
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error finding cover: {e}")
+            return None
+    
+    def _extract_image_url(self, text: str) -> Optional[str]:
+        """
+        Extract image URL from response
+        
+        Args:
+            text: Response text
+            
+        Returns:
+            Image URL or None
+        """
+        
+        # Check for NOT_FOUND
+        if "NOT_FOUND" in text.upper():
+            return None
+        
+        # Look for common image URL patterns
+        patterns = [
+            # Specific Bulgarian sites
+            r'https?://biblioman\.chitanka\.info/thumb/covers/[^\s\)]+\.(?:jpg|jpeg|png|webp)',
+            r'https?://chitanka\.info/thumb/[^\s\)]+\.(?:jpg|jpeg|png|webp)',
+            r'https?://ciela\.com/media/catalog/product/[^\s\)]+\.(?:jpg|jpeg|png|webp)',
+            
+            # Generic image URLs
+            r'https?://[^\s\)]+\.(?:jpg|jpeg|png|gif|webp)',
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                url = match.group(0)
+                # Clean up potential trailing characters
+                url = re.sub(r'[,\)\]\'\"]+$', '', url)
+                return url
+        
+        return None
+    
+    async def _verify_image_url(self, url: str) -> bool:
+        """
+        Verify that image URL is accessible
+        
+        Args:
+            url: Image URL to verify
+            
+        Returns:
+            True if accessible, False otherwise
+        """
+        
+        try:
+            response = await self.client.head(url, timeout=5.0)
+            
+            if response.status_code == 200:
+                # Check content type
+                content_type = response.headers.get('content-type', '')
+                if 'image' in content_type.lower():
+                    return True
+            
+            # Some servers don't support HEAD, try GET
+            response = await self.client.get(
+                url, 
+                timeout=5.0,
+                follow_redirects=True
+            )
+            return response.status_code == 200
+            
+        except Exception as e:
+            logger.debug(f"Failed to verify image URL: {e}")
+            return False
+    
+    async def close(self):
+        """Close HTTP client"""
+        await self.client.aclose()
+    
+    def __repr__(self):
+        return f"PerplexityEnricher(model={self.model})"
+
