@@ -24378,3 +24378,171 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+2025-12-24 18:09:06,334 [INFO] 192.168.1.9 - - [24/Dec/2025 18:09:06] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:09:06,353 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 18:09:06,354 [INFO] ⚙️  Configuration:
+2025-12-24 18:09:06,354 [INFO]    Limit: 5
+2025-12-24 18:09:06,354 [INFO]    Force: False
+2025-12-24 18:09:06,354 [INFO]    Dry run: False
+2025-12-24 18:09:06,354 [INFO]    Min quality: 0.3
+2025-12-24 18:09:06,354 [INFO]    No cover only: True (only books without covers)
+2025-12-24 18:09:06,354 [INFO] 📖 Querying database for books...
+2025-12-24 18:09:06,411 [INFO] ✅ Found 5 books to enrich
+2025-12-24 18:09:06,411 [INFO]
+📚 Found 5 books to enrich
+2025-12-24 18:09:06,411 [INFO]
+🚀 Starting enrichment...
+2025-12-24 18:09:06,411 [INFO]    Estimated time: ~0.2 minutes
+2025-12-24 18:09:06,411 [INFO]    Estimated cost: ~$0.00
+2025-12-24 18:09:06,411 [INFO] 🔍 [_progress_callback] Book 1/5: 'The Secret History', metadata=None
+2025-12-24 18:09:06,411 [WARNING] [1/5] ❌ The Secret History - No metadata found
+2025-12-24 18:09:06,411 [INFO] 🔍 [_progress_callback] Book data: title='The Secret History', author='Unknown', cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg', description=present
+2025-12-24 18:09:07,413 [INFO] 🔍 [_progress_callback] Book 2/5: 'The Secret Garden', metadata=None
+2025-12-24 18:09:07,414 [WARNING] [2/5] ❌ The Secret Garden - No metadata found
+2025-12-24 18:09:07,414 [INFO] 🔍 [_progress_callback] Book data: title='The Secret Garden', author='Франсис Бърнет', cover_url='https://knigabg.com/pix/28162.jpg', description=present
+2025-12-24 18:09:08,416 [INFO] 🔍 [_progress_callback] Book 3/5: 'The Priory of the Orange Tree (The Roots of Chaos, #1)', metadata=None
+2025-12-24 18:09:08,416 [WARNING] [3/5] ❌ The Priory of the Orange Tree (The Roots of Chaos, #1) - No metadata found
+2025-12-24 18:09:08,417 [INFO] 🔍 [_progress_callback] Book data: title='The Priory of the Orange Tree (The Roots of Chaos, #1)', author='Unknown', cover_url='https://images.thenile.io/r1000/9781408883358.jpg', description=present
+2025-12-24 18:09:09,419 [INFO] 🔍 [_progress_callback] Book 4/5: 'The Familiar', metadata=None
+2025-12-24 18:09:09,419 [WARNING] [4/5] ❌ The Familiar - No metadata found
+2025-12-24 18:09:09,419 [INFO] 🔍 [_progress_callback] Book data: title='The Familiar', author='Лий Бардуго', cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg', description=present
+2025-12-24 18:09:10,421 [INFO] 🔍 [_progress_callback] Book 5/5: 'The Costume History', metadata=None
+2025-12-24 18:09:10,422 [WARNING] [5/5] ❌ The Costume History - No metadata found
+2025-12-24 18:09:10,422 [INFO] 🔍 [_progress_callback] Book data: title='The Costume History', author='Racinet', cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401.jpg', description=present
+2025-12-24 18:09:10,422 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 18:09:10,424 [INFO] 📊 Tracked 0 enriched and 0 skipped books
+2025-12-24 18:09:10,424 [INFO]
+============================================================
+2025-12-24 18:09:10,424 [INFO] ENRICHMENT REPORT
+2025-12-24 18:09:10,424 [INFO] ============================================================
+2025-12-24 18:09:10,425 [INFO] 📊 Statistics:
+2025-12-24 18:09:10,425 [INFO]    Books checked: 5
+2025-12-24 18:09:10,425 [INFO]    Books enriched: 0
+2025-12-24 18:09:10,425 [INFO]    Books failed: 5
+2025-12-24 18:09:10,426 [INFO]    Success rate: 0.0%
+2025-12-24 18:09:10,426 [INFO]
+📝 Content:
+2025-12-24 18:09:10,426 [INFO]    Covers found: 0
+2025-12-24 18:09:10,426 [INFO]    Descriptions added: 0
+2025-12-24 18:09:10,426 [INFO]
+⏱️  Performance:
+2025-12-24 18:09:10,426 [INFO]    Duration: 4.0s
+2025-12-24 18:09:10,426 [INFO]    Speed: 74.8 books/min
+2025-12-24 18:09:10,426 [INFO]
+💰 Estimated cost: $0.00
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Все още се връщат книги с валидни cover URLs, което означава, че SQL заявката не филтрира правилно или кодът не е обновен на сървъра. Не виждам логове от `enrich_single_book` или `_has_sufficient_data` с новите префикси.
+
+Добавям логове в `_get_books_to_enrich`, за да видим какво точно връща заявката:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 9, lines removed: 4
+
+```diff
+@@ -389,9 +389,14 @@
+                              # If --no-cover-only is set, include all books (not just Bulgarian)
+                              if hasattr(self.args, 'no_cover_only') and self.args.no_cover_only:
+-                                 books.append(book_dict)
+-                                 if book_dict['author'] == 'Unknown':
+-                                     logger.debug(f"✅ Added book without cover and author: {title}")
++                                 cover_url = book_dict.get('cover_url', '')
++                                 has_valid_cover = cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://'))
++                                 logger.info(f"🔍 [_get_books_to_enrich] Book '{title}': cover_url='{cover_url[:60] if cover_url else 'None'}...', has_valid_cover={has_valid_cover}")
++                                 
++                                 # Double-check: only add books WITHOUT valid covers
++                                 if not has_valid_cover:
++                                     books.append(book_dict)
++                                     logger.info(f"✅ Added book without valid cover: {title}")
+                                  else:
+-                                     logger.debug(f"✅ Added book without cover: {title}")
++                                     logger.info(f"⏭️  Skipping book with valid cover: {title} (cover_url='{cover_url[:60]}...')")
+                              else:
+                                  # Check if it's a Bulgarian book
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add logging to _get_books_to_enrich to debug why books with covers are included" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add logging to _get_books_to_enrich to debug why books with covers are included" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main bae2ec8] Add logging to _get_books_to_enrich to debug why books with covers are included
+ 2 files changed, 420 insertions(+), 4 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   f4880ec..bae2ec8  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавих допълнителна проверка в `_get_books_to_enrich`: преди да добави книга в списъка, проверява дали има валиден cover URL. Ако има, я пропуска.
+
+Промените са качени в git main. Опитайте отново и споделете резултатите. Сега системата трябва да:
+1. Филтрира книги без валидни cover URLs в SQL заявката
+2. Допълнително проверява в Python и пропуска книги с валидни cover URLs
+3. Логва за всяка книга дали има валиден cover URL и дали е добавена или пропусната
+
+Ако все още виждате книги с валидни cover URLs, вероятно SQL заявката не работи правилно или има проблем с данните в базата. Логовете ще покажат какво точно се случва.
+
+---
+
