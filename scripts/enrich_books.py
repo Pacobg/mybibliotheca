@@ -482,18 +482,32 @@ class EnrichmentCommand:
                     # Check if existing description has citations
                     has_citations = bool(re.search(r'\[\d+\]', existing_desc))
                     
+                    # Check if description language matches title language
+                    title = book.get('title', '') or enriched.get('title', '')
+                    has_cyrillic_title = any('\u0400' <= char <= '\u04FF' for char in title)
+                    desc_has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in description)
+                    desc_matches_title = (has_cyrillic_title and desc_has_cyrillic) or (not has_cyrillic_title and not desc_has_cyrillic)
+                    
+                    existing_desc_has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in existing_desc) if existing_desc else False
+                    existing_desc_matches_title = (has_cyrillic_title and existing_desc_has_cyrillic) or (not has_cyrillic_title and not existing_desc_has_cyrillic)
+                    
                     # Update if:
                     # 1. No existing description, OR
                     # 2. Force flag is set, OR
                     # 3. Existing has citations (needs cleaning), OR
-                    # 4. New description is significantly longer
+                    # 4. New description matches title language AND (existing doesn't match OR new is significantly longer)
                     if (not existing_desc or 
                         self.args.force or 
                         has_citations or 
-                        len(description) > len(existing_desc) + 50):
-                        updates['description'] = description
-                        if has_citations:
-                            logger.info(f"🧹 Cleaning description citations for: {book['title']}")
+                        (desc_matches_title and (not existing_desc_matches_title or len(description) > len(existing_desc) + 50))):
+                        if desc_matches_title or not existing_desc:
+                            updates['description'] = description
+                            if has_citations:
+                                logger.info(f"🧹 Cleaning description citations for: {book['title']}")
+                            if not desc_matches_title and existing_desc:
+                                logger.warning(f"⚠️  Description language doesn't match title for '{book['title']}' - but updating anyway (no existing or force)")
+                        else:
+                            logger.warning(f"🚫 Rejecting description for '{book['title']}': language doesn't match title (title is {'Bulgarian' if has_cyrillic_title else 'English'}, desc is {'Bulgarian' if desc_has_cyrillic else 'English'})")
                 
                 # Update cover_url if missing or force update
                 # Only update if new cover_url is a valid URL (http/https), not a local path
@@ -565,6 +579,11 @@ class EnrichmentCommand:
                 # Save to database using book service
                 if updates:
                     try:
+                        # Log what we're about to update
+                        logger.debug(f"📝 Updating book '{book['title']}' with fields: {list(updates.keys())}")
+                        if 'cover_url' in updates:
+                            logger.info(f"🖼️  Will update cover_url to: {updates['cover_url']}")
+                        
                         # Use book_service directly (not facade) for simpler updates
                         from app.services.kuzu_book_service import KuzuBookService
                         book_update_service = KuzuBookService(user_id='system')
@@ -575,7 +594,9 @@ class EnrichmentCommand:
                         if updated_book:
                             saved_count += 1
                             logger.info(f"✅ Saved: {book['title']}")
-                            logger.debug(f"   Updated fields: {', '.join(updates.keys())}")
+                            logger.info(f"   Updated fields: {', '.join(updates.keys())}")
+                            if 'cover_url' in updates:
+                                logger.info(f"   Cover URL updated to: {updates['cover_url']}")
                         else:
                             logger.warning(f"⚠️  Failed to save: {book['title']}")
                     except Exception as e:

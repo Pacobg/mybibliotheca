@@ -12700,15 +12700,157 @@ Output mode: content
 ---
 
 
+Поправям проблемите:
+
 
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="read_file">
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -634,6 +634,6 @@
+                              logger.debug(f"⚠️  Bulgarian book '{title}' has English author '{ai_author}' - keeping for now")
+                          elif not has_cyrillic_title and has_cyrillic_author:
+-                             # English title but Bulgarian author - skip update
+-                             logger.debug(f"⚠️  Skipping Bulgarian author '{ai_author}' for English book '{title}'")
++                             # English title but Bulgarian author - skip update, keep original English author
++                             logger.info(f"⚠️  Skipping Bulgarian author '{ai_author}' for English book '{title}' - keeping original author")
+                              ai_author = None
+                  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 17, lines removed: 13
+
+```diff
+@@ -301,27 +301,31 @@
+              merged['author'] = ai_metadata['author']
+          
+-         # Description - use AI if better (prefer Bulgarian descriptions)
++         # Description - use AI if better, matching book title language
+          if ai_metadata.get('description'):
+              ai_desc = ai_metadata['description']
+              existing_desc = merged.get('description', '')
+              
+-             # Check if existing description is in English (has Latin chars but no Cyrillic)
+-             existing_is_english = (
+-                 existing_desc and 
+-                 any(c.isalpha() and ord(c) &lt; 128 for c in existing_desc) and
+-                 not any('\u0400' &lt;= char &lt;= '\u04FF' for char in existing_desc)
+-             )
++             # Check book title language
++             title = merged.get('title', '') or ai_metadata.get('title', '')
++             has_cyrillic_title = any('\u0400' &lt;= char &lt;= '\u04FF' for char in title)
++             
++             # Check if existing description matches title language
++             existing_has_cyrillic = any('\u0400' &lt;= char &lt;= '\u04FF' for char in existing_desc) if existing_desc else False
++             existing_matches_title = (has_cyrillic_title and existing_has_cyrillic) or (not has_cyrillic_title and not existing_has_cyrillic)
+              
+-             # Check if AI description is in Bulgarian (has Cyrillic)
+-             ai_is_bulgarian = any('\u0400' &lt;= char &lt;= '\u04FF' for char in ai_desc)
++             # Check if AI description matches title language
++             ai_has_cyrillic = any('\u0400' &lt;= char &lt;= '\u04FF' for char in ai_desc)
++             ai_matches_title = (has_cyrillic_title and ai_has_cyrillic) or (not has_cyrillic_title and not ai_has_cyrillic)
+              
+              # Use AI description if:
+              # 1. No existing description, OR
+-             # 2. Existing is English and AI is Bulgarian (prefer Bulgarian), OR
+-             # 3. AI description is significantly longer (50+ chars)
++             # 2. AI description matches title language AND (existing doesn't match OR AI is longer), OR
++             # 3. AI description is significantly longer (100+ chars) and matches title language
+              if (not existing_desc or 
+-                 (existing_is_english and ai_is_bulgarian) or 
+-                 len(ai_desc) &gt; len(existing_desc) + 50):
++                 (ai_matches_title and (not existing_matches_title or len(ai_desc) &gt; len(existing_desc) + 50)) or
++                 (ai_matches_title and len(ai_desc) &gt; len(existing_desc) + 100)):
+                  merged['description'] = ai_desc
++                 if not ai_matches_title:
++                     logger.debug(f"⚠️  Description language doesn't match title language for '{title}'")
+          
+          # Cover - always prefer AI if available
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
 <details>
-<summary>Tool use: **read_file**</summary>
+<summary>Tool use: **grep** • Grep for "cover_url.*enriched|enriched.*cover_url" in "scripts/enrich_books.py" • 2 matches</summary>
 
-Status: **loading**
+Output mode: content
 
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `if enriched.get('cover_url'):` | L500 |
+| `scripts/enrich_books.py` | `new_cover_url = enriched['cover_url']` | L501 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
 
 </details>
 </tool-use>
@@ -12724,6 +12866,50 @@ Status: **loading**
 ---
 
 
+Проверявам защо корицата не се обновява. Вероятно `find_cover_image` не връща валиден URL или не се запазва правилно. Проверявам логиката за обновяване на корицата:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/metadata_providers/perplexity.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "find_cover_image|cover_url.*=|cover.*http" in "app/services/metadata_providers/perplexity.py" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/metadata_providers/perplexity.py` | `"cover_url": "https://direkten-url-kam-korica.jpg",` | L199 |
+| `app/services/metadata_providers/perplexity.py` | `async def find_cover_image(` | L525 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/metadata_providers/perplexity.py</summary>
+
+</details>
+</tool-use>
 
 ---
 
@@ -12732,6 +12918,99 @@ Status: **loading**
 ---
 
 
+Поправям логиката за обновяване на корицата и добавям по-добро логване:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -504,4 +504,6 @@
+                      current_cover_url = book.get('cover_url', '')
+                      current_is_local = current_cover_url.startswith('/covers/') if current_cover_url else True
++                     
++                     logger.debug(f"🔍 Cover check for '{book['title']}': current='{current_cover_url}' (local={current_is_local}), new='{new_cover_url}' (valid={is_valid_url})")
+                      
+                      # Update if:
+```
+
+**Chunk 2**
+Lines added: 4, lines removed: 2
+
+```diff
+@@ -512,7 +514,9 @@
+                          if is_valid_url:
+                              updates['cover_url'] = new_cover_url
+-                             logger.info(f"🖼️  Updating cover URL for: {book['title']}")
++                             logger.info(f"🖼️  Updating cover URL for: {book['title']} -&gt; {new_cover_url}")
+                          else:
+-                             logger.debug(f"⚠️  Skipping local cover path: {new_cover_url}")
++                             logger.warning(f"⚠️  Skipping invalid cover URL for '{book['title']}': {new_cover_url} (not http/https)")
++                     elif current_cover_url and not current_is_local:
++                         logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url}")
+                  
+                  # Publisher is handled separately as a relationship
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+Model supplied an ambiguous edit
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 2 files</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+- `app/services/enrichment_service.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix: reject Bulgarian authors for English books, improve cover URL logging, match description language to title" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix: reject Bulgarian authors for English books, improve cover URL logging, match description language to title" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 98b8a79] Fix: reject Bulgarian authors for English books, improve cover URL logging, match description language to title
+ 3 files changed, 515 insertions(+), 17 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   4b0cb07..98b8a79  main -&gt; main
+
+```
+</details>
+</tool-use>
 
 ---
 
@@ -12740,10 +13019,401 @@ Status: **loading**
 ---
 
 
+Добавям финална проверка преди обновяване на автора:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 7, lines removed: undefined
+
+```diff
+@@ -642,4 +642,11 @@
+                              ai_author = None
+                  
++                 # Final check: Don't update author if title is English but AI returned Bulgarian
++                 if ai_author and not has_cyrillic_title:
++                     has_cyrillic_author_final = any('\u0400' &lt;= char &lt;= '\u04FF' for char in ai_author)
++                     if has_cyrillic_author_final:
++                         logger.warning(f"🚫 Rejecting Bulgarian author '{ai_author}' for English book '{title}'")
++                         ai_author = None
++                 
+                  if ai_author:
+                      try:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add final check to reject Bulgarian authors for English books" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add final check to reject Bulgarian authors for English books" && git push origin main
+```
+
+```
+[main 342c633] Add final check to reject Bulgarian authors for English books
+ 1 file changed, 7 insertions(+)
+To https://github.com/Pacobg/mybibliotheca.git
+   98b8a79..342c633  main -&gt; main
+
+```
+</details>
+</tool-use>
 
 ---
 
 
+
+---
+
+
+Поправих следното:
+
+## Поправки
+
+1. Автори: Добавена финална проверка преди обновяване — отхвърля български автори за английски книги.
+2. Описание: Използва се само ако съответства на езика на заглавието (българско заглавие → българско описание, английско → английско).
+3. Логване за корица: Добавено по-подробно логване за да видим защо корицата не се обновява.
+
+## Проблем с корицата
+
+От логовете виждам, че:
+- "The Costume History" има корица, но все още има локален път `/covers/...`
+- "The Secret Garden" няма корица, но не се обновява
+
+Вероятно `find_cover_image` не връща валиден URL или не се запазва правилно. На сървъра изпълнете:
+
+```bash
+git pull origin main
+
+# Опитайте отново с по-подробно логване
+python scripts/enrich_books.py --no-cover-only --limit 5 --quality-min 0.3 -y
+```
+
+Логовете ще покажат:
+- Какъв е текущият URL на корицата
+- Какъв е новият URL от AI
+- Защо не се обновява
+
+Споделете логовете, за да поправим проблема с корицата.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+2025-12-24 15:10:14,925 [INFO] ============================================================
+2025-12-24 15:10:14,925 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 15:10:14,925 [INFO] ============================================================
+2025-12-24 15:10:14,984 [INFO] ✅ PerplexityEnricher initialized with model: sonar-pro
+2025-12-24 15:10:14,984 [INFO] ✅ Perplexity enricher initialized
+2025-12-24 15:10:14,984 [INFO] ⚙️  Config: min_quality=0.3, rate_limit=1.0s, download_covers=True
+2025-12-24 15:10:14,984 [INFO] ⚙️  Configuration:
+2025-12-24 15:10:14,984 [INFO]    Limit: 5
+2025-12-24 15:10:14,984 [INFO]    Force: False
+2025-12-24 15:10:14,984 [INFO]    Dry run: False
+2025-12-24 15:10:14,984 [INFO]    Min quality: 0.3
+2025-12-24 15:10:14,984 [INFO]    No cover only: True (only books without covers)
+2025-12-24 15:10:14,984 [INFO] 📖 Querying database for books...
+2025-12-24 15:10:14,984 [INFO] SafeKuzuManager initialized for database: ./data/kuzu/bibliotheca.db
+2025-12-24 15:10:14,985 [INFO] Global SafeKuzuManager instance created
+2025-12-24 15:10:14,985 [INFO] [THREAD-140258005950720:MainThread] Initializing KuzuDB database...
+2025-12-24 15:10:15,108 [INFO] [THREAD-140258005950720:MainThread] Initializing database schema...
+2025-12-24 15:10:15,108 [INFO] 🔧 [DEBUG] SafeKuzuManager starting schema initialization...
+2025-12-24 15:10:15,108 [INFO] 🔧 [DEBUG] Schema init - force_reset=False, debug_mode=False
+2025-12-24 15:10:15,143 [INFO] ✅ All essential tables exist - schema appears complete
+2025-12-24 15:10:15,147 [INFO] 📊 Database contains 2 users
+2025-12-24 15:10:15,147 [INFO] ✅ Schema is complete - skipping initialization
+2025-12-24 15:10:15,147 [INFO] [THREAD-140258005950720:MainThread] KuzuDB database initialized successfully in 0.162s
+2025-12-24 15:10:15,202 [INFO] 🔍 [ADAPTER] Query returned 0 rows
+2025-12-24 15:10:15,207 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 15:10:15,210 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 15:10:15,215 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 15:10:15,219 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 15:10:15,219 [INFO] ✅ Found 5 books to enrich
+2025-12-24 15:10:15,220 [INFO]
+📚 Found 5 books to enrich
+2025-12-24 15:10:15,220 [INFO]
+🚀 Starting enrichment...
+2025-12-24 15:10:15,220 [INFO]    Estimated time: ~0.2 minutes
+2025-12-24 15:10:15,220 [INFO]    Estimated cost: ~$0.00
+2025-12-24 15:10:15,220 [INFO] 📦 Starting batch enrichment: 5 books
+2025-12-24 15:10:15,220 [INFO] ⚠️  Book 'The Secret History' has no author - will try to find it via AI
+2025-12-24 15:10:15,220 [INFO] 🔍 Enriching: The Secret History -
+2025-12-24 15:10:15,220 [INFO] 🔍 Searching for: The Secret History -
+2025-12-24 15:10:17,187 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 15:10:17,190 [INFO] 📋 Found metadata fields:
+2025-12-24 15:10:17,190 [WARNING] Missing author in metadata
+2025-12-24 15:10:17,190 [WARNING] Metadata validation failed
+2025-12-24 15:10:17,190 [WARNING] ⚠️  Could not parse metadata for: The Secret History
+2025-12-24 15:10:17,191 [WARNING] ❌ No metadata found for: The Secret History
+2025-12-24 15:10:17,191 [WARNING] [1/5] ❌ The Secret History - No metadata found
+2025-12-24 15:10:18,192 [INFO] 🔍 Enriching: The Secret Garden - Франсис Бърнет
+2025-12-24 15:10:18,192 [INFO] 🔍 Searching for: The Secret Garden - Франсис Бърнет
+2025-12-24 15:10:28,322 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 15:10:28,326 [INFO] 📋 Found metadata fields: title, author, translator, publisher, year, isbn, pages, genres, description, cover_url, confidence, sources
+2025-12-24 15:10:28,326 [INFO] ✅ Found metadata for: The Secret Garden (quality: 1.00)
+2025-12-24 15:10:28,326 [INFO] ✅ Enriched: The Secret Garden (quality: 1.00)
+2025-12-24 15:10:28,326 [INFO] [2/5] ✅ The Secret Garden (quality: 1.00)
+2025-12-24 15:10:28,326 [INFO]    🖼️  Cover found
+2025-12-24 15:10:28,327 [INFO]    📝 Description added
+2025-12-24 15:10:29,328 [INFO] 🔍 Enriching: The Priory of the Orange Tree (The Roots of Chaos, #1) - Shannon
+2025-12-24 15:10:29,328 [INFO] 🔍 Searching for: The Priory of the Orange Tree (The Roots of Chaos, #1) - Shannon
+2025-12-24 15:10:31,200 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 15:10:31,204 [INFO] 📋 Found metadata fields: sources
+2025-12-24 15:10:31,204 [INFO] ✅ Found metadata for: The Priory of the Orange Tree (The Roots of Chaos, #1) (quality: 0.40)
+2025-12-24 15:10:31,204 [INFO] 🖼️  Searching for cover: The Priory of the Orange Tree (The Roots of Chaos, #1)
+2025-12-24 15:10:31,204 [INFO] 🖼️  Searching for cover: The Priory of the Orange Tree (The Roots of Chaos, #1)
+2025-12-24 15:10:32,546 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 15:10:32,548 [INFO] ✅ Enriched: The Priory of the Orange Tree (The Roots of Chaos, #1) (quality: 0.40)
+2025-12-24 15:10:32,549 [INFO] [3/5] ✅ The Priory of the Orange Tree (The Roots of Chaos, #1) (quality: 0.40)
+2025-12-24 15:10:33,550 [INFO] 🔍 Enriching: The Familiar - Лий Бардуго
+2025-12-24 15:10:33,551 [INFO] 🔍 Searching for: The Familiar - Лий Бардуго
+2025-12-24 15:10:35,855 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 15:10:35,858 [INFO] 📋 Found metadata fields: author, sources
+2025-12-24 15:10:35,859 [INFO] ✅ Found metadata for: The Familiar (quality: 0.40)
+2025-12-24 15:10:35,859 [INFO] 🖼️  Searching for cover: The Familiar
+2025-12-24 15:10:35,859 [INFO] 🖼️  Searching for cover: The Familiar
+2025-12-24 15:10:37,895 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 15:10:37,898 [INFO] ✅ Enriched: The Familiar (quality: 0.40)
+2025-12-24 15:10:37,898 [INFO] [4/5] ✅ The Familiar (quality: 0.40)
+2025-12-24 15:10:38,900 [INFO] ⏭️  Skipping The Costume History - already has sufficient data
+2025-12-24 15:10:38,901 [WARNING] [5/5] ❌ The Costume History - No metadata found
+2025-12-24 15:10:38,901 [INFO] ✅ Batch enrichment complete!
+2025-12-24 15:10:38,902 [INFO]    Processed: 5/5
+2025-12-24 15:10:38,902 [INFO]    Enriched: 3 (60.0%)
+2025-12-24 15:10:38,902 [INFO]    Covers found: 1
+2025-12-24 15:10:38,902 [INFO]    Duration: 23.7s
+2025-12-24 15:10:38,903 [INFO] 🖼️  Updating cover URL for: The Secret Garden -> https://knigabg.com/pix/28162.jpg
+2025-12-24 15:10:38,913 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 15:10:38,913 [INFO] 🔍 Query results for book 2b6786f4-6340-41f8-8a6c-9eb0506ca52d: [{'result': {'_id': {'offset': 2369, 'table': 1}, '_label': 'Book', 'id': '2b6786f4-6340-41f8-8a6c-9eb0506ca52d', 'title': 'The Secret Garden', 'normalized_title': 'the secret garden', 'subtitle': '', 'isbn13': '9789542610762', 'isbn10': '', 'asin': '', 'description': '"Тайната градина" на Франсис Ходжсън Бърнет е една непреходна класика за животворящата сила на обичта и приятелството. Малката Мери Ленъкс, капризна и самотна, напуска Индия и отива да живее в имението Мисълтуейт при чичо си. Там тя открива тайна градина, която ще промени живота й и ще разцъфне истинско щастие в сърцето й.', 'published_date': datetime.date(2020, 1, 1), 'page_count': 238, 'language': 'en', 'cover_url': '/covers/e6d27557-10ef-413d-bec2-6b42df95a83c.jpg', 'google_books_id': '', 'openlibrary_id': '', 'opds_source_id': None, 'opds_source_updated_at': None, 'opds_source_entry_hash': None, 'media_type': 'physical', 'average_rating': 0.0, 'rating_count': 0, 'series': '', 'series_volume': None, 'series_order': None, 'custom_metadata': None, 'raw_categories': None, 'created_at': datetime.datetime(2025, 12, 23, 21, 43, 44, 216147), 'updated_at': datetime.datetime(2025, 12, 24, 13, 5, 39, 989430), 'audio_length_minutes': None, 'audio_is_abridged': None, 'audio_narrators': None, 'media_format': None, 'audiobookshelf_id': None, 'audio_duration_ms': None, 'audiobookshelf_updated_at': None, 'quantity': 1}}]
+2025-12-24 15:10:38,913 [INFO] 🔍 First result structure: {'result': {'_id': {'offset': 2369, 'table': 1}, '_label': 'Book', 'id': '2b6786f4-6340-41f8-8a6c-9eb0506ca52d', 'title': 'The Secret Garden', 'normalized_title': 'the secret garden', 'subtitle': '', 'isbn13': '9789542610762', 'isbn10': '', 'asin': '', 'description': '"Тайната градина" на Франсис Ходжсън Бърнет е една непреходна класика за животворящата сила на обичта и приятелството. Малката Мери Ленъкс, капризна и самотна, напуска Индия и отива да живее в имението Мисълтуейт при чичо си. Там тя открива тайна градина, която ще промени живота й и ще разцъфне истинско щастие в сърцето й.', 'published_date': datetime.date(2020, 1, 1), 'page_count': 238, 'language': 'en', 'cover_url': '/covers/e6d27557-10ef-413d-bec2-6b42df95a83c.jpg', 'google_books_id': '', 'openlibrary_id': '', 'opds_source_id': None, 'opds_source_updated_at': None, 'opds_source_entry_hash': None, 'media_type': 'physical', 'average_rating': 0.0, 'rating_count': 0, 'series': '', 'series_volume': None, 'series_order': None, 'custom_metadata': None, 'raw_categories': None, 'created_at': datetime.datetime(2025, 12, 23, 21, 43, 44, 216147), 'updated_at': datetime.datetime(2025, 12, 24, 13, 5, 39, 989430), 'audio_length_minutes': None, 'audio_is_abridged': None, 'audio_narrators': None, 'media_format': None, 'audiobookshelf_id': None, 'audio_duration_ms': None, 'audiobookshelf_updated_at': None, 'quantity': 1}}
+2025-12-24 15:10:38,913 [INFO] ✅ Found book via 'result' key: <class 'dict'>
+2025-12-24 15:10:38,914 [INFO] ✅ Book data is already dict with keys: ['_id', '_label', 'id', 'title', 'normalized_title', 'subtitle', 'isbn13', 'isbn10', 'asin', 'description', 'published_date', 'page_count', 'language', 'cover_url', 'google_books_id', 'openlibrary_id', 'opds_source_id', 'opds_source_updated_at', 'opds_source_entry_hash', 'media_type', 'average_rating', 'rating_count', 'series', 'series_volume', 'series_order', 'custom_metadata', 'raw_categories', 'created_at', 'updated_at', 'audio_length_minutes', 'audio_is_abridged', 'audio_narrators', 'media_format', 'audiobookshelf_id', 'audio_duration_ms', 'audiobookshelf_updated_at', 'quantity']
+2025-12-24 15:10:38,937 [INFO] ✅ Saved: The Secret Garden
+2025-12-24 15:10:38,937 [INFO] ⚠️  Skipping Bulgarian author 'Франсис Бърнет' for English book 'The Secret Garden' - keeping original author
+2025-12-24 15:10:38,941 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 15:10:38,944 [INFO] ⚠️  Skipping Bulgarian author 'Лий Бардуго' for English book 'The Familiar' - keeping original author
+2025-12-24 15:10:38,944 [INFO] 💾 Saved 1 enriched books to database
+2025-12-24 15:10:38,945 [INFO]
+============================================================
+2025-12-24 15:10:38,945 [INFO] ENRICHMENT REPORT
+2025-12-24 15:10:38,945 [INFO] ============================================================
+2025-12-24 15:10:38,945 [INFO] 📊 Statistics:
+2025-12-24 15:10:38,945 [INFO]    Books checked: 5
+2025-12-24 15:10:38,945 [INFO]    Books enriched: 3
+2025-12-24 15:10:38,945 [INFO]    Books failed: 2
+2025-12-24 15:10:38,945 [INFO]    Success rate: 60.0%
+2025-12-24 15:10:38,945 [INFO]
+📝 Content:
+2025-12-24 15:10:38,945 [INFO]    Covers found: 1
+2025-12-24 15:10:38,945 [INFO]    Descriptions added: 1
+2025-12-24 15:10:38,945 [INFO]
+⏱️  Performance:
+2025-12-24 15:10:38,945 [INFO]    Duration: 23.7s
+2025-12-24 15:10:38,945 [INFO]    Speed: 12.7 books/min
+2025-12-24 15:10:38,946 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 15:10:38,946 [INFO] ============================================================
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Има няколко проблема:
+1. Корицата не се записва — логът казва "Updating cover URL", но в базата все още е локалният път.
+2. Описанието е на български за английска книга — "The Secret Garden" има българско описание.
+3. Авторът е на български за английска книга — "Франсис Бърнет" е български автор.
+
+Проверявам защо корицата не се записва и защо описанието е на български:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "await.*update_book|book_service\.update_book" in "scripts/enrich_books.py" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `updated_book = await book_update_service.update_book(book['id'], updates)` | L573 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам защо корицата не се записва и защо описанието е на български. Поправям логиката:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 22, lines removed: 8
+
+```diff
+@@ -318,14 +318,28 @@
+              ai_matches_title = (has_cyrillic_title and ai_has_cyrillic) or (not has_cyrillic_title and not ai_has_cyrillic)
+              
+-             # Use AI description if:
+-             # 1. No existing description, OR
+-             # 2. AI description matches title language AND (existing doesn't match OR AI is longer), OR
+-             # 3. AI description is significantly longer (100+ chars) and matches title language
+-             if (not existing_desc or 
+-                 (ai_matches_title and (not existing_matches_title or len(ai_desc) &gt; len(existing_desc) + 50)) or
+-                 (ai_matches_title and len(ai_desc) &gt; len(existing_desc) + 100)):
++             # Use AI description ONLY if it matches title language
++             # Exception: if no existing description and AI doesn't match, still use it (better than nothing)
++             if not existing_desc:
++                 # No existing description - use AI even if language doesn't match
+                  merged['description'] = ai_desc
+                  if not ai_matches_title:
+-                     logger.debug(f"⚠️  Description language doesn't match title language for '{title}'")
++                     logger.warning(f"⚠️  Using description that doesn't match title language for '{title}' (no existing description)")
++             elif ai_matches_title:
++                 # AI description matches title language - use it if better
++                 if not existing_matches_title or len(ai_desc) &gt; len(existing_desc) + 50:
++                     merged['description'] = ai_desc
++                     logger.debug(f"✅ Using description matching title language for '{title}'")
++                 else:
++                     logger.debug(f"⏭️  Keeping existing description for '{title}' (AI not significantly better)")
++             else:
++                 # AI description doesn't match title language - reject it
++                 logger.warning(f"🚫 Rejecting description that doesn't match title language for '{title}': AI is {'Bulgarian' if ai_has_cyrillic else 'English'}, title is {'Bulgarian' if has_cyrillic_title else 'English'}")
++                 # Keep existing description if it matches title language
++                 if existing_matches_title:
++                     logger.debug(f"✅ Keeping existing description matching title language")
++                 elif not existing_desc:
++                     # No existing description and AI doesn't match - still use it (better than nothing)
++                     merged['description'] = ai_desc
++                     logger.warning(f"⚠️  Using mismatched description for '{title}' (no better option)")
+          
+          # Cover - always prefer AI if available
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="search_replace">
+<details>
+<summary>Tool use: **search_replace**</summary>
+
+
+Parameters:
+
+```json
+{
+  "relativeWorkspacePath": "scripts/enrich_books.py"
+}
+```
+Additional data:
+
+```json
+{
+  "codeblockId": "95dd31ed-6e94-4b51-8f25-2649e712a539"
+}
+```
+User decision: **accepted**
+
+Status: **loading**
+
+
+</details>
+</tool-use>
 
 ---
 

@@ -317,16 +317,30 @@ class EnrichmentService:
             ai_has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in ai_desc)
             ai_matches_title = (has_cyrillic_title and ai_has_cyrillic) or (not has_cyrillic_title and not ai_has_cyrillic)
             
-            # Use AI description if:
-            # 1. No existing description, OR
-            # 2. AI description matches title language AND (existing doesn't match OR AI is longer), OR
-            # 3. AI description is significantly longer (100+ chars) and matches title language
-            if (not existing_desc or 
-                (ai_matches_title and (not existing_matches_title or len(ai_desc) > len(existing_desc) + 50)) or
-                (ai_matches_title and len(ai_desc) > len(existing_desc) + 100)):
+            # Use AI description ONLY if it matches title language
+            # Exception: if no existing description and AI doesn't match, still use it (better than nothing)
+            if not existing_desc:
+                # No existing description - use AI even if language doesn't match
                 merged['description'] = ai_desc
                 if not ai_matches_title:
-                    logger.debug(f"⚠️  Description language doesn't match title language for '{title}'")
+                    logger.warning(f"⚠️  Using description that doesn't match title language for '{title}' (no existing description)")
+            elif ai_matches_title:
+                # AI description matches title language - use it if better
+                if not existing_matches_title or len(ai_desc) > len(existing_desc) + 50:
+                    merged['description'] = ai_desc
+                    logger.debug(f"✅ Using description matching title language for '{title}'")
+                else:
+                    logger.debug(f"⏭️  Keeping existing description for '{title}' (AI not significantly better)")
+            else:
+                # AI description doesn't match title language - reject it
+                logger.warning(f"🚫 Rejecting description that doesn't match title language for '{title}': AI is {'Bulgarian' if ai_has_cyrillic else 'English'}, title is {'Bulgarian' if has_cyrillic_title else 'English'}")
+                # Keep existing description if it matches title language
+                if existing_matches_title:
+                    logger.debug(f"✅ Keeping existing description matching title language")
+                elif not existing_desc:
+                    # No existing description and AI doesn't match - still use it (better than nothing)
+                    merged['description'] = ai_desc
+                    logger.warning(f"⚠️  Using mismatched description for '{title}' (no better option)")
         
         # Cover - always prefer AI if available
         if ai_metadata.get('cover_url'):
