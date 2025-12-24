@@ -179,26 +179,30 @@ class EnrichmentCommand:
         
         try:
             # Build query to find books missing metadata
+            # Note: publisher is a relationship, not a property, so we check for PUBLISHED_BY relationship
             if self.args.force:
                 # Force: get all books
                 query = """
                 MATCH (b:Book)
+                OPTIONAL MATCH (b)-[:PUBLISHED_BY]->(p:Publisher)
                 RETURN b.id as id, b.title as title, b.description as description,
-                       b.cover_url as cover_url, b.publisher as publisher,
+                       b.cover_url as cover_url, p.name as publisher,
                        b.isbn13 as isbn13, b.isbn10 as isbn10,
                        b.page_count as page_count, b.published_date as published_date
                 ORDER BY b.created_at DESC
                 """
             else:
                 # Get books missing critical metadata
+                # Check for publisher relationship existence
                 query = """
                 MATCH (b:Book)
+                OPTIONAL MATCH (b)-[:PUBLISHED_BY]->(p:Publisher)
                 WHERE (b.description IS NULL OR b.description = '')
                    OR (b.cover_url IS NULL OR b.cover_url = '')
-                   OR (b.publisher IS NULL OR b.publisher = '')
+                   OR (p IS NULL)
                    OR ((b.isbn13 IS NULL OR b.isbn13 = '') AND (b.isbn10 IS NULL OR b.isbn10 = ''))
                 RETURN b.id as id, b.title as title, b.description as description,
-                       b.cover_url as cover_url, b.publisher as publisher,
+                       b.cover_url as cover_url, p.name as publisher,
                        b.isbn13 as isbn13, b.isbn10 as isbn10,
                        b.page_count as page_count, b.published_date as published_date
                 ORDER BY b.created_at DESC
