@@ -183,6 +183,7 @@ class PerplexityEnricher:
             "Content-Type": "application/json"
         }
         
+        # Build payload - some parameters may not be supported in all API versions
         payload = {
             "model": self.model,
             "messages": [
@@ -201,10 +202,12 @@ class PerplexityEnricher:
                 }
             ],
             "temperature": 0.1,  # Very low for factual accuracy
-            "max_tokens": 1500,
-            "return_citations": True,  # Get source URLs
-            "search_recency_filter": "month"  # Prefer recent info
+            "max_tokens": 1500
         }
+        
+        # Add optional parameters only if they're supported
+        # Note: return_citations and search_recency_filter may not be available in all API versions
+        # Try without them first, then add if needed
         
         try:
             response = await self.client.post(
@@ -213,14 +216,28 @@ class PerplexityEnricher:
                 json=payload
             )
             
+            # Log response details for debugging
+            if response.status_code != 200:
+                error_detail = response.text[:500] if hasattr(response, 'text') else 'No error details'
+                logger.error(f"Perplexity API error {response.status_code}: {error_detail}")
+                logger.debug(f"Request payload: {json.dumps(payload, ensure_ascii=False)[:500]}")
+            
             response.raise_for_status()
             return response.json()
             
+        except httpx.HTTPStatusError as e:
+            error_detail = ""
+            if hasattr(e.response, 'text'):
+                error_detail = e.response.text[:500]
+            logger.error(f"HTTP error calling Perplexity: {e}")
+            logger.error(f"Response details: {error_detail}")
+            logger.debug(f"Request payload: {json.dumps(payload, ensure_ascii=False)[:500]}")
+            return None
         except httpx.HTTPError as e:
             logger.error(f"HTTP error calling Perplexity: {e}")
             return None
         except Exception as e:
-            logger.error(f"Error calling Perplexity: {e}")
+            logger.error(f"Error calling Perplexity: {e}", exc_info=True)
             return None
     
     def _parse_response(
@@ -245,8 +262,17 @@ class PerplexityEnricher:
             # Extract AI response
             content = response['choices'][0]['message']['content']
             
-            # Get citations (source URLs)
-            citations = response.get('citations', [])
+            # Get citations (source URLs) - may be in different places in response
+            citations = []
+            if 'citations' in response:
+                citations = response.get('citations', [])
+            elif 'choices' in response and len(response['choices']) > 0:
+                # Citations might be in choice metadata
+                choice = response['choices'][0]
+                if 'citations' in choice:
+                    citations = choice.get('citations', [])
+                elif 'message' in choice and 'citations' in choice['message']:
+                    citations = choice['message'].get('citations', [])
             
             # Try to parse as JSON
             metadata = self._extract_json(content)
@@ -255,7 +281,7 @@ class PerplexityEnricher:
                 logger.warning("Could not extract JSON from response")
                 return None
             
-            # Add citations
+            # Add citations if available
             if citations and 'sources' not in metadata:
                 metadata['sources'] = citations
             
