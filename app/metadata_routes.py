@@ -358,8 +358,12 @@ def start_enrichment():
                         'status': status
                     }), 400
         
-        # Start enrichment in background
+        # Start enrichment in background thread (same process to share KuzuDB connection)
         import threading
+        import asyncio
+        import argparse
+        from scripts.enrich_books import EnrichmentCommand
+        
         def run_enrichment():
             try:
                 # Update status
@@ -377,33 +381,43 @@ def start_enrichment():
                 with open(enrichment_status_file, 'w') as f:
                     json.dump(status, f)
                 
-                # Run enrichment script
-                script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts', 'enrich_books.py')
-                cmd = ['python', script_path, '--limit', str(limit), '-y']
-                if no_cover_only:
-                    cmd.append('--no-cover-only')
-                
-                result = subprocess.run(
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    timeout=3600  # 1 hour timeout
+                # Create args namespace for EnrichmentCommand
+                args = argparse.Namespace(
+                    limit=limit,
+                    force=False,
+                    dry_run=False,
+                    quality_min=0.3,
+                    yes=True,
+                    book_id=None,
+                    book_title=None,
+                    no_cover_only=no_cover_only
                 )
+                
+                # Run enrichment directly in same process (shares KuzuDB connection)
+                command = EnrichmentCommand(args)
+                
+                # Run async command in event loop
+                asyncio.run(command.run())
+                
+                # Load final status from script output
+                if enrichment_status_file.exists():
+                    with open(enrichment_status_file, 'r') as f:
+                        status = json.load(f)
                 
                 # Update status
                 status['running'] = False
                 status['completed_at'] = datetime.now().isoformat()
-                status['exit_code'] = result.returncode
-                status['output'] = result.stdout[-1000:] if result.stdout else ''  # Last 1000 chars
-                status['error'] = result.stderr[-1000:] if result.stderr else ''
                 
                 with open(enrichment_status_file, 'w') as f:
                     json.dump(status, f)
                     
             except Exception as e:
+                import traceback
+                error_trace = traceback.format_exc()
                 status = {
                     'running': False,
                     'error': str(e),
+                    'error_trace': error_trace[-2000:] if len(error_trace) > 2000 else error_trace,
                     'completed_at': datetime.now().isoformat()
                 }
                 with open(enrichment_status_file, 'w') as f:

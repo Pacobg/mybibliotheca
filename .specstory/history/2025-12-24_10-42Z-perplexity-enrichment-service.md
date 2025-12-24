@@ -19663,25 +19663,20 @@ Output mode: content
 
 <tool-use data-tool-type="search" data-tool-name="codebase_search">
 <details>
-                <summary>Tool use: **codebase_search** • Searched codebase "How to properly initialize KuzuDB connection in scripts without causing lock conflicts?" • **15** results</summary>
+                <summary>Tool use: **codebase_search** • Searched codebase "How to properly initialize KuzuDB connection in scripts without causing lock conflicts?" • **10** results</summary>
             
 | File | Lines |
 |------|-------|
-| `app/utils/safe_kuzu_manager.py` | L33-83 |
-| `app/utils/safe_kuzu_manager.py` | L447-492 |
-| `docs/KUZUDB_LOCK_FIX.md` | L1-60 |
-| `scripts/fix_kuzu_locks.sh` | L1-50 |
-| `app/__init__.py` | L697-731 |
-| `app/utils/safe_kuzu_manager.py` | L298-345 |
-| `app/infrastructure/kuzu_graph.py` | L45-75 |
-| `app/utils/safe_kuzu_manager.py` | L1-33 |
-| `app/utils/safe_kuzu_manager.py` | L492-521 |
-| `app/utils/safe_kuzu_manager.py` | L1450-1478 |
-| `app/infrastructure/kuzu_graph.py` | L1813-1842 |
-| `app/__init__.py` | L679-697 |
-| `app/infrastructure/kuzu_graph.py` | L1-45 |
-| `app/utils/safe_kuzu_manager.py` | L803-831 |
-| `app/utils/safe_kuzu_manager.py` | L521-547 |
+| `app/utils/safe_kuzu_manager.py` | L31-1449 |
+| `app/utils/safe_kuzu_manager.py` | L32-1449 |
+| `docs/KUZUDB_LOCK_FIX.md` | L62 |
+| `scripts/fix_kuzu_locks.sh` | L49 |
+| `app/__init__.py` | L313-1382 |
+| `app/infrastructure/kuzu_graph.py` | L15-953 |
+| `app/utils/safe_kuzu_manager.py` | L1449 |
+| `app/utils/safe_kuzu_manager.py` | L35-1490 |
+| `app/infrastructure/kuzu_graph.py` | L1778-1841 |
+| `app/infrastructure/kuzu_graph.py` | L953 |
 
 </details>
 </tool-use>
@@ -19729,25 +19724,19 @@ Output mode: content
 
 <tool-use data-tool-type="search" data-tool-name="codebase_search">
 <details>
-                <summary>Tool use: **codebase_search** • Searched codebase "How does KuzuBookRepository initialize database connection and handle locks?" • **15** results</summary>
+                <summary>Tool use: **codebase_search** • Searched codebase "How does KuzuBookRepository initialize database connection and handle locks?" • **9** results</summary>
             
 | File | Lines |
 |------|-------|
-| `app/utils/safe_kuzu_manager.py` | L33-83 |
-| `app/utils/safe_kuzu_manager.py` | L447-492 |
-| `app/utils/safe_kuzu_manager.py` | L492-521 |
-| `app/infrastructure/kuzu_repositories.py` | L718-743 |
-| `app/utils/safe_kuzu_manager.py` | L298-345 |
-| `app/__init__.py` | L697-731 |
-| `app/kuzu_integration.py` | L74-123 |
-| `app/infrastructure/kuzu_graph.py` | L45-75 |
-| `app/infrastructure/kuzu_graph.py` | L126-141 |
-| `app/utils/safe_kuzu_manager.py` | L521-547 |
-| `app/infrastructure/kuzu_repositories.py` | L1678-1703 |
-| `app/utils/safe_kuzu_manager.py` | L345-364 |
-| `app/utils/safe_kuzu_manager.py` | L1450-1478 |
-| `app/infrastructure/kuzu_graph.py` | L75-93 |
-| `app/utils/safe_kuzu_manager.py` | L1-33 |
+| `app/utils/safe_kuzu_manager.py` | L31-1449 |
+| `app/utils/safe_kuzu_manager.py` | L32-1449 |
+| `app/infrastructure/kuzu_repositories.py` | L421-1677 |
+| `app/__init__.py` | L313-1382 |
+| `app/kuzu_integration.py` | L71-920 |
+| `app/infrastructure/kuzu_graph.py` | L15-953 |
+| `app/infrastructure/kuzu_repositories.py` | L720-1958 |
+| `app/utils/safe_kuzu_manager.py` | L35-1490 |
+| `app/utils/safe_kuzu_manager.py` | L1449 |
 
 </details>
 </tool-use>
@@ -19887,6 +19876,185 @@ Output mode: content
 ---
 
 
+
+---
+
+
+
+---
+
+
+Проблемът е, че скриптът се изпълнява като отделен процес и се опитва да отвори базата, докато Flask я държи. Добавям retry логика и по-добра обработка на lock грешките:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/utils/safe_kuzu_manager.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "get_safe_kuzu_manager|_global_manager" in "app/utils/safe_kuzu_manager.py" • 4 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/utils/safe_kuzu_manager.py` | `def get_safe_kuzu_manager() -> SafeKuzuManager:` | L1459 |
+| `app/utils/safe_kuzu_manager.py` | `manager = get_safe_kuzu_manager()` | L1530 |
+| `app/utils/safe_kuzu_manager.py` | `manager = get_safe_kuzu_manager()` | L1611 |
+| `app/utils/safe_kuzu_manager.py` | `manager = get_safe_kuzu_manager()` | L1622 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/utils/safe_kuzu_manager.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 33, lines removed: 1
+
+```diff
+@@ -74,5 +74,37 @@
+          self.args = args
+          self.service = None
+-         self.book_repo = KuzuBookRepository()
++         
++         # Initialize book_repo with retry logic for lock conflicts
++         max_retries = 5
++         retry_delay = 2  # seconds
++         self.book_repo = None
++         
++         for attempt in range(max_retries):
++             try:
++                 self.book_repo = KuzuBookRepository()
++                 # Try to access safe_manager to trigger initialization
++                 _ = self.book_repo.safe_manager
++                 logger.info(f"✅ Successfully initialized KuzuBookRepository (attempt {attempt + 1})")
++                 break
++             except RuntimeError as e:
++                 if "Could not set lock on file" in str(e):
++                     if attempt &lt; max_retries - 1:
++                         logger.warning(f"⚠️  Database lock conflict (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay}s...")
++                         import time
++                         time.sleep(retry_delay)
++                         retry_delay *= 2  # Exponential backoff
++                     else:
++                         logger.error(f"❌ Failed to acquire database lock after {max_retries} attempts")
++                         logger.error("💡 Tip: Make sure Flask app is not running or wait a few seconds and try again")
++                         raise
++                 else:
++                     raise
++             except Exception as e:
++                 logger.error(f"❌ Error initializing KuzuBookRepository: {e}")
++                 raise
++         
++         if self.book_repo is None:
++             raise RuntimeError("Failed to initialize KuzuBookRepository after retries")
++         
+          self.stats = {
+              'start_time': datetime.now(),
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add retry logic for KuzuDB lock conflicts in enrichment script" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add retry logic for KuzuDB lock conflicts in enrichment script" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main e670e33] Add retry logic for KuzuDB lock conflicts in enrichment script
+ 2 files changed, 771 insertions(+), 17 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   b07bc00..e670e33  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавих retry логика за KuzuDB lock конфликти. Проблемът е, че когато скриптът се изпълнява като отделен процес (чрез `subprocess.run`), той се опитва да отвори базата данни, която вече е отворена от Flask приложението.
+
+## Какво е поправено:
+
+1. Добавена retry логика с exponential backoff — скриптът опитва до 5 пъти да отвори базата данни с нарастващи закъснения (2s, 4s, 8s, 16s, 32s).
+2. По-добра обработка на грешките — при lock конфликт се показва ясно съобщение и съвет.
+3. Логиране на опитите — всеки опит се логва за по-лесно проследяване.
+
+## Как работи:
+
+Когато скриптът се опита да инициализира `KuzuBookRepository`, ако получи lock грешка:
+- Изчаква 2 секунди и опитва отново
+- Ако отново има грешка, изчаква 4 секунди
+- Продължава до 5 опита с нарастващи закъснения
+- Ако всички опити са неуспешни, показва ясна грешка
+
+Това дава време на Flask приложението да освободи lock-а между заявките.
+
+## Следващи стъпки:
+
+1. Изтеглете промените на сървъра: `git pull origin main`
+2. Опитайте отново обогатяването — трябва да работи по-добре
+3. Ако проблемът продължава, може да е нужно да изчакате малко преди да стартирате скрипта, или да спрете Flask приложението временно
+
+Всички промени са качени в git main и са готови за изтегляне на сървъра.
 
 ---
 
