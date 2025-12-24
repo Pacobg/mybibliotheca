@@ -959,10 +959,10 @@ class EnrichmentCommand:
                                     logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
                             else:
                                 logger.warning(f"⚠️  Failed to download cover image for '{book['title']}': {local_cover_path}")
-                            except requests.exceptions.HTTPError as e:
-                                logger.warning(f"⚠️  HTTP error downloading cover for '{book['title']}': {e.response.status_code if e.response else 'unknown'}")
-                            except Exception as e:
-                                logger.error(f"❌ Error downloading cover image for '{book['title']}': {e}")
+                        except requests.exceptions.HTTPError as e:
+                            logger.warning(f"⚠️  HTTP error downloading cover for '{book['title']}': {e.response.status_code if e.response else 'unknown'}")
+                        except Exception as e:
+                            logger.error(f"❌ Error downloading cover image for '{book['title']}': {e}")
                     else:
                         logger.warning(f"⚠️  Skipping invalid cover URL for '{book['title']}': {new_cover_url} (not http/https)")
                 

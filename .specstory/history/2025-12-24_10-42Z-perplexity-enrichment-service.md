@@ -34707,3 +34707,319 @@ There's a syntax error in enrich_books.py at line 918 - "unexpected indent". Let
 
 ---
 
+Има синтактична грешка на ред 918. Нека я проверя и поправя:
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see the problem - the indentation is inconsistent. Lines 914-915 have less indentation than lines 917-918. The code after `response.raise_for_status()` should continue with the same indentation level. Let me fix this.</details></think>
+
+---
+
+Виждам проблема - индентацията е непоследователна. Нека го поправя:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 24, lines removed: 24
+
+```diff
+@@ -914,28 +914,28 @@
+                              response = requests.get(new_cover_url, timeout=10, stream=True, headers=headers)
+                              response.raise_for_status()
+-                                 
+-                                 # Check content type
+-                                 content_type = response.headers.get('content-type', '').lower()
+-                                 if 'image' not in content_type:
+-                                     logger.warning(f"⚠️  URL returned non-image content-type: {content_type}")
+-                                     local_cover_path = None
+-                                 else:
+-                                     # Determine file extension from content type
+-                                     if 'jpeg' in content_type or 'jpg' in content_type:
+-                                         ext = '.jpg'
+-                                     elif 'png' in content_type:
+-                                         ext = '.png'
+-                                     elif 'webp' in content_type:
+-                                         ext = '.webp'
+-                                     elif 'gif' in content_type:
+-                                         ext = '.gif'
+-                                     else:
+-                                         ext = '.jpg'  # Default
+-                                     
+-                                     # Generate unique filename
+-                                     filename = f"{uuid.uuid4()}{ext}"
+-                                     local_path = covers_dir / filename
+-                                     
+-                                     # Save the image
++                             
++                             # Check content type
++                             content_type = response.headers.get('content-type', '').lower()
++                             if 'image' not in content_type:
++                                 logger.warning(f"⚠️  URL returned non-image content-type: {content_type}")
++                                 local_cover_path = None
++                             else:
++                                 # Determine file extension from content type
++                                 if 'jpeg' in content_type or 'jpg' in content_type:
++                                     ext = '.jpg'
++                                 elif 'png' in content_type:
++                                     ext = '.png'
++                                 elif 'webp' in content_type:
++                                     ext = '.webp'
++                                 elif 'gif' in content_type:
++                                     ext = '.gif'
++                                 else:
++                                     ext = '.jpg'  # Default
++                                 
++                                 # Generate unique filename
++                                 filename = f"{uuid.uuid4()}{ext}"
++                                 local_path = covers_dir / filename
++                                 
++                                 # Save the image
+                                      with open(local_path, 'wb') as f:
+                                          for chunk in response.iter_content(chunk_size=8192):
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me check the rest of the code to fix the indentation throughout the block.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see there are more indentation issues. Let me fix the entire block properly.</details></think>
+
+---
+
+Виждам повече проблеми с индентацията. Нека поправя целия блок:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 22, lines removed: 22
+
+```diff
+@@ -938,26 +938,26 @@
+                                  
+                                  # Save the image
+-                                     with open(local_path, 'wb') as f:
+-                                         for chunk in response.iter_content(chunk_size=8192):
+-                                             f.write(chunk)
+-                                     
+-                                     local_cover_path = f"/covers/{filename}"
+-                                     logger.info(f"✅ Cover downloaded and saved: {local_cover_path} (from {new_cover_url[:60]}...)")
+-                                 
+-                                 if local_cover_path and local_cover_path.startswith('/covers/'):
+-                                     # Successfully downloaded and cached locally
+-                                     logger.info(f"✅ Cover downloaded and cached locally: {local_cover_path}")
+-                                     
+-                                     # Update if:
+-                                     # 1. No current cover, OR
+-                                     # 2. Current cover is invalid (local path or broken cache URL), OR
+-                                     # 3. Force flag is set
+-                                     if (not current_cover_url or not current_is_valid or self.args.force):
+-                                         updates['cover_url'] = local_cover_path
+-                                         logger.info(f"🖼️  Updating cover URL for: {book['title']} -&gt; {local_cover_path}")
+-                                     elif current_cover_url and current_is_valid:
+-                                         logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
+-                                 else:
+-                                     logger.warning(f"⚠️  Failed to download cover image for '{book['title']}': {local_cover_path}")
++                                 with open(local_path, 'wb') as f:
++                                     for chunk in response.iter_content(chunk_size=8192):
++                                         f.write(chunk)
++                                 
++                                 local_cover_path = f"/covers/{filename}"
++                                 logger.info(f"✅ Cover downloaded and saved: {local_cover_path} (from {new_cover_url[:60]}...)")
++                             
++                             if local_cover_path and local_cover_path.startswith('/covers/'):
++                                 # Successfully downloaded and cached locally
++                                 logger.info(f"✅ Cover downloaded and cached locally: {local_cover_path}")
++                                 
++                                 # Update if:
++                                 # 1. No current cover, OR
++                                 # 2. Current cover is invalid (local path or broken cache URL), OR
++                                 # 3. Force flag is set
++                                 if (not current_cover_url or not current_is_valid or self.args.force):
++                                     updates['cover_url'] = local_cover_path
++                                     logger.info(f"🖼️  Updating cover URL for: {book['title']} -&gt; {local_cover_path}")
++                                 elif current_cover_url and current_is_valid:
++                                     logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
++                             else:
++                                 logger.warning(f"⚠️  Failed to download cover image for '{book['title']}': {local_cover_path}")
+                              except requests.exceptions.HTTPError as e:
+                                  logger.warning(f"⚠️  HTTP error downloading cover for '{book['title']}': {e.response.status_code if e.response else 'unknown'}")
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me now check if there are any more indentation issues and verify the code is correct by running lints.</details></think>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Good, no linter errors now. Let me commit and push.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix indentation error in enrich_books.py cover download block" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix indentation error in enrich_books.py cover download block" && git push origin main
+```
+
+```
+[main 3c25953] Fix indentation error in enrich_books.py cover download block
+ 2 files changed, 405 insertions(+), 44 deletions(-)
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+To https://github.com/Pacobg/mybibliotheca.git
+   b92ba24..3c25953  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Good, the indentation error is fixed. The user should now pull the changes and try again.</details></think>
+
+---
+
+Поправих грешката с индентацията. Издърпайте промените на сървъра (`git pull`) и опитайте отново.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+There's another syntax error at line 962. Let me check that area.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see the issue - `except` is at the wrong indentation level and doesn't match a `try` block. Let me see the broader context to understand where the try block starts.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see the problem. The `except` blocks at lines 962-965 are inside the `try` block (they have the same indentation as the code inside the `try` block), but they should be outside. The `try` starts at line 891, and the `except` blocks should be at the same indentation level as `try`.
+
+Looking at the structure:
+- Line 891: `try:` (starts with 28 spaces)
+- Lines 892-961: code inside try (starts with 32 spaces for the first level)
+- Lines 962-965: `except` blocks (should start with 28 spaces like `try`)
+
+But currently, the `except` blocks are at 32 spaces indentation (inside the try block). Let me fix this.</details></think>
+
+---
+
+Виждам проблема - `except` блоковете са с грешна индентация. Те трябва да са на същото ниво като `try`:
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="search_replace">
+<details>
+<summary>Tool use: **search_replace**</summary>
+
+
+Parameters:
+
+```json
+{
+  "relativeWorkspacePath": "scripts/enrich_books.py"
+}
+```
+Additional data:
+
+```json
+{
+  "codeblockId": "eacda5f7-17dc-400b-a4c0-f816ff22b48a"
+}
+```
+User decision: **accepted**
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
