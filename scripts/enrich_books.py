@@ -194,6 +194,7 @@ class EnrichmentCommand:
             else:
                 # Get books missing critical metadata
                 # Check for publisher relationship existence
+                # Note: Filter for Bulgarian books happens in Python after query
                 query = """
                 MATCH (b:Book)
                 OPTIONAL MATCH (b)-[:PUBLISHED_BY]->(p:Publisher)
@@ -204,7 +205,8 @@ class EnrichmentCommand:
                 RETURN b.id as id, b.title as title, b.description as description,
                        b.cover_url as cover_url, p.name as publisher,
                        b.isbn13 as isbn13, b.isbn10 as isbn10,
-                       b.page_count as page_count, b.published_date as published_date
+                       b.page_count as page_count, b.published_date as published_date,
+                       b.language as language
                 ORDER BY b.created_at DESC
                 """
             
