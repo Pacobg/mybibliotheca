@@ -408,14 +408,38 @@ class EnrichmentCommand:
                                 
                                 # Local covers (/covers/...) are always valid - they're served by Flask
                                 if cover_url and cover_url.startswith('/covers/'):
-                                    # Verify the file actually exists
+                                    # Verify the file actually exists (without Flask app context)
                                     try:
-                                        from app.utils.image_processing import get_covers_dir
-                                        covers_dir = get_covers_dir()
+                                        # Try to find covers directory without Flask app context
                                         filename = cover_url.split('/covers/')[-1].split('?')[0]  # Remove query params if any
-                                        cover_path = covers_dir / filename
-                                        logger.info(f"🔍 [_get_books_to_enrich] Checking local cover: {cover_url} -> {cover_path}")
-                                        if cover_path.exists() and cover_path.is_file():
+                                        
+                                        # Try multiple possible paths
+                                        possible_dirs = [
+                                            Path('data/covers'),  # Relative path
+                                            Path('/app/data/covers'),  # Docker path
+                                        ]
+                                        
+                                        # Also try to get from environment or config
+                                        import os
+                                        data_dir = os.getenv('DATA_DIR')
+                                        if data_dir:
+                                            possible_dirs.insert(0, Path(data_dir) / 'covers')
+                                        
+                                        # Try to get base directory
+                                        try:
+                                            base_dir = Path(__file__).parent.parent
+                                            possible_dirs.append(base_dir / 'data' / 'covers')
+                                        except:
+                                            pass
+                                        
+                                        cover_path = None
+                                        for covers_dir in possible_dirs:
+                                            test_path = covers_dir / filename
+                                            if test_path.exists() and test_path.is_file():
+                                                cover_path = test_path
+                                                break
+                                        
+                                        if cover_path:
                                             file_size = cover_path.stat().st_size
                                             if file_size > 0:  # File exists and is not empty
                                                 has_valid_cover = True
@@ -423,7 +447,7 @@ class EnrichmentCommand:
                                             else:
                                                 logger.info(f"🔍 [_get_books_to_enrich] ⚠️  Local cover file is empty: {cover_path}")
                                         else:
-                                            logger.info(f"🔍 [_get_books_to_enrich] ⚠️  Local cover file not found: {cover_path} (covers_dir={covers_dir})")
+                                            logger.info(f"🔍 [_get_books_to_enrich] ⚠️  Local cover file not found: {filename} (checked {len(possible_dirs)} directories)")
                                     except Exception as e:
                                         logger.warning(f"🔍 [_get_books_to_enrich] Error verifying local cover '{cover_url}': {e}", exc_info=True)
                                 
@@ -981,9 +1005,38 @@ class EnrichmentCommand:
                                     logger.info(f"🇧🇬 Added Bulgarian fallback: {bg_url}")
                         
                         # Get the covers directory (once, outside loop)
-                        # Use the same logic as get_covers_dir() to ensure consistency
-                        from app.utils.image_processing import get_covers_dir
-                        covers_dir = get_covers_dir()
+                        # Get covers directory without Flask app context
+                        # Try multiple possible paths (same logic as get_covers_dir but without Flask)
+                        possible_dirs = [
+                            Path('data/covers'),  # Relative path
+                            Path('/app/data/covers'),  # Docker path
+                        ]
+                        
+                        # Also try to get from environment or config
+                        import os
+                        data_dir = os.getenv('DATA_DIR')
+                        if data_dir:
+                            possible_dirs.insert(0, Path(data_dir) / 'covers')
+                        
+                        # Try to get base directory
+                        try:
+                            base_dir = Path(__file__).parent.parent
+                            possible_dirs.append(base_dir / 'data' / 'covers')
+                        except:
+                            pass
+                        
+                        # Find first existing directory or use the first one
+                        covers_dir = None
+                        for path in possible_dirs:
+                            if path.exists():
+                                covers_dir = path
+                                break
+                        
+                        if not covers_dir:
+                            # Use the first path and create it
+                            covers_dir = possible_dirs[0]
+                            covers_dir.mkdir(parents=True, exist_ok=True)
+                        
                         logger.info(f"📁 Using covers directory: {covers_dir.absolute()}")
                         
                         # Browser-like headers to avoid 403 Forbidden

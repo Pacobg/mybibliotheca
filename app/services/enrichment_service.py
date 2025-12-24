@@ -374,7 +374,34 @@ class EnrichmentService:
             if cover_url.startswith('/covers/'):
                 try:
                     from app.utils.image_processing import get_covers_dir
-                    covers_dir = get_covers_dir()
+                    from pathlib import Path
+                    # Try with Flask app context first (if available)
+                    try:
+                        covers_dir = get_covers_dir()
+                    except RuntimeError:
+                        # No app context - try alternative paths
+                        possible_dirs = [
+                            Path('data/covers'),
+                            Path('/app/data/covers'),
+                        ]
+                        import os
+                        data_dir = os.getenv('DATA_DIR')
+                        if data_dir:
+                            possible_dirs.insert(0, Path(data_dir) / 'covers')
+                        try:
+                            base_dir = Path(__file__).parent.parent.parent
+                            possible_dirs.append(base_dir / 'data' / 'covers')
+                        except:
+                            pass
+                        
+                        covers_dir = None
+                        for path in possible_dirs:
+                            if path.exists():
+                                covers_dir = path
+                                break
+                        if not covers_dir:
+                            covers_dir = possible_dirs[0]
+                    
                     filename = cover_url.split('/covers/')[-1].split('?')[0]  # Remove query params if any
                     cover_path = covers_dir / filename
                     if cover_path.exists() and cover_path.is_file():

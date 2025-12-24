@@ -38048,6 +38048,775 @@ To https://github.com/Pacobg/mybibliotheca.git
 ---
 
 
+Поправих проблема. Сега локалните `/covers/` пътища се разпознават като валидни covers, ако файлът съществува.
+
+**Какво се случи:**
+- Книгите вече имат covers (`/covers/5fbed5bc-...`), но логиката ги маркираше като невалидни, защото проверяваше само `http://`/`https://`.
+- Сега системата проверява дали файлът съществува в `data/covers/` преди да го маркира като валиден.
+
+**За вече изтеглените covers:**
+Ако covers са в `covers/` (root), преместете ги в `data/covers/`:
+
+```bash
+# На сървъра
+mv covers/* data/covers/ 2>/dev/null || true
+rmdir covers 2>/dev/null || true
+```
+
+Или изтрийте старите и стартирайте enrichment отново — новите covers ще се записват в `data/covers/`.
+
+Издърпайте промените (`git pull`) и опитайте отново. Книгите с валидни локални covers няма да се избират за enrichment.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 23:11:49,276 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 23:11:49,276 [INFO] 192.168.1.9 - - [24/Dec/2025 23:11:49] "POST /metadata/enrichment/start HTTP/1.1" 200 -
+2025-12-24 23:11:49,276 [INFO] ============================================================
+2025-12-24 23:11:49,276 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 23:11:49] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 23:11:49,332 [INFO] 192.168.1.9 - - [24/Dec/2025 23:11:49] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 23:11:49,335 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 23:11:49,336 [INFO] ⚙️  Configuration:
+2025-12-24 23:11:49,336 [INFO]    Limit: 5
+2025-12-24 23:11:49,336 [INFO]    Force: False
+2025-12-24 23:11:49,336 [INFO]    Dry run: False
+2025-12-24 23:11:49,336 [INFO]    Min quality: 0.3
+2025-12-24 23:11:49,336 [INFO]    No cover only: True (only books without covers)
+2025-12-24 23:11:49,336 [INFO] 📖 Querying database for books...
+2025-12-24 23:11:49,336 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 23:11:49,336 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 23:11:49,343 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 23:11:49,346 [INFO] ✅ Added book without valid cover: The Secret History (cover_url='/covers/5fbed5bc-b26b-4d7e-aef5-ca3a83147dc4.jpg...')
+2025-12-24 23:11:49,349 [INFO] ✅ Added book without valid cover: The Secret Garden (cover_url='/covers/493bff0d-8741-46aa-9fde-8c4eb1eccd36.jpg...')
+2025-12-24 23:11:49,352 [INFO] 🔍 [_get_books_to_enrich] 'The Priory of the Orange Tree (The Roots of Chaos, #1)': cover_url='https://images.thenile.io/r1000/9781408883358.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 23:11:49,352 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 23:11:49,401 [INFO] HTTP Request: HEAD https://images.thenile.io/r1000/9781408883358.jpg "HTTP/1.1 200 OK"
+2025-12-24 23:11:49,402 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 23:11:49,405 [INFO] ✅ Added book without valid cover: The Familiar (cover_url='/covers/6aa46df8-450f-4df4-bf22-039057a8cbee.jpg...')
+2025-12-24 23:11:49,409 [INFO] 🔍 [_get_books_to_enrich] 'The Costume History': cover_url='http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 23:11:49,409 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+192.168.1.51 - - [24/Dec/2025 23:11:49] "HEAD /covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg HTTP/1.1" 200 -
+2025-12-24 23:11:49,431 [INFO] 192.168.1.51 - - [24/Dec/2025 23:11:49] "HEAD /covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg HTTP/1.1" 200 -
+2025-12-24 23:11:49,432 [INFO] HTTP Request: HEAD http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg "HTTP/1.1 200 OK"
+2025-12-24 23:11:49,432 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750...')
+2025-12-24 23:11:49,432 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 23:11:49,432 [INFO] 📊 Statistics: 2 books WITH valid cover URLs (skipped)
+2025-12-24 23:11:49,432 [INFO] 📊 Statistics: 3 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 23:11:49,432 [INFO] ✅ Found 3 books to enrich
+2025-12-24 23:11:49,433 [INFO]
+📚 Found 3 books to enrich
+2025-12-24 23:11:49,433 [INFO]
+🚀 Starting enrichment...
+2025-12-24 23:11:49,433 [INFO]    Estimated time: ~0.1 minutes
+2025-12-24 23:11:49,433 [INFO]    Estimated cost: ~$0.00
+2025-12-24 23:11:49,433 [INFO] 🔍 [_progress_callback] Book 1/3: 'The Secret History', metadata=None
+2025-12-24 23:11:49,433 [WARNING] [1/3] ❌ The Secret History - No metadata found
+2025-12-24 23:11:49,433 [INFO] 🔍 [_progress_callback] Book data: title='The Secret History', author='Donna Tartt', cover_url='/covers/5fbed5bc-b26b-4d7e-aef5-ca3a83147dc4.jpg', description=present
+2025-12-24 23:11:50,435 [INFO] 🔍 [_progress_callback] Book 2/3: 'The Secret Garden', metadata=None
+2025-12-24 23:11:50,435 [WARNING] [2/3] ❌ The Secret Garden - No metadata found
+2025-12-24 23:11:50,435 [INFO] 🔍 [_progress_callback] Book data: title='The Secret Garden', author='Frances Hodgson Burnett', cover_url='/covers/493bff0d-8741-46aa-9fde-8c4eb1eccd36.jpg', description=present
+2025-12-24 23:11:51,437 [INFO] 🔍 [_progress_callback] Book 3/3: 'The Familiar', metadata=None
+2025-12-24 23:11:51,438 [WARNING] [3/3] ❌ The Familiar - No metadata found
+2025-12-24 23:11:51,438 [INFO] 🔍 [_progress_callback] Book data: title='The Familiar', author='Leigh Bardugo', cover_url='/covers/6aa46df8-450f-4df4-bf22-039057a8cbee.jpg', description=present
+2025-12-24 23:11:51,438 [INFO] 🔍 [_save_enriched_books] Processing 3 books for saving...
+2025-12-24 23:11:51,439 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Secret History'
+2025-12-24 23:11:51,439 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata']
+2025-12-24 23:11:51,439 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: False
+2025-12-24 23:11:51,439 [WARNING] ⚠️  [_save_enriched_books] Skipping 'The Secret History' - no ai_metadata found
+2025-12-24 23:11:51,440 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Secret Garden'
+2025-12-24 23:11:51,440 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata']
+2025-12-24 23:11:51,440 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: False
+2025-12-24 23:11:51,440 [WARNING] ⚠️  [_save_enriched_books] Skipping 'The Secret Garden' - no ai_metadata found
+2025-12-24 23:11:51,441 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Familiar'
+2025-12-24 23:11:51,441 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata']
+2025-12-24 23:11:51,441 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: False
+2025-12-24 23:11:51,441 [WARNING] ⚠️  [_save_enriched_books] Skipping 'The Familiar' - no ai_metadata found
+2025-12-24 23:11:51,441 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 23:11:51,442 [INFO] 📊 Tracked 0 enriched and 0 skipped books
+2025-12-24 23:11:51,442 [INFO]
+============================================================
+2025-12-24 23:11:51,442 [INFO] ENRICHMENT REPORT
+2025-12-24 23:11:51,442 [INFO] ============================================================
+2025-12-24 23:11:51,442 [INFO] 📊 Statistics:
+2025-12-24 23:11:51,442 [INFO]    Books checked: 3
+2025-12-24 23:11:51,442 [INFO]    Books enriched: 0
+2025-12-24 23:11:51,442 [INFO]    Books failed: 3
+2025-12-24 23:11:51,443 [INFO]    Success rate: 0.0%
+2025-12-24 23:11:51,443 [INFO]
+📝 Content:
+2025-12-24 23:11:51,443 [INFO]    Covers found: 0
+2025-12-24 23:11:51,443 [INFO]    Descriptions added: 0
+2025-12-24 23:11:51,443 [INFO]
+⏱️  Performance:
+2025-12-24 23:11:51,443 [INFO]    Duration: 2.0s
+2025-12-24 23:11:51,443 [INFO]    Speed: 89.8 books/min
+2025-12-24 23:11:51,443 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 23:11:51,443 [INFO] ============================================================
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Два проблема:
+1. Локалните covers (`/covers/...`) се маркират като невалидни — проверката за съществуване на файла не работи или файловете не са на правилното място.
+2. Книгите се пропускат от `_has_sufficient_data`, защото вече имат covers и descriptions.
+
+Проверявам логиката за локални covers и поправям проверката:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Логиката изглежда правилна, но не виждам логове за проверката. Добавям по-подробни логове и подобрявам обработката на грешки:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 11, lines removed: 6
+
+```diff
+@@ -413,13 +413,18 @@
+                                          from app.utils.image_processing import get_covers_dir
+                                          covers_dir = get_covers_dir()
+-                                         filename = cover_url.split('/covers/')[-1]
++                                         filename = cover_url.split('/covers/')[-1].split('?')[0]  # Remove query params if any
+                                          cover_path = covers_dir / filename
++                                         logger.info(f"🔍 [_get_books_to_enrich] Checking local cover: {cover_url} -&gt; {cover_path}")
+                                          if cover_path.exists() and cover_path.is_file():
+-                                             has_valid_cover = True
+-                                             logger.info(f"🔍 [_get_books_to_enrich] ✅ Local cover exists: {cover_url}")
+-                                         else:
+-                                             logger.info(f"🔍 [_get_books_to_enrich] ⚠️  Local cover file not found: {cover_path}")
++                                             file_size = cover_path.stat().st_size
++                                             if file_size &gt; 0:  # File exists and is not empty
++                                                 has_valid_cover = True
++                                                 logger.info(f"🔍 [_get_books_to_enrich] ✅ Local cover exists and is valid: {cover_url} ({file_size} bytes)")
++                                             else:
++                                                 logger.info(f"🔍 [_get_books_to_enrich] ⚠️  Local cover file is empty: {cover_path}")
++                                         else:
++                                             logger.info(f"🔍 [_get_books_to_enrich] ⚠️  Local cover file not found: {cover_path} (covers_dir={covers_dir})")
+                                      except Exception as e:
+-                                         logger.debug(f"🔍 [_get_books_to_enrich] Could not verify local cover: {e}")
++                                         logger.warning(f"🔍 [_get_books_to_enrich] Error verifying local cover '{cover_url}': {e}", exc_info=True)
+                                  
+                                  # External URLs (http/https)
+```
+
+</details>
+
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам дали `_has_sufficient_data` прави същата проверка за локални covers:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Подобрявам проверката в `_has_sufficient_data` да проверява съществуването на файла:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 17, lines removed: 2
+
+```diff
+@@ -371,7 +371,22 @@
+          has_cover = False
+          if cover_url:
+-             # Local covers (/covers/...) are always valid
++             # Local covers (/covers/...) - verify file exists
+              if cover_url.startswith('/covers/'):
+-                 has_cover = True
++                 try:
++                     from app.utils.image_processing import get_covers_dir
++                     covers_dir = get_covers_dir()
++                     filename = cover_url.split('/covers/')[-1].split('?')[0]  # Remove query params if any
++                     cover_path = covers_dir / filename
++                     if cover_path.exists() and cover_path.is_file():
++                         file_size = cover_path.stat().st_size
++                         if file_size &gt; 0:  # File exists and is not empty
++                             has_cover = True
++                             logger.debug(f"🔍 [_has_sufficient_data] Local cover exists: {cover_url} ({file_size} bytes)")
++                         else:
++                             logger.debug(f"🔍 [_has_sufficient_data] Local cover file is empty: {cover_path}")
++                     else:
++                         logger.debug(f"🔍 [_has_sufficient_data] Local cover file not found: {cover_path}")
++                 except Exception as e:
++                     logger.debug(f"🔍 [_has_sufficient_data] Could not verify local cover '{cover_url}': {e}")
+              elif cover_url.startswith('http://') or cover_url.startswith('https://'):
+                  cover_url_lower = cover_url.lower()
+```
+
+</details>
+
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 2 files</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+- `app/services/enrichment_service.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Improve local cover validation: check if file exists and is not empty in both _get_books_to_enrich and _has_sufficient_data" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Improve local cover validation: check if file exists and is not empty in both _get_books_to_enrich and _has_sufficient_data" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 0ce5a83] Improve local cover validation: check if file exists and is not empty in both _get_books_to_enrich and _has_sufficient_data
+ 3 files changed, 342 insertions(+), 7 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   33d5279..0ce5a83  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Подобрих проверката за локални covers. Сега системата:
+
+1. **Проверява дали файлът съществува** в `data/covers/`
+2. **Проверява дали файлът не е празен** (размер > 0 байта)
+3. **Логва подробна информация** за всяка проверка
+
+**Какво означава това:**
+- Ако covers файловете съществуват в `data/covers/`, книгите няма да се избират за enrichment
+- Ако файловете не съществуват или са в грешна директория, книгите ще се изберат за enrichment и covers ще се изтеглят отново
+
+**За вече изтеглените covers:**
+Ако covers са в `covers/` (root), преместете ги в `data/covers/`:
+
+```bash
+# На сървъра
+mv covers/* data/covers/ 2>/dev/null || true
+rmdir covers 2>/dev/null || true
+```
+
+Или изтрийте старите и стартирайте enrichment отново — новите covers ще се записват в `data/covers/`.
+
+Издърпайте промените (`git pull`) и опитайте отново. Логовете ще покажат дали файловете съществуват или не.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+Супер вече е ОК, нека да проверим с други 5 книги да има и български
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Системата работи. За да тестваме с други 5 книги, включително български:
+
+1. Стартирайте enrichment отново от UI-то — бутонът "Обогатяване на книги без обложки - до 5 бр. (тест)" ще избере следващите 5 книги без валидни covers.
+
+2. Или стартирайте от командния ред с конкретна българска книга:
+```bash
+python scripts/enrich_books.py --book-title "13 за късмет" --no-cover-only --limit 5 -y
+```
+
+3. Или за да обогатите всички книги без covers (не само 5):
+```bash
+python scripts/enrich_books.py --no-cover-only --limit 100 -y
+```
+
+**Какво да очаквате:**
+- За български книги системата ще:
+  - Търси covers от Perplexity (ciela.com, helikon.bg, ozone.bg, hermesbooks.bg, chitanka.info)
+  - Добавя fallback URLs от българските книжарници базирани на ISBN
+  - Използва Google Books/OpenLibrary като последен fallback
+  - Генерира описания на български
+  - Задава `language = 'bg'` автоматично
+
+Стартирайте enrichment и споделете резултатите.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 23:19:04,053 [INFO] 192.168.1.9 - - [24/Dec/2025 23:19:04] "POST /metadata/enrichment/start HTTP/1.1" 200 -
+2025-12-24 23:19:04,053 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 23:19:04,053 [INFO] ============================================================
+2025-12-24 23:19:04,053 [INFO] 🔧 Initializing EnrichmentService...
+2025-12-24 23:19:04,070 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 23:19:04,070 [INFO] ⚙️  Configuration:
+2025-12-24 23:19:04,070 [INFO]    Limit: 5
+2025-12-24 23:19:04,071 [INFO]    Force: False
+2025-12-24 23:19:04,071 [INFO]    Dry run: False
+2025-12-24 23:19:04,071 [INFO]    Min quality: 0.3
+2025-12-24 23:19:04,071 [INFO]    No cover only: True (only books without covers)
+2025-12-24 23:19:04,071 [INFO] 📖 Querying database for books...
+2025-12-24 23:19:04,071 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 23:19:04,071 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 23:19:04,081 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 23:19:04,084 [WARNING] 🔍 [_get_books_to_enrich] Error verifying local cover '/covers/5fbed5bc-b26b-4d7e-aef5-ca3a83147dc4.jpg': Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+Traceback (most recent call last):
+  File "/home/pacovw/mybibliotheca/scripts/enrich_books.py", line 414, in _get_books_to_enrich
+    covers_dir = get_covers_dir()
+  File "/home/pacovw/mybibliotheca/app/utils/image_processing.py", line 36, in get_covers_dir
+    data_dir = getattr(current_app.config, 'DATA_DIR', None)
+                       ^^^^^^^^^^^^^^^^^^
+  File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/werkzeug/local.py", line 318, in __get__
+    obj = instance._get_current_object()
+  File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/werkzeug/local.py", line 519, in _get_current_object
+    raise RuntimeError(unbound_message) from None
+RuntimeError: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+2025-12-24 23:19:04,085 [INFO] ✅ Added book without valid cover: The Secret History (cover_url='/covers/5fbed5bc-b26b-4d7e-aef5-ca3a83147dc4.jpg...')
+2025-12-24 23:19:04,088 [WARNING] 🔍 [_get_books_to_enrich] Error verifying local cover '/covers/493bff0d-8741-46aa-9fde-8c4eb1eccd36.jpg': Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+Traceback (most recent call last):
+  File "/home/pacovw/mybibliotheca/scripts/enrich_books.py", line 414, in _get_books_to_enrich
+    covers_dir = get_covers_dir()
+  File "/home/pacovw/mybibliotheca/app/utils/image_processing.py", line 36, in get_covers_dir
+    data_dir = getattr(current_app.config, 'DATA_DIR', None)
+                       ^^^^^^^^^^^^^^^^^^
+  File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/werkzeug/local.py", line 318, in __get__
+    obj = instance._get_current_object()
+  File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/werkzeug/local.py", line 519, in _get_current_object
+    raise RuntimeError(unbound_message) from None
+RuntimeError: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+2025-12-24 23:19:04,089 [INFO] ✅ Added book without valid cover: The Secret Garden (cover_url='/covers/493bff0d-8741-46aa-9fde-8c4eb1eccd36.jpg...')
+2025-12-24 23:19:04,092 [INFO] 🔍 [_get_books_to_enrich] 'The Priory of the Orange Tree (The Roots of Chaos, #1)': cover_url='https://images.thenile.io/r1000/9781408883358.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 23:19:04,093 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+192.168.1.9 - - [24/Dec/2025 23:19:04] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 23:19:04,096 [INFO] 192.168.1.9 - - [24/Dec/2025 23:19:04] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 23:19:04,138 [INFO] HTTP Request: HEAD https://images.thenile.io/r1000/9781408883358.jpg "HTTP/1.1 200 OK"
+2025-12-24 23:19:04,139 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 23:19:04,142 [WARNING] 🔍 [_get_books_to_enrich] Error verifying local cover '/covers/6aa46df8-450f-4df4-bf22-039057a8cbee.jpg': Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+Traceback (most recent call last):
+  File "/home/pacovw/mybibliotheca/scripts/enrich_books.py", line 414, in _get_books_to_enrich
+    covers_dir = get_covers_dir()
+  File "/home/pacovw/mybibliotheca/app/utils/image_processing.py", line 36, in get_covers_dir
+    data_dir = getattr(current_app.config, 'DATA_DIR', None)
+                       ^^^^^^^^^^^^^^^^^^
+  File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/werkzeug/local.py", line 318, in __get__
+    obj = instance._get_current_object()
+  File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/werkzeug/local.py", line 519, in _get_current_object
+    raise RuntimeError(unbound_message) from None
+RuntimeError: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+2025-12-24 23:19:04,144 [INFO] ✅ Added book without valid cover: The Familiar (cover_url='/covers/6aa46df8-450f-4df4-bf22-039057a8cbee.jpg...')
+2025-12-24 23:19:04,147 [INFO] 🔍 [_get_books_to_enrich] 'The Costume History': cover_url='http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 23:19:04,147 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+192.168.1.51 - - [24/Dec/2025 23:19:04] "HEAD /covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg HTTP/1.1" 200 -
+2025-12-24 23:19:04,164 [INFO] 192.168.1.51 - - [24/Dec/2025 23:19:04] "HEAD /covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg HTTP/1.1" 200 -
+2025-12-24 23:19:04,164 [INFO] HTTP Request: HEAD http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg "HTTP/1.1 200 OK"
+2025-12-24 23:19:04,165 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750...')
+2025-12-24 23:19:04,165 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 23:19:04,165 [INFO] 📊 Statistics: 2 books WITH valid cover URLs (skipped)
+2025-12-24 23:19:04,165 [INFO] 📊 Statistics: 3 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 23:19:04,165 [INFO] ✅ Found 3 books to enrich
+2025-12-24 23:19:04,165 [INFO]
+📚 Found 3 books to enrich
+2025-12-24 23:19:04,165 [INFO]
+🚀 Starting enrichment...
+2025-12-24 23:19:04,166 [INFO]    Estimated time: ~0.1 minutes
+2025-12-24 23:19:04,166 [INFO]    Estimated cost: ~$0.00
+192.168.1.9 - - [24/Dec/2025 23:19:09] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 23:19:09,150 [INFO] 192.168.1.9 - - [24/Dec/2025 23:19:09] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 23:19:09,896 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 23:19:09,900 [INFO] 🔍 [_progress_callback] Book 1/3: 'The Secret History', metadata=found
+2025-12-24 23:19:09,900 [INFO] [1/3] ✅ The Secret History (quality: 1.00)
+2025-12-24 23:19:09,900 [INFO]    🖼️  Cover found
+2025-12-24 23:19:09,900 [INFO]    📝 Description added
+192.168.1.9 - - [24/Dec/2025 23:19:14] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 23:19:14,191 [INFO] 192.168.1.9 - - [24/Dec/2025 23:19:14] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 23:19:15,544 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 23:19:15,548 [INFO] 🔍 [_progress_callback] Book 2/3: 'The Secret Garden', metadata=found
+2025-12-24 23:19:15,548 [INFO] [2/3] ✅ The Secret Garden (quality: 1.00)
+2025-12-24 23:19:15,548 [INFO]    🖼️  Cover found
+2025-12-24 23:19:15,548 [INFO]    📝 Description added
+192.168.1.9 - - [24/Dec/2025 23:19:19] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 23:19:19,235 [INFO] 192.168.1.9 - - [24/Dec/2025 23:19:19] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 23:19:19,350 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 23:19:21,489 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 23:19:21,493 [INFO] 🔍 [_progress_callback] Book 3/3: 'The Familiar', metadata=found
+2025-12-24 23:19:21,493 [INFO] [3/3] ✅ The Familiar (quality: 0.95)
+2025-12-24 23:19:21,493 [INFO]    📝 Description added
+2025-12-24 23:19:21,494 [INFO] 🔍 [_save_enriched_books] Processing 3 books for saving...
+2025-12-24 23:19:21,494 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Secret History'
+2025-12-24 23:19:21,494 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata']
+2025-12-24 23:19:21,494 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: True
+2025-12-24 23:19:21,494 [INFO] 🔍 [_save_enriched_books] Merging metadata for 'The Secret History'...
+2025-12-24 23:19:21,494 [INFO] 🔍 [_save_enriched_books] AI metadata keys: ['title', 'subtitle', 'author', 'publisher', 'year', 'isbn', 'pages', 'genres', 'description', 'cover_url', 'confidence', 'sources', 'enrichment_source', 'enrichment_model', 'enrichment_date', 'original_query', 'quality_score']
+2025-12-24 23:19:21,494 [INFO] 🔍 [_save_enriched_books] AI metadata description present: True
+2025-12-24 23:19:21,494 [INFO] 🔍 [_save_enriched_books] AI metadata description: The Secret History follows Richard Papen, a young man from California who transfers to an elite Verm...
+2025-12-24 23:19:21,495 [INFO] 🔍 [_save_enriched_books] After merge, enriched keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata', 'cover_source', 'raw_categories', 'ai_enrichment']
+2025-12-24 23:19:21,495 [INFO] 🔍 [_save_enriched_books] After merge, enriched description present: True
+2025-12-24 23:19:21,495 [INFO] 🔍 [_save_enriched_books] After merge, enriched description: The Secret History follows Richard Papen, a young man who transfers to the elite Hampden College in ...
+2025-12-24 23:19:21,495 [INFO] 🔍 [_save_enriched_books] Found description for 'The Secret History': The Secret History follows Richard Papen, a young man who transfers to the elite Hampden College in ...
+2025-12-24 23:19:21,495 [INFO] 🔍 [_save_enriched_books] Existing description for 'The Secret History': The Secret History follows Richard Papen, a young man who transfers to the elite Hampden College in ...
+2025-12-24 23:19:21,496 [INFO] 🔍 [_save_enriched_books] Language check for 'The Secret History': title_has_cyrillic=False, desc_has_cyrillic=False, desc_matches_title=True, existing_desc_matches_title=True, has_citations=False, force=False
+2025-12-24 23:19:21,496 [INFO] 🔍 [_save_enriched_books] Description lengths: existing=655, new=655, diff=0
+2025-12-24 23:19:21,496 [INFO] 🔍 [_save_enriched_books] Should update description for 'The Secret History': True
+2025-12-24 23:19:21,496 [INFO] ✅ [_save_enriched_books] Added description to updates for 'The Secret History'
+2025-12-24 23:19:21,496 [INFO] 🔍 Validating cover URL accessibility for 'The Secret History': https://pictures.abebooks.com/inventory/md/md31142885471.jpg...
+2025-12-24 23:19:21,758 [INFO] HTTP Request: HEAD https://pictures.abebooks.com/inventory/md/md31142885471.jpg "HTTP/1.1 404 Not Found"
+2025-12-24 23:19:21,759 [WARNING] ⚠️  Cover URL returned status 404: https://pictures.abebooks.com/inventory/md/md31142885471.jpg...
+2025-12-24 23:19:21,760 [INFO] 🔍 [_save_enriched_books] Cover URL validation result for 'The Secret History': url_is_accessible=False, new_cover_url='https://pictures.abebooks.com/inventory/md/md31142885471.jpg...'
+2025-12-24 23:19:21,760 [INFO] 🔍 [_save_enriched_books] Starting cover download for 'The Secret History': https://pictures.abebooks.com/inventory/md/md31142885471.jpg...
+2025-12-24 23:19:21,761 [INFO] 🔍 Added Perplexity cover URL: https://pictures.abebooks.com/inventory/md/md31142885471.jpg...
+2025-12-24 23:19:21,761 [INFO] 🔍 Searching for cover candidates using ISBN/title search (same as UI)...
+2025-12-24 23:19:21,761 [INFO] ✅ Found 9 cover candidates from Google Books/OpenLibrary
+2025-12-24 23:19:21,762 [INFO] 📚 Added candidate: google - https://books.google.com/books/content?id=lMKYQgAACAAJ&print...
+2025-12-24 23:19:21,762 [INFO] 📚 Added candidate: google - https://books.google.com/books/content?id=lMKYQgAACAAJ&print...
+2025-12-24 23:19:21,762 [INFO] 📚 Added candidate: google - https://books.google.com/books/content?id=lMKYQgAACAAJ&print...
+2025-12-24 23:19:21,763 [INFO] 📚 Added candidate: google - https://books.google.com/books/content?id=lMKYQgAACAAJ&print...
+2025-12-24 23:19:21,763 [INFO] 📚 Added candidate: google - https://books.google.com/books/content?id=lMKYQgAACAAJ&print...
+2025-12-24 23:19:21,763 [INFO] 📚 Added candidate: google - https://books.google.com/books/content?id=lMKYQgAACAAJ&print...
+2025-12-24 23:19:21,763 [INFO] 📚 Added candidate: google - https://books.google.com/books/content?id=lMKYQgAACAAJ&print...
+2025-12-24 23:19:21,764 [INFO] 📚 Added candidate: google - https://books.google.com/books/content?id=lMKYQgAACAAJ&print...
+2025-12-24 23:19:21,764 [INFO] 📚 Added candidate: openlibrary - https://covers.openlibrary.org/b/id/6623129-L.jpg...
+2025-12-24 23:19:21,764 [ERROR] ❌ Error saving The Secret History: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+Traceback (most recent call last):
+  File "/home/pacovw/mybibliotheca/scripts/enrich_books.py", line 986, in _save_enriched_books
+    covers_dir = get_covers_dir()
+  File "/home/pacovw/mybibliotheca/app/utils/image_processing.py", line 36, in get_covers_dir
+    data_dir = getattr(current_app.config, 'DATA_DIR', None)
+                       ^^^^^^^^^^^^^^^^^^
+  File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/werkzeug/local.py", line 318, in __get__
+    obj = instance._get_current_object()
+  File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/werkzeug/local.py", line 519, in _get_current_object
+    raise RuntimeError(unbound_message) from None
+RuntimeError: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+2025-12-24 23:19:21,768 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Secret Garden'
+2025-12-24 23:19:21,769 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata']
+2025-12-24 23:19:21,769 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: True
+2025-12-24 23:19:21,769 [INFO] 🔍 [_save_enriched_books] Merging metadata for 'The Secret Garden'...
+2025-12-24 23:19:21,769 [INFO] 🔍 [_save_enriched_books] AI metadata keys: ['title', 'subtitle', 'author', 'publisher', 'year', 'isbn', 'pages', 'genres', 'description', 'cover_url', 'confidence', 'sources', 'enrichment_source', 'enrichment_model', 'enrichment_date', 'original_query', 'quality_score']
+2025-12-24 23:19:21,770 [INFO] 🔍 [_save_enriched_books] AI metadata description present: True
+2025-12-24 23:19:21,770 [INFO] 🔍 [_save_enriched_books] AI metadata description: The Secret Garden follows Mary Lennox, a spoiled and lonely girl raised in British India, who is sen...
+2025-12-24 23:19:21,772 [INFO] 🔍 [_save_enriched_books] After merge, enriched keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata', 'cover_source', 'raw_categories', 'ai_enrichment']
+2025-12-24 23:19:21,772 [INFO] 🔍 [_save_enriched_books] After merge, enriched description present: True
+2025-12-24 23:19:21,772 [INFO] 🔍 [_save_enriched_books] After merge, enriched description: The Secret Garden follows Mary Lennox, a sickly and self-centered orphan sent from colonial India to...
+2025-12-24 23:19:21,772 [INFO] 🔍 [_save_enriched_books] Found description for 'The Secret Garden': The Secret Garden follows Mary Lennox, a sickly and self-centered orphan sent from colonial India to...
+2025-12-24 23:19:21,773 [INFO] 🔍 [_save_enriched_books] Existing description for 'The Secret Garden': The Secret Garden follows Mary Lennox, a sickly and self-centered orphan sent from colonial India to...
+2025-12-24 23:19:21,774 [INFO] 🔍 [_save_enriched_books] Language check for 'The Secret Garden': title_has_cyrillic=False, desc_has_cyrillic=False, desc_matches_title=True, existing_desc_matches_title=True, has_citations=False, force=False
+2025-12-24 23:19:21,774 [INFO] 🔍 [_save_enriched_books] Description lengths: existing=706, new=706, diff=0
+2025-12-24 23:19:21,774 [INFO] 🔍 [_save_enriched_books] Should update description for 'The Secret Garden': True
+2025-12-24 23:19:21,775 [INFO] ✅ [_save_enriched_books] Added description to updates for 'The Secret Garden'
+2025-12-24 23:19:21,775 [INFO] 🔍 Validating cover URL accessibility for 'The Secret Garden': https://www.livingbookpress.com/wp-content/uploads/2017/11/TheSecretGardenCoverF...
+2025-12-24 23:19:21,969 [INFO] HTTP Request: HEAD https://www.livingbookpress.com/wp-content/uploads/2017/11/TheSecretGardenCoverFront-510x780.jpg "HTTP/1.1 404 Not Found"
+2025-12-24 23:19:21,969 [WARNING] ⚠️  Cover URL returned status 404: https://www.livingbookpress.com/wp-content/uploads/2017/11/TheSecretGardenCoverF...
+2025-12-24 23:19:21,970 [INFO] 🔍 [_save_enriched_books] Cover URL validation result for 'The Secret Garden': url_is_accessible=False, new_cover_url='https://www.livingbookpress.com/wp-content/uploads/2017/11/TheSecretGardenCoverF...'
+2025-12-24 23:19:21,970 [INFO] 🔍 [_save_enriched_books] Starting cover download for 'The Secret Garden': https://www.livingbookpress.com/wp-content/uploads/2017/11/TheSecretGardenCoverF...
+2025-12-24 23:19:21,970 [INFO] 🔍 Added Perplexity cover URL: https://www.livingbookpress.com/wp-content/uploads/2017/11/TheSecretGardenCoverF...
+2025-12-24 23:19:21,970 [INFO] 🔍 Searching for cover candidates using ISBN/title search (same as UI)...
+2025-12-24 23:19:24,217 [INFO] ✅ Found 9 cover candidates from Google Books/OpenLibrary
+2025-12-24 23:19:24,218 [INFO] 📚 Added candidate: google - https://books.google.com/books/content?id=w-1dswEACAAJ&print...
+2025-12-24 23:19:24,219 [INFO] 📚 Added candidate: google - https://books.google.com/books/content?id=w-1dswEACAAJ&print...
+2025-12-24 23:19:24,219 [INFO] 📚 Added candidate: google - https://books.google.com/books/content?id=w-1dswEACAAJ&print...
+2025-12-24 23:19:24,219 [INFO] 📚 Added candidate: google - https://books.google.com/books/content?id=w-1dswEACAAJ&print...
+2025-12-24 23:19:24,219 [INFO] 📚 Added candidate: google - https://books.google.com/books/content?id=w-1dswEACAAJ&print...
+2025-12-24 23:19:24,220 [INFO] 📚 Added candidate: google - https://books.google.com/books/content?id=w-1dswEACAAJ&print...
+2025-12-24 23:19:24,220 [INFO] 📚 Added candidate: google - https://books.google.com/books/content?id=w-1dswEACAAJ&print...
+2025-12-24 23:19:24,220 [INFO] 📚 Added candidate: google - https://books.google.com/books/content?id=w-1dswEACAAJ&print...
+2025-12-24 23:19:24,221 [INFO] 📚 Added candidate: openlibrary - https://covers.openlibrary.org/w/id/OL69612W-L.jpg...
+2025-12-24 23:19:24,221 [ERROR] ❌ Error saving The Secret Garden: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+Traceback (most recent call last):
+  File "/home/pacovw/mybibliotheca/scripts/enrich_books.py", line 986, in _save_enriched_books
+    covers_dir = get_covers_dir()
+  File "/home/pacovw/mybibliotheca/app/utils/image_processing.py", line 36, in get_covers_dir
+    data_dir = getattr(current_app.config, 'DATA_DIR', None)
+                       ^^^^^^^^^^^^^^^^^^
+  File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/werkzeug/local.py", line 318, in __get__
+    obj = instance._get_current_object()
+  File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/werkzeug/local.py", line 519, in _get_current_object
+    raise RuntimeError(unbound_message) from None
+RuntimeError: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+2025-12-24 23:19:24,225 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Familiar'
+2025-12-24 23:19:24,225 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata']
+2025-12-24 23:19:24,226 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: True
+2025-12-24 23:19:24,226 [INFO] 🔍 [_save_enriched_books] Merging metadata for 'The Familiar'...
+2025-12-24 23:19:24,226 [INFO] 🔍 [_save_enriched_books] AI metadata keys: ['title', 'subtitle', 'author', 'publisher', 'year', 'isbn', 'pages', 'genres', 'description', 'cover_url', 'confidence', 'sources', 'enrichment_source', 'enrichment_model', 'enrichment_date', 'original_query', 'quality_score']
+2025-12-24 23:19:24,227 [INFO] 🔍 [_save_enriched_books] AI metadata description present: True
+2025-12-24 23:19:24,227 [INFO] 🔍 [_save_enriched_books] AI metadata description: In the new capital of Madrid during Spain's Golden Age, Luzia Cotado, a scullion with hidden magical...
+2025-12-24 23:19:24,229 [INFO] 🔍 [_save_enriched_books] After merge, enriched keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata', 'raw_categories', 'ai_enrichment']
+2025-12-24 23:19:24,229 [INFO] 🔍 [_save_enriched_books] After merge, enriched description present: True
+2025-12-24 23:19:24,230 [INFO] 🔍 [_save_enriched_books] After merge, enriched description: From the New York Times bestselling author of Ninth House, Hell Bent, and creator of the Grishaverse...
+2025-12-24 23:19:24,230 [INFO] 🔍 [_save_enriched_books] Found description for 'The Familiar': From the New York Times bestselling author of Ninth House, Hell Bent, and creator of the Grishaverse...
+2025-12-24 23:19:24,231 [INFO] 🔍 [_save_enriched_books] Existing description for 'The Familiar': From the New York Times bestselling author of Ninth House, Hell Bent, and creator of the Grishaverse...
+2025-12-24 23:19:24,232 [INFO] 🔍 [_save_enriched_books] Language check for 'The Familiar': title_has_cyrillic=False, desc_has_cyrillic=False, desc_matches_title=True, existing_desc_matches_title=True, has_citations=False, force=False
+2025-12-24 23:19:24,232 [INFO] 🔍 [_save_enriched_books] Description lengths: existing=1428, new=1428, diff=0
+2025-12-24 23:19:24,232 [INFO] 🔍 [_save_enriched_books] Should update description for 'The Familiar': True
+2025-12-24 23:19:24,233 [INFO] ✅ [_save_enriched_books] Added description to updates for 'The Familiar'
+2025-12-24 23:19:24,233 [WARNING] ⚠️  Skipping invalid cover URL for 'The Familiar': /covers/6aa46df8-450f-4df4-bf22-039057a8cbee.jpg (not http/https)
+2025-12-24 23:19:24,239 [INFO] 🔍 [_save_enriched_books] Updates dictionary for 'The Familiar': ['description'] (count: 1)
+2025-12-24 23:19:24,240 [INFO] 📝 Updating book 'The Familiar' with fields: ['description']
+2025-12-24 23:19:24,240 [INFO] 🔍 [_save_enriched_books] Calling update_book for 'The Familiar' (ID: 03eb7493-b894-4325-9d2d-33f7400d87b9) with 1 fields: ['description']
+2025-12-24 23:19:24,270 [INFO] 🔍 [_save_enriched_books] update_book returned: Book
+2025-12-24 23:19:24,270 [INFO] ✅ Saved: The Familiar
+2025-12-24 23:19:24,270 [INFO]    Updated fields: description
+2025-12-24 23:19:24,280 [INFO] 💾 Saved 1 enriched books to database
+2025-12-24 23:19:24,281 [INFO] 📊 Tracked 1 enriched and 0 skipped books
+2025-12-24 23:19:24,281 [INFO]
+============================================================
+2025-12-24 23:19:24,281 [INFO] ENRICHMENT REPORT
+2025-12-24 23:19:24,281 [INFO] ============================================================
+2025-12-24 23:19:24,281 [INFO] 📊 Statistics:
+2025-12-24 23:19:24,281 [INFO]    Books checked: 3
+2025-12-24 23:19:24,281 [INFO]    Books enriched: 3
+2025-12-24 23:19:24,281 [INFO]    Books failed: 0
+2025-12-24 23:19:24,282 [INFO]    Success rate: 100.0%
+2025-12-24 23:19:24,282 [INFO]
+📝 Content:
+2025-12-24 23:19:24,282 [INFO]    Covers found: 2
+2025-12-24 23:19:24,282 [INFO]    Descriptions added: 3
+2025-12-24 23:19:24,282 [INFO]
+⏱️  Performance:
+2025-12-24 23:19:24,282 [INFO]    Duration: 17.3s
+2025-12-24 23:19:24,282 [INFO]    Speed: 10.4 books/min
+2025-12-24 23:19:24,282 [INFO]
+💰 Estimated cost: $0.00
+ мисля, че са същите книги
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Има два проблема:
+1. Flask application context error — `get_covers_dir()` изисква app context, но скриптът работи извън него.
+2. Същите книги се избират — файловете не се намират заради app context грешката.
+
+Поправям и двата проблема:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/utils/image_processing.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Създавам helper функция, която работи без Flask app context:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 30, lines removed: 6
+
+```diff
+@@ -409,12 +409,36 @@
+                                  # Local covers (/covers/...) are always valid - they're served by Flask
+                                  if cover_url and cover_url.startswith('/covers/'):
+-                                     # Verify the file actually exists
++                                     # Verify the file actually exists (without Flask app context)
+                                      try:
+-                                         from app.utils.image_processing import get_covers_dir
+-                                         covers_dir = get_covers_dir()
++                                         # Try to find covers directory without Flask app context
+                                          filename = cover_url.split('/covers/')[-1].split('?')[0]  # Remove query params if any
+-                                         cover_path = covers_dir / filename
+-                                         logger.info(f"🔍 [_get_books_to_enrich] Checking local cover: {cover_url} -&gt; {cover_path}")
+-                                         if cover_path.exists() and cover_path.is_file():
++                                         
++                                         # Try multiple possible paths
++                                         possible_dirs = [
++                                             Path('data/covers'),  # Relative path
++                                             Path('/app/data/covers'),  # Docker path
++                                         ]
++                                         
++                                         # Also try to get from environment or config
++                                         import os
++                                         data_dir = os.getenv('DATA_DIR')
++                                         if data_dir:
++                                             possible_dirs.insert(0, Path(data_dir) / 'covers')
++                                         
++                                         # Try to get base directory
++                                         try:
++                                             base_dir = Path(__file__).parent.parent
++                                             possible_dirs.append(base_dir / 'data' / 'covers')
++                                         except:
++                                             pass
++                                         
++                                         cover_path = None
++                                         for covers_dir in possible_dirs:
++                                             test_path = covers_dir / filename
++                                             if test_path.exists() and test_path.is_file():
++                                                 cover_path = test_path
++                                                 break
++                                         
++                                         if cover_path:
+                                              file_size = cover_path.stat().st_size
+                                              if file_size &gt; 0:  # File exists and is not empty
+```
+
+**Chunk 2**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -424,5 +448,5 @@
+                                                  logger.info(f"🔍 [_get_books_to_enrich] ⚠️  Local cover file is empty: {cover_path}")
+                                          else:
+-                                             logger.info(f"🔍 [_get_books_to_enrich] ⚠️  Local cover file not found: {cover_path} (covers_dir={covers_dir})")
++                                             logger.info(f"🔍 [_get_books_to_enrich] ⚠️  Local cover file not found: {filename} (checked {len(possible_dirs)} directories)")
+                                      except Exception as e:
+                                          logger.warning(f"🔍 [_get_books_to_enrich] Error verifying local cover '{cover_url}': {e}", exc_info=True)
+```
+
+</details>
+
+</tool-use>
+
+---
+
+
 
 ---
 
