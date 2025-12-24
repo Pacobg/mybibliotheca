@@ -374,10 +374,15 @@ class EnrichmentService:
         
         logger.info(f"🔍 [_has_sufficient_data] Checking '{title}': require_cover={require_cover}, has_description={has_description}, has_cover={has_cover} (cover_url='{cover_url[:50] if cover_url else 'None'}...'), has_publisher={has_publisher}, has_isbn={has_isbn}")
         
-        # If cover is required (e.g., --no-cover-only mode), don't skip if missing valid cover
-        if require_cover and not has_cover:
-            logger.info(f"🔍 [_has_sufficient_data] '{title}' needs enrichment: require_cover=True but has_cover=False")
-            return False
+        # If cover is required (e.g., --no-cover-only mode), only enrich books WITHOUT valid covers
+        # If book has valid cover, skip it (it's sufficient)
+        if require_cover:
+            if has_cover:
+                logger.info(f"🔍 [_has_sufficient_data] '{title}' has sufficient data: require_cover=True and has_cover=True - SKIPPING")
+                return True  # Book has cover, skip it
+            else:
+                logger.info(f"🔍 [_has_sufficient_data] '{title}' needs enrichment: require_cover=True but has_cover=False - WILL ENRICH")
+                return False  # Book needs cover, enrich it
         
         # For Bulgarian books, cover is critical - don't skip if missing cover
         is_bulgarian = any('\u0400' <= char <= '\u04FF' for char in title) or book_data.get('language') == 'bg'
