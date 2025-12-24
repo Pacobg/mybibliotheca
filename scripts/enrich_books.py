@@ -402,8 +402,11 @@ class EnrichmentCommand:
                             'language': row[9],
                         }
                         
-                        if book_dict['title'] and book_dict['author'] != 'Unknown':
+                        # Include books even if they don't have authors (we'll enrich them)
+                        if book_dict['title']:
                             books.append(book_dict)
+                            if book_dict['author'] == 'Unknown':
+                                logger.debug(f"📝 Book without author will be enriched: {title}")
             
             logger.info(f"✅ Found {len(books)} book(s) by title pattern: '{title_pattern}'")
             return books
