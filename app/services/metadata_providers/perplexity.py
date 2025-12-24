@@ -542,11 +542,22 @@ JSON ФОРМАТ (задължително):
         
         logger.info(f"🖼️  Searching for cover: {title}")
         
-        query = f"""
-Намери ДИРЕКТЕН URL към изображение на корицата за българската книга:
+        # Check if book is Bulgarian (has Cyrillic in title)
+        has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in title)
+        
+        if has_cyrillic:
+            query = f"""
+Намери ДИРЕКТЕН URL към изображение на корицата за БЪЛГАРСКАТА книга:
 
 ЗАГЛАВИЕ: {title}
 АВТОР: {author}
+"""
+        else:
+            query = f"""
+Find DIRECT URL to cover image for the ENGLISH book:
+
+TITLE: {title}
+AUTHOR: {author}
 """
         
         if isbn:

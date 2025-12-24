@@ -11661,3 +11661,603 @@ python scripts/enrich_books.py --no-cover-only --limit 5 --quality-min 0.3 -y
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+2025-12-24 14:55:56,015 [INFO] ============================================================
+2025-12-24 14:55:56,015 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 14:55:56,015 [INFO] ============================================================
+2025-12-24 14:55:56,075 [INFO] ✅ PerplexityEnricher initialized with model: sonar-pro
+2025-12-24 14:55:56,075 [INFO] ✅ Perplexity enricher initialized
+2025-12-24 14:55:56,075 [INFO] ⚙️  Config: min_quality=0.3, rate_limit=1.0s, download_covers=True
+2025-12-24 14:55:56,075 [INFO] ⚙️  Configuration:
+2025-12-24 14:55:56,075 [INFO]    Limit: 5
+2025-12-24 14:55:56,075 [INFO]    Force: False
+2025-12-24 14:55:56,075 [INFO]    Dry run: False
+2025-12-24 14:55:56,076 [INFO]    Min quality: 0.3
+2025-12-24 14:55:56,076 [INFO]    No cover only: True (only books without covers)
+2025-12-24 14:55:56,076 [INFO] 📖 Querying database for books...
+2025-12-24 14:55:56,076 [INFO] SafeKuzuManager initialized for database: ./data/kuzu/bibliotheca.db
+2025-12-24 14:55:56,076 [INFO] Global SafeKuzuManager instance created
+2025-12-24 14:55:56,076 [INFO] [THREAD-140322067603712:MainThread] Initializing KuzuDB database...
+2025-12-24 14:55:56,199 [INFO] [THREAD-140322067603712:MainThread] Initializing database schema...
+2025-12-24 14:55:56,199 [INFO] 🔧 [DEBUG] SafeKuzuManager starting schema initialization...
+2025-12-24 14:55:56,199 [INFO] 🔧 [DEBUG] Schema init - force_reset=False, debug_mode=False
+2025-12-24 14:55:56,235 [INFO] ✅ All essential tables exist - schema appears complete
+2025-12-24 14:55:56,239 [INFO] 📊 Database contains 2 users
+2025-12-24 14:55:56,239 [INFO] ✅ Schema is complete - skipping initialization
+2025-12-24 14:55:56,239 [INFO] [THREAD-140322067603712:MainThread] KuzuDB database initialized successfully in 0.163s
+2025-12-24 14:55:56,294 [INFO] 🔍 [ADAPTER] Query returned 2 rows
+2025-12-24 14:55:56,300 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 14:55:56,303 [INFO] 🔍 [ADAPTER] Query returned 2 rows
+2025-12-24 14:55:56,307 [INFO] 🔍 [ADAPTER] Query returned 2 rows
+2025-12-24 14:55:56,310 [INFO] 🔍 [ADAPTER] Query returned 3 rows
+2025-12-24 14:55:56,311 [INFO] ✅ Found 5 books to enrich
+2025-12-24 14:55:56,311 [INFO]
+📚 Found 5 books to enrich
+2025-12-24 14:55:56,311 [INFO]
+🚀 Starting enrichment...
+2025-12-24 14:55:56,311 [INFO]    Estimated time: ~0.2 minutes
+2025-12-24 14:55:56,311 [INFO]    Estimated cost: ~$0.00
+2025-12-24 14:55:56,311 [INFO] 📦 Starting batch enrichment: 5 books
+2025-12-24 14:55:56,311 [ERROR] Error in batch processing: EnrichmentService.enrich_single_book() got an unexpected keyword argument 'require_cover'
+2025-12-24 14:55:56,311 [ERROR] Error in batch processing: EnrichmentService.enrich_single_book() got an unexpected keyword argument 'require_cover'
+2025-12-24 14:55:56,312 [ERROR] Error in batch processing: EnrichmentService.enrich_single_book() got an unexpected keyword argument 'require_cover'
+2025-12-24 14:55:56,312 [ERROR] Error in batch processing: EnrichmentService.enrich_single_book() got an unexpected keyword argument 'require_cover'
+2025-12-24 14:55:56,312 [ERROR] Error in batch processing: EnrichmentService.enrich_single_book() got an unexpected keyword argument 'require_cover'
+2025-12-24 14:55:56,312 [INFO] ✅ Batch enrichment complete!
+2025-12-24 14:55:56,312 [INFO]    Processed: 0/5
+2025-12-24 14:55:56,312 [INFO]    Enriched: 0 (0.0%)
+2025-12-24 14:55:56,312 [INFO]    Covers found: 0
+2025-12-24 14:55:56,312 [INFO]    Duration: 0.0s
+2025-12-24 14:55:56,312 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 14:55:56,312 [INFO]
+============================================================
+2025-12-24 14:55:56,312 [INFO] ENRICHMENT REPORT
+2025-12-24 14:55:56,313 [INFO] ============================================================
+2025-12-24 14:55:56,313 [INFO] 📊 Statistics:
+2025-12-24 14:55:56,313 [INFO]    Books checked: 0
+2025-12-24 14:55:56,313 [INFO]    Books enriched: 0
+2025-12-24 14:55:56,313 [INFO]    Books failed: 0
+2025-12-24 14:55:56,313 [INFO]    Success rate: 0.0%
+2025-12-24 14:55:56,313 [INFO]
+📝 Content:
+2025-12-24 14:55:56,313 [INFO]    Covers found: 0
+2025-12-24 14:55:56,313 [INFO]    Descriptions added: 0
+2025-12-24 14:55:56,313 [INFO]
+⏱️  Performance:
+2025-12-24 14:55:56,313 [INFO]    Duration: 0.0s
+2025-12-24 14:55:56,314 [INFO]    Speed: 0.0 books/min
+2025-12-24 14:55:56,314 [INFO]
+💰 Estimated cost: $0.00
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Проверявам дали промените са в git и дали има проблем с кеша:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "def enrich_single_book" in "app/services/enrichment_service.py" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `async def enrich_single_book(` | L52 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Промените са правилни. Вероятно на сървъра има остарял Python bytecode кеш. Препоръчвам да изтриете `.pyc` файловете и да рестартирате:
+
+```bash
+# На сървъра изпълнете:
+# 1. Изтеглете промените
+git pull origin main
+
+# 2. Изтрийте Python bytecode кеша (ако има)
+find . -type d -name __pycache__ -exec rm -r {} + 2>/dev/null || true
+find . -name "*.pyc" -delete 2>/dev/null || true
+
+# 3. Опитайте отново
+export PERPLEXITY_MODEL="sonar-pro"
+python scripts/enrich_books.py --no-cover-only --limit 5 --quality-min 0.3 -y
+```
+
+Ако проблемът продължава, проверете дали файлът е обновен:
+
+```bash
+# Проверете дали файлът има правилната сигнатура
+grep -A 5 "def enrich_single_book" app/services/enrichment_service.py
+```
+
+Трябва да видите `require_cover: bool = False` в сигнатурата. Ако не го виждате, файлът не е обновен и трябва да изтеглите промените отново.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 14:58:46,690 [INFO] ============================================================
+2025-12-24 14:58:46,690 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 14:58:46,690 [INFO] ============================================================
+2025-12-24 14:58:46,873 [INFO] ✅ PerplexityEnricher initialized with model: sonar-pro
+2025-12-24 14:58:46,873 [INFO] ✅ Perplexity enricher initialized
+2025-12-24 14:58:46,873 [INFO] ⚙️  Config: min_quality=0.3, rate_limit=1.0s, download_covers=True
+2025-12-24 14:58:46,873 [INFO] ⚙️  Configuration:
+2025-12-24 14:58:46,873 [INFO]    Limit: 5
+2025-12-24 14:58:46,873 [INFO]    Force: False
+2025-12-24 14:58:46,873 [INFO]    Dry run: False
+2025-12-24 14:58:46,874 [INFO]    Min quality: 0.3
+2025-12-24 14:58:46,874 [INFO]    No cover only: True (only books without covers)
+2025-12-24 14:58:46,874 [INFO] 📖 Querying database for books...
+2025-12-24 14:58:46,874 [INFO] SafeKuzuManager initialized for database: ./data/kuzu/bibliotheca.db
+2025-12-24 14:58:46,874 [INFO] Global SafeKuzuManager instance created
+2025-12-24 14:58:46,874 [INFO] [THREAD-140593734340864:MainThread] Initializing KuzuDB database...
+2025-12-24 14:58:46,996 [INFO] [THREAD-140593734340864:MainThread] Initializing database schema...
+2025-12-24 14:58:46,996 [INFO] 🔧 [DEBUG] SafeKuzuManager starting schema initialization...
+2025-12-24 14:58:46,996 [INFO] 🔧 [DEBUG] Schema init - force_reset=False, debug_mode=False
+2025-12-24 14:58:47,032 [INFO] ✅ All essential tables exist - schema appears complete
+2025-12-24 14:58:47,035 [INFO] 📊 Database contains 2 users
+2025-12-24 14:58:47,035 [INFO] ✅ Schema is complete - skipping initialization
+2025-12-24 14:58:47,036 [INFO] [THREAD-140593734340864:MainThread] KuzuDB database initialized successfully in 0.161s
+2025-12-24 14:58:47,089 [INFO] 🔍 [ADAPTER] Query returned 2 rows
+2025-12-24 14:58:47,093 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 14:58:47,097 [INFO] 🔍 [ADAPTER] Query returned 2 rows
+2025-12-24 14:58:47,101 [INFO] 🔍 [ADAPTER] Query returned 2 rows
+2025-12-24 14:58:47,105 [INFO] 🔍 [ADAPTER] Query returned 3 rows
+2025-12-24 14:58:47,105 [INFO] ✅ Found 5 books to enrich
+2025-12-24 14:58:47,105 [INFO]
+📚 Found 5 books to enrich
+2025-12-24 14:58:47,105 [INFO]
+🚀 Starting enrichment...
+2025-12-24 14:58:47,105 [INFO]    Estimated time: ~0.2 minutes
+2025-12-24 14:58:47,105 [INFO]    Estimated cost: ~$0.00
+2025-12-24 14:58:47,105 [INFO] 📦 Starting batch enrichment: 5 books
+2025-12-24 14:58:47,105 [INFO] 🔍 Enriching: The Secret History - Tartt, Donna
+2025-12-24 14:58:47,105 [INFO] 🔍 Searching for: The Secret History - Tartt, Donna
+2025-12-24 14:58:48,861 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 14:58:48,864 [INFO] 📋 Found metadata fields: title, author, confidence, sources
+2025-12-24 14:58:48,864 [INFO] ✅ Found metadata for: The Secret History (quality: 0.42)
+2025-12-24 14:58:48,864 [INFO] 🖼️  Searching for cover: The Secret History
+2025-12-24 14:58:48,864 [INFO] 🖼️  Searching for cover: The Secret History
+2025-12-24 14:58:50,742 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 14:58:50,745 [INFO] ✅ Enriched: The Secret History (quality: 0.42)
+2025-12-24 14:58:50,745 [INFO] [1/5] ✅ The Secret History (quality: 0.42)
+2025-12-24 14:58:51,747 [INFO] 🔍 Enriching: The Secret Garden - Франсис Бърнет
+2025-12-24 14:58:51,747 [INFO] 🔍 Searching for: The Secret Garden - Франсис Бърнет
+2025-12-24 14:58:54,712 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 14:58:54,716 [INFO] 📋 Found metadata fields: title, author, translator, publisher, year, isbn, pages, genres, description, confidence, sources
+2025-12-24 14:58:54,716 [INFO] ✅ Found metadata for: The Secret Garden (quality: 0.95)
+2025-12-24 14:58:54,716 [INFO] 🖼️  Searching for cover: The Secret Garden
+2025-12-24 14:58:54,716 [INFO] 🖼️  Searching for cover: The Secret Garden
+2025-12-24 14:58:57,662 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 14:58:57,666 [INFO] ✅ Enriched: The Secret Garden (quality: 0.95)
+2025-12-24 14:58:57,666 [INFO] [2/5] ✅ The Secret Garden (quality: 0.95)
+2025-12-24 14:58:57,666 [INFO]    📝 Description added
+2025-12-24 14:58:58,667 [INFO] 🔍 Enriching: The Priory of the Orange Tree (The Roots of Chaos, #1) - Shannon, Samantha
+2025-12-24 14:58:58,668 [INFO] 🔍 Searching for: The Priory of the Orange Tree (The Roots of Chaos, #1) - Shannon, Samantha
+2025-12-24 14:59:00,340 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 14:59:00,344 [INFO] 📋 Found metadata fields: sources
+2025-12-24 14:59:00,344 [INFO] ✅ Found metadata for: The Priory of the Orange Tree (The Roots of Chaos, #1) (quality: 0.40)
+2025-12-24 14:59:00,344 [INFO] 🖼️  Searching for cover: The Priory of the Orange Tree (The Roots of Chaos, #1)
+2025-12-24 14:59:00,345 [INFO] 🖼️  Searching for cover: The Priory of the Orange Tree (The Roots of Chaos, #1)
+2025-12-24 14:59:02,646 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 14:59:02,649 [INFO] ✅ Enriched: The Priory of the Orange Tree (The Roots of Chaos, #1) (quality: 0.40)
+2025-12-24 14:59:02,649 [INFO] [3/5] ✅ The Priory of the Orange Tree (The Roots of Chaos, #1) (quality: 0.40)
+2025-12-24 14:59:03,651 [INFO] 🔍 Enriching: The Familiar - Bardugo, Leigh
+2025-12-24 14:59:03,651 [INFO] 🔍 Searching for: The Familiar - Bardugo, Leigh
+2025-12-24 14:59:09,318 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 14:59:09,321 [INFO] 📋 Found metadata fields: author, genres, description, confidence, sources
+2025-12-24 14:59:09,321 [INFO] ✅ Found metadata for: The Familiar (quality: 0.64)
+2025-12-24 14:59:09,321 [INFO] 🖼️  Searching for cover: The Familiar
+2025-12-24 14:59:09,322 [INFO] 🖼️  Searching for cover: The Familiar
+2025-12-24 14:59:10,819 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 14:59:10,822 [INFO] ✅ Enriched: The Familiar (quality: 0.64)
+2025-12-24 14:59:10,822 [INFO] [4/5] ✅ The Familiar (quality: 0.64)
+2025-12-24 14:59:10,823 [INFO]    📝 Description added
+2025-12-24 14:59:11,824 [INFO] 🔍 Enriching: The Costume History - Racinet, Auguste; Miller, Chris
+2025-12-24 14:59:11,825 [INFO] 🔍 Searching for: The Costume History - Racinet, Auguste; Miller, Chris
+2025-12-24 14:59:13,838 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 14:59:13,841 [INFO] 📋 Found metadata fields:
+2025-12-24 14:59:13,842 [INFO] ✅ Found metadata for: The Costume History (quality: 0.40)
+2025-12-24 14:59:13,842 [INFO] 🖼️  Searching for cover: The Costume History
+2025-12-24 14:59:13,842 [INFO] 🖼️  Searching for cover: The Costume History
+2025-12-24 14:59:15,228 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 14:59:15,231 [INFO] ✅ Enriched: The Costume History (quality: 0.40)
+2025-12-24 14:59:15,231 [INFO] [5/5] ✅ The Costume History (quality: 0.40)
+2025-12-24 14:59:15,232 [INFO] ✅ Batch enrichment complete!
+2025-12-24 14:59:15,232 [INFO]    Processed: 5/5
+2025-12-24 14:59:15,232 [INFO]    Enriched: 5 (100.0%)
+2025-12-24 14:59:15,233 [INFO]    Covers found: 0
+2025-12-24 14:59:15,233 [INFO]    Duration: 28.1s
+2025-12-24 14:59:15,242 [INFO] 🔍 [ADAPTER] Query returned 2 rows
+2025-12-24 14:59:15,242 [INFO] 📝 Updating authors from ['Tartt', 'Donna'] to [Дона Тарт]
+2025-12-24 14:59:15,253 [INFO] 🔍 [DEBUG] CREATE: Checking auto-fetch conditions for Дона Тарт: openlibrary_id=None, bio='None', birth_year=None, image_url=None
+2025-12-24 14:59:15,254 [INFO] 🔍 Auto-fetching OpenLibrary metadata for: Дона Тарт
+2025-12-24 14:59:15,849 [INFO] 📝 No OpenLibrary data found for: Дона Тарт
+2025-12-24 14:59:15,872 [INFO] ✅ Created new person: Дона Тарт (ID: 2cd78aa8-25b4-40e9-ad14-d25f90a92d41)
+2025-12-24 14:59:15,878 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 14:59:15,878 [INFO] 🔍 Query results for book 2b6786f4-6340-41f8-8a6c-9eb0506ca52d: [{'result': {'_id': {'offset': 2369, 'table': 1}, '_label': 'Book', 'id': '2b6786f4-6340-41f8-8a6c-9eb0506ca52d', 'title': 'The Secret Garden', 'normalized_title': 'the secret garden', 'subtitle': '', 'isbn13': '', 'isbn10': '', 'asin': '', 'description': 'След смъртта на родителите си малката Мери Ленъкс се озовава в Йоркширското имение на чичо си. Тя открива тайна градина, която е заключена от години, и започва да я възраства заедно с нови приятели. Книгата разказва за магията на природата, дружбата и изцелението.', 'published_date': None, 'page_count': 238, 'language': 'en', 'cover_url': '/covers/e6d27557-10ef-413d-bec2-6b42df95a83c.jpg', 'google_books_id': '', 'openlibrary_id': '', 'opds_source_id': None, 'opds_source_updated_at': None, 'opds_source_entry_hash': None, 'media_type': 'physical', 'average_rating': 0.0, 'rating_count': 0, 'series': '', 'series_volume': None, 'series_order': None, 'custom_metadata': None, 'raw_categories': None, 'created_at': datetime.datetime(2025, 12, 23, 21, 43, 44, 216147), 'updated_at': datetime.datetime(2025, 12, 24, 12, 50, 59, 255565), 'audio_length_minutes': None, 'audio_is_abridged': None, 'audio_narrators': None, 'media_format': None, 'audiobookshelf_id': None, 'audio_duration_ms': None, 'audiobookshelf_updated_at': None, 'quantity': 1}}]
+2025-12-24 14:59:15,879 [INFO] 🔍 First result structure: {'result': {'_id': {'offset': 2369, 'table': 1}, '_label': 'Book', 'id': '2b6786f4-6340-41f8-8a6c-9eb0506ca52d', 'title': 'The Secret Garden', 'normalized_title': 'the secret garden', 'subtitle': '', 'isbn13': '', 'isbn10': '', 'asin': '', 'description': 'След смъртта на родителите си малката Мери Ленъкс се озовава в Йоркширското имение на чичо си. Тя открива тайна градина, която е заключена от години, и започва да я възраства заедно с нови приятели. Книгата разказва за магията на природата, дружбата и изцелението.', 'published_date': None, 'page_count': 238, 'language': 'en', 'cover_url': '/covers/e6d27557-10ef-413d-bec2-6b42df95a83c.jpg', 'google_books_id': '', 'openlibrary_id': '', 'opds_source_id': None, 'opds_source_updated_at': None, 'opds_source_entry_hash': None, 'media_type': 'physical', 'average_rating': 0.0, 'rating_count': 0, 'series': '', 'series_volume': None, 'series_order': None, 'custom_metadata': None, 'raw_categories': None, 'created_at': datetime.datetime(2025, 12, 23, 21, 43, 44, 216147), 'updated_at': datetime.datetime(2025, 12, 24, 12, 50, 59, 255565), 'audio_length_minutes': None, 'audio_is_abridged': None, 'audio_narrators': None, 'media_format': None, 'audiobookshelf_id': None, 'audio_duration_ms': None, 'audiobookshelf_updated_at': None, 'quantity': 1}}
+2025-12-24 14:59:15,879 [INFO] ✅ Found book via 'result' key: <class 'dict'>
+2025-12-24 14:59:15,879 [INFO] ✅ Book data is already dict with keys: ['_id', '_label', 'id', 'title', 'normalized_title', 'subtitle', 'isbn13', 'isbn10', 'asin', 'description', 'published_date', 'page_count', 'language', 'cover_url', 'google_books_id', 'openlibrary_id', 'opds_source_id', 'opds_source_updated_at', 'opds_source_entry_hash', 'media_type', 'average_rating', 'rating_count', 'series', 'series_volume', 'series_order', 'custom_metadata', 'raw_categories', 'created_at', 'updated_at', 'audio_length_minutes', 'audio_is_abridged', 'audio_narrators', 'media_format', 'audiobookshelf_id', 'audio_duration_ms', 'audiobookshelf_updated_at', 'quantity']
+2025-12-24 14:59:15,902 [INFO] ✅ Saved: The Secret Garden
+2025-12-24 14:59:15,905 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 14:59:15,909 [INFO] 🔍 [ADAPTER] Query returned 2 rows
+2025-12-24 14:59:15,909 [INFO] 📝 Updating authors from ['Shannon', 'Samantha'] to [Shannon]
+2025-12-24 14:59:15,939 [INFO] ✅ Updated author to: Shannon
+2025-12-24 14:59:15,946 [INFO] 🔍 [ADAPTER] Query returned 2 rows
+2025-12-24 14:59:15,946 [INFO] 📝 Updating authors from ['Bardugo', 'Leigh'] to [Лий Бардуго]
+2025-12-24 14:59:15,964 [INFO] ✅ Updated author to: Лий Бардуго
+2025-12-24 14:59:15,968 [INFO] 🔍 [ADAPTER] Query returned 3 rows
+2025-12-24 14:59:15,968 [INFO] 📝 Updating authors from ['Racinet', 'Auguste; Miller', 'Chris'] to [Racinet]
+2025-12-24 14:59:15,988 [INFO] ✅ Updated author to: Racinet
+2025-12-24 14:59:15,988 [INFO] 💾 Saved 1 enriched books to database
+2025-12-24 14:59:15,988 [INFO]
+============================================================
+2025-12-24 14:59:15,989 [INFO] ENRICHMENT REPORT
+2025-12-24 14:59:15,989 [INFO] ============================================================
+2025-12-24 14:59:15,989 [INFO] 📊 Statistics:
+2025-12-24 14:59:15,989 [INFO]    Books checked: 5
+2025-12-24 14:59:15,989 [INFO]    Books enriched: 5
+2025-12-24 14:59:15,989 [INFO]    Books failed: 0
+2025-12-24 14:59:15,989 [INFO]    Success rate: 100.0%
+2025-12-24 14:59:15,989 [INFO]
+📝 Content:
+2025-12-24 14:59:15,989 [INFO]    Covers found: 0
+2025-12-24 14:59:15,989 [INFO]    Descriptions added: 2
+2025-12-24 14:59:15,989 [INFO]
+⏱️  Performance:
+2025-12-24 14:59:15,989 [INFO]    Duration: 28.1s
+2025-12-24 14:59:15,990 [INFO]    Speed: 10.7 books/min
+2025-12-24 14:59:15,990 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 14:59:15,990 [INFO] ============================================================
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Има няколко проблема:
+1. Авторите се променят на български за английски книги (например "Donna Tartt" → "Дона Тарт").
+2. Не се намират корица — "Covers found: 0".
+3. Локалният път `/covers/...` не се заменя с валиден URL.
+
+Поправям:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/metadata_providers/perplexity.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "How does find_cover_image return cover URL? What format does it return?" • **14** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/services/unified_cover_manager.py` | L35-310 |
+| `app/utils/image_processing.py` | L81-208 |
+| `app/services/cover_service.py` | L105-359 |
+| `app/utils/image_processing.py` | L108-208 |
+| `app/routes/book_routes.py` | L638-803 |
+| `app/utils.py` | L194-430 |
+| `app/routes/book_routes.py` | L1065-1193 |
+| `app/utils/book_utils.py` | L205-313 |
+| `app/routes/book_routes.py` | L640-867 |
+| `app/routes/book_routes.py` | L1305-1794 |
+| `app/services/unified_cover_manager.py` | L28-310 |
+| `app/utils/book_utils.py` | L224-419 |
+| `app/utils/book_utils.py` | L872-1039 |
+| `app/services/audiobookshelf_import_service.py` | L22-1775 |
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправям проблемите:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 25, lines removed: 6
+
+```diff
+@@ -587,14 +587,33 @@
+                  
+                  # Normalize author one more time to be sure
++                 # BUT: Only use Bulgarian author if book title is also Bulgarian
++                 title = book.get('title', '') or enriched.get('title', '')
++                 has_cyrillic_title = any('\u0400' &lt;= char &lt;= '\u04FF' for char in title)
++                 
+                  if ai_author:
+                      import re
+-                     # If multiple authors, prefer Bulgarian/Cyrillic
++                     # If multiple authors, prefer Bulgarian/Cyrillic ONLY if title is Bulgarian
+                      if ',' in ai_author or ';' in ai_author:
+                          authors_list = [a.strip() for a in re.split(r'[,;]', ai_author)]
+-                         cyrillic_authors = [a for a in authors_list if any('\u0400' &lt;= char &lt;= '\u04FF' for char in a)]
+-                         if cyrillic_authors:
+-                             ai_author = cyrillic_authors[0]
+-                         else:
+-                             ai_author = authors_list[0]
++                         if has_cyrillic_title:
++                             # Title is Bulgarian - prefer Bulgarian author
++                             cyrillic_authors = [a for a in authors_list if any('\u0400' &lt;= char &lt;= '\u04FF' for char in a)]
++                             if cyrillic_authors:
++                                 ai_author = cyrillic_authors[0]
++                             else:
++                                 ai_author = authors_list[0]
++                         else:
++                             # Title is English - keep English author (first one)
++                             ai_author = authors_list[0]
++                     elif has_cyrillic_title:
++                         # Single author, Bulgarian title - OK to use Bulgarian author
++                         pass
++                     else:
++                         # Single author, English title - if AI returned Bulgarian, keep original English author
++                         has_cyrillic_author = any('\u0400' &lt;= char &lt;= '\u04FF' for char in ai_author)
++                         if has_cyrillic_author:
++                             # AI returned Bulgarian author for English book - don't update
++                             logger.debug(f"⚠️  Skipping Bulgarian author '{ai_author}' for English book '{title}'")
++                             ai_author = None
+                  
+                  if ai_author:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+Model supplied an ambiguous edit
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "find_cover_image|cover_url.*find" in "app/services/enrichment_service.py" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `cover_url = await self.perplexity.find_cover_image(` | L118 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправям проблемите:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/metadata_providers/perplexity.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 17, lines removed: 3
+
+```diff
+@@ -497,8 +497,22 @@
+                  
+                  # Update cover_url if missing or force update
++                 # Only update if new cover_url is a valid URL (http/https), not a local path
+                  if enriched.get('cover_url'):
+-                     # Always update cover if AI found one (even if exists, might be better quality)
+-                     if not book.get('cover_url') or self.args.force:
+-                         updates['cover_url'] = enriched['cover_url']
++                     new_cover_url = enriched['cover_url']
++                     # Check if it's a valid URL (not a local path like /covers/...)
++                     is_valid_url = new_cover_url.startswith('http://') or new_cover_url.startswith('https://')
++                     current_cover_url = book.get('cover_url', '')
++                     current_is_local = current_cover_url.startswith('/covers/') if current_cover_url else True
++                     
++                     # Update if:
++                     # 1. No current cover, OR
++                     # 2. Current is local path and new is valid URL, OR
++                     # 3. Force flag is set
++                     if (not current_cover_url or (current_is_local and is_valid_url) or self.args.force):
++                         if is_valid_url:
++                             updates['cover_url'] = new_cover_url
++                             logger.info(f"🖼️  Updating cover URL for: {book['title']}")
++                         else:
++                             logger.debug(f"⚠️  Skipping local cover path: {new_cover_url}")
+                  
+                  # Publisher is handled separately as a relationship
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/metadata_providers/perplexity.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix enrichment: don't change English authors to Bulgarian for English books, only update cover if valid URL, skip local paths" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix enrichment: don't change English authors to Bulgarian for English books, only update cover if valid URL, skip local paths" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main b0d7ce2] Fix enrichment: don't change English authors to Bulgarian for English books, only update cover if valid URL, skip local paths
+ 2 files changed, 814 insertions(+), 7 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   6b2459f..b0d7ce2  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправих проблемите. Ето какво е променено:
+
+## Поправки
+
+1. Авторите не се променят на български за английски книги — проверявам дали заглавието е на български преди да променям автора. Ако заглавието е на английски, запазвам английския автор.
+2. Корицата се обновява само ако е валиден URL — проверявам дали новият `cover_url` започва с `http://` или `https://`. Локалните пътища като `/covers/...` се игнорират.
+3. Заменя локални пътища с валидни URL-и — ако текущата корица е локален път, а AI намери валиден URL, го заменям.
+
+## На сървъра изпълнете:
+
+```bash
+# Изтеглете промените
+git pull origin main
+
+# Опитайте отново
+export PERPLEXITY_MODEL="sonar-pro"
+python scripts/enrich_books.py --no-cover-only --limit 5 --quality-min 0.3 -y
+```
+
+Сега трябва да:
+- Не променя английски автори на български за английски книги
+- Намери и запази корица само ако е валиден URL
+- Замени локални пътища с валидни URL-и
+
+Опитайте отново и ми кажете резултата. Ако корицата все още не се намира, може да е проблем с заявката към Perplexity — ще проверя и поправя.
+
+---
+

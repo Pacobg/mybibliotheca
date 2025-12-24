@@ -599,34 +599,41 @@ class EnrichmentCommand:
                     # Fallback to enriched author
                     ai_author = enriched.get('author')
                 
-                # Normalize author one more time to be sure
-                # BUT: Only use Bulgarian author if book title is also Bulgarian
+                # Normalize author based on book title language
+                # Rule: If title is Bulgarian → use Bulgarian author, else use English author
                 title = book.get('title', '') or enriched.get('title', '')
                 has_cyrillic_title = any('\u0400' <= char <= '\u04FF' for char in title)
                 
                 if ai_author:
                     import re
-                    # If multiple authors, prefer Bulgarian/Cyrillic ONLY if title is Bulgarian
+                    # If multiple authors, choose based on title language
                     if ',' in ai_author or ';' in ai_author:
                         authors_list = [a.strip() for a in re.split(r'[,;]', ai_author)]
                         if has_cyrillic_title:
-                            # Title is Bulgarian - prefer Bulgarian author
+                            # Bulgarian title → prefer Bulgarian author
                             cyrillic_authors = [a for a in authors_list if any('\u0400' <= char <= '\u04FF' for char in a)]
                             if cyrillic_authors:
                                 ai_author = cyrillic_authors[0]
+                                logger.debug(f"✅ Using Bulgarian author for Bulgarian book: {ai_author}")
                             else:
+                                # No Bulgarian author found, use first one
                                 ai_author = authors_list[0]
                         else:
-                            # Title is English - keep English author (first one)
-                            ai_author = authors_list[0]
-                    elif has_cyrillic_title:
-                        # Single author, Bulgarian title - OK to use Bulgarian author
-                        pass
+                            # English title → use English author (first one, prefer non-Cyrillic)
+                            english_authors = [a for a in authors_list if not any('\u0400' <= char <= '\u04FF' for char in a)]
+                            if english_authors:
+                                ai_author = english_authors[0]
+                                logger.debug(f"✅ Using English author for English book: {ai_author}")
+                            else:
+                                ai_author = authors_list[0]
                     else:
-                        # Single author, English title - if AI returned Bulgarian, keep original English author
+                        # Single author - check if it matches title language
                         has_cyrillic_author = any('\u0400' <= char <= '\u04FF' for char in ai_author)
-                        if has_cyrillic_author:
-                            # AI returned Bulgarian author for English book - don't update
+                        if has_cyrillic_title and not has_cyrillic_author:
+                            # Bulgarian title but English author - try to find Bulgarian version
+                            logger.debug(f"⚠️  Bulgarian book '{title}' has English author '{ai_author}' - keeping for now")
+                        elif not has_cyrillic_title and has_cyrillic_author:
+                            # English title but Bulgarian author - skip update
                             logger.debug(f"⚠️  Skipping Bulgarian author '{ai_author}' for English book '{title}'")
                             ai_author = None
                 
