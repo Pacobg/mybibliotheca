@@ -891,20 +891,55 @@ class EnrichmentCommand:
                         # List of cover URLs to try (original + fallbacks)
                         import requests
                         import uuid
+                        import re
                         from pathlib import Path
                         
                         cover_urls_to_try = [new_cover_url]
                         
-                        # Add Open Library fallback based on ISBN (always accessible)
+                        # Check if this is a Bulgarian book (title contains Cyrillic)
+                        title = book.get('title', '')
+                        is_bulgarian = bool(re.search(r'[\u0400-\u04FF]', title))
+                        
+                        # Add ISBN and prepare for fallbacks
                         isbn = enriched.get('isbn13') or enriched.get('isbn10') or book.get('isbn13') or book.get('isbn10')
+                        clean_isbn = ''
                         if isbn:
-                            # Clean ISBN
                             clean_isbn = ''.join(c for c in str(isbn) if c.isdigit() or c.upper() == 'X')
-                            if clean_isbn:
-                                # Open Library covers - always accessible, no auth required
-                                ol_cover = f"https://covers.openlibrary.org/b/isbn/{clean_isbn}-L.jpg"
-                                cover_urls_to_try.append(ol_cover)
-                                logger.info(f"📚 Added Open Library fallback cover URL: {ol_cover}")
+                        
+                        # For Bulgarian books, add Bulgarian bookstore fallbacks FIRST (higher priority)
+                        if is_bulgarian and clean_isbn:
+                            logger.info(f"🇧🇬 Bulgarian book detected, adding Bulgarian bookstore fallbacks for ISBN: {clean_isbn}")
+                            
+                            # Bulgarian bookstores - try multiple formats
+                            bg_sources = [
+                                # ciela.com - direct product image
+                                f"https://www.ciela.com/media/catalog/product/{clean_isbn[0]}/{clean_isbn[1]}/{clean_isbn}.jpg",
+                                # ozone.bg - product images
+                                f"https://www.ozone.bg/media/catalog/product/{clean_isbn[0]}/{clean_isbn[1]}/{clean_isbn}.jpg",
+                                # helikon.bg - product thumbnails
+                                f"https://www.helikon.bg/uploads/thumbnail/helikon/product/{clean_isbn[-3:-1]}/{clean_isbn[-1]}/{clean_isbn}.jpg",
+                                # hermesbooks.bg
+                                f"https://hermesbooks.bg/media/catalog/product/{clean_isbn[0]}/{clean_isbn[1]}/{clean_isbn}.jpg",
+                                # book.store.bg - commonly accessible
+                                f"https://www.book.store.bg/prdimg/{clean_isbn[-6:]}/{clean_isbn}.jpg",
+                                # knigabg.com  
+                                f"https://knigabg.com/pix/{clean_isbn}.jpg",
+                                # booktrading.bg
+                                f"https://booktrading.bg/media/catalog/product/{clean_isbn}.jpg",
+                                # chitanka.info - free Bulgarian ebooks with covers
+                                f"https://chitanka.info/thumb/book-cover/{clean_isbn}.250.jpg",
+                            ]
+                            
+                            for bg_url in bg_sources:
+                                cover_urls_to_try.append(bg_url)
+                                logger.info(f"🇧🇬 Added Bulgarian fallback: {bg_url}")
+                        
+                        # Add Open Library fallback based on ISBN (always accessible, works for any language)
+                        if clean_isbn:
+                            # Open Library covers - always accessible, no auth required
+                            ol_cover = f"https://covers.openlibrary.org/b/isbn/{clean_isbn}-L.jpg"
+                            cover_urls_to_try.append(ol_cover)
+                            logger.info(f"📚 Added Open Library fallback cover URL: {ol_cover}")
                         
                         # Get the covers directory (once, outside loop)
                         covers_dir = Path('covers')

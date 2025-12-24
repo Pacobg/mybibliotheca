@@ -632,15 +632,24 @@ AUTHOR: {author}
   * https://biblioman.chitanka.info/thumb/covers/.../xxx.1000.jpg
   * https://chitanka.info/thumb/book/xxx.250.jpg
   * https://ciela.com/media/catalog/product/.../xxx.jpg (БЕЗ /cache/ в пътя!)
+  * https://www.ozone.bg/media/catalog/product/.../xxx.jpg
+  * https://www.book.store.bg/prdimg/.../xxx.jpg
 
 ИЗТОЧНИЦИ ЗА ПРОВЕРКА (по приоритет):
-1. biblioman.chitanka.info
-2. chitanka.info  
-3. ciela.com (избягвай cache URL-и!)
-4. helikon.bg
-5. publishers websites (Колибри, Изток-Запад, Хермес, Бард)
+1. biblioman.chitanka.info - безплатни корици
+2. chitanka.info - безплатни корици
+3. ciela.com (избягвай cache URL-и с хешове!)
+4. ozone.bg - голям избор български книги
+5. helikon.bg - онлайн книжарница
+6. hermesbooks.bg - издателство Хермес
+7. book.store.bg - книжарница
+8. knigabg.com - книжарница
+9. Издателства: Колибри, Изток-Запад, Бард
 
-КРИТИЧНО: Провери дали URL-ът е достъпен преди да го върнеш! Ако URL-ът не работи (403, 404), не го връщай!
+КРИТИЧНО: 
+- Провери дали URL-ът е достъпен преди да го върнеш!
+- ИЗБЯГВАЙ URLs с /cache/ и дълги хешове - те често не работят!
+- Ако URL-ът не работи (403, 404), НЕ го връщай!
 
 ОТГОВОРИ САМО С РАБОТЕЩ URL или "NOT_FOUND":
 https://direkten-url-kam-izobrajenie.jpg

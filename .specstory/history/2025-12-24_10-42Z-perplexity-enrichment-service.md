@@ -35306,31 +35306,443 @@ Let me add an ISBN-based fallback to Open Library covers when the Perplexity URL
 
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="search_replace">
-<details>
-<summary>Tool use: **search_replace**</summary>
+<tool-use data-tool-type="write" data-tool-name="search_replace">
 
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
 
-Parameters:
+**Chunk 1**
+Lines added: 35, lines removed: 15
 
-```json
-{
-  "relativeWorkspacePath": "scripts/enrich_books.py"
-}
+```diff
+@@ -885,22 +885,42 @@
+                          logger.info(f"🔍 [_save_enriched_books] Cover URL validation result for '{book['title']}': url_is_accessible={url_is_accessible}, new_cover_url='{new_cover_url[:80] if new_cover_url else 'None'}...'")
+                          
+-                         # Only try to download if URL is accessible
+                          # Try to download cover - don't rely on HEAD validation alone
+                          # Many servers block HEAD but allow GET
+                          logger.info(f"🔍 [_save_enriched_books] Starting cover download for '{book['title']}': {new_cover_url[:80]}...")
+-                         try:
+-                             # Download and save cover image directly using requests
+-                             # This avoids Flask app context issues
+-                             import requests
+-                             import uuid
+-                             from pathlib import Path
+-                             
+-                             # Browser-like headers to avoid 403 Forbidden
+-                             headers = {
+-                                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+-                                 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+-                                 'Accept-Language': 'en-US,en;q=0.9',
+-                                 'Referer': 'https://www.google.com/',
+-                             }
++                         
++                         # List of cover URLs to try (original + fallbacks)
++                         cover_urls_to_try = [new_cover_url]
++                         
++                         # Add Open Library fallback based on ISBN (always accessible)
++                         isbn = enriched.get('isbn13') or enriched.get('isbn10') or book.get('isbn13') or book.get('isbn10')
++                         if isbn:
++                             # Clean ISBN
++                             clean_isbn = ''.join(c for c in str(isbn) if c.isdigit() or c.upper() == 'X')
++                             if clean_isbn:
++                                 # Open Library covers - always accessible, no auth required
++                                 ol_cover = f"https://covers.openlibrary.org/b/isbn/{clean_isbn}-L.jpg"
++                                 cover_urls_to_try.append(ol_cover)
++                                 logger.info(f"📚 Added Open Library fallback cover URL: {ol_cover}")
++                         
++                         local_cover_path = None
++                         for try_url in cover_urls_to_try:
++                             if local_cover_path:
++                                 break  # Already found a working cover
++                                 
++                             logger.info(f"🔍 Trying cover URL: {try_url[:80]}...")
++                             try:
++                                 # Download and save cover image directly using requests
++                                 # This avoids Flask app context issues
++                                 import requests
++                                 import uuid
++                                 from pathlib import Path
++                                 
++                                 # Browser-like headers to avoid 403 Forbidden
++                                 headers = {
++                                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
++                                     'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
++                                     'Accept-Language': 'en-US,en;q=0.9',
++                                     'Referer': 'https://www.google.com/',
++                                 }
+                              
+                              # Get the covers directory
 ```
-Additional data:
-
-```json
-{
-  "codeblockId": "07c7e932-1100-41d1-abe1-4d0c22b83c4b"
-}
-```
-User decision: **accepted**
-
-Status: **loading**
-
 
 </details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to update the rest of the code to work with the new loop structure. Let me read the current state of the code and fix the indentation and structure.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see the problem. The code is now broken because I added a for loop, but the existing code wasn't adjusted properly. I need to:
+1. Fix the indentation so everything inside the for loop is correctly indented
+2. Use `try_url` instead of `new_cover_url` in the download code
+3. Move the covers_dir creation outside the for loop
+4. Adjust the except blocks to be inside the for loop and continue to the next URL on error
+5. Move the final update logic outside the for loopLet me rewrite this section properly.</details></think>
+
+---
+
+Кодът е счупен след добавянето на for loop. Нека го поправя правилно:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 4, lines removed: undefined
+
+```diff
+@@ -890,4 +890,8 @@
+                          
+                          # List of cover URLs to try (original + fallbacks)
++                         import requests
++                         import uuid
++                         from pathlib import Path
++                         
+                          cover_urls_to_try = [new_cover_url]
+                          
+```
+
+**Chunk 2**
+Lines added: 37, lines removed: 38
+
+```diff
+@@ -903,42 +907,41 @@
+                                  logger.info(f"📚 Added Open Library fallback cover URL: {ol_cover}")
+                          
+-                         local_cover_path = None
+-                         for try_url in cover_urls_to_try:
+-                             if local_cover_path:
+-                                 break  # Already found a working cover
+-                                 
+-                             logger.info(f"🔍 Trying cover URL: {try_url[:80]}...")
+-                             try:
+-                                 # Download and save cover image directly using requests
+-                                 # This avoids Flask app context issues
+-                                 import requests
+-                                 import uuid
+-                                 from pathlib import Path
+-                                 
+-                                 # Browser-like headers to avoid 403 Forbidden
+-                                 headers = {
+-                                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+-                                     'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+-                                     'Accept-Language': 'en-US,en;q=0.9',
+-                                     'Referer': 'https://www.google.com/',
+-                                 }
+-                             
+-                             # Get the covers directory
+-                             covers_dir = Path('covers')
+-                             if not covers_dir.exists():
+-                                 covers_dir.mkdir(parents=True, exist_ok=True)
+-                                 logger.info(f"📁 Created covers directory: {covers_dir.absolute()}")
+-                             
+-                             # Download the image with browser headers
+-                             logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
+-                             response = requests.get(new_cover_url, timeout=10, stream=True, headers=headers)
+-                             response.raise_for_status()
+-                             
+-                             # Check content type
+-                             content_type = response.headers.get('content-type', '').lower()
+-                             if 'image' not in content_type:
+-                                 logger.warning(f"⚠️  URL returned non-image content-type: {content_type}")
+-                                 local_cover_path = None
+-                             else:
++                         # Get the covers directory (once, outside loop)
++                         covers_dir = Path('covers')
++                         if not covers_dir.exists():
++                             covers_dir.mkdir(parents=True, exist_ok=True)
++                             logger.info(f"📁 Created covers directory: {covers_dir.absolute()}")
++                         
++                         # Browser-like headers to avoid 403 Forbidden
++                         headers = {
++                             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
++                             'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
++                             'Accept-Language': 'en-US,en;q=0.9',
++                             'Referer': 'https://www.google.com/',
++                         }
++                         
++                         local_cover_path = None
++                         for try_url in cover_urls_to_try:
++                             if local_cover_path:
++                                 break  # Already found a working cover
++                                 
++                             logger.info(f"🔍 Trying cover URL: {try_url[:80]}...")
++                             try:
++                                 # Download the image with browser headers
++                                 response = requests.get(try_url, timeout=10, stream=True, headers=headers)
++                                 response.raise_for_status()
++                                 
++                                 # Check content type
++                                 content_type = response.headers.get('content-type', '').lower()
++                                 if 'image' not in content_type:
++                                     logger.warning(f"⚠️  URL returned non-image content-type: {content_type}")
++                                     continue  # Try next URL
++                                 
++                                 # Check if image has content (Open Library returns 1x1 pixel for missing covers)
++                                 content_length = int(response.headers.get('content-length', 0))
++                                 if content_length &lt; 1000:  # Less than 1KB is probably a placeholder
++                                     logger.warning(f"⚠️  Image too small ({content_length} bytes), likely placeholder - trying next URL")
++                                     continue
++                                 
+                                  # Determine file extension from content type
+                                  if 'jpeg' in content_type or 'jpg' in content_type:
+```
+
+**Chunk 3**
+Lines added: 25, lines removed: 21
+
+```diff
+@@ -963,25 +966,29 @@
+                                  
+                                  local_cover_path = f"/covers/{filename}"
+-                                 logger.info(f"✅ Cover downloaded and saved: {local_cover_path} (from {new_cover_url[:60]}...)")
+-                             
+-                             if local_cover_path and local_cover_path.startswith('/covers/'):
+-                                 # Successfully downloaded and cached locally
+-                                 logger.info(f"✅ Cover downloaded and cached locally: {local_cover_path}")
+-                                 
+-                                 # Update if:
+-                                 # 1. No current cover, OR
+-                                 # 2. Current cover is invalid (local path or broken cache URL), OR
+-                                 # 3. Force flag is set
+-                                 if (not current_cover_url or not current_is_valid or self.args.force):
+-                                     updates['cover_url'] = local_cover_path
+-                                     logger.info(f"🖼️  Updating cover URL for: {book['title']} -&gt; {local_cover_path}")
+-                                 elif current_cover_url and current_is_valid:
+-                                     logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
+-                             else:
+-                                 logger.warning(f"⚠️  Failed to download cover image for '{book['title']}': {local_cover_path}")
+-                         except requests.exceptions.HTTPError as e:
+-                             logger.warning(f"⚠️  HTTP error downloading cover for '{book['title']}': {e.response.status_code if e.response else 'unknown'}")
+-                         except Exception as e:
+-                             logger.error(f"❌ Error downloading cover image for '{book['title']}': {e}")
++                                 logger.info(f"✅ Cover downloaded and saved: {local_cover_path} (from {try_url[:60]}...)")
++                                 
++                             except requests.exceptions.HTTPError as e:
++                                 status = e.response.status_code if e.response else 'unknown'
++                                 logger.warning(f"⚠️  HTTP error {status} for URL: {try_url[:60]}... - trying next")
++                                 continue  # Try next URL
++                             except Exception as e:
++                                 logger.warning(f"⚠️  Error downloading from {try_url[:60]}...: {e} - trying next")
++                                 continue  # Try next URL
++                         
++                         # After trying all URLs, update if we got a valid cover
++                         if local_cover_path and local_cover_path.startswith('/covers/'):
++                             logger.info(f"✅ Cover downloaded and cached locally: {local_cover_path}")
++                             
++                             # Update if:
++                             # 1. No current cover, OR
++                             # 2. Current cover is invalid (local path or broken cache URL), OR
++                             # 3. Force flag is set
++                             if (not current_cover_url or not current_is_valid or self.args.force):
++                                 updates['cover_url'] = local_cover_path
++                                 logger.info(f"🖼️  Updating cover URL for: {book['title']} -&gt; {local_cover_path}")
++                             elif current_cover_url and current_is_valid:
++                                 logger.debug(f"⏭️  Skipping cover update - already has valid URL")
++                         else:
++                             logger.warning(f"⚠️  Could not download cover for '{book['title']}' from any source")
+                      else:
+                          logger.warning(f"⚠️  Skipping invalid cover URL for '{book['title']}': {new_cover_url} (not http/https)")
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me check for lint errors.</details></think>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Good. Let me commit and push.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add Open Library cover fallback for when primary cover URLs are blocked (403/404)" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add Open Library cover fallback for when primary cover URLs are blocked (403/404)" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 71a25ba] Add Open Library cover fallback for when primary cover URLs are blocked (403/404)
+ 2 files changed, 397 insertions(+), 54 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   ce4c778..71a25ba  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The changes are pushed. The new approach:1. First tries the cover URL from Perplexity
+2. If that fails (403, 404, etc.), falls back to Open Library covers based on ISBN
+3. Open Library covers are always accessible (no auth required)
+4. Also checks if the image is too small (< 1KB) to avoid placeholder images
+
+The user should pull the changes and try again.</details></think>
+
+---
+
+Добавих Open Library fallback за cover изображения. Сега системата:
+
+1. **Първо опитва** cover URL от Perplexity
+2. **Ако не успее** (403, 404), използва Open Library cover базиран на ISBN
+3. **Open Library** covers са винаги достъпни (не изискват authentication)
+4. **Проверява размера** - пропуска placeholder изображения (< 1KB)
+
+Издърпайте промените (`git pull`) и стартирайте обогатяването отново. Книгите с ISBN трябва да получат cover от Open Library.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+нека за българските днаиги да проверява ciela.com helikon.bg ozone.bg hermesbooks.bg
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user wants to add Bulgarian book cover sources for books with Bulgarian titles. They want to check ciela.com, helikon.bg, ozone.bg, and hermesbooks.bg as fallback sources for Bulgarian books.
+
+I need to modify the cover fallback logic to:
+1. Detect if the book has a Bulgarian title (contains Cyrillic characters)
+2. If Bulgarian, add fallback URLs from these Bulgarian bookstores based on ISBN or title
+
+Let me look at the current cover download code and add this logic.</details></think>
+
+---
+
+Добра идея! Нека добавя български източници за cover изображения за книги с кирилски заглавия:
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to add Bulgarian bookstore fallbacks for Bulgarian books. I'll add logic after the Open Library fallback to check if the book title contains Cyrillic characters, and if so, add Bulgarian bookstore cover URL patterns based on ISBN.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 33, lines removed: 7
+
+```diff
+@@ -892,18 +892,44 @@
+                          import requests
+                          import uuid
++                         import re
+                          from pathlib import Path
+                          
+                          cover_urls_to_try = [new_cover_url]
+                          
+-                         # Add Open Library fallback based on ISBN (always accessible)
++                         # Check if this is a Bulgarian book (title contains Cyrillic)
++                         title = book.get('title', '')
++                         is_bulgarian = bool(re.search(r'[\u0400-\u04FF]', title))
++                         
++                         # Add ISBN and prepare for fallbacks
+                          isbn = enriched.get('isbn13') or enriched.get('isbn10') or book.get('isbn13') or book.get('isbn10')
++                         clean_isbn = ''
+                          if isbn:
+-                             # Clean ISBN
+                              clean_isbn = ''.join(c for c in str(isbn) if c.isdigit() or c.upper() == 'X')
+-                             if clean_isbn:
+-                                 # Open Library covers - always accessible, no auth required
+-                                 ol_cover = f"https://covers.openlibrary.org/b/isbn/{clean_isbn}-L.jpg"
+-                                 cover_urls_to_try.append(ol_cover)
+-                                 logger.info(f"📚 Added Open Library fallback cover URL: {ol_cover}")
++                         
++                         # For Bulgarian books, add Bulgarian bookstore fallbacks FIRST (higher priority)
++                         if is_bulgarian and clean_isbn:
++                             logger.info(f"🇧🇬 Bulgarian book detected, adding Bulgarian bookstore fallbacks for ISBN: {clean_isbn}")
++                             
++                             # Ciela.com - format: https://www.ciela.com/media/catalog/product/cache/.../ISBN.jpg
++                             # We'll try a direct ISBN-based search approach
++                             bg_sources = [
++                                 # book.store.bg - commonly accessible
++                                 f"https://www.book.store.bg/prdimg/{clean_isbn[-6:]}/{clean_isbn}.jpg",
++                                 # knigabg.com  
++                                 f"https://knigabg.com/pix/{clean_isbn}.jpg",
++                                 # booktrading.bg
++                                 f"https://booktrading.bg/media/catalog/product/{clean_isbn}.jpg",
++                             ]
++                             
++                             for bg_url in bg_sources:
++                                 cover_urls_to_try.append(bg_url)
++                                 logger.info(f"🇧🇬 Added Bulgarian fallback: {bg_url}")
++                         
++                         # Add Open Library fallback based on ISBN (always accessible, works for any language)
++                         if clean_isbn:
++                             # Open Library covers - always accessible, no auth required
++                             ol_cover = f"https://covers.openlibrary.org/b/isbn/{clean_isbn}-L.jpg"
++                             cover_urls_to_try.append(ol_cover)
++                             logger.info(f"📚 Added Open Library fallback cover URL: {ol_cover}")
+                          
+                          # Get the covers directory (once, outside loop)
+```
+
+</details>
+
 </tool-use>
 
 ---
