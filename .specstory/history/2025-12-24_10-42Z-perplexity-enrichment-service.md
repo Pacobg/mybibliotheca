@@ -31851,3 +31851,481 @@ _**Agent (model composer-1, mode Agent)**_
 
 ---
 
+
+
+---
+
+
+Проблем: описанията се намират, но не се записват, защото `updates` остава празен. Проверявам логиката в `_save_enriched_books`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "if.*description|updates\[.description|description.*updates" in "scripts/enrich_books.py" • 7 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `if not book.get('description'):` | L180 |
+| `scripts/enrich_books.py` | `if enriched.get('description'):` | L717 |
+| `scripts/enrich_books.py` | `# Check if existing description has citations` | L726 |
+| `scripts/enrich_books.py` | `# Check if description language matches title language` | L729 |
+| `scripts/enrich_books.py` | `updates['description'] = description` | L748 |
+| `scripts/enrich_books.py` | `if metadata.get('description'):` | L1205 |
+| `scripts/enrich_books.py` | `logger.info(f"🔍 [_progress_callback] Book data: title='\{book_title\}', author='\{current_book.get('author', 'Unknown')\}', cover_url='\{current_book.get('cover_url', 'None')\}', description=\{'present' if current_book.get('description') else 'missing'\}")` | L1215 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам защо описанията не се добавят към `updates`. Добавям по-подробно логиране:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -717,4 +717,5 @@
+                  if enriched.get('description'):
+                      description = enriched['description']
++                     logger.info(f"🔍 [_save_enriched_books] Found description for '{book_title}': {description[:100]}...")
+                      # Remove citation markers like [3][5][7][9] before saving
+                      import re
+```
+
+**Chunk 2**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -724,4 +725,5 @@
+                      
+                      existing_desc = book.get('description', '')
++                     logger.info(f"🔍 [_save_enriched_books] Existing description for '{book_title}': {existing_desc[:100] if existing_desc else 'None'}...")
+                      # Check if existing description has citations
+                      has_citations = bool(re.search(r'\[\d+\]', existing_desc))
+```
+
+**Chunk 3**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -735,4 +737,6 @@
+                      existing_desc_has_cyrillic = any('\u0400' &lt;= char &lt;= '\u04FF' for char in existing_desc) if existing_desc else False
+                      existing_desc_matches_title = (has_cyrillic_title and existing_desc_has_cyrillic) or (not has_cyrillic_title and not existing_desc_has_cyrillic)
++                     
++                     logger.info(f"🔍 [_save_enriched_books] Language check for '{book_title}': title_has_cyrillic={has_cyrillic_title}, desc_has_cyrillic={desc_has_cyrillic}, desc_matches_title={desc_matches_title}, existing_desc_matches_title={existing_desc_matches_title}, has_citations={has_citations}, force={self.args.force}")
+                      
+                      # Update if:
+```
+
+**Chunk 4**
+Lines added: 7, lines removed: 2
+
+```diff
+@@ -741,10 +745,15 @@
+                      # 3. Existing has citations (needs cleaning), OR
+                      # 4. New description matches title language AND (existing doesn't match OR new is significantly longer)
+-                     if (not existing_desc or 
++                     should_update = (not existing_desc or 
+                          self.args.force or 
+                          has_citations or 
+-                         (desc_matches_title and (not existing_desc_matches_title or len(description) &gt; len(existing_desc) + 50))):
++                         (desc_matches_title and (not existing_desc_matches_title or len(description) &gt; len(existing_desc) + 50)))
++                     
++                     logger.info(f"🔍 [_save_enriched_books] Should update description for '{book_title}': {should_update}")
++                     
++                     if should_update:
+                          if desc_matches_title or not existing_desc:
+                              updates['description'] = description
++                             logger.info(f"✅ [_save_enriched_books] Added description to updates for '{book_title}'")
+                              if has_citations:
+                                  logger.info(f"🧹 Cleaning description citations for: {book['title']}")
+```
+
+**Chunk 5**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -753,4 +762,6 @@
+                          else:
+                              logger.warning(f"🚫 Rejecting description for '{book['title']}': language doesn't match title (title is {'Bulgarian' if has_cyrillic_title else 'English'}, desc is {'Bulgarian' if desc_has_cyrillic else 'English'})")
++                 else:
++                     logger.info(f"🔍 [_save_enriched_books] No description in enriched data for '{book_title}'")
+                  
+                  # Update cover_url if missing or force update
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add detailed logging for description update logic to debug why descriptions are not being saved" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add detailed logging for description update logic to debug why descriptions are not being saved" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 4089aff] Add detailed logging for description update logic to debug why descriptions are not being saved
+ 2 files changed, 541 insertions(+), 2 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   2b2003f..4089aff  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавих подробно логиране. Проблемът е, че описанията се намират, но не се записват. Проверявам какво връща `merge_metadata_into_book`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "def merge_metadata_into_book|description.*merge|merge.*description" in "app/services/enrichment_service.py" • 5 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `def merge_metadata_into_book(` | L485 |
+| `app/services/enrichment_service.py` | `existing_desc = merged.get('description', '')` | L522 |
+| `app/services/enrichment_service.py` | `merged['description'] = ai_desc` | L540 |
+| `app/services/enrichment_service.py` | `merged['description'] = ai_desc` | L546 |
+| `app/services/enrichment_service.py` | `merged['description'] = ai_desc` | L558 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам какво връща `merge_metadata_into_book` и дали описанието е там. Добавям логиране преди и след merge:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 11, lines removed: undefined
+
+```diff
+@@ -706,9 +706,20 @@
+              try:
+                  # Merge AI metadata into book
++                 logger.info(f"🔍 [_save_enriched_books] Merging metadata for '{book_title}'...")
++                 logger.info(f"🔍 [_save_enriched_books] AI metadata keys: {list(book['ai_metadata'].keys())}")
++                 logger.info(f"🔍 [_save_enriched_books] AI metadata description present: {'description' in book['ai_metadata']}")
++                 if 'description' in book['ai_metadata']:
++                     logger.info(f"🔍 [_save_enriched_books] AI metadata description: {book['ai_metadata']['description'][:100] if book['ai_metadata']['description'] else 'None'}...")
++                 
+                  enriched = self.service.merge_metadata_into_book(
+                      book_data=book,
+                      ai_metadata=book['ai_metadata']
+                  )
+                  
++                 logger.info(f"🔍 [_save_enriched_books] After merge, enriched keys: {list(enriched.keys())}")
++                 logger.info(f"🔍 [_save_enriched_books] After merge, enriched description present: {'description' in enriched}")
++                 if 'description' in enriched:
++                     logger.info(f"🔍 [_save_enriched_books] After merge, enriched description: {enriched['description'][:100] if enriched['description'] else 'None'}...")
++                 
+                  # Prepare update data
+                  updates = {}
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add logging before and after merge_metadata_into_book to debug description handling" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add logging before and after merge_metadata_into_book to debug description handling" && git push origin main
+```
+
+```
+[main 719d71c] Add logging before and after merge_metadata_into_book to debug description handling
+ 1 file changed, 11 insertions(+)
+To https://github.com/Pacobg/mybibliotheca.git
+   4089aff..719d71c  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавих подробно логиране преди и след `merge_metadata_into_book`. При следващото изпълнение ще видим:
+
+1. Какви ключове има в `ai_metadata`
+2. Дали има описание в `ai_metadata`
+3. Какво е съдържанието на описанието
+4. Какво връща `merge_metadata_into_book`
+5. Защо описанието не се добавя към `updates`
+
+Стартирайте обогатяването отново и споделете логовете — ще видим къде точно се губи описанието.
+
+От предишните логове виждам, че:
+- Описанията се намират успешно ("Description added")
+- Но не се записват в базата данни ("No updates to save")
+- `updates` dictionary остава празен
+
+Новото логиране ще покаже дали описанието е в `ai_metadata`, дали `merge_metadata_into_book` го запазва, и защо не се добавя към `updates`.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+2025-12-24 20:27:42,716 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 20:27:42,716 [INFO] ============================================================
+2025-12-24 20:27:42,716 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 20:27:42] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:27:42,753 [INFO] 192.168.1.9 - - [24/Dec/2025 20:27:42] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:27:42,778 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 20:27:42,778 [INFO] ⚙️  Configuration:
+2025-12-24 20:27:42,778 [INFO]    Limit: 5
+2025-12-24 20:27:42,778 [INFO]    Force: False
+2025-12-24 20:27:42,778 [INFO]    Dry run: False
+2025-12-24 20:27:42,778 [INFO]    Min quality: 0.3
+2025-12-24 20:27:42,778 [INFO]    No cover only: True (only books without covers)
+2025-12-24 20:27:42,778 [INFO] 📖 Querying database for books...
+2025-12-24 20:27:42,778 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 20:27:42,778 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 20:27:42,788 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 20:27:42,791 [INFO] 🔍 [_get_books_to_enrich] 'The Secret History': cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 20:27:42,791 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 20:27:43,036 [INFO] HTTP Request: HEAD https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg "HTTP/1.1 403 Forbidden"
+2025-12-24 20:27:43,038 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned status 403 - marking as INVALID
+2025-12-24 20:27:43,038 [INFO] ✅ Added book without valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+2025-12-24 20:27:43,048 [INFO] 🔍 [_get_books_to_enrich] 'The Secret Garden': cover_url='https://knigabg.com/pix/28162.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 20:27:43,048 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 20:27:43,099 [INFO] HTTP Request: HEAD https://knigabg.com/pix/28162.jpg "HTTP/1.1 404 Not Found"
+2025-12-24 20:27:43,099 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned status 404 - marking as INVALID
+2025-12-24 20:27:43,100 [INFO] ✅ Added book without valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 20:27:43,103 [INFO] 🔍 [_get_books_to_enrich] 'The Priory of the Orange Tree (The Roots of Chaos, #1)': cover_url='https://images.thenile.io/r1000/9781408883358.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 20:27:43,103 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 20:27:43,142 [INFO] HTTP Request: HEAD https://images.thenile.io/r1000/9781408883358.jpg "HTTP/1.1 200 OK"
+2025-12-24 20:27:43,143 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 20:27:43,146 [INFO] 🔍 [_get_books_to_enrich] 'The Familiar': cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 20:27:43,146 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 20:27:44,100 [INFO] HTTP Request: HEAD https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg "HTTP/1.1 200 OK"
+2025-12-24 20:27:44,101 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned non-image content-type: text/html; charset=utf-8 - marking as INVALID
+2025-12-24 20:27:44,102 [INFO] ✅ Added book without valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 20:27:44,106 [INFO] 🔍 [_get_books_to_enrich] 'The Costume History': cover_url='http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 20:27:44,106 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+192.168.1.51 - - [24/Dec/2025 20:27:44] "HEAD /covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg HTTP/1.1" 200 -
+2025-12-24 20:27:44,123 [INFO] 192.168.1.51 - - [24/Dec/2025 20:27:44] "HEAD /covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg HTTP/1.1" 200 -
+2025-12-24 20:27:44,124 [INFO] HTTP Request: HEAD http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg "HTTP/1.1 200 OK"
+2025-12-24 20:27:44,124 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750...')
+2025-12-24 20:27:44,124 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 20:27:44,124 [INFO] 📊 Statistics: 2 books WITH valid cover URLs (skipped)
+2025-12-24 20:27:44,124 [INFO] 📊 Statistics: 3 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 20:27:44,125 [INFO] ✅ Found 3 books to enrich
+2025-12-24 20:27:44,125 [INFO]
+📚 Found 3 books to enrich
+2025-12-24 20:27:44,125 [INFO]
+🚀 Starting enrichment...
+2025-12-24 20:27:44,125 [INFO]    Estimated time: ~0.1 minutes
+2025-12-24 20:27:44,125 [INFO]    Estimated cost: ~$0.00
+2025-12-24 20:27:44,264 [INFO] HTTP Request: HEAD https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg "HTTP/1.1 403 Forbidden"
+2025-12-24 20:27:47,568 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+192.168.1.9 - - [24/Dec/2025 20:27:47] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:27:47,803 [INFO] 192.168.1.9 - - [24/Dec/2025 20:27:47] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:27:49,079 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 20:27:50,064 [INFO] HTTP Request: HEAD https://covers.openlibrary.org/b/isbn/9780140167771-L.jpg "HTTP/1.1 302 Found"
+2025-12-24 20:27:50,260 [INFO] HTTP Request: GET https://covers.openlibrary.org/b/isbn/9780140167771-L.jpg "HTTP/1.1 302 Found"
+2025-12-24 20:27:50,948 [INFO] HTTP Request: GET https://archive.org/download/olcovers662/olcovers662-L.zip/6623129-L.jpg "HTTP/1.1 302 Found"
+2025-12-24 20:27:51,511 [INFO] HTTP Request: GET https://ia600402.us.archive.org/view_archive.php?archive=/12/items/olcovers662/olcovers662-L.zip&file=6623129-L.jpg "HTTP/1.1 200 OK"
+2025-12-24 20:27:51,514 [INFO] 🔍 [_progress_callback] Book 1/3: 'The Secret History', metadata=found
+2025-12-24 20:27:51,514 [INFO] [1/3] ✅ The Secret History (quality: 0.95)
+2025-12-24 20:27:51,514 [INFO]    🖼️  Cover found
+2025-12-24 20:27:51,515 [INFO]    📝 Description added
+2025-12-24 20:27:52,551 [INFO] HTTP Request: HEAD https://knigabg.com/pix/28162.jpg "HTTP/1.1 404 Not Found"
+192.168.1.9 - - [24/Dec/2025 20:27:52] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:27:52,852 [INFO] 192.168.1.9 - - [24/Dec/2025 20:27:52] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+192.168.1.9 - - [24/Dec/2025 20:27:57] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:27:57,913 [INFO] 192.168.1.9 - - [24/Dec/2025 20:27:57] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:28:00,651 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 20:28:00,655 [INFO] 🔍 [_progress_callback] Book 2/3: 'The Secret Garden', metadata=found
+2025-12-24 20:28:00,655 [INFO] [2/3] ✅ The Secret Garden (quality: 0.90)
+2025-12-24 20:28:00,655 [INFO]    🖼️  Cover found
+2025-12-24 20:28:00,655 [INFO]    📝 Description added
+2025-12-24 20:28:02,626 [INFO] HTTP Request: HEAD https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg "HTTP/1.1 200 OK"
+192.168.1.9 - - [24/Dec/2025 20:28:02] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:28:02,956 [INFO] 192.168.1.9 - - [24/Dec/2025 20:28:02] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+192.168.1.9 - - [24/Dec/2025 20:28:07] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:28:07,992 [INFO] 192.168.1.9 - - [24/Dec/2025 20:28:07] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:28:12,160 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 20:28:12,164 [INFO] 🔍 [_progress_callback] Book 3/3: 'The Familiar', metadata=found
+2025-12-24 20:28:12,164 [INFO] [3/3] ✅ The Familiar (quality: 1.00)
+2025-12-24 20:28:12,164 [INFO]    🖼️  Cover found
+2025-12-24 20:28:12,164 [INFO]    📝 Description added
+2025-12-24 20:28:12,164 [INFO] 🔍 [_save_enriched_books] Processing 3 books for saving...
+2025-12-24 20:28:12,164 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Secret History'
+2025-12-24 20:28:12,164 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata']
+2025-12-24 20:28:12,164 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: True
+2025-12-24 20:28:12,164 [INFO] 🔍 [_save_enriched_books] Merging metadata for 'The Secret History'...
+2025-12-24 20:28:12,164 [INFO] 🔍 [_save_enriched_books] AI metadata keys: ['title', 'subtitle', 'author', 'publisher', 'year', 'isbn', 'pages', 'genres', 'description', 'cover_url', 'confidence', 'sources', 'enrichment_source', 'enrichment_model', 'enrichment_date', 'original_query', 'quality_score']
+2025-12-24 20:28:12,164 [INFO] 🔍 [_save_enriched_books] AI metadata description present: True
+2025-12-24 20:28:12,165 [INFO] 🔍 [_save_enriched_books] AI metadata description: Under the influence of their charismatic classics professor, a group of clever, eccentric misfits at...
+2025-12-24 20:28:12,165 [INFO] 🔍 [_save_enriched_books] After merge, enriched keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata', 'cover_source', 'raw_categories', 'ai_enrichment']
+2025-12-24 20:28:12,165 [INFO] 🔍 [_save_enriched_books] After merge, enriched description present: True
+2025-12-24 20:28:12,165 [INFO] 🔍 [_save_enriched_books] After merge, enriched description: Under the influence of their charismatic classics professor, a group of clever, eccentric misfits at...
+2025-12-24 20:28:12,165 [INFO] 🔍 [_save_enriched_books] Found description for 'The Secret History': Under the influence of their charismatic classics professor, a group of clever, eccentric misfits at...
+2025-12-24 20:28:12,165 [INFO] 🔍 [_save_enriched_books] Existing description for 'The Secret History': Under the influence of their charismatic classics professor, a group of clever, eccentric misfits at...
+2025-12-24 20:28:12,166 [INFO] 🔍 [_save_enriched_books] Language check for 'The Secret History': title_has_cyrillic=False, desc_has_cyrillic=False, desc_matches_title=True, existing_desc_matches_title=True, has_citations=False, force=False
+2025-12-24 20:28:12,166 [INFO] 🔍 [_save_enriched_books] Should update description for 'The Secret History': False
+2025-12-24 20:28:12,166 [INFO] 🔍 Validating cover URL accessibility for 'The Secret History': https://covers.openlibrary.org/b/isbn/9780140167771-L.jpg...
+2025-12-24 20:28:12,706 [INFO] HTTP Request: HEAD https://covers.openlibrary.org/b/isbn/9780140167771-L.jpg "HTTP/1.1 302 Found"
+192.168.1.9 - - [24/Dec/2025 20:28:13] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:28:13,035 [INFO] 192.168.1.9 - - [24/Dec/2025 20:28:13] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:28:13,264 [INFO] HTTP Request: HEAD https://archive.org/download/olcovers662/olcovers662-L.zip/6623129-L.jpg "HTTP/1.1 302 Found"
+2025-12-24 20:28:13,799 [INFO] HTTP Request: HEAD https://ia600402.us.archive.org/view_archive.php?archive=/12/items/olcovers662/olcovers662-L.zip&file=6623129-L.jpg "HTTP/1.1 200 OK"
+2025-12-24 20:28:13,799 [INFO] ✅ Cover URL is accessible: https://covers.openlibrary.org/b/isbn/9780140167771-L.jpg... (content-type: image/jpeg)
+2025-12-24 20:28:13,801 [INFO] 🔍 [_save_enriched_books] Cover URL validation result for 'The Secret History': url_is_accessible=True, new_cover_url='https://covers.openlibrary.org/b/isbn/9780140167771-L.jpg...'
+[APP] Flask app factory completed; application is ready to serve.
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="read_file">
+<details>
+<summary>Tool use: **read_file**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+

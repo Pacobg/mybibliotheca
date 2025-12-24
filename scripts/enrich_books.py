@@ -749,16 +749,24 @@ class EnrichmentCommand:
                     existing_desc_matches_title = (has_cyrillic_title and existing_desc_has_cyrillic) or (not has_cyrillic_title and not existing_desc_has_cyrillic)
                     
                     logger.info(f"🔍 [_save_enriched_books] Language check for '{book_title}': title_has_cyrillic={has_cyrillic_title}, desc_has_cyrillic={desc_has_cyrillic}, desc_matches_title={desc_matches_title}, existing_desc_matches_title={existing_desc_matches_title}, has_citations={has_citations}, force={self.args.force}")
+                    logger.info(f"🔍 [_save_enriched_books] Description lengths: existing={len(existing_desc)}, new={len(description)}, diff={len(description) - len(existing_desc)}")
                     
                     # Update if:
                     # 1. No existing description, OR
                     # 2. Force flag is set, OR
                     # 3. Existing has citations (needs cleaning), OR
-                    # 4. New description matches title language AND (existing doesn't match OR new is significantly longer)
+                    # 4. New description matches title language AND:
+                    #    a. Existing doesn't match title language, OR
+                    #    b. New is significantly longer (more than 50 chars), OR
+                    #    c. New is longer (even slightly) - prefer AI-generated descriptions
                     should_update = (not existing_desc or 
                         self.args.force or 
                         has_citations or 
-                        (desc_matches_title and (not existing_desc_matches_title or len(description) > len(existing_desc) + 50)))
+                        (desc_matches_title and (
+                            not existing_desc_matches_title or 
+                            len(description) > len(existing_desc) + 50 or
+                            (len(description) > len(existing_desc) and existing_desc_matches_title)  # Prefer AI description if longer, even if existing matches
+                        )))
                     
                     logger.info(f"🔍 [_save_enriched_books] Should update description for '{book_title}': {should_update}")
                     
