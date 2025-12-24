@@ -281,7 +281,7 @@ class EnrichmentCommand:
                                 if datetime.now(enriched_time.tzinfo) - enriched_time < timedelta(hours=24):
                                     logger.info(f"⏭️  Skipping {title} - enriched recently ({last_enriched_at})")
                                     # Track skipped book
-                                    skipped_books_list.append({
+                                    self.skipped_books_list.append({
                                         'title': title,
                                         'id': book_id,
                                         'reason': f'Already enriched at {last_enriched_at}',
