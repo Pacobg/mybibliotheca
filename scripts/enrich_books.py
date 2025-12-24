@@ -789,12 +789,15 @@ class EnrichmentCommand:
                         logger.info(f"🌍 Setting language to 'bg' for Bulgarian book: {title}")
                 
                 # Save to database using book service
+                logger.info(f"🔍 [_save_enriched_books] Updates dictionary for '{book['title']}': {list(updates.keys())} (count: {len(updates)})")
                 if updates:
                     try:
                         # Log what we're about to update
-                        logger.debug(f"📝 Updating book '{book['title']}' with fields: {list(updates.keys())}")
+                        logger.info(f"📝 Updating book '{book['title']}' with fields: {list(updates.keys())}")
                         if 'cover_url' in updates:
                             logger.info(f"🖼️  Will update cover_url to: {updates['cover_url']}")
+                else:
+                    logger.warning(f"⚠️  [_save_enriched_books] No updates to save for '{book['title']}' - updates dictionary is empty")
                         
                         # Use book_service directly (not facade) for simpler updates
                         from app.services.kuzu_book_service import KuzuBookService
