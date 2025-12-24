@@ -705,10 +705,21 @@ class EnrichmentCommand:
             
             try:
                 # Merge AI metadata into book
+                logger.info(f"🔍 [_save_enriched_books] Merging metadata for '{book_title}'...")
+                logger.info(f"🔍 [_save_enriched_books] AI metadata keys: {list(book['ai_metadata'].keys())}")
+                logger.info(f"🔍 [_save_enriched_books] AI metadata description present: {'description' in book['ai_metadata']}")
+                if 'description' in book['ai_metadata']:
+                    logger.info(f"🔍 [_save_enriched_books] AI metadata description: {book['ai_metadata']['description'][:100] if book['ai_metadata']['description'] else 'None'}...")
+                
                 enriched = self.service.merge_metadata_into_book(
                     book_data=book,
                     ai_metadata=book['ai_metadata']
                 )
+                
+                logger.info(f"🔍 [_save_enriched_books] After merge, enriched keys: {list(enriched.keys())}")
+                logger.info(f"🔍 [_save_enriched_books] After merge, enriched description present: {'description' in enriched}")
+                if 'description' in enriched:
+                    logger.info(f"🔍 [_save_enriched_books] After merge, enriched description: {enriched['description'][:100] if enriched['description'] else 'None'}...")
                 
                 # Prepare update data
                 updates = {}
