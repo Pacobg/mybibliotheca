@@ -37303,3 +37303,436 @@ _**Agent (model composer-1, mode Agent)**_
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+не се визуаизират
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Проверявам как се сервират covers в приложението и дали има route за `/covers/`:
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "/covers/|covers|static.*cover" in "app" • 243 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app\services\metadata_providers\perplexity.py` | `* https://biblioman.chitanka.info/thumb/covers/.../xxx.1000.jpg` | L632 |
+| `app\services\metadata_providers\perplexity.py` | `* https://covers.openlibrary.org/b/isbn/...-L.jpg` | L668 |
+| `app\services\metadata_providers\perplexity.py` | `2. OpenLibrary (covers.openlibrary.org)` | L673 |
+| `app\services\metadata_providers\perplexity.py` | `r'https?://biblioman\.chitanka\.info/thumb/covers/[^\s\)]+\.(?:jpg\|jpeg\|png\|webp)',` | L729 |
+| `app\services\enrichment_service.py` | `self.download_covers = os.getenv('AI_COVER_DOWNLOAD', 'true').lower() == 'true'` | L106 |
+| `app\services\enrichment_service.py` | `f"download_covers=\{self.download_covers\}")` | L110 |
+| `app\services\enrichment_service.py` | `if not metadata.get('cover_url') and self.download_covers:` | L223 |
+| `app\services\enrichment_service.py` | `# OpenAI/Ollama cannot search for covers (no web search)` | L239 |
+| `app\services\enrichment_service.py` | `logger.debug("OpenAI/Ollama cannot search for covers (no web search capability)")` | L241 |
+| `app\services\enrichment_service.py` | `'covers_found': 0,` | L283 |
+| `app\services\enrichment_service.py` | `stats['covers_found'] += 1` | L305 |
+| `app\services\enrichment_service.py` | `logger.info(f"   Covers found: \{stats['covers_found']\}")` | L343 |
+| `app\services\enrichment_service.py` | `# Local covers (/covers/...) are always valid` | L373 |
+| `app\services\enrichment_service.py` | `if cover_url.startswith('/covers/'):` | L374 |
+| `app\services\enrichment_service.py` | `# If cover is required (e.g., --no-cover-only mode), only enrich books WITHOUT valid covers` | L455 |
+| `app\routes\book_routes.py` | `from app.utils.image_processing import process_image_from_url, process_image_from_filestorage, get_covers_dir` | L24 |
+| `app\routes\book_routes.py` | `if not cover_url.startswith('/covers/'):` | L720 |
+| `app\routes\book_routes.py` | `# Use unified metadata aggregator (already normalizes covers downstream)` | L1112 |
+| `app\routes\book_routes.py` | `# Only evaluate if both old and new are locally cached covers` | L3875 |
+| `app\routes\book_routes.py` | `fpath = get_covers_dir() / fname` | L3883 |
+| `app\routes\book_routes.py` | `nf = get_covers_dir() / new_cached_cover_url.split('/')[-1]` | L3900 |
+| `app\routes\book_routes.py` | `if old_cover_url and (old_cover_url.startswith('/covers/') or old_cover_url.startswith('/static/covers/')):` | L3926 |
+| `app\routes\book_routes.py` | `old_filepath = get_covers_dir() / old_filename` | L3929 |
+| `app\routes\book_routes.py` | `if old_cover_url and (old_cover_url.startswith('/covers/') or old_cover_url.startswith('/static/covers/')):` | L4002 |
+| `app\routes\book_routes.py` | `old_filepath = get_covers_dir() / old_filename` | L4005 |
+| `app\routes\book_routes.py` | `(current_cover.startswith('/covers/') and len(current_cover.split('/')[-1].split('.')[0]) == 36)):` | L5191 |
+| `app\routes\book_routes.py` | `if processed_cover and processed_cover.startswith('/covers/'):` | L5197 |
+| `app\routes\book_routes.py` | `# Use persistent covers directory in data folder` | L5851 |
+| `app\routes\book_routes.py` | `covers_dir = Path('/app/data/covers')` | L5853 |
+| `app\routes\book_routes.py` | `if not covers_dir.exists():` | L5856 |
+| `app\routes\book_routes.py` | `covers_dir = Path(data_dir) / 'covers'` | L5860 |
+| `app\routes\book_routes.py` | `covers_dir = base_dir / 'data' / 'covers'` | L5864 |
+| `app\routes\book_routes.py` | `covers_dir.mkdir(parents=True, exist_ok=True)` | L5866 |
+| `app\services\metadata_providers\openai_enricher.py` | `It can generate descriptions and parse metadata, but cannot search for covers or` | L6 |
+| `app\services\metadata_providers\openai_enricher.py` | `- No web search (cannot find covers or real-time information)` | L25 |
+| `app\services\metadata_providers\openai_enricher.py` | `NOTE: OpenAI/Ollama cannot search the web for covers.` | L362 |
+| `app\services\metadata_providers\openai_enricher.py` | `logger.warning("⚠️ OpenAI/Ollama provider cannot search for covers (no web search capability)")` | L365 |
+| `app\templates\import_books_progress.html` | `if (data.covers_downloaded !== undefined && data.covers_downloaded > 0) \{` | L592 |
+| `app\templates\import_books_progress.html` | `statsParts.push(`🖼️ $\{data.covers_downloaded\} корици изтеглени`);` | L593 |
+| `app\routes\import_routes.py` | `from app.utils.image_processing import process_image_from_url, process_image_from_filestorage, get_covers_dir` | L49 |
+| `app\routes\import_routes.py` | `if not simplified_book.cover_url or not simplified_book.cover_url.startswith('/covers/'):` | L2306 |
+| `app\routes\import_routes.py` | `- Handles missing covers and descriptions from Biblioman` | L4653 |
+| `app\routes\import_routes.py` | `covers_downloaded = descriptions_improved = not_found_count = 0` | L4804 |
+| `app\routes\import_routes.py` | `covers_downloaded += 1` | L4892 |
+| `app\routes\import_routes.py` | `'covers_downloaded': covers_downloaded,` | L5023 |
+| `app\routes\import_routes.py` | `'covers_downloaded': covers_downloaded,` | L5084 |
+| `app\routes\import_routes.py` | `'covers_downloaded': covers_downloaded,` | L5129 |
+| `app\simplified_book_service.py` | `if processed_cover and processed_cover.startswith('/covers/'):` | L471 |
+| `app\simplified_book_service.py` | `# Try multiple paths to find the correct covers directory` | L506 |
+| `app\simplified_book_service.py` | `covers_dir = None` | L507 |
+| `app\simplified_book_service.py` | `Path('/app/data/covers'),  # Docker path` | L509 |
+| `app\simplified_book_service.py` | `Path('./data/covers'),  # Relative path` | L510 |
+| `app\simplified_book_service.py` | `possible_paths.insert(0, Path(data_dir) / 'covers')` | L518 |
+| `app\simplified_book_service.py` | `possible_paths.append(base_dir / 'data' / 'covers')` | L525 |
+| `app\simplified_book_service.py` | `covers_dir = path` | L532 |
+| `app\simplified_book_service.py` | `if not covers_dir:` | L535 |
+| `app\simplified_book_service.py` | `covers_dir = possible_paths[0]` | L537 |
+| `app\simplified_book_service.py` | `covers_dir.mkdir(parents=True, exist_ok=True)` | L539 |
+| `app\simplified_book_service.py` | `filepath = covers_dir / filename` | L552 |
+| `app\simplified_book_service.py` | `final_cover_url = f"/covers/\{filename\}"` | L566 |
+| `app\services\metadata_providers\biblioman.py` | `# Format: https://biblioman.chitanka.info/thumb/covers/\{last_4_digits\}/\{chitanka_id\}-\{hash\}.1000.jpg` | L361 |
+| `app\services\metadata_providers\biblioman.py` | `# Example: https://biblioman.chitanka.info/thumb/covers/6/5/1/6/16516-61e2e079eca99.1000.jpg` | L362 |
+| `app\services\metadata_providers\biblioman.py` | `cover_url = f"https://biblioman.chitanka.info/thumb/covers/\{digits_path\}/\{base_filename\}.1000.jpg"` | L392 |
+| `app\services\metadata_providers\biblioman.py` | `cover_url = f"https://biblioman.chitanka.info/thumb/covers/\{digits_path\}/\{base_filename\}.1000.jpg"` | L407 |
+| `app\utils\image_processing.py` | `def get_covers_dir() -> Path:` | L26 |
+| `app\utils\image_processing.py` | `"""Return the covers directory, creating it if needed.` | L27 |
+| `app\utils\image_processing.py` | `- /app/data/covers (Docker)` | L30 |
+| `app\utils\image_processing.py` | `- \{DATA_DIR\}/covers if app.config.DATA_DIR is set` | L31 |
+| `app\utils\image_processing.py` | `- \{repo_root\}/data/covers as a last resort` | L32 |
+| `app\utils\image_processing.py` | `covers_dir = Path('/app/data/covers')` | L34 |
+| `app\utils\image_processing.py` | `if not covers_dir.exists():` | L35 |
+| `app\utils\image_processing.py` | `covers_dir = Path(data_dir) / 'covers'` | L38 |
+| `app\utils\image_processing.py` | `covers_dir = _get_base_dir() / 'data' / 'covers'` | L40 |
+| `app\utils\image_processing.py` | `covers_dir.mkdir(parents=True, exist_ok=True)` | L42 |
+| `app\utils\image_processing.py` | `return covers_dir` | L43 |
+| `app\utils\image_processing.py` | `- Prefer JPEG for photographic covers.` | L49 |
+| `app\utils\image_processing.py` | `"""Process image bytes with LANCZOS resampling and store into covers dir.` | L110 |
+| `app\utils\image_processing.py` | `Returns the relative URL like "/covers/<uuid>.jpg\|.png".` | L112 |
+| `app\utils\image_processing.py` | `covers_dir = get_covers_dir()` | L114 |
+| `app\utils\image_processing.py` | `out_path = covers_dir / filename` | L121 |
+| `app\utils\image_processing.py` | `return f"/covers/\{filename\}"` | L132 |
+| `app\utils\image_processing.py` | `Adds safety to prevent deadlock when a single Gunicorn worker tries to HTTP GET its own /covers/* resource.` | L143 |
+| `app\utils\image_processing.py` | `If the URL points to an already-local cover (relative or loopback host + /covers/ path), we short‑circuit.` | L144 |
+| `app\utils\image_processing.py` | `if url.startswith('/covers/'):` | L151 |
+| `app\utils\image_processing.py` | `if parsed.scheme in ('http', 'https') and parsed.hostname in ('127.0.0.1', 'localhost', '0.0.0.0') and '/covers/' in parsed.path:` | L157 |
+| `app\utils\image_processing.py` | `covers_dir = get_covers_dir()` | L159 |
+| `app\utils\image_processing.py` | `fname = parsed.path.split('/covers/')[-1]` | L160 |
+| `app\utils\image_processing.py` | `local_path = covers_dir / fname` | L161 |
+| `app\utils\image_processing.py` | `return f"/covers/\{fname\}"` | L164 |
+| `app\__init__.py` | `'serve_static', 'serve_covers', 'serve_uploads',` | L873 |
+| `app\__init__.py` | `or request.path.startswith('/covers/')` | L888 |
+| `app\__init__.py` | `'serve_static', 'serve_covers', 'serve_uploads',` | L906 |
+| `app\__init__.py` | `or request.path.startswith('/covers/')` | L914 |
+| `app\__init__.py` | `'serve_covers',` | L945 |
+| `app\__init__.py` | `or request.path.startswith('/covers/')` | L957 |
+| `app\__init__.py` | `@app.route('/covers/<path:filename>')` | L1040 |
+| `app\__init__.py` | `def serve_covers(filename):` | L1041 |
+| `app\__init__.py` | `# Try multiple paths to find the correct covers directory (same logic as simplified_book_service.py)` | L1047 |
+| `app\__init__.py` | `covers_dir = None` | L1048 |
+| `app\__init__.py` | `Path('/app/data/covers'),  # Docker path` | L1050 |
+| `app\__init__.py` | `Path('./data/covers'),  # Relative path` | L1051 |
+| `app\__init__.py` | `possible_paths.insert(0, Path(data_dir) / 'covers')` | L1058 |
+| `app\__init__.py` | `possible_paths.append(base_dir / 'data' / 'covers')` | L1065 |
+| `app\__init__.py` | `# Also check using get_covers_dir() logic to match where files are actually saved` | L1069 |
+| `app\__init__.py` | `from app.utils.image_processing import get_covers_dir` | L1071 |
+| `app\__init__.py` | `actual_covers_dir = get_covers_dir()` | L1072 |
+| `app\__init__.py` | `if actual_covers_dir.exists():` | L1073 |
+| `app\__init__.py` | `possible_paths.insert(0, actual_covers_dir)  # Prioritize the actual directory` | L1074 |
+| `app\__init__.py` | `logger.debug(f"Could not get covers_dir from image_processing: \{e\}")` | L1078 |
+| `app\__init__.py` | `covers_dir = str(path)` | L1083 |
+| `app\__init__.py` | `if not covers_dir:` | L1086 |
+| `app\__init__.py` | `covers_dir = str(possible_paths[0])` | L1088 |
+| `app\__init__.py` | `Path(covers_dir).mkdir(parents=True, exist_ok=True)` | L1089 |
+| `app\__init__.py` | `logger.info(f"🔍 [SERVE_COVERS] Serving '\{filename\}' from covers_dir='\{covers_dir\}'")` | L1094 |
+| `app\__init__.py` | `resp = _sfd(covers_dir, filename)` | L1098 |
+| `app\__init__.py` | `# Cache covers moderately; they can change if users update them` | L1099 |
+| `app\__init__.py` | `resp = _sfd(covers_dir, filename)` | L1102 |
+| `app\utils\book_search.py` | `base = f"https://covers.openlibrary.org/b/id/\{cover_i\}"` | L194 |
+| `app\utils\book_search.py` | `# Extract cover image (centralized via CoverService)` | L469 |
+| `app\templates\add_book.html` | `// Ensure proper parameters for Google Books covers` | L1122 |
+| `app\templates\onboarding\step2_site_config.html` | `<small class="text-muted d-block">A backup runs after imports and at the scheduled time. Backups include database, covers, uploads, and settings.</small>` | L201 |
+| `app\utils\placeholder_covers.py` | `series initials when no cover is available. Stored in the standard covers dir.` | L4 |
+| `app\utils\placeholder_covers.py` | `from .image_processing import get_covers_dir` | L14 |
+| `app\utils\placeholder_covers.py` | `Returns relative /covers/<file>.jpg` | L35 |
+| `app\utils\placeholder_covers.py` | `covers_dir = get_covers_dir()` | L84 |
+| `app\utils\placeholder_covers.py` | `out_path = covers_dir / filename` | L86 |
+| `app\utils\placeholder_covers.py` | `rel = f"/covers/\{filename\}"` | L92 |
+| `app\utils\book_utils.py` | `if 'covers.openlibrary.org' in url:` | L218 |
+| `app\utils\book_utils.py` | `photo_url = f"https://covers.openlibrary.org/a/id/\{photo_id\}-L.jpg"` | L839 |
+| `app\utils\book_utils.py` | `cover_url = f"https://covers.openlibrary.org/w/id/\{result['openlibrary_id']\}-L.jpg"` | L1366 |
+| `app\utils\book_utils.py` | `cover_url = f"https://covers.openlibrary.org/w/id/\{result['openlibrary_id']\}-L.jpg"` | L1515 |
+| `app\templates\stats\reading_journey.html` | `Click on book covers to view reading session details` | L164 |
+| `app\templates\settings\partials\data_backup_manager.html` | `<div class="col-6 col-md-2"><div class="p-2 border rounded text-center"><div class="fw-bold">\{{ backup_stats.covers_count \}}</div><div class="text-muted small">Covers</div></div></div>` | L10 |
+| `app\templates\settings\partials\data_backup_manager.html` | `<div class="col-6 col-md-2"><div class="p-2 border rounded text-center"><div class="fw-bold">\{{ backup_stats.covers_size_formatted \}}</div><div class="text-muted small">Images</div></div></div>` | L11 |
+| `app\templates\series\series_detail.html` | `<div class="dialog-footer"><button type="button" class="btn-plain" data-close>Close</button><button type="button" class="btn-plain primary" id="uploadCoverSubmit">Upload</button></div>` | L237 |
+| `app\templates\series\series_detail.html` | `const uploadBtn = document.getElementById('uploadCoverSubmit');` | L258 |
+| `app\templates\admin\simple_backup.html` | `<h5 class="card-title">\{{ backup_stats.covers_count \}}</h5>` | L78 |
+| `app\templates\admin\simple_backup.html` | `<h5 class="card-title">\{{ backup_stats.covers_size_formatted \}}</h5>` | L94 |
+| `app\templates\view_book_enhanced.html` | `showCoverSelectionModal(data.results);` | L2321 |
+| `app\templates\view_book_enhanced.html` | `function showCoverSelectionModal(results) \{` | L3066 |
+| `app\templates\view_book_enhanced.html` | `const resultsWithCovers = results.filter(result => \{` | L3068 |
+| `app\templates\view_book_enhanced.html` | `if (resultsWithCovers.length === 0) \{` | L3087 |
+| `app\templates\view_book_enhanced.html` | `<div class="modal fade" id="coverSelectionModal" tabindex="-1" aria-labelledby="coverSelectionModalLabel" aria-hidden="true">` | L3094 |
+| `app\templates\view_book_enhanced.html` | `<h5 class="modal-title" id="coverSelectionModalLabel">` | L3098 |
+| `app\templates\view_book_enhanced.html` | `$\{resultsWithCovers.map((result, index) => \{` | L3106 |
+| `app\templates\view_book_enhanced.html` | `const existingModal = document.getElementById('coverSelectionModal');` | L3147 |
+| `app\templates\view_book_enhanced.html` | `const modal = new bootstrap.Modal(document.getElementById('coverSelectionModal'));` | L3156 |
+| `app\templates\view_book_enhanced.html` | `document.getElementById('coverSelectionModal').addEventListener('hidden.bs.modal', function() \{` | L3198 |
+| `app\templates\view_book.html` | `onerror="this.onerror=null;this.src='\{{ url_for('static', filename='book_cover.png') \}}';">` | L323 |
+| `app\templates\view_book.html` | `<img src="\{{ url_for('static', filename='book_cover.png') \}}" alt="Book Cover" class="book-cover">` | L325 |
+| `app\templates\simple_import.html` | `Automatically fetch additional metadata (covers, descriptions, etc.) from Google Books and OpenLibrary APIs.` | L54 |
+| `app\templates\public_library.html` | `<img src="\{{ url_for('serve_static', filename='bookshelf.png') \}}" alt="Default cover" class="book-cover-shelf img-fluid">` | L101 |
+| `app\templates\index.html` | `onerror="this.onerror=null;this.src='\{{ url_for('serve_static', filename='book_cover.png') \}}';">` | L20 |
+| `app\templates\index.html` | `<img src="\{{ url_for('serve_static', filename='book_cover.png') \}}" alt="cover"` | L22 |
+| `app\templates\index.html` | `onerror="this.onerror=null;this.src='\{{ url_for('serve_static', filename='book_cover.png') \}}';">` | L45 |
+| `app\templates\index.html` | `<img src="\{{ url_for('serve_static', filename='book_cover.png') \}}" alt="cover"` | L47 |
+| `app\templates\index.html` | `onerror="this.onerror=null;this.src='\{{ url_for('serve_static', filename='book_cover.png') \}}';">` | L75 |
+| `app\templates\index.html` | `<img src="\{{ url_for('serve_static', filename='book_cover.png') \}}" alt="cover"` | L77 |
+| `app\templates\index.html` | `onerror="this.onerror=null;this.src='\{{ url_for('serve_static', filename='book_cover.png') \}}';">` | L103 |
+| `app\templates\index.html` | `<img src="\{{ url_for('serve_static', filename='book_cover.png') \}}" alt="cover"` | L105 |
+| `app\templates\base.html` | `We define 2x3 (portrait) for book/series covers here.` | L123 |
+| `app\static\js\library_perf.js` | `function enhanceCovers() \{` | L3 |
+| `app\static\js\library_perf.js` | `// Prioritize the first couple of covers for faster visual feedback` | L8 |
+| `app\static\js\library_perf.js` | `enhanceCovers();` | L45 |
+| `app\static\js\library_perf.js` | `enhanceCovers();` | L50 |
+| `app\static\default-book-cover-info.md` | `/Users/jeremiah/Documents/Python Projects/bibliotheca/app/static/default-book-cover.png` | L5 |
+| `app\services\unified_cover_manager.py` | `- Update operations that respect existing covers` | L47 |
+| `app\services\unified_cover_manager.py` | `self.openlibrary_pattern = re.compile(r'covers\.openlibrary\.org')` | L54 |
+| `app\services\unified_cover_manager.py` | `Handles both external URLs (https://...) and cached covers (/covers/uuid.jpg).` | L60 |
+| `app\services\unified_cover_manager.py` | `# Check for cached covers (local files)` | L72 |
+| `app\services\unified_cover_manager.py` | `if url.startswith('/covers/') or url.startswith('/static/covers/'):` | L73 |
+| `app\services\unified_cover_manager.py` | `return url  # These are valid cached covers` | L74 |
+| `app\services\unified_cover_manager.py` | `if validated_url.startswith('/covers/') or validated_url.startswith('/static/covers/'):` | L118 |
+| `app\services\simple_backup_service.py` | `self.covers_dir = self.data_dir / "covers"` | L92 |
+| `app\services\simple_backup_service.py` | `'covers_path': str(self.covers_dir),` | L336 |
+| `app\services\simple_backup_service.py` | `'covers_size': self._get_directory_size(self.covers_dir) if self.covers_dir.exists() else 0,` | L338 |
+| `app\services\simple_backup_service.py` | `covers_count = 0` | L372 |
+| `app\services\simple_backup_service.py` | `if self.covers_dir.exists():` | L373 |
+| `app\services\simple_backup_service.py` | `for file_path in self.covers_dir.rglob('*'):` | L374 |
+| `app\services\simple_backup_service.py` | `relative_path = file_path.relative_to(self.covers_dir)` | L376 |
+| `app\services\simple_backup_service.py` | `zipf.write(file_path, f"data/covers/\{relative_path\}")` | L377 |
+| `app\services\simple_backup_service.py` | `covers_count += 1` | L378 |
+| `app\services\simple_backup_service.py` | `logger.debug(f"Added cover to backup: data/covers/\{relative_path\}")` | L379 |
+| `app\services\simple_backup_service.py` | `logger.info(f"Backed up \{covers_count\} cover images")` | L381 |
+| `app\services\simple_backup_service.py` | `# Step 2: Make a pre-restore safety backup by moving aside and zipping (expanded to include covers/uploads/settings)` | L482 |
+| `app\services\simple_backup_service.py` | `# Create a zip snapshot in backups including covers/uploads/settings` | L494 |
+| `app\services\simple_backup_service.py` | `# Add covers` | L515 |
+| `app\services\simple_backup_service.py` | `if self.covers_dir.exists():` | L516 |
+| `app\services\simple_backup_service.py` | `for file_path in self.covers_dir.rglob('*'):` | L517 |
+| `app\services\simple_backup_service.py` | `rel = file_path.relative_to(self.covers_dir)` | L519 |
+| `app\services\simple_backup_service.py` | `zipf.write(file_path, f"data/covers/\{rel\}")` | L520 |
+| `app\services\simple_backup_service.py` | `# Restore cover images from static/covers` | L610 |
+| `app\services\simple_backup_service.py` | `covers_source = static_source_path / "covers"` | L611 |
+| `app\services\simple_backup_service.py` | `if covers_source.exists():` | L612 |
+| `app\services\simple_backup_service.py` | `covers_restored = 0` | L613 |
+| `app\services\simple_backup_service.py` | `self.covers_dir.mkdir(parents=True, exist_ok=True)` | L614 |
+| `app\services\simple_backup_service.py` | `for file_path in covers_source.rglob('*'):` | L616 |
+| `app\services\simple_backup_service.py` | `relative_path = file_path.relative_to(covers_source)` | L618 |
+| `app\services\simple_backup_service.py` | `target_path = self.covers_dir / relative_path` | L619 |
+| `app\services\simple_backup_service.py` | `covers_restored += 1` | L623 |
+| `app\services\simple_backup_service.py` | `logger.info(f"Restored \{covers_restored\} cover images from legacy backup")` | L626 |
+| `app\services\simple_backup_service.py` | `# Restore cover images from data/covers` | L649 |
+| `app\services\simple_backup_service.py` | `covers_source = data_source_path / "covers"` | L650 |
+| `app\services\simple_backup_service.py` | `if covers_source.exists():` | L651 |
+| `app\services\simple_backup_service.py` | `covers_restored = 0` | L652 |
+| `app\services\simple_backup_service.py` | `self.covers_dir.mkdir(parents=True, exist_ok=True)` | L653 |
+| `app\services\simple_backup_service.py` | `for file_path in covers_source.rglob('*'):` | L655 |
+| `app\services\simple_backup_service.py` | `relative_path = file_path.relative_to(covers_source)` | L657 |
+| `app\services\simple_backup_service.py` | `target_path = self.covers_dir / relative_path` | L658 |
+| `app\services\simple_backup_service.py` | `covers_restored += 1` | L662 |
+| `app\services\simple_backup_service.py` | `logger.info(f"Restored \{covers_restored\} cover images")` | L665 |
+| `app\services\simple_backup_service.py` | `covers_size = self._get_directory_size(self.covers_dir) if self.covers_dir.exists() else 0` | L1051 |
+| `app\services\simple_backup_service.py` | `covers_count = len(list(self.covers_dir.rglob('*'))) if self.covers_dir.exists() else 0` | L1053 |
+| `app\services\simple_backup_service.py` | `covers_size_formatted = f"\{covers_size / (1024 * 1024):.1f\} MB" if covers_size > 0 else "0 MB"` | L1056 |
+| `app\services\simple_backup_service.py` | `'covers_size_formatted': covers_size_formatted,` | L1065 |
+| `app\services\simple_backup_service.py` | `'covers_count': covers_count,` | L1067 |
+| `app\services\simple_backup_service.py` | `'covers_size_formatted': covers_size_formatted,` | L1097 |
+| `app\services\simple_backup_service.py` | `'covers_count': covers_count,` | L1099 |
+| `app\services\opds_sync_service.py` | `if isinstance(cover_url, str) and cover_url.startswith("/covers/"):` | L727 |
+| `app\services\kuzu_series_service.py` | `# A custom series cover is purely a series-level visual override. Book covers` | L29 |
+| `app\services\cover_service.py` | `class CoverService:` | L108 |
+| `app\services\cover_service.py` | `"""Unified facade for selecting & caching book covers.` | L109 |
+| `app\services\cover_service.py` | `cover_service = CoverService()` | L363 |
+| `app\services\cover_service.py` | `__all__ = ['cover_service', 'CoverService', 'CoverResult']` | L365 |
+| `app\services\audiobookshelf_import_service.py` | `"""Download ABS cover with auth headers and store under /covers; return local URL.` | L281 |
+| `app\services\audiobookshelf_import_service.py` | `# Pick covers dir similar to simplified service (works without Flask app context)` | L306 |
+| `app\services\audiobookshelf_import_service.py` | `covers_dir = Path('/app/data/covers')` | L307 |
+| `app\services\audiobookshelf_import_service.py` | `if not covers_dir.exists():` | L308 |
+| `app\services\audiobookshelf_import_service.py` | `covers_dir = Path(data_dir) / 'covers'` | L312 |
+| `app\services\audiobookshelf_import_service.py` | `covers_dir = Path(__file__).parent.parent.parent / 'data' / 'covers'` | L314 |
+| `app\services\audiobookshelf_import_service.py` | `covers_dir.mkdir(parents=True, exist_ok=True)` | L315 |
+| `app\services\audiobookshelf_import_service.py` | `out_path = covers_dir / filename` | L366 |
+| `app\services\audiobookshelf_import_service.py` | `return f"/covers/\{filename\}"` | L372 |
+| `app\routes\series_routes.py` | `from app.utils.image_processing import process_image_from_filestorage, get_covers_dir` | L14 |
+| `app\routes\series_routes.py` | `# Only remove previous custom (user) cover file if replaced. We never touch inferred (book) covers.` | L140 |
+| `app\routes\series_routes.py` | `if old_custom and old_custom.startswith('/covers/'):` | L150 |
+| `app\routes\series_routes.py` | `old_path = get_covers_dir() / fname` | L153 |
+| `app\routes\series_routes.py` | `if old_custom and isinstance(old_custom, str) and old_custom.startswith('/covers/'):` | L252 |
+| `app\routes\series_routes.py` | `from app.utils.image_processing import get_covers_dir` | L254 |
+| `app\routes\series_routes.py` | `p = get_covers_dir() / old_custom.split('/')[-1]` | L255 |
+| `app\utils.py` | `if cover_url and 'covers.openlibrary.org' in cover_url:` | L57 |
+| `app\utils.py` | `photo_url = f"https://covers.openlibrary.org/a/id/\{photo_id\}-L.jpg"` | L184 |
+| `app\utils.py` | `# Place covers with high-quality resampling` | L527 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам route-а за `/covers/` и дали covers се записват на правилното място:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/__init__.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам къде се записват covers в enrichment скрипта:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проблем: covers се записват в `covers/`, а route-ът търси в `data/covers/`. Използваме същата логика като `get_covers_dir()`:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 4, lines removed: 4
+
+```diff
+@@ -958,8 +958,8 @@
+                          
+                          # Get the covers directory (once, outside loop)
+-                         covers_dir = Path('covers')
+-                         if not covers_dir.exists():
+-                             covers_dir.mkdir(parents=True, exist_ok=True)
+-                             logger.info(f"📁 Created covers directory: {covers_dir.absolute()}")
++                         # Use the same logic as get_covers_dir() to ensure consistency
++                         from app.utils.image_processing import get_covers_dir
++                         covers_dir = get_covers_dir()
++                         logger.info(f"📁 Using covers directory: {covers_dir.absolute()}")
+                          
+                          # Browser-like headers to avoid 403 Forbidden
+```
+
+</details>
+
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix: Use get_covers_dir() instead of Path('covers') to ensure covers are saved in the correct location (data/covers/) that Flask can serve" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix: Use get_covers_dir() instead of Path('covers') to ensure covers are saved in the correct location (data/covers/) that Flask can serve" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 2780bdc] Fix: Use get_covers_dir() instead of Path('covers') to ensure covers are saved in the correct location (data/covers/) that Flask can serve
+ 2 files changed, 679 insertions(+), 4 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   68347df..2780bdc  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправих проблема. Covers се записваха в `covers/` (относителен път), а Flask route-ът търси в `data/covers/`.
+
+Сега използвам `get_covers_dir()`, което гарантира запис в правилната директория, която Flask може да сервира.
+
+**За вече изтеглените covers:**
+Ако има covers в `covers/` (в root директорията), преместете ги в `data/covers/`:
+
+```bash
+# На сървъра
+mv covers/* data/covers/ 2>/dev/null || true
+rmdir covers 2>/dev/null || true
+```
+
+Или просто изтрийте старите и стартирайте enrichment отново — новите covers ще се записват на правилното място.
+
+Издърпайте промените (`git pull`) и опитайте отново. Covers трябва да се визуализират правилно сега.
+
+---
+

@@ -399,12 +399,31 @@ class EnrichmentCommand:
                                 cover_url = book_dict.get('cover_url', '')
                                 
                                 # Check if cover URL is valid:
-                                # 1. Must start with http:// or https://
-                                # 2. Must end with image extension (.jpg, .jpeg, .png, .webp, .gif) OR
+                                # 1. Local covers (/covers/...) are always valid (served by Flask)
+                                # 2. Must start with http:// or https:// for external URLs
+                                # 3. Must end with image extension (.jpg, .jpeg, .png, .webp, .gif) OR
                                 #    contain image extension in path (for URLs with query params)
-                                # 3. Exclude cache URLs that don't end with proper extension (broken cache URLs)
+                                # 4. Exclude cache URLs that don't end with proper extension (broken cache URLs)
                                 has_valid_cover = False
-                                if cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')):
+                                
+                                # Local covers (/covers/...) are always valid - they're served by Flask
+                                if cover_url and cover_url.startswith('/covers/'):
+                                    # Verify the file actually exists
+                                    try:
+                                        from app.utils.image_processing import get_covers_dir
+                                        covers_dir = get_covers_dir()
+                                        filename = cover_url.split('/covers/')[-1]
+                                        cover_path = covers_dir / filename
+                                        if cover_path.exists() and cover_path.is_file():
+                                            has_valid_cover = True
+                                            logger.info(f"🔍 [_get_books_to_enrich] ✅ Local cover exists: {cover_url}")
+                                        else:
+                                            logger.info(f"🔍 [_get_books_to_enrich] ⚠️  Local cover file not found: {cover_path}")
+                                    except Exception as e:
+                                        logger.debug(f"🔍 [_get_books_to_enrich] Could not verify local cover: {e}")
+                                
+                                # External URLs (http/https)
+                                elif cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')):
                                     cover_url_lower = cover_url.lower()
                                     image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
                                     
