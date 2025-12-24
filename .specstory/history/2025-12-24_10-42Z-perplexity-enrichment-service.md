@@ -17837,3 +17837,169 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+да добавим всичко в git main за да мога да го сваля на сървъра
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Проверявам за непуснати промени и ги добавям в git main:
+
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git status</summary>
+
+```bash
+git status
+```
+
+```
+On branch main
+Your branch is up to date with 'origin/main'.
+
+nothing to commit, working tree clean
+
+```
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A</summary>
+
+```bash
+git add -A
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+
+```
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git status</summary>
+
+```bash
+git status
+```
+
+```
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes to be committed:
+  (use "git restore --staged &lt;file&gt;..." to unstage)
+	modified:   .specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md
+
+
+```
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git commit -m "Complete AI enrichment integration: Perplexity support, metadata page UI, and enrichment tracking"</summary>
+
+```bash
+git commit -m "Complete AI enrichment integration: Perplexity support, metadata page UI, and enrichment tracking"
+```
+
+```
+[main 6d7da16] Complete AI enrichment integration: Perplexity support, metadata page UI, and enrichment tracking
+ 1 file changed, 1301 insertions(+), 14 deletions(-)
+
+```
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git push origin main</summary>
+
+```bash
+git push origin main
+```
+
+```
+To https://github.com/Pacobg/mybibliotheca.git
+   cb43398..6d7da16  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Всички промени са качени в git main. Проверявам дали има още нещо:
+
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git log --oneline -5</summary>
+
+```bash
+git log --oneline -5
+```
+
+```
+6d7da16 Complete AI enrichment integration: Perplexity support, metadata page UI, and enrichment tracking
+cb43398 Complete enrichment tracking: add custom_metadata parsing and skip recently enriched books in all queries
+118326f Add custom_metadata to all enrichment queries to support tracking recently enriched books
+792dd51 Fix enrichment tracking: use custom_metadata field to track enriched books and skip recently enriched books
+b9a74cd Add tracking for enriched books to avoid re-enriching them within 24 hours
+
+```
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git status</summary>
+
+```bash
+git status
+```
+
+```
+On branch main
+Your branch is up to date with 'origin/main'.
+
+nothing to commit, working tree clean
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+

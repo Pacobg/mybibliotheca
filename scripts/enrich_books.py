@@ -277,7 +277,14 @@ class EnrichmentCommand:
                             try:
                                 enriched_time = datetime.fromisoformat(last_enriched_at.replace('Z', '+00:00'))
                                 if datetime.now(enriched_time.tzinfo) - enriched_time < timedelta(hours=24):
-                                    logger.debug(f"⏭️  Skipping {title} - enriched recently ({last_enriched_at})")
+                                    logger.info(f"⏭️  Skipping {title} - enriched recently ({last_enriched_at})")
+                                    # Track skipped book
+                                    skipped_books_list.append({
+                                        'title': title,
+                                        'id': book_id,
+                                        'reason': f'Already enriched at {last_enriched_at}',
+                                        'skipped_at': datetime.now().isoformat()
+                                    })
                                     continue
                             except Exception as e:
                                 logger.debug(f"Could not parse enrichment timestamp: {e}")

@@ -344,7 +344,7 @@ def start_enrichment():
         if not current_user.is_admin:
             return jsonify({'error': 'Admin access required'}), 403
         
-        limit = int(request.form.get('limit', 100))
+        limit = int(request.form.get('limit', 5))  # Default to 5 for testing
         no_cover_only = request.form.get('no_cover_only', 'false').lower() == 'true'
         
         # Check if enrichment is already running
@@ -370,7 +370,9 @@ def start_enrichment():
                     'no_cover_only': no_cover_only,
                     'processed': 0,
                     'enriched': 0,
-                    'failed': 0
+                    'failed': 0,
+                    'enriched_books': [],  # Track which books were enriched
+                    'skipped_books': []   # Track which books were skipped (already enriched)
                 }
                 with open(enrichment_status_file, 'w') as f:
                     json.dump(status, f)
