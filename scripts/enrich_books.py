@@ -716,6 +716,7 @@ class EnrichmentCommand:
                 # Update description if missing or improved
                 if enriched.get('description'):
                     description = enriched['description']
+                    logger.info(f"🔍 [_save_enriched_books] Found description for '{book_title}': {description[:100]}...")
                     # Remove citation markers like [3][5][7][9] before saving
                     import re
                     description = re.sub(r'\[\d+\]', '', description)
@@ -723,6 +724,7 @@ class EnrichmentCommand:
                     description = re.sub(r'\s+', ' ', description).strip()
                     
                     existing_desc = book.get('description', '')
+                    logger.info(f"🔍 [_save_enriched_books] Existing description for '{book_title}': {existing_desc[:100] if existing_desc else 'None'}...")
                     # Check if existing description has citations
                     has_citations = bool(re.search(r'\[\d+\]', existing_desc))
                     
@@ -735,23 +737,32 @@ class EnrichmentCommand:
                     existing_desc_has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in existing_desc) if existing_desc else False
                     existing_desc_matches_title = (has_cyrillic_title and existing_desc_has_cyrillic) or (not has_cyrillic_title and not existing_desc_has_cyrillic)
                     
+                    logger.info(f"🔍 [_save_enriched_books] Language check for '{book_title}': title_has_cyrillic={has_cyrillic_title}, desc_has_cyrillic={desc_has_cyrillic}, desc_matches_title={desc_matches_title}, existing_desc_matches_title={existing_desc_matches_title}, has_citations={has_citations}, force={self.args.force}")
+                    
                     # Update if:
                     # 1. No existing description, OR
                     # 2. Force flag is set, OR
                     # 3. Existing has citations (needs cleaning), OR
                     # 4. New description matches title language AND (existing doesn't match OR new is significantly longer)
-                    if (not existing_desc or 
+                    should_update = (not existing_desc or 
                         self.args.force or 
                         has_citations or 
-                        (desc_matches_title and (not existing_desc_matches_title or len(description) > len(existing_desc) + 50))):
+                        (desc_matches_title and (not existing_desc_matches_title or len(description) > len(existing_desc) + 50)))
+                    
+                    logger.info(f"🔍 [_save_enriched_books] Should update description for '{book_title}': {should_update}")
+                    
+                    if should_update:
                         if desc_matches_title or not existing_desc:
                             updates['description'] = description
+                            logger.info(f"✅ [_save_enriched_books] Added description to updates for '{book_title}'")
                             if has_citations:
                                 logger.info(f"🧹 Cleaning description citations for: {book['title']}")
                             if not desc_matches_title and existing_desc:
                                 logger.warning(f"⚠️  Description language doesn't match title for '{book['title']}' - but updating anyway (no existing or force)")
                         else:
                             logger.warning(f"🚫 Rejecting description for '{book['title']}': language doesn't match title (title is {'Bulgarian' if has_cyrillic_title else 'English'}, desc is {'Bulgarian' if desc_has_cyrillic else 'English'})")
+                else:
+                    logger.info(f"🔍 [_save_enriched_books] No description in enriched data for '{book_title}'")
                 
                 # Update cover_url if missing or force update
                 # Only update if new cover_url is a valid URL (http/https), not a local path
