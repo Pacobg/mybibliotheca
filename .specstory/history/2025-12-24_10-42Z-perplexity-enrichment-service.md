@@ -26875,3 +26875,275 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 18:56:01,932 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 18:56:01] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:56:01,973 [INFO] 192.168.1.9 - - [24/Dec/2025 18:56:01] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:56:01,994 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 18:56:01,994 [INFO] ⚙️  Configuration:
+2025-12-24 18:56:01,994 [INFO]    Limit: 5
+2025-12-24 18:56:01,994 [INFO]    Force: False
+2025-12-24 18:56:01,994 [INFO]    Dry run: False
+2025-12-24 18:56:01,994 [INFO]    Min quality: 0.3
+2025-12-24 18:56:01,994 [INFO]    No cover only: True (only books without covers)
+2025-12-24 18:56:01,994 [INFO] 📖 Querying database for books...
+2025-12-24 18:56:01,994 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 18:56:01,994 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 18:56:02,003 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 18:56:02,006 [INFO] 🔍 [_get_books_to_enrich] 'The Secret History': cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 18:56:02,006 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 18:56:02,006 [INFO] ⏭️  Skipping book with valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+2025-12-24 18:56:02,010 [INFO] 🔍 [_get_books_to_enrich] 'The Secret Garden': cover_url='https://knigabg.com/pix/28162.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 18:56:02,010 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 18:56:02,011 [INFO] ⏭️  Skipping book with valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 18:56:02,015 [INFO] 🔍 [_get_books_to_enrich] 'The Priory of the Orange Tree (The Roots of Chaos, #1)': cover_url='https://images.thenile.io/r1000/9781408883358.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 18:56:02,015 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 18:56:02,015 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 18:56:02,019 [INFO] 🔍 [_get_books_to_enrich] 'The Familiar': cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 18:56:02,019 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 18:56:02,019 [INFO] ⏭️  Skipping book with valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 18:56:02,022 [INFO] 🔍 [_get_books_to_enrich] 'The Costume History': cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401...', is_cache_url=True, ends_with_extension=True, contains_extension=False
+2025-12-24 18:56:02,023 [INFO] 🔍 [_get_books_to_enrich] Cache URL analysis: has_isbn_in_path=True, has_numeric_path=False, filename_is_isbn=True, path_segments=['9', '7', '9783836555401']
+2025-12-24 18:56:02,023 [INFO] 🔍 [_get_books_to_enrich] ❌ Cache URL invalid: 'https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401...' - ends_with_extension=True, has_isbn_in_path=True, has_numeric_path=False, filename_is_isbn=True - marking as INVALID
+2025-12-24 18:56:02,023 [INFO] ✅ Added book without valid cover: The Costume History (cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f...')
+2025-12-24 18:56:02,023 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 18:56:02,023 [INFO] 📊 Statistics: 4 books WITH valid cover URLs (skipped)
+2025-12-24 18:56:02,023 [INFO] 📊 Statistics: 1 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 18:56:02,023 [INFO] ✅ Found 1 books to enrich
+2025-12-24 18:56:02,023 [INFO]
+📚 Found 1 books to enrich
+2025-12-24 18:56:02,023 [INFO]
+🚀 Starting enrichment...
+2025-12-24 18:56:02,023 [INFO]    Estimated time: ~0.0 minutes
+2025-12-24 18:56:02,023 [INFO]    Estimated cost: ~$0.00
+2025-12-24 18:56:02,023 [INFO] 🔍 [_progress_callback] Book 1/1: 'The Costume History', metadata=None
+2025-12-24 18:56:02,023 [WARNING] [1/1] ❌ The Costume History - No metadata found
+2025-12-24 18:56:02,024 [INFO] 🔍 [_progress_callback] Book data: title='The Costume History', author='Racinet', cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401.jpg', description=present
+2025-12-24 18:56:02,024 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 18:56:02,024 [INFO] 📊 Tracked 0 enriched and 0 skipped books
+2025-12-24 18:56:02,024 [INFO]
+============================================================
+2025-12-24 18:56:02,024 [INFO] ENRICHMENT REPORT
+2025-12-24 18:56:02,024 [INFO] ============================================================
+2025-12-24 18:56:02,024 [INFO] 📊 Statistics:
+2025-12-24 18:56:02,024 [INFO]    Books checked: 1
+2025-12-24 18:56:02,024 [INFO]    Books enriched: 0
+2025-12-24 18:56:02,024 [INFO]    Books failed: 1
+2025-12-24 18:56:02,024 [INFO]    Success rate: 0.0%
+2025-12-24 18:56:02,024 [INFO]
+📝 Content:
+2025-12-24 18:56:02,025 [INFO]    Covers found: 0
+2025-12-24 18:56:02,025 [INFO]    Descriptions added: 0
+2025-12-24 18:56:02,025 [INFO]
+⏱️  Performance:
+2025-12-24 18:56:02,025 [INFO]    Duration: 0.0s
+2025-12-24 18:56:02,025 [INFO]    Speed: 252100.8 books/min
+2025-12-24 18:56:02,025 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 18:56:02,025 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 18:56:07] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:56:07,011 [INFO] 192.168.1.9 - - [24/Dec/2025 18:56:07] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Системата правилно идентифицира "The Costume History" като книга без валиден cover URL и я добавя за обогатяване. Обогатяването не работи — `metadata=None` и не виждам логове от `enrich_single_book`. Проверявам защо:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "\[enrich_batch\]|Processing book|Book.*metadata=" in "app/services/enrichment_service.py" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [enrich_batch] Processing book \{i\}/\{len(books)\}: '\{book_title\}' (force=\{force\}, require_cover=\{require_cover\})")` | L293 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [enrich_batch] Book \{i\}/\{len(books)\} '\{book_title\}': metadata=\{'found' if metadata else 'None'\}")` | L299 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Не виждам логове от `enrich_batch` или `enrich_single_book` — вероятно кодът не е обновен на сървъра. Вероятно `_has_sufficient_data` връща `True` и пропуска книгата преди обогатяване. Проверявам логиката в `_has_sufficient_data`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Special case: cache URLs|has_cover = ends_with_extension" in "app/services/enrichment_service.py" • 3 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `# Special case: cache URLs must end with extension to be valid` | L381 |
+| `app/services/enrichment_service.py` | `has_cover = ends_with_extension` | L385 |
+| `app/services/enrichment_service.py` | `has_cover = ends_with_extension or contains_extension` | L388 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Логиката в `_has_sufficient_data` не е обновена с проверката за ISBN. Обновявам я да съответства на тази в `scripts/enrich_books.py`:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 28, lines removed: 3
+
+```diff
+@@ -381,7 +381,32 @@
+              # Special case: cache URLs must end with extension to be valid
+              # Broken cache URLs like "cache/926507dc7f..." are invalid
+-             if '/cache/' in cover_url:
+-                 # Cache URLs must end with extension
+-                 has_cover = ends_with_extension
++             # Also check for suspicious patterns like ISBN numbers in path
++             is_cache_url = '/cache/' in cover_url
++             
++             if is_cache_url:
++                 # Cache URLs must end with extension AND not contain suspicious patterns
++                 # Suspicious patterns: ISBN numbers (13 digits starting with 978 or 979) in path
++                 import re
++                 # Check for ISBN in path (can be between / or at end before extension)
++                 has_isbn_in_path = bool(re.search(r'/(978|979)\d{10}(/|\.)', cover_url))
++                 
++                 # Also check if filename itself is an ISBN (13 digits)
++                 path_after_cache = cover_url.split('/cache/')[-1] if '/cache/' in cover_url else ''
++                 path_segments = [s for s in path_after_cache.split('/') if s]
++                 if path_segments:
++                     # Remove extension from last segment
++                     last_seg = path_segments[-1]
++                     for ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif']:
++                         if last_seg.lower().endswith(ext):
++                             last_seg = last_seg[:-len(ext)]
++                             break
++                     filename_is_isbn = bool(re.match(r'^(978|979)\d{10}$', last_seg))
++                 else:
++                     filename_is_isbn = False
++                 
++                 # Check if path segments are mostly single digits (suspicious pattern like /9/7/9783836555401)
++                 has_numeric_path = len(path_segments) &gt; 2 and all(len(seg) &lt;= 2 and seg.isdigit() for seg in path_segments[:-1])
++                 
++                 has_cover = ends_with_extension and not has_isbn_in_path and not has_numeric_path and not filename_is_isbn
+              else:
+                  # Non-cache URLs: check if ends with extension or contains it before query params
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `app/services/enrichment_service.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Update _has_sufficient_data to use same ISBN detection logic as _get_books_to_enrich" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Update _has_sufficient_data to use same ISBN detection logic as _get_books_to_enrich" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 33116e3] Update _has_sufficient_data to use same ISBN detection logic as _get_books_to_enrich
+ 2 files changed, 350 insertions(+), 6 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   76ffd1c..33116e3  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Обнових логиката в `_has_sufficient_data` да използва същата проверка за ISBN като в `_get_books_to_enrich`. Сега системата трябва да идентифицира правилно cache URL-ите с ISBN като невалидни и в двата места.
+
+Промените са качени в git main. Опитайте отново и споделете резултатите — сега системата трябва да:
+1. Идентифицира "The Costume History" като книга без валиден cover URL (заради ISBN в пътя)
+2. Да я обогати с правилния cover URL от Perplexity
+3. Да покаже логове от `enrich_single_book` и `_has_sufficient_data` за по-добра видимост
+
+Ако все още не виждате логове от `enrich_single_book`, вероятно кодът не е обновен на сървъра или има проблем с кеша. Логовете ще покажат какво точно се случва.
+
+---
+

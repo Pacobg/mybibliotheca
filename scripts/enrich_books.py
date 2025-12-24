@@ -659,8 +659,16 @@ class EnrichmentCommand:
         
         saved_count = 0
         
+        logger.info(f"🔍 [_save_enriched_books] Processing {len(books)} books for saving...")
+        
         for book in books:
+            book_title = book.get('title', 'Unknown')
+            logger.info(f"🔍 [_save_enriched_books] Processing book: '{book_title}'")
+            logger.info(f"🔍 [_save_enriched_books] Book keys: {list(book.keys())}")
+            logger.info(f"🔍 [_save_enriched_books] Has ai_metadata: {'ai_metadata' in book}")
+            
             if 'ai_metadata' not in book:
+                logger.warning(f"⚠️  [_save_enriched_books] Skipping '{book_title}' - no ai_metadata found")
                 continue
             
             try:
