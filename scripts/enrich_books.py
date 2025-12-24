@@ -468,7 +468,14 @@ class EnrichmentCommand:
                                             # Quick accessibility check (timeout 3 seconds)
                                             try:
                                                 import httpx
-                                                with httpx.Client(timeout=3.0, follow_redirects=True) as client:
+                                                # Browser-like headers to avoid 403 Forbidden
+                                                browser_headers = {
+                                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                                                    'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                                                    'Accept-Language': 'en-US,en;q=0.9',
+                                                    'Referer': 'https://www.google.com/',
+                                                }
+                                                with httpx.Client(timeout=3.0, follow_redirects=True, headers=browser_headers) as client:
                                                     response = client.head(cover_url)
                                                     if response.status_code == 200:
                                                         content_type = response.headers.get('content-type', '').lower()
@@ -838,8 +845,15 @@ class EnrichmentCommand:
                         url_is_accessible = False
                         try:
                             import httpx
+                            # Browser-like headers to avoid 403 Forbidden
+                            browser_headers = {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                                'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                                'Accept-Language': 'en-US,en;q=0.9',
+                                'Referer': 'https://www.google.com/',
+                            }
                             logger.info(f"🔍 Validating cover URL accessibility for '{book['title']}': {new_cover_url[:80]}...")
-                            with httpx.Client(timeout=5.0, follow_redirects=True) as client:
+                            with httpx.Client(timeout=5.0, follow_redirects=True, headers=browser_headers) as client:
                                 response = client.head(new_cover_url)
                                 if response.status_code == 200:
                                     content_type = response.headers.get('content-type', '').lower()
@@ -871,25 +885,34 @@ class EnrichmentCommand:
                         logger.info(f"🔍 [_save_enriched_books] Cover URL validation result for '{book['title']}': url_is_accessible={url_is_accessible}, new_cover_url='{new_cover_url[:80] if new_cover_url else 'None'}...'")
                         
                         # Only try to download if URL is accessible
-                        if url_is_accessible:
-                            logger.info(f"🔍 [_save_enriched_books] Starting cover download for '{book['title']}': {new_cover_url[:80]}...")
-                            try:
-                                # Download and save cover image directly using requests
-                                # This avoids Flask app context issues
-                                import requests
-                                import uuid
-                                from pathlib import Path
-                                
-                                # Get the covers directory
-                                covers_dir = Path('covers')
-                                if not covers_dir.exists():
-                                    covers_dir.mkdir(parents=True, exist_ok=True)
-                                    logger.info(f"📁 Created covers directory: {covers_dir.absolute()}")
-                                
-                                # Download the image
-                                logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
-                                response = requests.get(new_cover_url, timeout=10, stream=True)
-                                response.raise_for_status()
+                        # Try to download cover - don't rely on HEAD validation alone
+                        # Many servers block HEAD but allow GET
+                        logger.info(f"🔍 [_save_enriched_books] Starting cover download for '{book['title']}': {new_cover_url[:80]}...")
+                        try:
+                            # Download and save cover image directly using requests
+                            # This avoids Flask app context issues
+                            import requests
+                            import uuid
+                            from pathlib import Path
+                            
+                            # Browser-like headers to avoid 403 Forbidden
+                            headers = {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                                'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                                'Accept-Language': 'en-US,en;q=0.9',
+                                'Referer': 'https://www.google.com/',
+                            }
+                            
+                            # Get the covers directory
+                            covers_dir = Path('covers')
+                            if not covers_dir.exists():
+                                covers_dir.mkdir(parents=True, exist_ok=True)
+                                logger.info(f"📁 Created covers directory: {covers_dir.absolute()}")
+                            
+                            # Download the image with browser headers
+                            logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
+                            response = requests.get(new_cover_url, timeout=10, stream=True, headers=headers)
+                            response.raise_for_status()
                                 
                                 # Check content type
                                 content_type = response.headers.get('content-type', '').lower()
@@ -936,11 +959,10 @@ class EnrichmentCommand:
                                         logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
                                 else:
                                     logger.warning(f"⚠️  Failed to download cover image for '{book['title']}': {local_cover_path}")
+                            except requests.exceptions.HTTPError as e:
+                                logger.warning(f"⚠️  HTTP error downloading cover for '{book['title']}': {e.response.status_code if e.response else 'unknown'}")
                             except Exception as e:
                                 logger.error(f"❌ Error downloading cover image for '{book['title']}': {e}")
-                                # Don't fallback to inaccessible URL - just skip it
-                        else:
-                            logger.warning(f"⚠️  Skipping inaccessible cover URL for '{book['title']}': {new_cover_url[:80]}... (not accessible)")
                     else:
                         logger.warning(f"⚠️  Skipping invalid cover URL for '{book['title']}': {new_cover_url} (not http/https)")
                 
