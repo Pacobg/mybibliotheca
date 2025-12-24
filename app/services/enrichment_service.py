@@ -16,29 +16,72 @@ from .metadata_providers.perplexity import PerplexityEnricher
 
 logger = logging.getLogger(__name__)
 
+# Try to import OpenAI enricher (optional)
+try:
+    from .metadata_providers.openai_enricher import OpenAIEnricher
+    OPENAI_ENRICHER_AVAILABLE = True
+except ImportError:
+    OPENAI_ENRICHER_AVAILABLE = False
+    logger.debug("OpenAI enricher not available")
+
 
 class EnrichmentService:
     """
     Orchestrates book metadata enrichment using AI web search
     
     Strategy:
-    1. Try Perplexity (primary - best for web search)
-    2. Fall back to OpenAI if needed (optional)
+    1. Try Perplexity (primary - best for web search with real-time internet access)
+    2. Fall back to OpenAI/Ollama from settings if Perplexity unavailable (limited - no web search)
     3. Apply metadata to books
     4. Download cover images
     """
     
-    def __init__(self):
-        """Initialize enrichment service"""
+    def __init__(self, provider: str = 'auto'):
+        """
+        Initialize enrichment service
+        
+        Args:
+            provider: 'perplexity', 'openai', 'ollama', or 'auto' (default)
+                    'auto' uses Perplexity if available, otherwise falls back to settings
+        """
+        self.provider = provider.lower()
         
         # Initialize Perplexity
         perplexity_key = os.getenv('PERPLEXITY_API_KEY')
-        if perplexity_key:
+        if perplexity_key and (self.provider == 'auto' or self.provider == 'perplexity'):
             self.perplexity = PerplexityEnricher(api_key=perplexity_key)
             logger.info("✅ Perplexity enricher initialized")
         else:
             self.perplexity = None
-            logger.warning("⚠️  PERPLEXITY_API_KEY not set - enrichment disabled")
+            if self.provider == 'perplexity':
+                logger.warning("⚠️  PERPLEXITY_API_KEY not set - Perplexity enrichment disabled")
+        
+        # Initialize OpenAI/Ollama enricher (from settings)
+        self.openai_enricher = None
+        if OPENAI_ENRICHER_AVAILABLE and (self.provider == 'auto' or self.provider in ['openai', 'ollama']):
+            try:
+                # Load AI config from settings
+                from app.admin import load_ai_config
+                ai_config = load_ai_config()
+                
+                # Check if provider matches
+                config_provider = ai_config.get('AI_PROVIDER', 'openai').lower()
+                if self.provider == 'auto':
+                    # Use OpenAI/Ollama only if Perplexity is not available
+                    if not self.perplexity and config_provider in ['openai', 'ollama']:
+                        self.openai_enricher = OpenAIEnricher(config=ai_config)
+                        logger.info(f"✅ OpenAI/Ollama enricher initialized (provider: {config_provider})")
+                elif self.provider in ['openai', 'ollama']:
+                    if config_provider == self.provider:
+                        self.openai_enricher = OpenAIEnricher(config=ai_config)
+                        logger.info(f"✅ OpenAI/Ollama enricher initialized (provider: {config_provider})")
+                    else:
+                        logger.warning(f"⚠️  Requested provider '{self.provider}' but settings have '{config_provider}'")
+            except Exception as e:
+                logger.warning(f"⚠️  Failed to initialize OpenAI/Ollama enricher: {e}")
+        
+        if not self.perplexity and not self.openai_enricher:
+            logger.warning("⚠️  No enrichment providers available - enrichment disabled")
         
         # Configuration
         self.min_quality_score = float(os.getenv('AI_ENRICHMENT_MIN_QUALITY', '0.7'))
