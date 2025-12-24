@@ -767,16 +767,55 @@ class EnrichmentCommand:
                                 # Non-cache URLs: check if ends with extension or contains it before query params
                                 current_is_valid = ends_with_extension or contains_extension
                     
-                    logger.info(f"🔍 Cover check for '{book['title']}': current='{current_cover_url[:80] if current_cover_url else 'None'}...' (valid={current_is_valid}), new='{new_cover_url[:80] if new_cover_url else 'None'}...' (valid={is_valid_url})")
+                    # Validate new cover URL before saving (check if it's accessible)
+                    new_url_is_accessible = False
+                    if is_valid_url:
+                        try:
+                            import httpx
+                            # Quick HEAD request to check if URL is accessible (timeout 5 seconds)
+                            with httpx.Client(timeout=5.0, follow_redirects=True) as client:
+                                response = client.head(new_cover_url)
+                                if response.status_code == 200:
+                                    # Check content type
+                                    content_type = response.headers.get('content-type', '').lower()
+                                    if 'image' in content_type:
+                                        new_url_is_accessible = True
+                                        logger.info(f"✅ New cover URL is accessible: {new_cover_url[:80]}... (content-type: {content_type})")
+                                    else:
+                                        logger.warning(f"⚠️  New cover URL returned non-image content-type: {content_type}")
+                                elif response.status_code in [301, 302, 303, 307, 308]:
+                                    # Redirect - try GET request to final URL
+                                    final_url = response.headers.get('location', new_cover_url)
+                                    get_response = client.get(final_url, timeout=5.0)
+                                    if get_response.status_code == 200:
+                                        content_type = get_response.headers.get('content-type', '').lower()
+                                        if 'image' in content_type:
+                                            new_url_is_accessible = True
+                                            new_cover_url = final_url  # Use final URL after redirect
+                                            logger.info(f"✅ New cover URL is accessible after redirect: {final_url[:80]}...")
+                                else:
+                                    logger.warning(f"⚠️  New cover URL returned status {response.status_code}: {new_cover_url[:80]}...")
+                        except Exception as e:
+                            logger.warning(f"⚠️  Could not validate new cover URL accessibility: {e}")
+                            # If validation fails, still allow the URL if it looks valid (has image extension)
+                            image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+                            if any(new_cover_url.lower().endswith(ext) for ext in image_extensions):
+                                new_url_is_accessible = True
+                                logger.info(f"⚠️  Could not verify accessibility, but URL has image extension - allowing: {new_cover_url[:80]}...")
+                    
+                    logger.info(f"🔍 Cover check for '{book['title']}': current='{current_cover_url[:80] if current_cover_url else 'None'}...' (valid={current_is_valid}), new='{new_cover_url[:80] if new_cover_url else 'None'}...' (accessible={new_url_is_accessible})")
                     
                     # Update if:
                     # 1. No current cover, OR
                     # 2. Current cover is invalid (local path or broken cache URL), OR
                     # 3. Force flag is set
+                    # AND new URL is accessible
                     if (not current_cover_url or not current_is_valid or self.args.force):
-                        if is_valid_url:
+                        if is_valid_url and new_url_is_accessible:
                             updates['cover_url'] = new_cover_url
                             logger.info(f"🖼️  Updating cover URL for: {book['title']} -> {new_cover_url[:80]}...")
+                        elif is_valid_url and not new_url_is_accessible:
+                            logger.warning(f"⚠️  Skipping inaccessible cover URL for '{book['title']}': {new_cover_url[:80]}... (URL not accessible or not an image)")
                         else:
                             logger.warning(f"⚠️  Skipping invalid cover URL for '{book['title']}': {new_cover_url} (not http/https)")
                     elif current_cover_url and current_is_valid:

@@ -28346,3 +28346,534 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+http://192.168.1.51:5054/static/bookshelf.png   това е link на картината на cover на The Costume History   
+2025-12-24 19:26:21,907 [INFO] ============================================================
+2025-12-24 19:26:21,907 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 19:26:21,907 [INFO] ============================================================
+2025-12-24 19:26:21,908 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 19:26:21] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:26:21,951 [INFO] 192.168.1.9 - - [24/Dec/2025 19:26:21] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:26:21,971 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 19:26:21,971 [INFO] ⚙️  Configuration:
+2025-12-24 19:26:21,971 [INFO]    Limit: 5
+2025-12-24 19:26:21,971 [INFO]    Force: False
+2025-12-24 19:26:21,971 [INFO]    Dry run: False
+2025-12-24 19:26:21,971 [INFO]    Min quality: 0.3
+2025-12-24 19:26:21,971 [INFO]    No cover only: True (only books without covers)
+2025-12-24 19:26:21,972 [INFO] 📖 Querying database for books...
+2025-12-24 19:26:21,972 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 19:26:21,972 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 19:26:21,980 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 19:26:21,984 [INFO] 🔍 [_get_books_to_enrich] 'The Secret History': cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:26:21,984 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:26:21,984 [INFO] ⏭️  Skipping book with valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+2025-12-24 19:26:21,987 [INFO] 🔍 [_get_books_to_enrich] 'The Secret Garden': cover_url='https://knigabg.com/pix/28162.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:26:21,987 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:26:21,987 [INFO] ⏭️  Skipping book with valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 19:26:21,990 [INFO] 🔍 [_get_books_to_enrich] 'The Priory of the Orange Tree (The Roots of Chaos, #1)': cover_url='https://images.thenile.io/r1000/9781408883358.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:26:21,991 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:26:21,991 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 19:26:21,995 [INFO] 🔍 [_get_books_to_enrich] 'The Familiar': cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:26:21,995 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:26:21,995 [INFO] ⏭️  Skipping book with valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 19:26:21,998 [INFO] 🔍 [_get_books_to_enrich] 'The Costume History': cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401...', is_cache_url=True, ends_with_extension=True, contains_extension=False
+2025-12-24 19:26:21,999 [INFO] 🔍 [_get_books_to_enrich] Cache URL analysis: has_isbn_in_path=True, has_numeric_path=False, filename_is_isbn=True, path_segments=['9', '7', '9783836555401']
+2025-12-24 19:26:21,999 [INFO] 🔍 [_get_books_to_enrich] ❌ Cache URL invalid: 'https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401...' - ends_with_extension=True, has_isbn_in_path=True, has_numeric_path=False, filename_is_isbn=True - marking as INVALID
+2025-12-24 19:26:21,999 [INFO] ✅ Added book without valid cover: The Costume History (cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f...')
+2025-12-24 19:26:21,999 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 19:26:21,999 [INFO] 📊 Statistics: 4 books WITH valid cover URLs (skipped)
+2025-12-24 19:26:21,999 [INFO] 📊 Statistics: 1 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 19:26:21,999 [INFO] ✅ Found 1 books to enrich
+2025-12-24 19:26:21,999 [INFO]
+📚 Found 1 books to enrich
+2025-12-24 19:26:22,000 [INFO]
+🚀 Starting enrichment...
+2025-12-24 19:26:22,000 [INFO]    Estimated time: ~0.0 minutes
+2025-12-24 19:26:22,000 [INFO]    Estimated cost: ~$0.00
+192.168.1.9 - - [24/Dec/2025 19:26:26] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:26:26,993 [INFO] 192.168.1.9 - - [24/Dec/2025 19:26:26] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:26:29,755 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 19:26:29,758 [INFO] 🔍 [_progress_callback] Book 1/1: 'The Costume History', metadata=found
+2025-12-24 19:26:29,758 [INFO] [1/1] ✅ The Costume History (quality: 1.00)
+2025-12-24 19:26:29,758 [INFO]    🖼️  Cover found
+2025-12-24 19:26:29,758 [INFO]    📝 Description added
+2025-12-24 19:26:29,758 [INFO] 🔍 [_save_enriched_books] Processing 1 books for saving...
+2025-12-24 19:26:29,758 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Costume History'
+2025-12-24 19:26:29,758 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata']
+2025-12-24 19:26:29,758 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: True
+2025-12-24 19:26:29,760 [INFO] 🔍 Cover check for 'The Costume History': current='https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778f...' (valid=False), new='https://cdn.taschen.com/custom/taschen/uploads/2021/08/26142148/va_racinet_costu...' (valid=True)
+2025-12-24 19:26:29,760 [INFO] 🖼️  Updating cover URL for: The Costume History -> https://cdn.taschen.com/custom/taschen/uploads/2021/08/26142148/va_racinet_costu...
+2025-12-24 19:26:29,763 [INFO] 🔍 [_save_enriched_books] Updates dictionary for 'The Costume History': ['cover_url'] (count: 1)
+2025-12-24 19:26:29,763 [INFO] 📝 Updating book 'The Costume History' with fields: ['cover_url']
+2025-12-24 19:26:29,763 [INFO] 🖼️  Will update cover_url to: https://cdn.taschen.com/custom/taschen/uploads/2021/08/26142148/va_racinet_costume_history_25_g_3d_45425_1506051047_id_1062509.jpg
+2025-12-24 19:26:29,785 [INFO] ✅ Saved: The Costume History
+2025-12-24 19:26:29,786 [INFO]    Updated fields: cover_url
+2025-12-24 19:26:29,786 [INFO]    Cover URL updated to: https://cdn.taschen.com/custom/taschen/uploads/2021/08/26142148/va_racinet_costume_history_25_g_3d_45425_1506051047_id_1062509.jpg
+2025-12-24 19:26:29,795 [INFO] 💾 Saved 1 enriched books to database
+2025-12-24 19:26:29,796 [INFO] 📊 Tracked 1 enriched and 0 skipped books
+2025-12-24 19:26:29,796 [INFO]
+============================================================
+2025-12-24 19:26:29,796 [INFO] ENRICHMENT REPORT
+2025-12-24 19:26:29,796 [INFO] ============================================================
+2025-12-24 19:26:29,796 [INFO] 📊 Statistics:
+2025-12-24 19:26:29,796 [INFO]    Books checked: 1
+2025-12-24 19:26:29,796 [INFO]    Books enriched: 1
+2025-12-24 19:26:29,796 [INFO]    Books failed: 0
+2025-12-24 19:26:29,796 [INFO]    Success rate: 100.0%
+2025-12-24 19:26:29,796 [INFO]
+📝 Content:
+2025-12-24 19:26:29,796 [INFO]    Covers found: 1
+2025-12-24 19:26:29,796 [INFO]    Descriptions added: 1
+2025-12-24 19:26:29,796 [INFO]
+⏱️  Performance:
+2025-12-24 19:26:29,796 [INFO]    Duration: 7.8s
+2025-12-24 19:26:29,797 [INFO]    Speed: 7.7 books/min
+2025-12-24 19:26:29,797 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 19:26:29,797 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 19:26:32] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:26:32,036 [INFO] 192.168.1.9 - - [24/Dec/2025 19:26:32] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+192.168.1.9 - - [24/Dec/2025 19:26:43] "GET /library HTTP/1.1" 302 -
+2025-12-24 19:26:43,755 [INFO] 192.168.1.9 - - [24/Dec/2025 19:26:43] "GET /library HTTP/1.1" 302 -
+192.168.1.9 - - [24/Dec/2025 19:26:44] "GET /books/library HTTP/1.1" 304 -
+2025-12-24 19:26:44,108 [INFO] 192.168.1.9 - - [24/Dec/2025 19:26:44] "GET /books/library HTTP/1.1" 304 -
+192.168.1.9 - - [24/Dec/2025 19:26:44] "GET /books/library?page=2&format=json HTTP/1.1" 304 -
+2025-12-24 19:26:44,614 [INFO] 192.168.1.9 - - [24/Dec/2025 19:26:44] "GET /books/library?page=2&format=json HTTP/1.1" 304 -
+192.168.1.9 - - [24/Dec/2025 19:26:44] "GET /books/library?page=1&rows=4&cols=6 HTTP/1.1" 304 -
+2025-12-24 19:26:44,829 [INFO] 192.168.1.9 - - [24/Dec/2025 19:26:44] "GET /books/library?page=1&rows=4&cols=6 HTTP/1.1" 304 -
+192.168.1.9 - - [24/Dec/2025 19:26:44] "GET /books/library?page=2&format=json HTTP/1.1" 304 -
+2025-12-24 19:26:44,971 [INFO] 192.168.1.9 - - [24/Dec/2025 19:26:44] "GET /books/library?page=2&format=json HTTP/1.1" 304 -
+192.168.1.9 - - [24/Dec/2025 19:26:45] "GET /books/library?page=2&rows=4&cols=6&format=json HTTP/1.1" 304 -
+2025-12-24 19:26:45,306 [INFO] 192.168.1.9 - - [24/Dec/2025 19:26:45] "GET /books/library?page=2&rows=4&cols=6&format=json HTTP/1.1" 304 -
+192.168.1.9 - - [24/Dec/2025 19:26:45] "GET /books/library?page=2&rows=4&cols=6&format=json HTTP/1.1" 200 -
+2025-12-24 19:26:45,584 [INFO] 192.168.1.9 - - [24/Dec/2025 19:26:45] "GET /books/library?page=2&rows=4&cols=6&format=json HTTP/1.1" 200 -
+192.168.1.9 - - [24/Dec/2025 19:27:10] "GET /library?status_filter=all&sort=title_asc&search=The+Costume+History HTTP/1.1" 302 -
+2025-12-24 19:27:10,379 [INFO] 192.168.1.9 - - [24/Dec/2025 19:27:10] "GET /library?status_filter=all&sort=title_asc&search=The+Costume+History HTTP/1.1" 302 -
+192.168.1.9 - - [24/Dec/2025 19:27:23] "GET /books/library?status_filter=all&sort=title_asc&search=The%20Costume%20History HTTP/1.1" 200 -
+2025-12-24 19:27:23,929 [INFO] 192.168.1.9 - - [24/Dec/2025 19:27:23] "GET /books/library?status_filter=all&sort=title_asc&search=The%20Costume%20History HTTP/1.1" 200 -
+192.168.1.9 - - [24/Dec/2025 19:27:24] "GET /books/library?status_filter=all&sort=title_asc&search=The+Costume+History&page=1&rows=4&cols=6 HTTP/1.1" 200 -
+2025-12-24 19:27:24,184 [INFO] 192.168.1.9 - - [24/Dec/2025 19:27:24] "GET /books/library?status_filter=all&sort=title_asc&search=The+Costume+History&page=1&rows=4&cols=6 HTTP/1.1" 200 -
+192.168.1.9 - - [24/Dec/2025 19:27:24] "GET /static/bookshelf.png HTTP/1.1" 200 -
+2025-12-24 19:27:24,397 [INFO] 192.168.1.9 - - [24/Dec/2025 19:27:24] "GET /static/bookshelf.png HTTP/1.1" 200 -
+192.168.1.9 - - [24/Dec/2025 19:27:26] "GET /books/book/3bda577d-6eb5-4358-bfaa-40258c7398c4/enhanced HTTP/1.1" 200 -
+2025-12-24 19:27:26,689 [INFO] 192.168.1.9 - - [24/Dec/2025 19:27:26] "GET /books/book/3bda577d-6eb5-4358-bfaa-40258c7398c4/enhanced HTTP/1.1" 200 -
+192.168.1.9 - - [24/Dec/2025 19:27:26] "GET /locations/api/user_locations HTTP/1.1" 200 -
+2025-12-24 19:27:26,808 [INFO] 192.168.1.9 - - [24/Dec/2025 19:27:26] "GET /locations/api/user_locations HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+В UI се показва `http://192.168.1.51:5054/static/bookshelf.png` (placeholder) вместо новия cover URL. Проверявам дали новият URL е запазен в базата данни и защо се показва placeholder:
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "Where is bookshelf.png used as a placeholder or fallback cover image?" • **13** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/services/unified_cover_manager.py` | L35-310 |
+| `app/templates/macros/cover_input.html` | L35 |
+| `app/templates/public_library.html` | L86-122 |
+| `app/static/default-book-cover-info.md` | L12 |
+| `app/templates/person_details.html` | L193-216 |
+| `app/templates/stats/library_journey.html` | L215-245 |
+| `app/templates/library.html` | L437-460 |
+| `app/routes/book_routes.py` | L638-803 |
+| `app/templates/locations/view.html` | L137-164 |
+| `app/simplified_book_service.py` | L167-1819 |
+| `app/templates/public_library.html` | L52 |
+| `app/utils/placeholder_covers.py` | L16-93 |
+| `app/templates/community_stats/currently_reading.html` | L41 |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "bookshelf\.png|static/bookshelf" in "." • 28 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `.\app\simplified_book_service.py` | `final_cover_url = url_for('serve_static', filename='bookshelf.png', _external=True)` | L605 |
+| `.\app\simplified_book_service.py` | `final_cover_url = '/static/bookshelf.png'` | L607 |
+| `.\app\simplified_book_service.py` | `final_cover_url = '/static/bookshelf.png'` | L610 |
+| `.\app\simplified_book_service.py` | `final_cover_url = url_for('serve_static', filename='bookshelf.png', _external=True)` | L617 |
+| `.\app\simplified_book_service.py` | `final_cover_url = '/static/bookshelf.png'` | L619 |
+| `.\app\simplified_book_service.py` | `final_cover_url = '/static/bookshelf.png'` | L622 |
+| `.\app\routes\book_routes.py` | `fallback = url_for('serve_static', filename='bookshelf.png', _external=True)` | L742 |
+| `.\app\routes\book_routes.py` | `book_data['cover'] = url_for('serve_static', filename='bookshelf.png')` | L803 |
+| `.\app\__init__.py` | `# Fallback: if bookshelf.png is requested but doesn't exist, try bookshelf.webp` | L997 |
+| `.\app\__init__.py` | `if filename == 'bookshelf.png':` | L999 |
+| `.\app\templates\add_book.html` | `const FALLBACK_COVER_URL = "\{{ url_for('serve_static', filename='bookshelf.png') \}}";` | L955 |
+| `.\app\templates\macros\cover_input.html` | `onerror="this.onerror=null;this.src='\{{ url_for('serve_static', filename='bookshelf.png') \}}';">` | L28 |
+| `.\app\templates\locations\view.html` | `onerror="this.onerror=null;this.src='\{{ url_for('serve_static', filename='bookshelf.png') \}}';">` | L156 |
+| `.\app\templates\view_book_enhanced.html` | `onerror="this.onerror=null;this.src='\{{ url_for('serve_static', filename='bookshelf.png') \}}';">`;` | L2377 |
+| `.\app\templates\public_library.html` | `onerror="this.onerror=null;this.src='\{{ url_for('serve_static', filename='bookshelf.png') \}}';">` | L99 |
+| `.\app\templates\public_library.html` | `<img src="\{{ url_for('serve_static', filename='bookshelf.png') \}}" alt="Default cover" class="book-cover-shelf img-fluid">` | L101 |
+| `.\app\templates\person_details.html` | `onerror="this.onerror=null;this.src='\{{ url_for('serve_static', filename='bookshelf.png') \}}';">` | L208 |
+| `.\app\templates\person_details.html` | `<img src="\{{ url_for('serve_static', filename='bookshelf.png') \}}"` | L210 |
+| `.\app\templates\library.html` | `src="\{{ book.cover_url or url_for('serve_static', filename='bookshelf.png') \}}"` | L449 |
+| `.\app\templates\library.html` | `onerror="this.onerror=null;this.src='\{{ url_for('serve_static', filename='bookshelf.png') \}}'">` | L452 |
+| `.\app\templates\base.html` | `--bookshelf-bg: url("\{{ url_for('serve_static', filename='bookshelf.png') \}}");` | L32 |
+| `.\app\templates\add_book_fast.html` | `<img id="previewCover" src="\{{ url_for('serve_static', filename='bookshelf.png') \}}"` | L113 |
+| `.\app\templates\add_book_fast.html` | `const FALLBACK_COVER = "\{{ url_for('serve_static', filename='bookshelf.png') \}}";` | L397 |
+| `.\app\static\library-indexed.js` | `<img alt="cover" class="card-img-top book-cover" loading="lazy" src="$\{book.cover_url \|\| '/static/bookshelf.png'\}" />` | L66 |
+| `.\app\services\unified_cover_manager.py` | `fallback_image = url_for('serve_static', filename='bookshelf.png')` | L132 |
+| `.\app\services\unified_cover_manager.py` | `fallback_url = '/static/bookshelf.png'  # Default fallback` | L245 |
+| `.\app\services\unified_cover_manager.py` | `fallback_url = url_for('serve_static', filename='bookshelf.png')` | L249 |
+| `.\app\utils.py` | `bg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'static', 'bookshelf.png'))` | L479 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "How is cover_url displayed in the book details page or library view?" • **15** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/templates/view_book.html` | L315-378 |
+| `app/templates/library.html` | L437-460 |
+| `app/templates/macros/cover_input.html` | L35 |
+| `app/templates/view_book_enhanced.html` | L105-123 |
+| `app/templates/view_book_enhanced.html` | L3114-3146 |
+| `app/templates/genres/details.html` | L154-176 |
+| `app/templates/stats/library_journey.html` | L204-217 |
+| `app/templates/person_details.html` | L193-216 |
+| `app/templates/public_library.html` | L86-122 |
+| `app/templates/locations/view.html` | L137-164 |
+| `app/templates/library_enhanced.html` | L705-721 |
+| `app/templates/view_book_enhanced.html` | L2736-2744 |
+| `app/templates/series/series_detail.html` | L90-113 |
+| `app/templates/stats/library_journey.html` | L732-768 |
+| `app/templates/add_book.html` | L1083-1130 |
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+`bookshelf.png` се използва като fallback при грешка при зареждане на `cover_url` (onerror). Проверявам дали новият URL е запазен в базата данни и дали има проблем с зареждането:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/templates/view_book_enhanced.html</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "How is the book cover_url retrieved from database and passed to the view_book_enhanced template?" • **6** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/routes/book_routes.py` | L2884-3726 |
+| `app/routes/book_routes.py` | L3337-3726 |
+| `app/routes/book_routes.py` | L638-803 |
+| `app/routes/book_routes.py` | L640-867 |
+| `app/routes/book_routes.py` | L638-867 |
+| `app/routes/book_routes.py` | L2774-3337 |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "view_book_enhanced|book.*cover_url|def.*enhanced" in "app/routes/book_routes.py" • 55 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=uid))` | L205 |
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=uid))` | L243 |
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=uid))` | L293 |
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=uid))` | L327 |
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=uid))` | L330 |
+| `app/routes/book_routes.py` | `book_data['cover'] = best_cover['cover_url']` | L686 |
+| `app/routes/book_routes.py` | `book_data['cover_url'] = best_cover['cover_url']` | L687 |
+| `app/routes/book_routes.py` | `cover_url = book_data.get('cover_url') or book_data.get('cover')` | L692 |
+| `app/routes/book_routes.py` | `book_data['cover_url'] = c` | L709 |
+| `app/routes/book_routes.py` | `book_data['cover'] = cover_url` | L728 |
+| `app/routes/book_routes.py` | `book_data['cover_url'] = cover_url` | L729 |
+| `app/routes/book_routes.py` | `book_data['cover_url'] = cand.get('url')` | L738 |
+| `app/routes/book_routes.py` | `book_data['cover_url'] = fallback` | L744 |
+| `app/routes/book_routes.py` | `book_data['cover'] = best_cover['cover_url']` | L772 |
+| `app/routes/book_routes.py` | `book_data['cover_url'] = best_cover['cover_url']` | L773 |
+| `app/routes/book_routes.py` | `from app.utils.book_utils import select_highest_google_image, upgrade_google_cover_url` | L835 |
+| `app/routes/book_routes.py` | `cover_url = book_data.get('cover_url') or book_data.get('cover')` | L1118 |
+| `app/routes/book_routes.py` | `book_data['cover'] = abs_cover_url` | L1126 |
+| `app/routes/book_routes.py` | `book_data['cover_url'] = abs_cover_url` | L1127 |
+| `app/routes/book_routes.py` | `from app.utils.book_utils import select_highest_google_image, upgrade_google_cover_url` | L1591 |
+| `app/routes/book_routes.py` | `from app.utils.book_utils import get_cover_candidates, normalize_cover_url` | L1763 |
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=uid))` | L1846 |
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=uid))` | L1885 |
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=uid))` | L1960 |
+| `app/routes/book_routes.py` | `if k in ['contributors', 'raw_categories', 'series', 'series_volume', 'series_order', 'publisher', 'asin', 'google_books_id', 'openlibrary_id', 'average_rating', 'rating_count', 'cover_url'] or v is not None:` | L3219 |
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=uid))` | L3228 |
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=uid))` | L3277 |
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=uid))` | L3338 |
+| `app/routes/book_routes.py` | `def view_book_enhanced(uid):` | L3343 |
+| `app/routes/book_routes.py` | `cover_url = getattr(user_book, 'cover_url', None)` | L3510 |
+| `app/routes/book_routes.py` | `'view_book_enhanced.html',` | L3717 |
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=uid))` | L3831 |
+| `app/routes/book_routes.py` | `old_cover_url = user_book.cover_url` | L3851 |
+| `app/routes/book_routes.py` | `from app.utils.book_utils import normalize_cover_url` | L3857 |
+| `app/routes/book_routes.py` | `book_service.update_book_sync(user_book.uid, str(current_user.id), cover_url=abs_cover_url)` | L3913 |
+| `app/routes/book_routes.py` | `old_cover_url = user_book.cover_url` | L3988 |
+| `app/routes/book_routes.py` | `book_service.update_book_sync(user_book.uid, str(current_user.id), cover_url=abs_cover_url)` | L3996 |
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=uid))` | L4050 |
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=uid))` | L4073 |
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=uid))` | L4084 |
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=uid))` | L4158 |
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=uid))` | L4206 |
+| `app/routes/book_routes.py` | `'cover_url': book.get('cover_url', '') if isinstance(book, dict) else getattr(book, 'cover_url', ''),` | L4240 |
+| `app/routes/book_routes.py` | `from app.utils.book_utils import select_highest_google_image, upgrade_google_cover_url` | L4743 |
+| `app/routes/book_routes.py` | `current_app.logger.error(f"📝 [ROUTE] Processing book data: title='\{title\}', cover_url='\{cover_url\}', categories=\{categories\}")` | L5058 |
+| `app/routes/book_routes.py` | `current_app.logger.info(f"[COVER_UPDATE] Attempting to update cover for existing book \{existing_id\} with cover_url='\{cover_url\}'")` | L5174 |
+| `app/routes/book_routes.py` | `current_cover = getattr(existing_book, 'cover_url', None) or ''` | L5185 |
+| `app/routes/book_routes.py` | `book_service_instance.update_book_sync(existing_id, \{'cover_url': processed_cover\})` | L5196 |
+| `app/routes/book_routes.py` | `return redirect(url_for('book.view_book_enhanced', uid=existing_id))` | L5241 |
+| `app/routes/book_routes.py` | `'redirect_url': url_for('book.view_book_enhanced', uid=book_id)` | L5438 |
+| `app/routes/book_routes.py` | `cover_url=book_data.get('cover_url'),` | L5469 |
+| `app/routes/book_routes.py` | `'redirect_url': url_for('book.view_book_enhanced', uid=book_id)` | L5537 |
+| `app/routes/book_routes.py` | `'redirect_url': url_for('book.view_book_enhanced', uid=book_id)` | L5557 |
+| `app/routes/book_routes.py` | `def enhanced_google_books_lookup(isbn):` | L5648 |
+| `app/routes/book_routes.py` | `def enhanced_openlibrary_lookup(isbn):` | L5724 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам дали новият cover URL е запазен в базата данни и дали има проблем с зареждането. Добавям логиране, за да видим какво точно се случва:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/templates/macros/cover_input.html</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/routes/book_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "get_book_by_uid_sync|cover_url.*=|book\.cover_url" in "app/services" • 66 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services\enrichment_service.py` | `cover_url = book_data.get('cover_url', 'None')` | L132 |
+| `app/services\enrichment_service.py` | `logger.info(f"🔍 [ENRICH_SINGLE_BOOK] Book data: author='\{author\}', cover_url='\{cover_url[:80] if cover_url != 'None' else 'None'\}...', has_description=\{has_description\}")` | L136 |
+| `app/services\enrichment_service.py` | `cover_url = None` | L228 |
+| `app/services\enrichment_service.py` | `cover_url = await self.perplexity.find_cover_image(` | L231 |
+| `app/services\enrichment_service.py` | `metadata['cover_url'] = cover_url` | L244 |
+| `app/services\enrichment_service.py` | `cover_url = book_data.get('cover') or book_data.get('cover_url') or ''` | L369 |
+| `app/services\enrichment_service.py` | `cover_url_lower = cover_url.lower()` | L372 |
+| `app/services\enrichment_service.py` | `logger.info(f"🔍 [_has_sufficient_data] Checking '\{title\}': require_cover=\{require_cover\}, has_description=\{has_description\}, has_cover=\{has_cover\} (cover_url='\{cover_url[:50] if cover_url else 'None'\}...'), has_publisher=\{has_publisher\}, has_isbn=\{has_isbn\}")` | L418 |
+| `app/services\enrichment_service.py` | `merged['cover_url'] = ai_metadata['cover_url']` | L528 |
+| `app/services\kuzu_book_service.py` | `cover_url=book_data.get('cover_url'),` | L133 |
+| `app/services\metadata_providers\biblioman.py` | `logger.info(f"📚 [BIBLIOMAN][ISBN] Formatted result: cover_url=\{formatted.get('cover_url')\}, chitanka_cover_url=\{formatted.get('chitanka_cover_url')\}, categories=\{formatted.get('categories')\}, chitanka_id=\{formatted.get('chitanka_id')\}")` | L90 |
+| `app/services\metadata_providers\biblioman.py` | `builtins.print(f"✅ [BIBLIOMAN][ISBN] Returning formatted result for ISBN \{clean_isbn\}: chitanka_id=\{formatted.get('chitanka_id')\}, cover_url=\{formatted.get('cover_url')\}, categories=\{formatted.get('categories')\}")` | L93 |
+| `app/services\metadata_providers\biblioman.py` | `logger.info(f"📚 [BIBLIOMAN][ISBN] Formatted partial result: cover_url=\{formatted.get('cover_url')\}, chitanka_cover_url=\{formatted.get('chitanka_cover_url')\}, categories=\{formatted.get('categories')\}")` | L112 |
+| `app/services\metadata_providers\biblioman.py` | `cover_url = None` | L327 |
+| `app/services\metadata_providers\biblioman.py` | `cover_url = cover_field` | L366 |
+| `app/services\metadata_providers\biblioman.py` | `cover_url = f"https://biblioman.chitanka.info/thumb/covers/\{digits_path\}/\{base_filename\}.1000.jpg"` | L392 |
+| `app/services\metadata_providers\biblioman.py` | `cover_url = f"https://biblioman.chitanka.info/books/\{chitanka_id\}/cover"` | L396 |
+| `app/services\metadata_providers\biblioman.py` | `cover_url = f"https://biblioman.chitanka.info/thumb/covers/\{digits_path\}/\{base_filename\}.1000.jpg"` | L407 |
+| `app/services\metadata_providers\biblioman.py` | `cover_url = f"https://biblioman.chitanka.info/books/\{chitanka_id\}/cover"` | L411 |
+| `app/services\metadata_providers\biblioman.py` | `cover_url = f"https://biblioman.chitanka.info/books/\{chitanka_id\}/cover"` | L415 |
+| `app/services\metadata_providers\biblioman.py` | `cover_url = f"https://biblioman.chitanka.info/books/\{chitanka_id\}/cover"` | L419 |
+| `app/services\metadata_providers\biblioman.py` | `cover_url = f"https://biblioman.chitanka.info/books/\{chitanka_id\}/cover"` | L423 |
+| `app/services\unified_cover_manager.py` | `cover_url = getattr(book, 'cover_url')` | L98 |
+| `app/services\unified_cover_manager.py` | `cover_url = book.get('cover_url') or book.get('cover')` | L101 |
+| `app/services\unified_cover_manager.py` | `book['cover_url'] = cover_url  # non-fatal best-effort` | L106 |
+| `app/services\unified_cover_manager.py` | `cover_url = None` | L110 |
+| `app/services\unified_cover_manager.py` | `current_cover = current_book.cover_url` | L199 |
+| `app/services\unified_cover_manager.py` | `updates['cover_url'] = validated_new` | L210 |
+| `app/services\unified_cover_manager.py` | `<label for="cover_url" class="form-label fw-medium">` | L305 |
+| `app/services\unified_cover_manager.py` | `<input type="url" class="form-control" id="cover_url" name="cover_url"` | L308 |
+| `app/services\opds_sync_service.py` | `entry["cover_url"] = href_val` | L362 |
+| `app/services\opds_sync_service.py` | `cover_url = entry.get("cover_url")` | L724 |
+| `app/services\opds_sync_service.py` | `cached_url = process_image_from_url(str(cover_url), auth=cover_auth, headers=cover_headers)` | L733 |
+| `app/services\opds_sync_service.py` | `entry["cover_url"] = cached_url` | L743 |
+| `app/services\opds_probe_service.py` | `suggestions.setdefault("cover_url", "link[rel=http://opds-spec.org/image].href")` | L641 |
+| `app/services\kuzu_service_facade.py` | `return self.get_book_by_uid_sync(book_id, user_id)` | L321 |
+| `app/services\kuzu_service_facade.py` | `def get_book_by_uid_sync(self, uid: str, user_id: str) -> Optional[Book]:` | L374 |
+| `app/services\kuzu_service_facade.py` | `return self.relationship_service.get_book_by_uid_sync(uid, user_id)` | L376 |
+| `app/services\kuzu_series_service.py` | `cover_url=effective,` | L69 |
+| `app/services\kuzu_series_service.py` | `cover_url=effective,` | L111 |
+| `app/services\kuzu_series_service.py` | `cover_url=row[3] if len(row) > 3 else None,  # type: ignore[index]` | L147 |
+| `app/services\kuzu_series_service.py` | `async def update_series_cover_async(self, series_id: str, cover_url: str, custom: bool = True, generated_placeholder: bool \| None = None, user_uploaded: bool = True) -> bool:  # signature retained for backward compatibility` | L280 |
+| `app/services\kuzu_series_service.py` | `def update_series_cover(self, series_id: str, cover_url: str, custom: bool = True, generated_placeholder: bool \| None = None, user_uploaded: bool = True) -> bool:` | L294 |
+| `app/services\kuzu_series_service.py` | `cover_url=row[4] if len(row) > 4 else None,  # type: ignore[index]` | L424 |
+| `app/services\kuzu_relationship_service.py` | `def get_book_by_uid_sync(self, uid: str, user_id: str) -> Optional[Book]:` | L614 |
+| `app/services\kuzu_relationship_service.py` | `result = self.get_book_by_uid_sync(book_id, user_id)` | L682 |
+| `app/services\cover_service.py` | `cover_url = chosen.get('url') if chosen else None` | L167 |
+| `app/services\cover_service.py` | `cover_url = normalize_cover_url(cover_url)` | L171 |
+| `app/services\cover_service.py` | `cover_url = sel.get('cover_url')` | L177 |
+| `app/services\cover_service.py` | `cover_url = ta_candidates[0].get('url')` | L184 |
+| `app/services\cover_service.py` | `cover_url = normalize_cover_url(cover_url)` | L188 |
+| `app/services\cover_service.py` | `current_app.logger.warning(f"[COVER][SERVICE] Download/process failed url=\{cover_url\} err=\{e\}")` | L230 |
+| `app/services\cover_service.py` | `quality = 'high' if ('zoom=1' in cover_url or 'extraLarge' in cover_url or 'edge=c' in cover_url) else 'medium'` | L239 |
+| `app/services\cover_service.py` | `result = CoverResult(source=source, quality=quality, original_url=cover_url, cached_url=cached_url, elapsed=elapsed, steps='\|'.join(steps))` | L243 |
+| `app/services\audiobookshelf_import_service.py` | `cover_url = None` | L148 |
+| `app/services\audiobookshelf_import_service.py` | `cover_url = self.client.build_cover_url(cover_path)` | L154 |
+| `app/services\audiobookshelf_import_service.py` | `cover_url = self.client._url(f"/api/items/\{item_id\}/cover?width=600")` | L158 |
+| `app/services\audiobookshelf_import_service.py` | `cover_url=cover_url,` | L172 |
+| `app/services\audiobookshelf_import_service.py` | `book_data.cover_url = pre_local_cover` | L717 |
+| `app/services\audiobookshelf_import_service.py` | `updates['cover_url'] = local_cover` | L739 |
+| `app/services\audiobookshelf_import_service.py` | `book_data.cover_url = pre_local_cover` | L962 |
+| `app/services\audiobookshelf_import_service.py` | `updates2['cover_url'] = local_cover` | L982 |
+| `app/services\audiobookshelf_import_service.py` | `book_data.cover_url = pre_local_cover` | L1274 |
+| `app/services\audiobookshelf_import_service.py` | `bd.cover_url = local_cover` | L1526 |
+| `app/services\audiobookshelf_import_service.py` | `updates3['cover_url'] = local_cover` | L1618 |
+| `app/services\audiobookshelf_import_service.py` | `updates3['cover_url'] = local_cover2` | L1623 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавям логиране в `view_book_enhanced`, за да видим какво точно е в `cover_url` при зареждане на страницата:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/routes/book_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/routes/book_routes.py</summary>
+
+**Chunk 1**
+Lines added: 3, lines removed: undefined
+
+```diff
+@@ -3509,4 +3509,7 @@
+          isbn_generic = getattr(user_book, 'isbn', None)
+          cover_url = getattr(user_book, 'cover_url', None)
++         
++         # Log cover URL for debugging
++         current_app.logger.info(f"[VIEW_BOOK_ENHANCED] Book {uid} cover_url: {cover_url}")
+          
+          
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add logging for cover_url in view_book_enhanced to debug cover display issue" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add logging for cover_url in view_book_enhanced to debug cover display issue" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main b7b3259] Add logging for cover_url in view_book_enhanced to debug cover display issue
+ 2 files changed, 216 insertions(+)
+To https://github.com/Pacobg/mybibliotheca.git
+   cb6437f..b7b3259  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавих логиране. При следващо отваряне на страницата на "The Costume History" в логовете ще видим какво точно е в `cover_url`.
+
+Възможни причини за показване на `bookshelf.png`:
+1. Новият URL не може да се зареди (CORS, 404, timeout) и браузърът показва fallback чрез `onerror`.
+2. Проблем с кеширане на данните.
+
+От логовете виждам, че новият URL е запазен:
+```
+Cover URL updated to: https://cdn.taschen.com/custom/taschen/uploads/2021/08/26142148/va_racinet_costume_history_25_g_3d_45425_1506051047_id_1062509.jpg
+```
+
+Моля, отворете отново страницата на "The Costume History" и проверете логовете — трябва да видим какво точно е в `cover_url` когато се зарежда страницата. Ако URL-ът е правилен, но изображението не се зарежда, вероятно е проблем с достъпа до `cdn.taschen.com` (CORS или 404).
+
+Ако проблемът е с достъпа до `cdn.taschen.com`, можем да:
+1. Проверим дали URL-ът е достъпен
+2. Използваме друг cover URL от Perplexity
+3. Добавим логиране за грешки при зареждане на изображенията
+
+Моля, споделете какво показват логовете след отваряне на страницата.
+
+---
+
