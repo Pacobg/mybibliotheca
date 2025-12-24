@@ -300,6 +300,7 @@ JSON ФОРМАТ (задължително):
             
             # Debug: log parsed metadata
             logger.debug(f"Parsed metadata keys: {list(metadata.keys())}")
+            logger.info(f"📋 Found metadata fields: {', '.join([k for k, v in metadata.items() if v])}")
             
             # If title is missing but we have content, try to extract it
             if not metadata.get('title') and title:
