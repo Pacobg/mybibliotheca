@@ -7323,3 +7323,656 @@ _No matches found_
 
 ---
 
+
+
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/metadata_providers/perplexity.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправям проблемите:
+1. `--force` не се предава в `enrich_batch`
+2. `_has_sufficient_data` пропуска книгата дори без cover
+3. Заявката трябва да търси на български и да връща български description
+4. Parsing на авторите трябва да намира правилния автор
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/metadata_providers/perplexity.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправям проблемите:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -127,4 +127,5 @@
+          self, 
+          books: List[Dict],
++         force: bool = False,
+          progress_callback: Optional[callable] = None
+      ) -&gt; Dict:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -157,6 +157,6 @@
+          for i, book in enumerate(books, 1):
+              try:
+-                 # Enrich book
+-                 metadata = await self.enrich_single_book(book)
++                 # Enrich book (pass force flag)
++                 metadata = await self.enrich_single_book(book, force=force)
+                  
+                  stats['processed'] += 1
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 15, lines removed: 4
+
+```diff
+@@ -229,8 +229,19 @@
+          has_isbn = bool(book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10'))
+          
+-         # Need at least 3 out of 4
+-         score = sum([has_description, has_cover, has_publisher, has_isbn])
+-         
+-         return score &gt;= 3
++         # For Bulgarian books, cover is critical - don't skip if missing cover
++         title = book_data.get('title', '')
++         is_bulgarian = any('\u0400' &lt;= char &lt;= '\u04FF' for char in title) or book_data.get('language') == 'bg'
++         
++         if is_bulgarian:
++             # Bulgarian books MUST have cover - it's critical
++             if not has_cover:
++                 return False
++             # Need at least 3 out of 4 including cover
++             score = sum([has_description, has_cover, has_publisher, has_isbn])
++             return score &gt;= 3
++         else:
++             # For non-Bulgarian books, need at least 3 out of 4
++             score = sum([has_description, has_cover, has_publisher, has_isbn])
++             return score &gt;= 3
+      
+      def merge_metadata_into_book(
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "enrich_batch" in "scripts/enrich_books.py" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `results = await self.service.enrich_batch(` | L148 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/metadata_providers/perplexity.py</summary>
+
+**Chunk 1**
+Lines added: 14, lines removed: 1
+
+```diff
+@@ -120,9 +120,22 @@
+          has_cyrillic = any('\u0400' &lt;= char &lt;= '\u04FF' for char in title)
+          
++         # Normalize author - if multiple authors, try to find the main one
++         # For Bulgarian books, prefer Bulgarian name format
++         author_normalized = author
++         if ',' in author or ';' in author:
++             # Multiple authors - try to extract main author
++             authors_list = [a.strip() for a in re.split(r'[,;]', author)]
++             # For Bulgarian books, prefer Cyrillic name
++             cyrillic_authors = [a for a in authors_list if any('\u0400' &lt;= char &lt;= '\u04FF' for char in a)]
++             if cyrillic_authors:
++                 author_normalized = cyrillic_authors[0]  # Use first Bulgarian name
++             else:
++                 author_normalized = authors_list[0]  # Use first author
++         
+          query = f"""
+  Намери детайлна информация за българската книга:
+  
+  ЗАГЛАВИЕ: {title}
+- АВТОР: {author}
++ АВТОР: {author_normalized}
+  """
+          
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/metadata_providers/perplexity.py</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -155,5 +155,5 @@
+  
+  1. **Точно заглавие** на български (може да има подзаглавие)
+- 2. **Автор(и)** - пълно име на български (не английско!)
++ 2. **Автор** - ЕДИН основен автор на български (не английско!). Ако книгата е от Агата Кристи, авторът е "Агата Кристи" (не "Christie, Agatha" или други варианти!)
+  3. **Преводач** (ако книгата е превод)
+  4. **Издателство** - българско издателство
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+The string to replace was not found in the file.
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/metadata_providers/perplexity.py</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -122,4 +122,5 @@
+          # Normalize author - if multiple authors, try to find the main one
+          # For Bulgarian books, prefer Bulgarian name format
++         import re
+          author_normalized = author
+          if ',' in author or ';' in author:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/metadata_providers/perplexity.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -148,4 +148,5 @@
+          results = await self.service.enrich_batch(
+              books=books,
++             force=self.args.force,
+              progress_callback=self._progress_callback
+          )
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/metadata_providers/perplexity.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Подобрявам parsing на авторите, за да нормализира "Агата Кристи":
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/metadata_providers/perplexity.py</summary>
+
+**Chunk 1**
+Lines added: 25, lines removed: 3
+
+```diff
+@@ -328,9 +328,31 @@
+                  logger.debug(f"Using original title as fallback: {title}")
+              
++             # Normalize author - ensure single main author
++             if metadata.get('author'):
++                 author_from_ai = metadata['author']
++                 # If multiple authors separated by comma/semicolon, take the first/main one
++                 if ',' in author_from_ai or ';' in author_from_ai:
++                     authors_list = [a.strip() for a in re.split(r'[,;]', author_from_ai)]
++                     # For Bulgarian books, prefer Cyrillic name
++                     cyrillic_authors = [a for a in authors_list if any('\u0400' &lt;= char &lt;= '\u04FF' for char in a)]
++                     if cyrillic_authors:
++                         metadata['author'] = cyrillic_authors[0]
++                     else:
++                         metadata['author'] = authors_list[0]
++                     logger.debug(f"Normalized author from '{author_from_ai}' to '{metadata['author']}'")
++             
+              # If author is missing but we have content, try to extract it
+              if not metadata.get('author') and author:
+-                 # Use original author as fallback
+-                 metadata['author'] = author
+-                 logger.debug(f"Using original author as fallback: {author}")
++                 # Normalize original author too
++                 if ',' in author or ';' in author:
++                     authors_list = [a.strip() for a in re.split(r'[,;]', author)]
++                     cyrillic_authors = [a for a in authors_list if any('\u0400' &lt;= char &lt;= '\u04FF' for char in a)]
++                     if cyrillic_authors:
++                         metadata['author'] = cyrillic_authors[0]
++                     else:
++                         metadata['author'] = authors_list[0]
++                 else:
++                     metadata['author'] = author
++                 logger.debug(f"Using normalized original author as fallback: {metadata['author']}")
+              
+              # Add citations if available
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 3 files</summary>
+      
+Lint paths:
+
+- `app/services/enrichment_service.py`
+- `app/services/metadata_providers/perplexity.py`
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 16, lines removed: 3
+
+```diff
+@@ -279,13 +279,26 @@
+              merged['author'] = ai_metadata['author']
+          
+-         # Description - use AI if better
++         # Description - use AI if better (prefer Bulgarian descriptions)
+          if ai_metadata.get('description'):
+              ai_desc = ai_metadata['description']
+              existing_desc = merged.get('description', '')
++             
++             # Check if existing description is in English (has Latin chars but no Cyrillic)
++             existing_is_english = (
++                 existing_desc and 
++                 any(c.isalpha() and ord(c) &lt; 128 for c in existing_desc) and
++                 not any('\u0400' &lt;= char &lt;= '\u04FF' for char in existing_desc)
++             )
++             
++             # Check if AI description is in Bulgarian (has Cyrillic)
++             ai_is_bulgarian = any('\u0400' &lt;= char &lt;= '\u04FF' for char in ai_desc)
+              
+              # Use AI description if:
+              # 1. No existing description, OR
+-             # 2. AI description is significantly longer (50+ chars)
+-             if not existing_desc or len(ai_desc) &gt; len(existing_desc) + 50:
++             # 2. Existing is English and AI is Bulgarian (prefer Bulgarian), OR
++             # 3. AI description is significantly longer (50+ chars)
++             if (not existing_desc or 
++                 (existing_is_english and ai_is_bulgarian) or 
++                 len(ai_desc) &gt; len(existing_desc) + 50):
+                  merged['description'] = ai_desc
+          
+```
+
+</details>
+
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправих проблемите. Коммитвам промените:
+
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix enrichment: force flag, Bulgarian book detection, author normalization, prefer Bulgarian descriptions" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix enrichment: force flag, Bulgarian book detection, author normalization, prefer Bulgarian descriptions" && git push origin main
+```
+
+```
+warning: in the working copy of 'app/templates/add_book.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/utils/book_search.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.specstory/history/2025-12-22_16-45Z-manual-book-addition-working-despite-errors.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.specstory/history/2025-12-23_15-43Z-импорт-на-книги-от-csv.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 6603c79] Fix enrichment: force flag, Bulgarian book detection, author normalization, prefer Bulgarian descriptions
+ 11 files changed, 51217 insertions(+), 21591 deletions(-)
+ delete mode 100644 ".specstory/history/2025-12-21_10-13Z-\320\274\320\276\321\217\321\202-\320\277\321\200\320\276\320\265\320\272\321\202-\320\267\320\260-\321\200\320\260\320\267\321\200\320\260\320\261\320\276\321\202\320\272\320\260.md"
+ create mode 100644 ".specstory/history/2025-12-21_10-13Z-\320\277\321\200\320\276\320\264\321\212\320\273\320\266\320\265\320\275\320\270\320\265-\320\275\320\260-\321\200\320\260\320\267\320\263\320\276\320\262\320\276\321\200\320\260.md"
+ create mode 100644 .specstory/history/2025-12-22_16-45Z-manual-book-addition-working-despite-errors.md
+ create mode 100644 .specstory/history/2025-12-22_21-27Z-manual-book-addition-error.md
+ create mode 100644 ".specstory/history/2025-12-23_15-43Z-\320\270\320\274\320\277\320\276\321\200\321\202-\320\275\320\260-\320\272\320\275\320\270\320\263\320\270-\320\276\321\202-csv.md"
+ create mode 100644 .specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md
+To https://github.com/Pacobg/mybibliotheca.git
+   6eff86d..6603c79  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправих проблемите. Ето какво е променено:
+
+## Поправки
+
+1. `--force` флагът се предава правилно — сега `enrich_batch` получава `force` параметъра и не пропуска книги дори с `--force`.
+
+2. Българските книги без cover не се пропускат — `_has_sufficient_data` проверява за cover при български книги и не ги пропуска ако липсва.
+
+3. Нормализация на авторите:
+   - Ако има няколко автора (разделени с `,` или `;`), се използва основният
+   - При български книги се предпочита кирилското име
+   - За "13 за късмет" ще намери "Агата Кристи" вместо трима различни автори
+
+4. Предпочитане на български описания — ако съществуващото описание е на английски, а AI намери българско, се използва българското.
+
+5. Подобрена заявка към Perplexity — заявката е по-ясна за авторите и изисква един основен автор на български.
+
+## На сървъра изпълнете:
+
+```bash
+# Изтеглете промените
+git pull origin main
+
+# Опитайте отново с --force
+export PERPLEXITY_MODEL="sonar-pro"
+python scripts/enrich_books.py --book-title "13 за късмет" --force --quality-min 0.3 -y
+```
+
+Сега трябва да:
+- Намери cover (корица)
+- Намери българско описание (вместо английско)
+- Намери правилния автор "Агата Кристи" (вместо трима различни)
+- Запази всички данни в базата
+
+Опитайте и ми кажете резултата.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+намери българско описание с някакви цифри между буквите, не намери cover, нито попрваи автора тук примерно има всичко https://www.ciela.com/13-za-kasmet.html 
+2025-12-24 14:10:15,402 [INFO] ============================================================
+2025-12-24 14:10:15,403 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 14:10:15,403 [INFO] ============================================================
+2025-12-24 14:10:15,460 [INFO] ✅ PerplexityEnricher initialized with model: sonar-pro
+2025-12-24 14:10:15,460 [INFO] ✅ Perplexity enricher initialized
+2025-12-24 14:10:15,460 [INFO] ⚙️  Config: min_quality=0.3, rate_limit=1.0s, download_covers=True
+2025-12-24 14:10:15,460 [INFO] ⚙️  Configuration:
+2025-12-24 14:10:15,461 [INFO]    Limit: No limit
+2025-12-24 14:10:15,461 [INFO]    Force: True
+2025-12-24 14:10:15,461 [INFO]    Dry run: False
+2025-12-24 14:10:15,461 [INFO]    Min quality: 0.3
+2025-12-24 14:10:15,461 [INFO] 📖 Querying database for books...
+2025-12-24 14:10:15,461 [INFO] SafeKuzuManager initialized for database: ./data/kuzu/bibliotheca.db
+2025-12-24 14:10:15,461 [INFO] Global SafeKuzuManager instance created
+2025-12-24 14:10:15,461 [INFO] [THREAD-140654643601664:MainThread] Initializing KuzuDB database...
+2025-12-24 14:10:15,585 [INFO] [THREAD-140654643601664:MainThread] Initializing database schema...
+2025-12-24 14:10:15,586 [INFO] 🔧 [DEBUG] SafeKuzuManager starting schema initialization...
+2025-12-24 14:10:15,586 [INFO] 🔧 [DEBUG] Schema init - force_reset=False, debug_mode=False
+2025-12-24 14:10:15,620 [INFO] ✅ All essential tables exist - schema appears complete
+2025-12-24 14:10:15,625 [INFO] 📊 Database contains 2 users
+2025-12-24 14:10:15,625 [INFO] ✅ Schema is complete - skipping initialization
+2025-12-24 14:10:15,626 [INFO] [THREAD-140654643601664:MainThread] KuzuDB database initialized successfully in 0.164s
+2025-12-24 14:10:15,655 [INFO] 🔍 [ADAPTER] Query returned 3 rows
+2025-12-24 14:10:15,656 [INFO] ✅ Found 1 book(s) by title pattern: '13 за късмет'
+2025-12-24 14:10:15,656 [INFO]
+📚 Found 1 books to enrich
+2025-12-24 14:10:15,656 [INFO]
+🚀 Starting enrichment...
+2025-12-24 14:10:15,656 [INFO]    Estimated time: ~0.0 minutes
+2025-12-24 14:10:15,656 [INFO]    Estimated cost: ~$0.00
+2025-12-24 14:10:15,656 [INFO] 📦 Starting batch enrichment: 1 books
+2025-12-24 14:10:15,656 [INFO] 🔍 Enriching: 13 за късмет - Christie, Agatha; Кристи, Агата
+2025-12-24 14:10:15,656 [INFO] 🔍 Searching for: 13 за късмет - Christie, Agatha; Кристи, Агата
+2025-12-24 14:10:38,109 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 14:10:38,112 [INFO] 📋 Found metadata fields: title, author, publisher, year, isbn, pages, genres, description, cover_url, confidence, sources
+2025-12-24 14:10:38,112 [INFO] ✅ Found metadata for: 13 за късмет (quality: 1.00)
+2025-12-24 14:10:38,112 [INFO] ✅ Enriched: 13 за късмет (quality: 1.00)
+2025-12-24 14:10:38,112 [INFO] [1/1] ✅ 13 за късмет (quality: 1.00)
+2025-12-24 14:10:38,112 [INFO]    🖼️  Cover found
+2025-12-24 14:10:38,112 [INFO]    📝 Description added
+2025-12-24 14:10:38,112 [INFO] ✅ Batch enrichment complete!
+2025-12-24 14:10:38,112 [INFO]    Processed: 1/1
+2025-12-24 14:10:38,112 [INFO]    Enriched: 1 (100.0%)
+2025-12-24 14:10:38,113 [INFO]    Covers found: 1
+2025-12-24 14:10:38,113 [INFO]    Duration: 22.5s
+2025-12-24 14:10:38,121 [INFO] OWNS migration skipped: {'status': 'skipped', 'reason': 'owns_schema_disabled'}
+2025-12-24 14:10:38,129 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 14:10:38,130 [INFO] 🔍 Query results for book bb543e76-8fb3-4fc0-a9cc-2a7fdccb7d16: [{'result': {'_id': {'offset': 1373, 'table': 1}, '_label': 'Book', 'id': 'bb543e76-8fb3-4fc0-a9cc-2a7fdccb7d16', 'title': '13 за късмет', 'normalized_title': '13 за късмет', 'subtitle': '', 'isbn13': '9789543895380', 'isbn10': '', 'asin': '', 'description': 'Brain-twisters, spine-chilling perils, secret codes, daring deductions, well-hidden clues, suspicious-looking characters—these are just a few of the tantalizing ingredients Miss Christie serves up to Hercule Poirot, Jane Marple, Harley Quin, Mr Parker Pyne, Tommy and Tuppence, and Inspector Evans in this collection.\n\nContents: The veiled lady — The Nemean lion — The girdle of Hyppolita — The Market Basing mystery — Tape-measure murder — The blue geranium — The four suspects — The face of Helen — The bird with the broken wing — The Regatta mystery — Problem at Pollensa Bay — The unbreakable alibi — Accident', 'published_date': datetime.date(2019, 1, 1), 'page_count': 280, 'language': 'en', 'cover_url': '', 'google_books_id': '', 'openlibrary_id': '', 'opds_source_id': None, 'opds_source_updated_at': None, 'opds_source_entry_hash': None, 'media_type': 'physical', 'average_rating': 0.0, 'rating_count': 0, 'series': '', 'series_volume': None, 'series_order': None, 'custom_metadata': None, 'raw_categories': None, 'created_at': datetime.datetime(2025, 12, 23, 20, 25, 22, 107507), 'updated_at': datetime.datetime(2025, 12, 24, 12, 2, 25, 604958), 'audio_length_minutes': None, 'audio_is_abridged': None, 'audio_narrators': None, 'media_format': None, 'audiobookshelf_id': None, 'audio_duration_ms': None, 'audiobookshelf_updated_at': None, 'quantity': 1}}]
+2025-12-24 14:10:38,130 [INFO] 🔍 First result structure: {'result': {'_id': {'offset': 1373, 'table': 1}, '_label': 'Book', 'id': 'bb543e76-8fb3-4fc0-a9cc-2a7fdccb7d16', 'title': '13 за късмет', 'normalized_title': '13 за късмет', 'subtitle': '', 'isbn13': '9789543895380', 'isbn10': '', 'asin': '', 'description': 'Brain-twisters, spine-chilling perils, secret codes, daring deductions, well-hidden clues, suspicious-looking characters—these are just a few of the tantalizing ingredients Miss Christie serves up to Hercule Poirot, Jane Marple, Harley Quin, Mr Parker Pyne, Tommy and Tuppence, and Inspector Evans in this collection.\n\nContents: The veiled lady — The Nemean lion — The girdle of Hyppolita — The Market Basing mystery — Tape-measure murder — The blue geranium — The four suspects — The face of Helen — The bird with the broken wing — The Regatta mystery — Problem at Pollensa Bay — The unbreakable alibi — Accident', 'published_date': datetime.date(2019, 1, 1), 'page_count': 280, 'language': 'en', 'cover_url': '', 'google_books_id': '', 'openlibrary_id': '', 'opds_source_id': None, 'opds_source_updated_at': None, 'opds_source_entry_hash': None, 'media_type': 'physical', 'average_rating': 0.0, 'rating_count': 0, 'series': '', 'series_volume': None, 'series_order': None, 'custom_metadata': None, 'raw_categories': None, 'created_at': datetime.datetime(2025, 12, 23, 20, 25, 22, 107507), 'updated_at': datetime.datetime(2025, 12, 24, 12, 2, 25, 604958), 'audio_length_minutes': None, 'audio_is_abridged': None, 'audio_narrators': None, 'media_format': None, 'audiobookshelf_id': None, 'audio_duration_ms': None, 'audiobookshelf_updated_at': None, 'quantity': 1}}
+2025-12-24 14:10:38,130 [INFO] ✅ Found book via 'result' key: <class 'dict'>
+2025-12-24 14:10:38,130 [INFO] ✅ Book data is already dict with keys: ['_id', '_label', 'id', 'title', 'normalized_title', 'subtitle', 'isbn13', 'isbn10', 'asin', 'description', 'published_date', 'page_count', 'language', 'cover_url', 'google_books_id', 'openlibrary_id', 'opds_source_id', 'opds_source_updated_at', 'opds_source_entry_hash', 'media_type', 'average_rating', 'rating_count', 'series', 'series_volume', 'series_order', 'custom_metadata', 'raw_categories', 'created_at', 'updated_at', 'audio_length_minutes', 'audio_is_abridged', 'audio_narrators', 'media_format', 'audiobookshelf_id', 'audio_duration_ms', 'audiobookshelf_updated_at', 'quantity']
+2025-12-24 14:10:38,154 [ERROR] ❌ Error updating book bb543e76-8fb3-4fc0-a9cc-2a7fdccb7d16: Expected coroutine or callable, got <class 'app.domain.models.Book'>
+Traceback (most recent call last):
+  File "/home/pacovw/mybibliotheca/scripts/enrich_books.py", line 452, in _save_enriched_books
+    updated_book = run_async(
+        book_service.update_book_sync(
+    ...<3 lines>...
+        )
+    )
+  File "/home/pacovw/mybibliotheca/app/services/kuzu_async_helper.py", line 68, in run_async
+    raise TypeError(f"Expected coroutine or callable, got {type(coro_or_func)}")
+TypeError: Expected coroutine or callable, got <class 'app.domain.models.Book'>
+2025-12-24 14:10:38,156 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 14:10:38,156 [INFO]
+============================================================
+2025-12-24 14:10:38,156 [INFO] ENRICHMENT REPORT
+2025-12-24 14:10:38,156 [INFO] ============================================================
+2025-12-24 14:10:38,156 [INFO] 📊 Statistics:
+2025-12-24 14:10:38,156 [INFO]    Books checked: 1
+2025-12-24 14:10:38,156 [INFO]    Books enriched: 1
+2025-12-24 14:10:38,156 [INFO]    Books failed: 0
+2025-12-24 14:10:38,156 [INFO]    Success rate: 100.0%
+2025-12-24 14:10:38,156 [INFO]
+📝 Content:
+2025-12-24 14:10:38,156 [INFO]    Covers found: 1
+2025-12-24 14:10:38,157 [INFO]    Descriptions added: 1
+2025-12-24 14:10:38,157 [INFO]
+⏱️  Performance:
+2025-12-24 14:10:38,157 [INFO]    Duration: 22.5s
+2025-12-24 14:10:38,157 [INFO]    Speed: 2.7 books/min
+2025-12-24 14:10:38,157 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 14:10:38,157 [INFO] ============================================================
+(venv) pacovw@localLab:~/mybibliotheca$ cd ~/mybibliotheca
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+

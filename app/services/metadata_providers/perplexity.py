@@ -317,6 +317,15 @@ JSON ФОРМАТ (задължително):
                 logger.debug(f"Full response content: {content}")
                 return None
             
+            # Clean description - remove citation markers like [3][5][7][9]
+            if metadata.get('description'):
+                description = metadata['description']
+                # Remove citation patterns like [1], [2][3], [1][2][3][4], etc.
+                description = re.sub(r'\[\d+\]', '', description)
+                # Clean up multiple spaces
+                description = re.sub(r'\s+', ' ', description).strip()
+                metadata['description'] = description
+            
             # Debug: log parsed metadata
             logger.debug(f"Parsed metadata keys: {list(metadata.keys())}")
             logger.info(f"📋 Found metadata fields: {', '.join([k for k, v in metadata.items() if v])}")

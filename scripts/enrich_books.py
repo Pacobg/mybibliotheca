@@ -410,9 +410,11 @@ class EnrichmentCommand:
                 ):
                     updates['description'] = enriched['description']
                 
-                # Update cover_url if missing
-                if enriched.get('cover_url') and not book.get('cover_url'):
-                    updates['cover_url'] = enriched['cover_url']
+                # Update cover_url if missing or force update
+                if enriched.get('cover_url'):
+                    # Always update cover if AI found one (even if exists, might be better quality)
+                    if not book.get('cover_url') or self.args.force:
+                        updates['cover_url'] = enriched['cover_url']
                 
                 # Publisher is handled separately as a relationship
                 publisher_name = enriched.get('publisher')
@@ -445,16 +447,11 @@ class EnrichmentCommand:
                 # Save to database using book service
                 if updates:
                     try:
-                        # Use the sync method wrapped in run_async for async context
-                        from app.services.kuzu_async_helper import run_async
-                        
-                        # update_book_sync expects (book_id, user_id, **updates)
-                        updated_book = run_async(
-                            book_service.update_book_sync(
-                                book['id'],
-                                'system',  # System user for enrichment
-                                **updates
-                            )
+                        # Use async update_book method
+                        updated_book = await book_service.update_book(
+                            book['id'],
+                            updates,
+                            'system'  # System user for enrichment
                         )
                         if updated_book:
                             saved_count += 1
@@ -473,6 +470,66 @@ class EnrichmentCommand:
                         logger.debug(f"✅ Added publisher: {publisher_name} for {book['title']}")
                     except Exception as e:
                         logger.warning(f"⚠️  Failed to add publisher for {book['title']}: {e}")
+                
+                # Handle author update if AI found a normalized author
+                ai_author = enriched.get('author')
+                if ai_author:
+                    try:
+                        # Get current authors
+                        current_authors = await self.book_repo.get_book_authors(book['id'])
+                        current_author_names = [a.get('name', '') for a in current_authors if a.get('name')]
+                        
+                        # Check if author needs to be updated
+                        # If multiple authors or author doesn't match AI author, update
+                        if len(current_author_names) != 1 or current_author_names[0] != ai_author:
+                            logger.info(f"📝 Updating authors from {current_author_names} to [{ai_author}]")
+                            
+                            # Remove all existing author relationships
+                            delete_authors_query = """
+                            MATCH (p:Person)-[r:AUTHORED]->(b:Book {id: $book_id})
+                            DELETE r
+                            """
+                            safe_execute_kuzu_query(delete_authors_query, {"book_id": book['id']})
+                            
+                            # Add new author relationship
+                            # First, find or create the person
+                            person_query = """
+                            MATCH (p:Person {name: $author_name})
+                            RETURN p.id as id
+                            LIMIT 1
+                            """
+                            person_result = safe_execute_kuzu_query(person_query, {"author_name": ai_author})
+                            
+                            person_id = None
+                            if person_result and hasattr(person_result, 'has_next') and person_result.has_next():
+                                row = person_result.get_next()
+                                if len(row) > 0:
+                                    person_id = row[0]
+                            
+                            if not person_id:
+                                # Create new person
+                                from app.domain.models import Person
+                                from app.services.kuzu_person_service import KuzuPersonService
+                                person_service = KuzuPersonService()
+                                person = Person(name=ai_author)
+                                created_person = await person_service.create_person(person)
+                                if created_person:
+                                    person_id = created_person.id
+                            
+                            if person_id:
+                                # Create AUTHORED relationship
+                                create_author_query = """
+                                MATCH (p:Person {id: $person_id}), (b:Book {id: $book_id})
+                                MERGE (p)-[r:AUTHORED {role: 'author', order_index: 0}]->(b)
+                                RETURN r
+                                """
+                                safe_execute_kuzu_query(create_author_query, {
+                                    "person_id": person_id,
+                                    "book_id": book['id']
+                                })
+                                logger.info(f"✅ Updated author to: {ai_author}")
+                    except Exception as e:
+                        logger.warning(f"⚠️  Failed to update author for {book['title']}: {e}")
                 
             except Exception as e:
                 logger.error(f"❌ Error saving {book.get('title', 'unknown')}: {e}", exc_info=True)
