@@ -34346,3 +34346,364 @@ _**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
 
 ---
 
+<think><details><summary>Thought Process</summary>
+The enrichment is now working correctly! The logs show:
+
+1. **3 books were processed** and all 3 were successfully enriched with descriptions
+2. **Cover URLs are being validated** - the system correctly identifies and skips inaccessible URLs (403 Forbidden)
+3. **The problem is that all cover URLs returned by Perplexity are returning 403 Forbidden**:
+   - `https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg` → 403
+   - `https://www.livingbookpress.com/wp-content/uploads/2019/11/FB-The-Secret-Garden.jpg` → 403
+   - `https://images.macmillan.com/folio-assets/macmillan_us_frontbookcovers/9781250884251.jpg` → 403
+
+This is because many image hosting services block direct access without proper headers (User-Agent, Referer, etc.).
+
+The fix is to:
+1. Add proper headers to the cover download request (User-Agent, etc.)
+2. Or ask Perplexity to find cover URLs from sources that don't require authentication
+
+Let me update the Perplexity prompt to specifically ask for cover URLs from sources that allow direct access, and also add proper headers to the download request.
+
+Actually, the better approach is to update the cover download to include proper headers that mimic a browser request. Many image servers block requests without a User-Agent header.</details></think>
+
+---
+
+Отлично! Обогатяването работи коректно сега - 3 книги бяха обогатени с описания. Но cover изображенията не се изтеглят, защото много image сървъри блокират директен достъп (403 Forbidden).
+
+Нека добавя правилни HTTP headers към заявките за изтегляне на covers:
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I see the issue. The cover download validation using HEAD request is failing with 403 Forbidden, which then prevents the actual download. The problem is that many servers block HEAD requests or require proper headers.
+
+Let me update:
+1. The HEAD request to include browser-like headers
+2. The GET request for downloading to also include browser-like headers
+
+Also, I should update the Perplexity prompt to request cover URLs from more accessible sources.</details></think>
+
+---
+
+Виждам проблема - HEAD заявките за валидация връщат 403, защото сървърите изискват правилни headers. Нека добавя browser-like headers към всички заявки:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 28, lines removed: 19
+
+```diff
+@@ -872,23 +872,32 @@
+                          
+                          # Only try to download if URL is accessible
+-                         if url_is_accessible:
+-                             logger.info(f"🔍 [_save_enriched_books] Starting cover download for '{book['title']}': {new_cover_url[:80]}...")
+-                             try:
+-                                 # Download and save cover image directly using requests
+-                                 # This avoids Flask app context issues
+-                                 import requests
+-                                 import uuid
+-                                 from pathlib import Path
+-                                 
+-                                 # Get the covers directory
+-                                 covers_dir = Path('covers')
+-                                 if not covers_dir.exists():
+-                                     covers_dir.mkdir(parents=True, exist_ok=True)
+-                                     logger.info(f"📁 Created covers directory: {covers_dir.absolute()}")
+-                                 
+-                                 # Download the image
+-                                 logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
+-                                 response = requests.get(new_cover_url, timeout=10, stream=True)
+-                                 response.raise_for_status()
++                         # Try to download cover - don't rely on HEAD validation alone
++                         # Many servers block HEAD but allow GET
++                         logger.info(f"🔍 [_save_enriched_books] Starting cover download for '{book['title']}': {new_cover_url[:80]}...")
++                         try:
++                             # Download and save cover image directly using requests
++                             # This avoids Flask app context issues
++                             import requests
++                             import uuid
++                             from pathlib import Path
++                             
++                             # Browser-like headers to avoid 403 Forbidden
++                             headers = {
++                                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
++                                 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
++                                 'Accept-Language': 'en-US,en;q=0.9',
++                                 'Referer': 'https://www.google.com/',
++                             }
++                             
++                             # Get the covers directory
++                             covers_dir = Path('covers')
++                             if not covers_dir.exists():
++                                 covers_dir.mkdir(parents=True, exist_ok=True)
++                                 logger.info(f"📁 Created covers directory: {covers_dir.absolute()}")
++                             
++                             # Download the image with browser headers
++                             logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
++                             response = requests.get(new_cover_url, timeout=10, stream=True, headers=headers)
++                             response.raise_for_status()
+                                  
+                                  # Check content type
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to also remove the url_is_accessible check since we're just going to try the download directly. Let me also update the else clause that was skipping inaccessible URLs.</details></think>
+
+---
+
+Сега трябва да премахна проверката `url_is_accessible` преди изтеглянето и да фиксирам else клаузата:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 3
+
+```diff
+@@ -946,9 +946,8 @@
+                                  else:
+                                      logger.warning(f"⚠️  Failed to download cover image for '{book['title']}': {local_cover_path}")
++                             except requests.exceptions.HTTPError as e:
++                                 logger.warning(f"⚠️  HTTP error downloading cover for '{book['title']}': {e.response.status_code if e.response else 'unknown'}")
+                              except Exception as e:
+                                  logger.error(f"❌ Error downloading cover image for '{book['title']}': {e}")
+-                                 # Don't fallback to inaccessible URL - just skip it
+-                         else:
+-                             logger.warning(f"⚠️  Skipping inaccessible cover URL for '{book['title']}': {new_cover_url[:80]}... (not accessible)")
+                      else:
+                          logger.warning(f"⚠️  Skipping invalid cover URL for '{book['title']}': {new_cover_url} (not http/https)")
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now I need to also update the HEAD requests used for validation in _get_books_to_enrich and _save_enriched_books to use proper headers. Let me check where those HEAD requests are made.</details></think>
+
+---
+
+Сега нека добавя browser headers и към HEAD заявките за валидация:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "httpx\.head\(|\.head\(" in "scripts/enrich_books.py" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `response = client.head(cover_url)` | L472 |
+| `scripts/enrich_books.py` | `response = client.head(new_cover_url)` | L843 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to update both HEAD requests to include browser-like headers. Let me read the context around these lines.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to add browser-like headers to the httpx HEAD requests. Let me update both locations.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 8, lines removed: 1
+
+```diff
+@@ -469,5 +469,12 @@
+                                              try:
+                                                  import httpx
+-                                                 with httpx.Client(timeout=3.0, follow_redirects=True) as client:
++                                                 # Browser-like headers to avoid 403 Forbidden
++                                                 browser_headers = {
++                                                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
++                                                     'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
++                                                     'Accept-Language': 'en-US,en;q=0.9',
++                                                     'Referer': 'https://www.google.com/',
++                                                 }
++                                                 with httpx.Client(timeout=3.0, follow_redirects=True, headers=browser_headers) as client:
+                                                      response = client.head(cover_url)
+                                                      if response.status_code == 200:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me update the second HEAD request in _save_enriched_books.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 8, lines removed: 1
+
+```diff
+@@ -846,6 +846,13 @@
+                          try:
+                              import httpx
++                             # Browser-like headers to avoid 403 Forbidden
++                             browser_headers = {
++                                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
++                                 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
++                                 'Accept-Language': 'en-US,en;q=0.9',
++                                 'Referer': 'https://www.google.com/',
++                             }
+                              logger.info(f"🔍 Validating cover URL accessibility for '{book['title']}': {new_cover_url[:80]}...")
+-                             with httpx.Client(timeout=5.0, follow_redirects=True) as client:
++                             with httpx.Client(timeout=5.0, follow_redirects=True, headers=browser_headers) as client:
+                                  response = client.head(new_cover_url)
+                                  if response.status_code == 200:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me also check if there's any issues with the linting and then commit and push.</details></think>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Good, no linter errors. Now let me commit and push the changes.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add browser-like headers to cover URL validation and download requests to avoid 403 Forbidden errors" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add browser-like headers to cover URL validation and download requests to avoid 403 Forbidden errors" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main b92ba24] Add browser-like headers to cover URL validation and download requests to avoid 403 Forbidden errors
+ 2 files changed, 430 insertions(+), 34 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   50614e5..b92ba24  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I've added browser-like headers to all cover URL validation and download requests. This should help avoid the 403 Forbidden errors that were blocking the cover downloads.
+
+The changes include:
+1. Browser-like headers (User-Agent, Accept, Accept-Language, Referer) added to httpx HEAD requests in `_get_books_to_enrich`
+2. Same headers added to httpx HEAD requests in `_save_enriched_books` for cover validation
+3. Same headers added to requests.get() in the cover download section
+4. Removed the url_is_accessible condition before trying to download - now we just try to download directly with proper headers
+
+The user should pull the changes and try again.</details></think>
+
+---
+
+Добавих browser-like headers към всички заявки за валидация и изтегляне на cover изображения:
+
+1. **User-Agent** - имитира Chrome браузър
+2. **Accept** - приема различни image формати
+3. **Accept-Language** - английски език
+4. **Referer** - Google (много сървъри проверяват откъде идва заявката)
+
+Тези headers трябва да помогнат за избягване на 403 Forbidden грешките. 
+
+Издърпайте промените на сървъра (`git pull`) и стартирайте обогатяването отново. Cover изображенията вече трябва да се изтеглят успешно.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+There's a syntax error in enrich_books.py at line 918 - "unexpected indent". Let me check that line and fix it.</details></think>
+
+---
+

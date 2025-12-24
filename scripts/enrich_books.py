@@ -913,52 +913,52 @@ class EnrichmentCommand:
                             logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
                             response = requests.get(new_cover_url, timeout=10, stream=True, headers=headers)
                             response.raise_for_status()
-                                
-                                # Check content type
-                                content_type = response.headers.get('content-type', '').lower()
-                                if 'image' not in content_type:
-                                    logger.warning(f"⚠️  URL returned non-image content-type: {content_type}")
-                                    local_cover_path = None
+                            
+                            # Check content type
+                            content_type = response.headers.get('content-type', '').lower()
+                            if 'image' not in content_type:
+                                logger.warning(f"⚠️  URL returned non-image content-type: {content_type}")
+                                local_cover_path = None
+                            else:
+                                # Determine file extension from content type
+                                if 'jpeg' in content_type or 'jpg' in content_type:
+                                    ext = '.jpg'
+                                elif 'png' in content_type:
+                                    ext = '.png'
+                                elif 'webp' in content_type:
+                                    ext = '.webp'
+                                elif 'gif' in content_type:
+                                    ext = '.gif'
                                 else:
-                                    # Determine file extension from content type
-                                    if 'jpeg' in content_type or 'jpg' in content_type:
-                                        ext = '.jpg'
-                                    elif 'png' in content_type:
-                                        ext = '.png'
-                                    elif 'webp' in content_type:
-                                        ext = '.webp'
-                                    elif 'gif' in content_type:
-                                        ext = '.gif'
-                                    else:
-                                        ext = '.jpg'  # Default
-                                    
-                                    # Generate unique filename
-                                    filename = f"{uuid.uuid4()}{ext}"
-                                    local_path = covers_dir / filename
-                                    
-                                    # Save the image
-                                    with open(local_path, 'wb') as f:
-                                        for chunk in response.iter_content(chunk_size=8192):
-                                            f.write(chunk)
-                                    
-                                    local_cover_path = f"/covers/{filename}"
-                                    logger.info(f"✅ Cover downloaded and saved: {local_cover_path} (from {new_cover_url[:60]}...)")
+                                    ext = '.jpg'  # Default
                                 
-                                if local_cover_path and local_cover_path.startswith('/covers/'):
-                                    # Successfully downloaded and cached locally
-                                    logger.info(f"✅ Cover downloaded and cached locally: {local_cover_path}")
-                                    
-                                    # Update if:
-                                    # 1. No current cover, OR
-                                    # 2. Current cover is invalid (local path or broken cache URL), OR
-                                    # 3. Force flag is set
-                                    if (not current_cover_url or not current_is_valid or self.args.force):
-                                        updates['cover_url'] = local_cover_path
-                                        logger.info(f"🖼️  Updating cover URL for: {book['title']} -> {local_cover_path}")
-                                    elif current_cover_url and current_is_valid:
-                                        logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
-                                else:
-                                    logger.warning(f"⚠️  Failed to download cover image for '{book['title']}': {local_cover_path}")
+                                # Generate unique filename
+                                filename = f"{uuid.uuid4()}{ext}"
+                                local_path = covers_dir / filename
+                                
+                                # Save the image
+                                with open(local_path, 'wb') as f:
+                                    for chunk in response.iter_content(chunk_size=8192):
+                                        f.write(chunk)
+                                
+                                local_cover_path = f"/covers/{filename}"
+                                logger.info(f"✅ Cover downloaded and saved: {local_cover_path} (from {new_cover_url[:60]}...)")
+                            
+                            if local_cover_path and local_cover_path.startswith('/covers/'):
+                                # Successfully downloaded and cached locally
+                                logger.info(f"✅ Cover downloaded and cached locally: {local_cover_path}")
+                                
+                                # Update if:
+                                # 1. No current cover, OR
+                                # 2. Current cover is invalid (local path or broken cache URL), OR
+                                # 3. Force flag is set
+                                if (not current_cover_url or not current_is_valid or self.args.force):
+                                    updates['cover_url'] = local_cover_path
+                                    logger.info(f"🖼️  Updating cover URL for: {book['title']} -> {local_cover_path}")
+                                elif current_cover_url and current_is_valid:
+                                    logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
+                            else:
+                                logger.warning(f"⚠️  Failed to download cover image for '{book['title']}': {local_cover_path}")
                             except requests.exceptions.HTTPError as e:
                                 logger.warning(f"⚠️  HTTP error downloading cover for '{book['title']}': {e.response.status_code if e.response else 'unknown'}")
                             except Exception as e:
