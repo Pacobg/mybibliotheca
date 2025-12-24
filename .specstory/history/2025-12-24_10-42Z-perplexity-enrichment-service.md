@@ -19041,25 +19041,22 @@ Output mode: files_with_matches
 
 <tool-use data-tool-type="search" data-tool-name="codebase_search">
 <details>
-                <summary>Tool use: **codebase_search** • Searched codebase "How to get CSRF token in Flask templates for AJAX requests?" • **15** results</summary>
+                <summary>Tool use: **codebase_search** • Searched codebase "How to get CSRF token in Flask templates for AJAX requests?" • **12** results</summary>
             
 | File | Lines |
 |------|-------|
-| `app/templates/base.html` | L1753-1785 |
-| `app/templates/csrf_guide.html` | L35-68 |
-| `app/templates/csrf_guide.html` | L68-112 |
-| `app/templates/csrf_guide.html` | L1-35 |
-| `app/templates/macros/forms.html` | L1-21 |
-| `app/templates/base.html` | L1-19 |
-| `app/templates/csrf_guide.html` | L112-129 |
-| `app/__init__.py` | L825-851 |
-| `app/templates/add_book_fast.html` | L331-400 |
-| `app/templates/reading_logs/user_logs.html` | L297-342 |
-| `app/templates/view_book_enhanced.html` | L1645-1680 |
-| `app/__init__.py` | L851-867 |
-| `app/__init__.py` | L644-679 |
-| `app/__init__.py` | L415-464 |
-| `app/templates/view_book_enhanced.html` | L3288-3339 |
+| `app/templates/base.html` | L1750-1786 |
+| `app/templates/csrf_guide.html` | L32-69 |
+| `app/templates/csrf_guide.html` | L63-113 |
+| `app/templates/csrf_guide.html` | L36 |
+| `app/templates/macros/forms.html` | L20 |
+| `app/templates/base.html` | L21 |
+| `app/templates/csrf_guide.html` | L107-128 |
+| `app/__init__.py` | L313-1382 |
+| `app/templates/add_book_fast.html` | L326-400 |
+| `app/templates/reading_logs/user_logs.html` | L292-343 |
+| `app/templates/view_book_enhanced.html` | L1643-1680 |
+| `app/templates/view_book_enhanced.html` | L3283-3340 |
 
 </details>
 </tool-use>
@@ -19159,6 +19156,731 @@ To https://github.com/Pacobg/mybibliotheca.git
    4fc879e..7d1b267  main -&gt; main
 
 ```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправям CSRF token използването, за да използва глобалния `window.csrfToken`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/templates/metadata/index.html</summary>
+
+</details>
+</tool-use>
+
+---
+
+The string to replace was not found in the file.
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "@csrf\.exempt|csrf\.exempt|csrf_exempt" in "app/metadata_routes.py" • 0 matches</summary>
+
+Output mode: content
+
+
+_No matches found_
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix CSRF token usage in enrichment JavaScript - use window.csrfToken" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix CSRF token usage in enrichment JavaScript - use window.csrfToken" && git push origin main
+```
+
+```
+On branch main
+Your branch is up to date with 'origin/main'.
+
+nothing to commit, working tree clean
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам дали JavaScript кодът е правилно добавен:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/templates/metadata/index.html</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "enrichNoCoverBtn|enrichment/start|checkStatus" in "app/templates/metadata/index.html" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/templates/metadata/index.html` | `<button type="button" class="btn btn-primary" id="enrichNoCoverBtn">` | L109 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/templates/metadata/index.html</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+JavaScript кодът липсва. Добавям го:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/templates/metadata/index.html</summary>
+
+**Chunk 1**
+Lines added: 139, lines removed: undefined
+
+```diff
+@@ -190,4 +190,143 @@
+      &lt;/div&gt;
+  &lt;/div&gt;
++ 
++ {% if ai_available %}
++ &lt;script&gt;
++ document.addEventListener('DOMContentLoaded', function() {
++     console.log('Enrichment script loaded');
++     const enrichBtn = document.getElementById('enrichNoCoverBtn');
++     const statusBtn = document.getElementById('checkEnrichmentStatusBtn');
++     const statusDiv = document.getElementById('enrichmentStatus');
++     const statusText = document.getElementById('enrichmentStatusText');
++     
++     if (!enrichBtn) {
++         console.error('Enrichment button not found!');
++         return;
++     }
++     
++     console.log('Enrichment button found:', enrichBtn);
++     
++     enrichBtn.addEventListener('click', async function() {
++         console.log('Enrichment button clicked');
++         if (!confirm('Сигурни ли сте, че искате да стартирате обогатяване на до 5 книги без обложки?')) {
++             return;
++         }
++         
++         const btn = this;
++         const originalText = btn.innerHTML;
++         btn.disabled = true;
++         btn.innerHTML = '&lt;i class="bi bi-arrow-clockwise spin me-1"&gt;&lt;/i&gt;Стартиране...';
++         
++         try {
++             const formData = new FormData();
++             formData.append('limit', '5');
++             formData.append('no_cover_only', 'true');
++             
++             // Get CSRF token from global window.csrfToken or meta tag
++             const csrfToken = window.csrfToken || 
++                              document.querySelector('meta[name="csrf-token"]')?.content ||
++                              '{{ csrf_token() }}';
++             if (csrfToken) {
++                 formData.append('csrf_token', csrfToken);
++                 console.log('CSRF token added');
++             } else {
++                 console.warn('No CSRF token found!');
++             }
++             
++             console.log('Sending enrichment request to:', '{{ url_for("metadata.start_enrichment") }}');
++             const response = await fetch('{{ url_for("metadata.start_enrichment") }}', {
++                 method: 'POST',
++                 body: formData,
++                 headers: {
++                     'X-Requested-With': 'XMLHttpRequest'
++                 }
++             });
++             
++             console.log('Response status:', response.status);
++             const result = await response.json();
++             console.log('Response data:', result);
++             
++             if (result.success) {
++                 statusDiv.style.display = 'block';
++                 statusText.innerHTML = '&lt;span class="text-success"&gt;✅ Обогатяването е стартирано успешно!&lt;/span&gt;';
++                 checkStatus();
++             } else {
++                 alert('Грешка: ' + (result.error || 'Неизвестна грешка'));
++                 console.error('Enrichment error:', result);
++             }
++         } catch (error) {
++             console.error('Error starting enrichment:', error);
++             alert('Грешка: ' + error.message);
++         } finally {
++             btn.disabled = false;
++             btn.innerHTML = originalText;
++         }
++     });
++     
++     if (statusBtn) {
++         statusBtn.addEventListener('click', checkStatus);
++     }
++     
++     async function checkStatus() {
++         try {
++             const response = await fetch('{{ url_for("metadata.enrichment_status") }}');
++             const status = await response.json();
++             
++             statusDiv.style.display = 'block';
++             
++             if (status.running) {
++                 statusText.innerHTML = &#96;
++                     &lt;span class="text-info"&gt;🔄 Обогатяването работи...&lt;/span&gt;&lt;br&gt;
++                     &lt;small&gt;Стартирано: ${new Date(status.started_at).toLocaleString('bg-BG')}&lt;/small&gt;&lt;br&gt;
++                     &lt;small&gt;Лимит: ${status.limit || 'N/A'}&lt;/small&gt;&lt;br&gt;
++                     ${status.processed ? &#96;&lt;small&gt;Обработени: ${status.processed}&lt;/small&gt;&#96; : ''}
++                     ${status.enriched ? &#96;&lt;small&gt;Обогатени: ${status.enriched}&lt;/small&gt;&#96; : ''}
++                 &#96;;
++                 // Auto-refresh every 5 seconds if running
++                 setTimeout(checkStatus, 5000);
++             } else if (status.completed_at) {
++                 let detailsHtml = '';
++                 
++                 // Show enriched books
++                 if (status.enriched_books &amp;&amp; status.enriched_books.length &gt; 0) {
++                     detailsHtml += &#96;&lt;div class="mt-2"&gt;&lt;strong&gt;Обогатени книги (${status.enriched_books.length}):&lt;/strong&gt;&lt;ul class="small mb-0"&gt;&#96;;
++                     status.enriched_books.forEach(book =&gt; {
++                         detailsHtml += &#96;&lt;li&gt;${book.title} ${book.has_cover ? '✅ (с обложка)' : ''}&lt;/li&gt;&#96;;
++                     });
++                     detailsHtml += '&lt;/ul&gt;&lt;/div&gt;';
++                 }
++                 
++                 // Show skipped books
++                 if (status.skipped_books &amp;&amp; status.skipped_books.length &gt; 0) {
++                     detailsHtml += &#96;&lt;div class="mt-2"&gt;&lt;strong&gt;Пропуснати книги (${status.skipped_books.length}):&lt;/strong&gt;&lt;ul class="small mb-0 text-muted"&gt;&#96;;
++                     status.skipped_books.forEach(book =&gt; {
++                         detailsHtml += &#96;&lt;li&gt;${book.title} - ${book.reason || 'вече обогатена'}&lt;/li&gt;&#96;;
++                     });
++                     detailsHtml += '&lt;/ul&gt;&lt;/div&gt;';
++                 }
++                 
++                 statusText.innerHTML = &#96;
++                     &lt;span class="text-success"&gt;✅ Завършено&lt;/span&gt;&lt;br&gt;
++                     &lt;small&gt;Завършено: ${new Date(status.completed_at).toLocaleString('bg-BG')}&lt;/small&gt;&lt;br&gt;
++                     ${status.processed ? &#96;&lt;small&gt;Обработени: ${status.processed}&lt;/small&gt;&#96; : ''}
++                     ${status.enriched ? &#96;&lt;small&gt;Обогатени: ${status.enriched}&lt;/small&gt;&#96; : ''}
++                     ${status.failed ? &#96;&lt;small class="text-warning"&gt;Неуспешни: ${status.failed}&lt;/small&gt;&#96; : ''}
++                     ${status.error ? &#96;&lt;small class="text-danger"&gt;Грешка: ${status.error}&lt;/small&gt;&#96; : ''}
++                     ${detailsHtml}
++                 &#96;;
++             } else {
++                 statusText.innerHTML = '&lt;span class="text-muted"&gt;Няма активно обогатяване&lt;/span&gt;';
++             }
++         } catch (error) {
++             console.error('Error checking status:', error);
++             statusText.innerHTML = '&lt;span class="text-danger"&gt;Грешка при проверка на статуса&lt;/span&gt;';
++         }
++     }
++     
++     // Auto-check status on page load
++     checkStatus();
++ });
++ &lt;/script&gt;
++ {% endif %}
+  {% endblock %}
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `app/templates/metadata/index.html`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add JavaScript code for enrichment button functionality" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add JavaScript code for enrichment button functionality" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/templates/metadata/index.html', LF will be replaced by CRLF the next time Git touches it
+[main b07bc00] Add JavaScript code for enrichment button functionality
+ 2 files changed, 442 insertions(+)
+To https://github.com/Pacobg/mybibliotheca.git
+   7d1b267..b07bc00  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам дали endpoint-ът изисква CSRF token и дали има проблеми:
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "csrf\.exempt|@csrf|CSRF" in "app/metadata_routes.py" • 0 matches</summary>
+
+Output mode: content
+
+
+_No matches found_
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "How to handle CSRF token validation in Flask routes for AJAX POST requests?" • **12** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/__init__.py` | L313-1382 |
+| `app/api_auth.py` | L15-103 |
+| `app/templates/base.html` | L1750-1786 |
+| `app/forms.py` | L118-189 |
+| `app/templates/csrf_guide.html` | L36 |
+| `app/auth.py` | L69-185 |
+| `app/templates/csrf_guide.html` | L32-69 |
+| `app/templates/base.html` | L2520-2565 |
+| `app/api_auth.py` | L106-151 |
+| `app/templates/csrf_guide.html` | L63-113 |
+| `app/templates/reading_logs/user_logs.html` | L292-343 |
+| `app/templates/macros/forms.html` | L20 |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "validate_csrf|csrf\.validate|csrf_token.*validate" in "app" • 0 matches</summary>
+
+Output mode: content
+
+
+_No matches found_
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git log --oneline -3</summary>
+
+```bash
+git log --oneline -3
+```
+
+```
+b07bc00 Add JavaScript code for enrichment button functionality
+7d1b267 Add missing JavaScript code for enrichment button - fix button not working
+4fc879e Add enrichment status file update after saving books to track enriched and skipped books
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+JavaScript кодът е добавен. Промените са качени в git main. Проблемът беше липсващ JavaScript код за бутона.
+
+## Какво е поправено:
+
+1. Добавен JavaScript код за бутона "Обогатяване на книги без обложки"
+2. Добавена обработка на CSRF token (използва `window.csrfToken` от base.html)
+3. Добавено логиране в конзолата за debug
+4. Добавена функция за проверка на статус
+5. Автоматично обновяване на статуса докато работи
+
+## Как да тествате:
+
+1. Обновете страницата в браузъра (Ctrl+F5 за hard refresh)
+2. Отворете Developer Console (F12)
+3. Кликнете бутона "Обогатяване на книги без обложки - до 5 бр. (тест)"
+4. В конзолата трябва да видите:
+   - "Enrichment script loaded"
+   - "Enrichment button found"
+   - "Enrichment button clicked"
+   - "Sending enrichment request..."
+   - "Response status: 200"
+   - "Response data: {success: true, ...}"
+
+Ако има грешки в конзолата, споделете ги и ще ги поправим.
+
+Всички промени са качени в git main и са готови за изтегляне на сървъра.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+Статус: ✅ Завършено
+Завършено: 24.12.2025 г., 16:56:40 ч.
+Грешка: acovw/mybibliotheca/app/utils/safe_kuzu_manager.py", line 354, in _initialize_database self._database = kuzu.Database(self.database_path) ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^ File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/kuzu/database.py", line 104, in __init__ self.init_database() ~~~~~~~~~~~~~~~~~~^^ File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/kuzu/database.py", line 155, in init_database self._database = _kuzu.Database( # type: ignore[union-attr] ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ self.database_path, ^^^^^^^^^^^^^^^^^^^ ...<6 lines>... self.checkpoint_threshold, ^^^^^^^^^^^^^^^^^^^^^^^^^^ ) ^ RuntimeError: IO exception: Could not set lock on file : /home/pacovw/mybibliotheca/data/kuzu/bibliotheca.db See the docs: https://docs.kuzudb.com/concurrency for more information. 2025-12-24 16:56:40,579 [INFO] ✅ No books need enrichment!
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Проблемът е, че KuzuDB не може да установи lock, защото базата вече е отворена от Flask приложението. Поправям скрипта да използва правилния начин за достъп до базата:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "SafeKuzuManager|KuzuBookRepository|kuzu_repositories" in "scripts/enrich_books.py" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `from app.infrastructure.kuzu_repositories import KuzuBookRepository` | L50 |
+| `scripts/enrich_books.py` | `self.book_repo = KuzuBookRepository()` | L76 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "How to properly initialize KuzuDB connection in scripts without causing lock conflicts?" • **15** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/utils/safe_kuzu_manager.py` | L33-83 |
+| `app/utils/safe_kuzu_manager.py` | L447-492 |
+| `docs/KUZUDB_LOCK_FIX.md` | L1-60 |
+| `scripts/fix_kuzu_locks.sh` | L1-50 |
+| `app/__init__.py` | L697-731 |
+| `app/utils/safe_kuzu_manager.py` | L298-345 |
+| `app/infrastructure/kuzu_graph.py` | L45-75 |
+| `app/utils/safe_kuzu_manager.py` | L1-33 |
+| `app/utils/safe_kuzu_manager.py` | L492-521 |
+| `app/utils/safe_kuzu_manager.py` | L1450-1478 |
+| `app/infrastructure/kuzu_graph.py` | L1813-1842 |
+| `app/__init__.py` | L679-697 |
+| `app/infrastructure/kuzu_graph.py` | L1-45 |
+| `app/utils/safe_kuzu_manager.py` | L803-831 |
+| `app/utils/safe_kuzu_manager.py` | L521-547 |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "from app.infrastructure|from app.services|KuzuBookRepository" in "scripts/enrich_books.py" • 7 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `from app.services.enrichment_service import EnrichmentService` | L49 |
+| `scripts/enrich_books.py` | `from app.infrastructure.kuzu_repositories import KuzuBookRepository` | L50 |
+| `scripts/enrich_books.py` | `from app.infrastructure.kuzu_graph import safe_execute_kuzu_query` | L51 |
+| `scripts/enrich_books.py` | `from app.services import book_service` | L52 |
+| `scripts/enrich_books.py` | `self.book_repo = KuzuBookRepository()` | L76 |
+| `scripts/enrich_books.py` | `from app.services.kuzu_book_service import KuzuBookService` | L646 |
+| `scripts/enrich_books.py` | `from app.services.kuzu_person_service import KuzuPersonService` | L836 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/infrastructure/kuzu_repositories.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "How does KuzuBookRepository initialize database connection and handle locks?" • **15** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/utils/safe_kuzu_manager.py` | L33-83 |
+| `app/utils/safe_kuzu_manager.py` | L447-492 |
+| `app/utils/safe_kuzu_manager.py` | L492-521 |
+| `app/infrastructure/kuzu_repositories.py` | L718-743 |
+| `app/utils/safe_kuzu_manager.py` | L298-345 |
+| `app/__init__.py` | L697-731 |
+| `app/kuzu_integration.py` | L74-123 |
+| `app/infrastructure/kuzu_graph.py` | L45-75 |
+| `app/infrastructure/kuzu_graph.py` | L126-141 |
+| `app/utils/safe_kuzu_manager.py` | L521-547 |
+| `app/infrastructure/kuzu_repositories.py` | L1678-1703 |
+| `app/utils/safe_kuzu_manager.py` | L345-364 |
+| `app/utils/safe_kuzu_manager.py` | L1450-1478 |
+| `app/infrastructure/kuzu_graph.py` | L75-93 |
+| `app/utils/safe_kuzu_manager.py` | L1-33 |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "self\.book_repo|book_repo\.|KuzuBookRepository\(\)" in "scripts/enrich_books.py" • 6 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `self.book_repo = KuzuBookRepository()` | L76 |
+| `scripts/enrich_books.py` | `authors = await self.book_repo.get_book_authors(book_id)` | L286 |
+| `scripts/enrich_books.py` | `authors = await self.book_repo.get_book_authors(book_id_val)` | L389 |
+| `scripts/enrich_books.py` | `authors = await self.book_repo.get_book_authors(book_id)` | L473 |
+| `scripts/enrich_books.py` | `await self.book_repo._create_publisher_relationship(book['id'], publisher_name)` | L717 |
+| `scripts/enrich_books.py` | `current_authors = await self.book_repo.get_book_authors(book['id'])` | L783 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/infrastructure/kuzu_repositories.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "def __init__|self\.db|Database|kuzu\.Database" in "app/infrastructure/kuzu_repositories.py" • 8 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/infrastructure/kuzu_repositories.py` | `def __init__(self, safe_manager: SafeKuzuManager):` | L42 |
+| `app/infrastructure/kuzu_repositories.py` | `def __init__(self):` | L187 |
+| `app/infrastructure/kuzu_repositories.py` | `def __init__(self):` | L425 |
+| `app/infrastructure/kuzu_repositories.py` | `results = self.db.query(query, \{"person_id": person_id\})` | L579 |
+| `app/infrastructure/kuzu_repositories.py` | `results = self.db.query(query, \{` | L622 |
+| `app/infrastructure/kuzu_repositories.py` | `results = self.db.query(query)` | L646 |
+| `app/infrastructure/kuzu_repositories.py` | `results = self.db.query(query, params)` | L686 |
+| `app/infrastructure/kuzu_repositories.py` | `results = self.db.query(query, \{"person_id": person_id\})` | L708 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/infrastructure/kuzu_repositories.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "get_kuzu_manager|SafeKuzuManager|get_database" in "app/infrastructure/kuzu_repositories.py" • 12 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/infrastructure/kuzu_repositories.py` | `from ..utils.safe_kuzu_manager import SafeKuzuManager, get_safe_kuzu_manager, safe_get_connection` | L17 |
+| `app/infrastructure/kuzu_repositories.py` | `while using SafeKuzuManager underneath for thread safety.` | L39 |
+| `app/infrastructure/kuzu_repositories.py` | `def __init__(self, safe_manager: SafeKuzuManager):` | L42 |
+| `app/infrastructure/kuzu_repositories.py` | `"""Create a node using SafeKuzuManager."""` | L46 |
+| `app/infrastructure/kuzu_repositories.py` | `"""Execute a query using SafeKuzuManager and return results in old format."""` | L70 |
+| `app/infrastructure/kuzu_repositories.py` | `"""Create a relationship using SafeKuzuManager."""` | L99 |
+| `app/infrastructure/kuzu_repositories.py` | `"""Get a node by ID using SafeKuzuManager."""` | L124 |
+| `app/infrastructure/kuzu_repositories.py` | `"""Update a node using SafeKuzuManager."""` | L135 |
+| `app/infrastructure/kuzu_repositories.py` | `"""Delete a node using SafeKuzuManager."""` | L157 |
+| `app/infrastructure/kuzu_repositories.py` | `"""Lazy SafeKuzuManager connection - only connect when needed."""` | L193 |
+| `app/infrastructure/kuzu_repositories.py` | `# Create user using SafeKuzuManager with direct Cypher query` | L219 |
+| `app/infrastructure/kuzu_repositories.py` | `"""Lazy SafeKuzuManager connection - only connect when needed."""` | L431 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/infrastructure/kuzu_repositories.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "class KuzuBookRepository|def __init__" in "app/infrastructure/kuzu_repositories.py" • 10 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/infrastructure/kuzu_repositories.py` | `def __init__(self, safe_manager: SafeKuzuManager):` | L42 |
+| `app/infrastructure/kuzu_repositories.py` | `def __init__(self):` | L187 |
+| `app/infrastructure/kuzu_repositories.py` | `def __init__(self):` | L425 |
+| `app/infrastructure/kuzu_repositories.py` | `class KuzuBookRepository:` | L721 |
+| `app/infrastructure/kuzu_repositories.py` | `def __init__(self):` | L724 |
+| `app/infrastructure/kuzu_repositories.py` | `def __init__(self):` | L1684 |
+| `app/infrastructure/kuzu_repositories.py` | `def __init__(self):` | L1965 |
+| `app/infrastructure/kuzu_repositories.py` | `def __init__(self):` | L2081 |
+| `app/infrastructure/kuzu_repositories.py` | `def __init__(self):` | L2305 |
+| `app/infrastructure/kuzu_repositories.py` | `def __init__(self):` | L2524 |
+
+
 </details>
 </tool-use>
 

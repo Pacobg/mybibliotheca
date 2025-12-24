@@ -73,7 +73,39 @@ class EnrichmentCommand:
         """Initialize command with arguments"""
         self.args = args
         self.service = None
-        self.book_repo = KuzuBookRepository()
+        
+        # Initialize book_repo with retry logic for lock conflicts
+        max_retries = 5
+        retry_delay = 2  # seconds
+        self.book_repo = None
+        
+        for attempt in range(max_retries):
+            try:
+                self.book_repo = KuzuBookRepository()
+                # Try to access safe_manager to trigger initialization
+                _ = self.book_repo.safe_manager
+                logger.info(f"✅ Successfully initialized KuzuBookRepository (attempt {attempt + 1})")
+                break
+            except RuntimeError as e:
+                if "Could not set lock on file" in str(e):
+                    if attempt < max_retries - 1:
+                        logger.warning(f"⚠️  Database lock conflict (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay}s...")
+                        import time
+                        time.sleep(retry_delay)
+                        retry_delay *= 2  # Exponential backoff
+                    else:
+                        logger.error(f"❌ Failed to acquire database lock after {max_retries} attempts")
+                        logger.error("💡 Tip: Make sure Flask app is not running or wait a few seconds and try again")
+                        raise
+                else:
+                    raise
+            except Exception as e:
+                logger.error(f"❌ Error initializing KuzuBookRepository: {e}")
+                raise
+        
+        if self.book_repo is None:
+            raise RuntimeError("Failed to initialize KuzuBookRepository after retries")
+        
         self.stats = {
             'start_time': datetime.now(),
             'books_checked': 0,
