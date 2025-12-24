@@ -366,51 +366,86 @@ class EnrichmentService:
         )
         
         # Check cover - must be a valid URL (starts with http/https) AND ends with image extension
+        # Also check accessibility if require_cover is True (for --no-cover-only mode)
         cover_url = book_data.get('cover') or book_data.get('cover_url') or ''
         has_cover = False
-        if cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')):
-            cover_url_lower = cover_url.lower()
-            image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
-            
-            # Check if URL ends with image extension
-            ends_with_extension = any(cover_url_lower.endswith(ext) for ext in image_extensions)
-            
-            # Check if URL contains image extension before query params
-            contains_extension = any(f'{ext}?' in cover_url_lower or f'{ext}&' in cover_url_lower for ext in image_extensions)
-            
-            # Special case: cache URLs must end with extension to be valid
-            # Broken cache URLs like "cache/926507dc7f..." are invalid
-            # Also check for suspicious patterns like ISBN numbers in path
-            is_cache_url = '/cache/' in cover_url
-            
-            if is_cache_url:
-                # Cache URLs must end with extension AND not contain suspicious patterns
-                # Suspicious patterns: ISBN numbers (13 digits starting with 978 or 979) in path
-                import re
-                # Check for ISBN in path (can be between / or at end before extension)
-                has_isbn_in_path = bool(re.search(r'/(978|979)\d{10}(/|\.)', cover_url))
+        if cover_url:
+            # Local covers (/covers/...) are always valid
+            if cover_url.startswith('/covers/'):
+                has_cover = True
+            elif cover_url.startswith('http://') or cover_url.startswith('https://'):
+                cover_url_lower = cover_url.lower()
+                image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
                 
-                # Also check if filename itself is an ISBN (13 digits)
-                path_after_cache = cover_url.split('/cache/')[-1] if '/cache/' in cover_url else ''
-                path_segments = [s for s in path_after_cache.split('/') if s]
-                if path_segments:
-                    # Remove extension from last segment
-                    last_seg = path_segments[-1]
-                    for ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif']:
-                        if last_seg.lower().endswith(ext):
-                            last_seg = last_seg[:-len(ext)]
-                            break
-                    filename_is_isbn = bool(re.match(r'^(978|979)\d{10}$', last_seg))
+                # Check if URL ends with image extension
+                ends_with_extension = any(cover_url_lower.endswith(ext) for ext in image_extensions)
+                
+                # Check if URL contains image extension before query params
+                contains_extension = any(f'{ext}?' in cover_url_lower or f'{ext}&' in cover_url_lower for ext in image_extensions)
+                
+                # Special case: cache URLs must end with extension to be valid
+                # Broken cache URLs like "cache/926507dc7f..." are invalid
+                # Also check for suspicious patterns like ISBN numbers in path
+                is_cache_url = '/cache/' in cover_url
+                
+                if is_cache_url:
+                    # Cache URLs must end with extension AND not contain suspicious patterns
+                    # Suspicious patterns: ISBN numbers (13 digits starting with 978 or 979) in path
+                    import re
+                    # Check for ISBN in path (can be between / or at end before extension)
+                    has_isbn_in_path = bool(re.search(r'/(978|979)\d{10}(/|\.)', cover_url))
+                    
+                    # Also check if filename itself is an ISBN (13 digits)
+                    path_after_cache = cover_url.split('/cache/')[-1] if '/cache/' in cover_url else ''
+                    path_segments = [s for s in path_after_cache.split('/') if s]
+                    if path_segments:
+                        # Remove extension from last segment
+                        last_seg = path_segments[-1]
+                        for ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif']:
+                            if last_seg.lower().endswith(ext):
+                                last_seg = last_seg[:-len(ext)]
+                                break
+                        filename_is_isbn = bool(re.match(r'^(978|979)\d{10}$', last_seg))
+                    else:
+                        filename_is_isbn = False
+                    
+                    # Check if path segments are mostly single digits (suspicious pattern like /9/7/9783836555401)
+                    has_numeric_path = len(path_segments) > 2 and all(len(seg) <= 2 and seg.isdigit() for seg in path_segments[:-1])
+                    
+                    has_cover = ends_with_extension and not has_isbn_in_path and not has_numeric_path and not filename_is_isbn
                 else:
-                    filename_is_isbn = False
+                    # Non-cache URLs: check if ends with extension or contains it before query params
+                    has_cover = ends_with_extension or contains_extension
                 
-                # Check if path segments are mostly single digits (suspicious pattern like /9/7/9783836555401)
-                has_numeric_path = len(path_segments) > 2 and all(len(seg) <= 2 and seg.isdigit() for seg in path_segments[:-1])
-                
-                has_cover = ends_with_extension and not has_isbn_in_path and not has_numeric_path and not filename_is_isbn
-            else:
-                # Non-cache URLs: check if ends with extension or contains it before query params
-                has_cover = ends_with_extension or contains_extension
+                # If require_cover is True, also check accessibility (same as _get_books_to_enrich)
+                if has_cover and require_cover:
+                    try:
+                        import httpx
+                        with httpx.Client(timeout=3.0, follow_redirects=True) as client:
+                            response = client.head(cover_url)
+                            if response.status_code == 200:
+                                content_type = response.headers.get('content-type', '').lower()
+                                if 'image' not in content_type:
+                                    has_cover = False
+                                    logger.debug(f"🔍 [_has_sufficient_data] URL returned non-image content-type: {content_type} - marking as INVALID")
+                            elif response.status_code in [301, 302, 303, 307, 308]:
+                                # Redirect - try GET to final URL
+                                final_url = response.headers.get('location', cover_url)
+                                get_response = client.get(final_url, timeout=3.0)
+                                if get_response.status_code != 200:
+                                    has_cover = False
+                                    logger.debug(f"🔍 [_has_sufficient_data] URL redirect failed with status {get_response.status_code} - marking as INVALID")
+                                else:
+                                    content_type = get_response.headers.get('content-type', '').lower()
+                                    if 'image' not in content_type:
+                                        has_cover = False
+                                        logger.debug(f"🔍 [_has_sufficient_data] URL redirect returned non-image content-type: {content_type} - marking as INVALID")
+                            else:
+                                has_cover = False
+                                logger.debug(f"🔍 [_has_sufficient_data] URL returned status {response.status_code} - marking as INVALID")
+                    except Exception as e:
+                        # If accessibility check fails, assume valid if it has image extension (might be temporary network issue)
+                        logger.debug(f"🔍 [_has_sufficient_data] Could not verify accessibility: {e} - assuming valid based on extension")
         
         has_publisher = bool(book_data.get('publisher'))
         has_isbn = bool(book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10'))

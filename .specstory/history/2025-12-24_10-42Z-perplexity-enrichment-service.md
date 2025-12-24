@@ -29480,3 +29480,428 @@ _**Agent (model composer-1, mode Agent)**_
 
 ---
 
+
+Проверявам как се обработват cover изображенията в системата и как да ги сваляме локално:
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "How are cover images downloaded and cached locally in the covers directory?" • **12** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/utils/image_processing.py` | L108-208 |
+| `app/services/audiobookshelf_import_service.py` | L22-1775 |
+| `app/utils/image_processing.py` | L81-208 |
+| `app/__init__.py` | L313-1382 |
+| `app/services/cover_service.py` | L105-359 |
+| `app/utils/image_processing.py` | L20-58 |
+| `app/simplified_book_service.py` | L167-1819 |
+| `app/routes/book_routes.py` | L4986-6101 |
+| `docs/BIBLIOMAN_COVER_FIX.md` | L51 |
+| `app/services/cover_service.py` | L84-359 |
+| `app/services/unified_cover_manager.py` | L28-310 |
+| `app/utils/book_utils.py` | L205-313 |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "/covers/|covers/|download.*cover|fetch.*cover|process_image_from_url" in "app/services" • 24 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services\enrichment_service.py` | `self.download_covers = os.getenv('AI_COVER_DOWNLOAD', 'true').lower() == 'true'` | L106 |
+| `app/services\enrichment_service.py` | `f"download_covers=\{self.download_covers\}")` | L110 |
+| `app/services\enrichment_service.py` | `if not metadata.get('cover_url') and self.download_covers:` | L223 |
+| `app/services\metadata_providers\perplexity.py` | `* https://biblioman.chitanka.info/thumb/covers/.../xxx.1000.jpg` | L630 |
+| `app/services\metadata_providers\perplexity.py` | `r'https?://biblioman\.chitanka\.info/thumb/covers/[^\s\)]+\.(?:jpg\|jpeg\|png\|webp)',` | L690 |
+| `app/services\metadata_providers\biblioman.py` | `# Format: https://biblioman.chitanka.info/thumb/covers/\{last_4_digits\}/\{chitanka_id\}-\{hash\}.1000.jpg` | L361 |
+| `app/services\metadata_providers\biblioman.py` | `# Example: https://biblioman.chitanka.info/thumb/covers/6/5/1/6/16516-61e2e079eca99.1000.jpg` | L362 |
+| `app/services\metadata_providers\biblioman.py` | `cover_url = f"https://biblioman.chitanka.info/thumb/covers/\{digits_path\}/\{base_filename\}.1000.jpg"` | L392 |
+| `app/services\metadata_providers\biblioman.py` | `cover_url = f"https://biblioman.chitanka.info/thumb/covers/\{digits_path\}/\{base_filename\}.1000.jpg"` | L407 |
+| `app/services\unified_cover_manager.py` | `Handles both external URLs (https://...) and cached covers (/covers/uuid.jpg).` | L60 |
+| `app/services\unified_cover_manager.py` | `if url.startswith('/covers/') or url.startswith('/static/covers/'):` | L73 |
+| `app/services\unified_cover_manager.py` | `if validated_url.startswith('/covers/') or validated_url.startswith('/static/covers/'):` | L118 |
+| `app/services\simple_backup_service.py` | `zipf.write(file_path, f"data/covers/\{relative_path\}")` | L377 |
+| `app/services\simple_backup_service.py` | `logger.debug(f"Added cover to backup: data/covers/\{relative_path\}")` | L379 |
+| `app/services\simple_backup_service.py` | `# Step 2: Make a pre-restore safety backup by moving aside and zipping (expanded to include covers/uploads/settings)` | L482 |
+| `app/services\simple_backup_service.py` | `# Create a zip snapshot in backups including covers/uploads/settings` | L494 |
+| `app/services\simple_backup_service.py` | `zipf.write(file_path, f"data/covers/\{rel\}")` | L520 |
+| `app/services\opds_sync_service.py` | `from ..utils.image_processing import process_image_from_url` | L22 |
+| `app/services\opds_sync_service.py` | `if isinstance(cover_url, str) and cover_url.startswith("/covers/"):` | L727 |
+| `app/services\opds_sync_service.py` | `cached_url = process_image_from_url(str(cover_url), auth=cover_auth, headers=cover_headers)` | L733 |
+| `app/services\opds_sync_service.py` | `cached_url = process_image_from_url(str(cover_url))` | L736 |
+| `app/services\cover_service.py` | `from app.utils.image_processing import process_image_from_url` | L13 |
+| `app/services\cover_service.py` | `rel = process_image_from_url(cover_url)` | L214 |
+| `app/services\audiobookshelf_import_service.py` | `return f"/covers/\{filename\}"` | L372 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/cover_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Системата вече има функционалност за сваляне и кеширане на cover изображения. Модифицираме обогатяването да използва `process_image_from_url()` вместо да запазва директно външния URL:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/utils/image_processing.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 52, lines removed: 51
+
+```diff
+@@ -800,57 +800,58 @@
+                                  current_is_valid = ends_with_extension or contains_extension
+                      
+-                     # Validate new cover URL before saving (check if it's accessible)
+-                     new_url_is_accessible = False
++                     # Download and cache cover image locally instead of saving external URL
+                      if is_valid_url:
+                          try:
+-                             import httpx
+-                             # Quick HEAD request to check if URL is accessible (timeout 5 seconds)
+-                             with httpx.Client(timeout=5.0, follow_redirects=True) as client:
+-                                 response = client.head(new_cover_url)
+-                                 if response.status_code == 200:
+-                                     # Check content type
+-                                     content_type = response.headers.get('content-type', '').lower()
+-                                     if 'image' in content_type:
+-                                         new_url_is_accessible = True
+-                                         logger.info(f"✅ New cover URL is accessible: {new_cover_url[:80]}... (content-type: {content_type})")
+-                                     else:
+-                                         logger.warning(f"⚠️  New cover URL returned non-image content-type: {content_type}")
+-                                 elif response.status_code in [301, 302, 303, 307, 308]:
+-                                     # Redirect - try GET request to final URL
+-                                     final_url = response.headers.get('location', new_cover_url)
+-                                     get_response = client.get(final_url, timeout=5.0)
+-                                     if get_response.status_code == 200:
+-                                         content_type = get_response.headers.get('content-type', '').lower()
+-                                         if 'image' in content_type:
+-                                             new_url_is_accessible = True
+-                                             new_cover_url = final_url  # Use final URL after redirect
+-                                             logger.info(f"✅ New cover URL is accessible after redirect: {final_url[:80]}...")
+-                                 else:
+-                                     logger.warning(f"⚠️  New cover URL returned status {response.status_code}: {new_cover_url[:80]}...")
+-                         except Exception as e:
+-                             logger.warning(f"⚠️  Could not validate new cover URL accessibility: {e}")
+-                             # If validation fails, still allow the URL if it looks valid (has image extension)
+-                             image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+-                             if any(new_cover_url.lower().endswith(ext) for ext in image_extensions):
+-                                 new_url_is_accessible = True
+-                                 logger.info(f"⚠️  Could not verify accessibility, but URL has image extension - allowing: {new_cover_url[:80]}...")
+-                     
+-                     logger.info(f"🔍 Cover check for '{book['title']}': current='{current_cover_url[:80] if current_cover_url else 'None'}...' (valid={current_is_valid}), new='{new_cover_url[:80] if new_cover_url else 'None'}...' (accessible={new_url_is_accessible})")
+-                     
+-                     # Update if:
+-                     # 1. No current cover, OR
+-                     # 2. Current cover is invalid (local path or broken cache URL), OR
+-                     # 3. Force flag is set
+-                     # AND new URL is accessible
+-                     if (not current_cover_url or not current_is_valid or self.args.force):
+-                         if is_valid_url and new_url_is_accessible:
+-                             updates['cover_url'] = new_cover_url
+-                             logger.info(f"🖼️  Updating cover URL for: {book['title']} -&gt; {new_cover_url[:80]}...")
+-                         elif is_valid_url and not new_url_is_accessible:
+-                             logger.warning(f"⚠️  Skipping inaccessible cover URL for '{book['title']}': {new_cover_url[:80]}... (URL not accessible or not an image)")
+-                         else:
+-                             logger.warning(f"⚠️  Skipping invalid cover URL for '{book['title']}': {new_cover_url} (not http/https)")
+-                     elif current_cover_url and current_is_valid:
+-                         logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
++                             # Use process_image_from_url to download and cache the cover locally
++                             # This will save the image to /covers/ directory and return a local path like /covers/uuid.jpg
++                             from app.utils.image_processing import process_image_from_url
++                             from flask import Flask
++                             
++                             # Create a minimal Flask app context if needed
++                             app = None
++                             try:
++                                 from flask import current_app
++                                 app = current_app
++                             except RuntimeError:
++                                 # No app context - create a minimal one for image processing
++                                 from app import create_app
++                                 app = create_app()
++                             
++                             with app.app_context():
++                                 logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
++                                 local_cover_path = process_image_from_url(new_cover_url)
++                                 
++                                 if local_cover_path and local_cover_path.startswith('/covers/'):
++                                     # Successfully downloaded and cached locally
++                                     logger.info(f"✅ Cover downloaded and cached locally: {local_cover_path}")
++                                     
++                                     # Update if:
++                                     # 1. No current cover, OR
++                                     # 2. Current cover is invalid (local path or broken cache URL), OR
++                                     # 3. Force flag is set
++                                     if (not current_cover_url or not current_is_valid or self.args.force):
++                                         updates['cover_url'] = local_cover_path
++                                         logger.info(f"🖼️  Updating cover URL for: {book['title']} -&gt; {local_cover_path}")
++                                     elif current_cover_url and current_is_valid:
++                                         logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
++                                 else:
++                                     logger.warning(f"⚠️  Failed to download cover image for '{book['title']}': {local_cover_path}")
++                         except Exception as e:
++                             logger.error(f"❌ Error downloading cover image for '{book['title']}': {e}", exc_info=True)
++                             # Fallback: if download fails, still try to save the external URL if it's accessible
++                             try:
++                                 import httpx
++                                 with httpx.Client(timeout=5.0, follow_redirects=True) as client:
++                                     response = client.head(new_cover_url)
++                                     if response.status_code == 200:
++                                         content_type = response.headers.get('content-type', '').lower()
++                                         if 'image' in content_type:
++                                             if (not current_cover_url or not current_is_valid or self.args.force):
++                                                 updates['cover_url'] = new_cover_url
++                                                 logger.info(f"🖼️  Fallback: Using external URL (download failed): {new_cover_url[:80]}...")
++                             except Exception as fallback_error:
++                                 logger.warning(f"⚠️  Fallback validation also failed: {fallback_error}")
++                     else:
++                         logger.warning(f"⚠️  Skipping invalid cover URL for '{book['title']}': {new_cover_url} (not http/https)")
+                  
+                  # Publisher is handled separately as a relationship
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Download and cache cover images locally instead of saving external URLs - use process_image_from_url to save covers to /covers/ directory" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Download and cache cover images locally instead of saving external URLs - use process_image_from_url to save covers to /covers/ directory" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 764de33] Download and cache cover images locally instead of saving external URLs - use process_image_from_url to save covers to /covers/ directory
+ 2 files changed, 392 insertions(+), 49 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   21ca20f..764de33  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Модифицирах кода да използва `process_image_from_url()` за сваляне и кеширане на cover изображенията локално. При обогатяване:
+
+1. Perplexity връща cover URL
+2. Изображението се сваля и обработва чрез `process_image_from_url()`
+3. Запазва се в `/covers/` с UUID име (напр. `/covers/uuid.jpg`)
+4. В базата данни се записва локалният път `/covers/uuid.jpg` вместо външния URL
+5. Изображението се сервира статично чрез Flask route `/covers/<filename>`
+
+Предимства:
+- Не зависи от външни URL-и, които могат да изчезнат
+- По-бързо зареждане (локални файлове)
+- По-надеждно (няма проблеми с CORS или 404)
+- Автоматична оптимизация на изображенията (resize, quality)
+
+Опитайте отново обогатяването — cover изображенията трябва да се свалят локално и да се запазят в `/covers/` директорията.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 19:45:10,123 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 19:45:10,123 [INFO] ============================================================
+2025-12-24 19:45:10,123 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 19:45:10] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:45:10,165 [INFO] 192.168.1.9 - - [24/Dec/2025 19:45:10] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:45:10,187 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 19:45:10,187 [INFO] ⚙️  Configuration:
+2025-12-24 19:45:10,187 [INFO]    Limit: 5
+2025-12-24 19:45:10,187 [INFO]    Force: False
+2025-12-24 19:45:10,187 [INFO]    Dry run: False
+2025-12-24 19:45:10,187 [INFO]    Min quality: 0.3
+2025-12-24 19:45:10,187 [INFO]    No cover only: True (only books without covers)
+2025-12-24 19:45:10,187 [INFO] 📖 Querying database for books...
+2025-12-24 19:45:10,187 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 19:45:10,188 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 19:45:10,195 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 19:45:10,198 [INFO] 🔍 [_get_books_to_enrich] 'The Secret History': cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:45:10,198 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:45:10,516 [INFO] HTTP Request: HEAD https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg "HTTP/1.1 403 Forbidden"
+2025-12-24 19:45:10,518 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned status 403 - marking as INVALID
+2025-12-24 19:45:10,518 [INFO] ✅ Added book without valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+2025-12-24 19:45:10,529 [INFO] 🔍 [_get_books_to_enrich] 'The Secret Garden': cover_url='https://knigabg.com/pix/28162.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:45:10,530 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:45:10,578 [INFO] HTTP Request: HEAD https://knigabg.com/pix/28162.jpg "HTTP/1.1 404 Not Found"
+2025-12-24 19:45:10,578 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned status 404 - marking as INVALID
+2025-12-24 19:45:10,579 [INFO] ✅ Added book without valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 19:45:10,581 [INFO] 🔍 [_get_books_to_enrich] 'The Priory of the Orange Tree (The Roots of Chaos, #1)': cover_url='https://images.thenile.io/r1000/9781408883358.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:45:10,582 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:45:10,626 [INFO] HTTP Request: HEAD https://images.thenile.io/r1000/9781408883358.jpg "HTTP/1.1 200 OK"
+2025-12-24 19:45:10,627 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 19:45:10,630 [INFO] 🔍 [_get_books_to_enrich] 'The Familiar': cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:45:10,631 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:45:11,519 [INFO] HTTP Request: HEAD https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg "HTTP/1.1 200 OK"
+2025-12-24 19:45:11,520 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned non-image content-type: text/html; charset=utf-8 - marking as INVALID
+2025-12-24 19:45:11,520 [INFO] ✅ Added book without valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 19:45:11,524 [INFO] 🔍 [_get_books_to_enrich] 'The Costume History': cover_url='https://cdn.taschen.com/custom/taschen/uploads/2021/08/26142148/va_racinet_costume_history_25_g_3d_4...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:45:11,525 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:45:11,538 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='https://cdn.taschen.com/custom/taschen/uploads/2021/08/26142...')
+2025-12-24 19:45:11,538 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 19:45:11,538 [INFO] 📊 Statistics: 2 books WITH valid cover URLs (skipped)
+2025-12-24 19:45:11,538 [INFO] 📊 Statistics: 3 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 19:45:11,538 [INFO] ✅ Found 3 books to enrich
+2025-12-24 19:45:11,538 [INFO]
+📚 Found 3 books to enrich
+2025-12-24 19:45:11,538 [INFO]
+🚀 Starting enrichment...
+2025-12-24 19:45:11,538 [INFO]    Estimated time: ~0.1 minutes
+2025-12-24 19:45:11,538 [INFO]    Estimated cost: ~$0.00
+2025-12-24 19:45:11,539 [INFO] 🔍 [_progress_callback] Book 1/3: 'The Secret History', metadata=None
+2025-12-24 19:45:11,539 [WARNING] [1/3] ❌ The Secret History - No metadata found
+2025-12-24 19:45:11,539 [INFO] 🔍 [_progress_callback] Book data: title='The Secret History', author='Unknown', cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg', description=present
+2025-12-24 19:45:12,540 [INFO] 🔍 [_progress_callback] Book 2/3: 'The Secret Garden', metadata=None
+2025-12-24 19:45:12,541 [WARNING] [2/3] ❌ The Secret Garden - No metadata found
+2025-12-24 19:45:12,541 [INFO] 🔍 [_progress_callback] Book data: title='The Secret Garden', author='Франсис Бърнет', cover_url='https://knigabg.com/pix/28162.jpg', description=present
+2025-12-24 19:45:13,543 [INFO] 🔍 [_progress_callback] Book 3/3: 'The Familiar', metadata=None
+2025-12-24 19:45:13,543 [WARNING] [3/3] ❌ The Familiar - No metadata found
+2025-12-24 19:45:13,544 [INFO] 🔍 [_progress_callback] Book data: title='The Familiar', author='Лий Бардуго', cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg', description=present
+2025-12-24 19:45:13,544 [INFO] 🔍 [_save_enriched_books] Processing 3 books for saving...
+2025-12-24 19:45:13,544 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Secret History'
+2025-12-24 19:45:13,544 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata']
+2025-12-24 19:45:13,545 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: False
+2025-12-24 19:45:13,545 [WARNING] ⚠️  [_save_enriched_books] Skipping 'The Secret History' - no ai_metadata found
+2025-12-24 19:45:13,545 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Secret Garden'
+2025-12-24 19:45:13,545 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata']
+2025-12-24 19:45:13,545 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: False
+2025-12-24 19:45:13,546 [WARNING] ⚠️  [_save_enriched_books] Skipping 'The Secret Garden' - no ai_metadata found
+2025-12-24 19:45:13,546 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Familiar'
+2025-12-24 19:45:13,546 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata']
+2025-12-24 19:45:13,546 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: False
+2025-12-24 19:45:13,546 [WARNING] ⚠️  [_save_enriched_books] Skipping 'The Familiar' - no ai_metadata found
+2025-12-24 19:45:13,547 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 19:45:13,548 [INFO] 📊 Tracked 0 enriched and 0 skipped books
+2025-12-24 19:45:13,548 [INFO]
+============================================================
+2025-12-24 19:45:13,548 [INFO] ENRICHMENT REPORT
+2025-12-24 19:45:13,548 [INFO] ============================================================
+2025-12-24 19:45:13,548 [INFO] 📊 Statistics:
+2025-12-24 19:45:13,548 [INFO]    Books checked: 3
+2025-12-24 19:45:13,548 [INFO]    Books enriched: 0
+2025-12-24 19:45:13,548 [INFO]    Books failed: 3
+2025-12-24 19:45:13,548 [INFO]    Success rate: 0.0%
+2025-12-24 19:45:13,548 [INFO]
+📝 Content:
+2025-12-24 19:45:13,548 [INFO]    Covers found: 0
+2025-12-24 19:45:13,548 [INFO]    Descriptions added: 0
+2025-12-24 19:45:13,548 [INFO]
+⏱️  Performance:
+2025-12-24 19:45:13,548 [INFO]    Duration: 2.0s
+2025-12-24 19:45:13,548 [INFO]    Speed: 89.8 books/min
+2025-12-24 19:45:13,548 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 19:45:13,549 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 19:45:15] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:45:15,250 [INFO] 192.168.1.9 - - [24/Dec/2025 19:45:15] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="read_file">
+<details>
+<summary>Tool use: **read_file**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
