@@ -758,14 +758,17 @@ class EnrichmentCommand:
                     # 4. New description matches title language AND:
                     #    a. Existing doesn't match title language, OR
                     #    b. New is significantly longer (more than 50 chars), OR
-                    #    c. New is longer (even slightly) - prefer AI-generated descriptions
+                    #    c. New is longer (even slightly), OR
+                    #    d. New is at least 90% of existing length (prefer AI-generated descriptions even if slightly shorter)
+                    length_ratio = len(description) / len(existing_desc) if existing_desc else 1.0
                     should_update = (not existing_desc or 
                         self.args.force or 
                         has_citations or 
                         (desc_matches_title and (
                             not existing_desc_matches_title or 
                             len(description) > len(existing_desc) + 50 or
-                            (len(description) > len(existing_desc) and existing_desc_matches_title)  # Prefer AI description if longer, even if existing matches
+                            len(description) > len(existing_desc) or
+                            (length_ratio >= 0.9 and existing_desc_matches_title)  # Prefer AI description if at least 90% of existing length
                         )))
                     
                     logger.info(f"🔍 [_save_enriched_books] Should update description for '{book_title}': {should_update}")

@@ -32306,16 +32306,100 @@ _**Agent (model composer-1, mode Agent)**_
 ---
 
 
+Проблемът е в логиката за обновяване на описанието. Когато вече има описание, което съвпада с езика на заглавието, и няма citations, условието не позволява обновяване, дори когато новото описание е по-качествено.
+
+От логовете:
+- Има съществуващо описание
+- Няма citations
+- `force=False`
+- Резултат: `Should update description: False`
+
+Коригираме логиката, за да обновява описанието, когато новото е по-качествено или по-подробно:
+
 
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="read_file">
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 10, lines removed: 2
+
+```diff
+@@ -750,14 +750,22 @@
+                      
+                      logger.info(f"🔍 [_save_enriched_books] Language check for '{book_title}': title_has_cyrillic={has_cyrillic_title}, desc_has_cyrillic={desc_has_cyrillic}, desc_matches_title={desc_matches_title}, existing_desc_matches_title={existing_desc_matches_title}, has_citations={has_citations}, force={self.args.force}")
++                     logger.info(f"🔍 [_save_enriched_books] Description lengths: existing={len(existing_desc)}, new={len(description)}, diff={len(description) - len(existing_desc)}")
+                      
+                      # Update if:
+                      # 1. No existing description, OR
+                      # 2. Force flag is set, OR
+                      # 3. Existing has citations (needs cleaning), OR
+-                     # 4. New description matches title language AND (existing doesn't match OR new is significantly longer)
++                     # 4. New description matches title language AND:
++                     #    a. Existing doesn't match title language, OR
++                     #    b. New is significantly longer (more than 50 chars), OR
++                     #    c. New is longer (even slightly) - prefer AI-generated descriptions
+                      should_update = (not existing_desc or 
+                          self.args.force or 
+                          has_citations or 
+-                         (desc_matches_title and (not existing_desc_matches_title or len(description) &gt; len(existing_desc) + 50)))
++                         (desc_matches_title and (
++                             not existing_desc_matches_title or 
++                             len(description) &gt; len(existing_desc) + 50 or
++                             (len(description) &gt; len(existing_desc) and existing_desc_matches_title)  # Prefer AI description if longer, even if existing matches
++                         )))
+                      
+                      logger.info(f"🔍 [_save_enriched_books] Should update description for '{book_title}': {should_update}")
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
 <details>
-<summary>Tool use: **read_file**</summary>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
 
-Status: **loading**
+- `scripts/enrich_books.py`
+
+Lint results
 
 
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix description update logic to prefer AI-generated descriptions when they are longer, even if existing description matches language" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix description update logic to prefer AI-generated descriptions when they are longer, even if existing description matches language" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main f05b3d5] Fix description update logic to prefer AI-generated descriptions when they are longer, even if existing description matches language
+ 2 files changed, 488 insertions(+), 2 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   719d71c..f05b3d5  main -&gt; main
+
+```
 </details>
 </tool-use>
 
@@ -32326,6 +32410,25 @@ Status: **loading**
 ---
 
 
+Проблемът е в логиката за обновяване на описанието. От логовете:
+
+```
+🔍 [_save_enriched_books] Existing description for 'The Secret History': Under the influence...
+🔍 [_save_enriched_books] Should update description for 'The Secret History': False
+```
+
+Когато вече има описание, което съвпада с езика на заглавието, и няма citations, условието не позволява обновяване, дори когато новото описание е по-качествено.
+
+Подобрих логиката, за да обновява описанието, когато:
+1. Няма съществуващо описание, или
+2. Е зададен `force`, или
+3. Съществуващото има citations, или
+4. Новото описание съвпада с езика на заглавието И:
+   - Съществуващото не съвпада с езика, или
+   - Новото е с 50+ символа по-дълго, или
+   - Новото е по-дълго (дори леко) — предпочитаме AI-генерираните описания
+
+Стартирайте обогатяването отново — описанията трябва да се записват правилно. Също така виждам, че намерените cover URL-и са достъпни (OpenLibrary), така че и те трябва да се записват.
 
 ---
 
