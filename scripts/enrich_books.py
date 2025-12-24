@@ -138,6 +138,7 @@ class EnrichmentCommand:
         logger.info("="*60)
         
         # Initialize service (auto-detects provider from settings)
+        logger.info("🔧 Initializing EnrichmentService...")
         self.service = EnrichmentService(provider='auto')
         
         # Check if any provider is available
@@ -148,6 +149,11 @@ class EnrichmentCommand:
             logger.error("   2. Configure OpenAI/Ollama in Settings > AI Settings")
             logger.error("      (Note: OpenAI/Ollama cannot search web for covers)")
             return 1
+        else:
+            if self.service.perplexity:
+                logger.info("✅ Perplexity enricher is ready")
+            if self.service.openai_enricher:
+                logger.info("✅ OpenAI/Ollama enricher is ready")
         
         logger.info(f"⚙️  Configuration:")
         logger.info(f"   Limit: {self.args.limit or 'No limit'}")
