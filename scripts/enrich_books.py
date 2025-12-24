@@ -254,8 +254,8 @@ class EnrichmentCommand:
                             'language': language,
                         }
                         
-                        # Only include books with title and author
-                        if book_dict['title'] and book_dict['author'] != 'Unknown':
+                        # Include books even if they don't have authors (we'll enrich them)
+                        if book_dict['title']:
                             # Check if it's a Bulgarian book
                             # Bulgarian books have Cyrillic characters in title OR language='bg'
                             has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in title)
@@ -263,7 +263,10 @@ class EnrichmentCommand:
                             
                             if has_cyrillic or is_bg_language:
                                 books.append(book_dict)
-                                logger.debug(f"✅ Added Bulgarian book: {title}")
+                                if book_dict['author'] == 'Unknown':
+                                    logger.debug(f"✅ Added Bulgarian book without author: {title}")
+                                else:
+                                    logger.debug(f"✅ Added Bulgarian book: {title}")
                             else:
                                 logger.debug(f"⏭️  Skipping non-Bulgarian book: {title} (language: {language})")
             
@@ -327,9 +330,12 @@ class EnrichmentCommand:
     async def _get_book_by_title(self, title_pattern: str) -> List[Dict]:
         """Get books by title pattern (partial match)"""
         try:
+            # Try multiple search patterns for better matching
             query = """
             MATCH (b:Book)
             WHERE b.title CONTAINS $title_pattern
+               OR b.normalized_title CONTAINS $title_pattern
+               OR b.title = $title_pattern
             OPTIONAL MATCH (b)-[:PUBLISHED_BY]->(p:Publisher)
             RETURN b.id as id, b.title as title, b.description as description,
                    b.cover_url as cover_url, p.name as publisher,

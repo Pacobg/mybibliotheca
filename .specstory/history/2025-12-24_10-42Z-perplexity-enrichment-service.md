@@ -8845,3 +8845,228 @@ python scripts/enrich_books.py --book-title "13 за късмет" --force --qua
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+Никаква промяна
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Проверявам защо промените не се прилагат. Вероятно описанието вече е запазено с цитатите и не се обновява. Подобрявам логиката:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "How does merge_metadata_into_book decide whether to update description? When does it replace existing description?" • **11** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/utils/book_utils.py` | L439-609 |
+| `app/routes/import_routes.py` | L2280-2581 |
+| `app/routes/import_routes.py` | L1903-2280 |
+| `app/utils/unified_metadata.py` | L603-830 |
+| `app/services/opds_sync_service.py` | L407-1081 |
+| `app/templates/add_book.html` | L1504-1543 |
+| `app/routes/import_routes.py` | L1905-2581 |
+| `app/services/personal_metadata_service.py` | L97-654 |
+| `app/utils/unified_metadata.py` | L603-859 |
+| `app/templates/add_book.html` | L1390-1441 |
+| `app/utils/unified_metadata.py` | L600-830 |
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проблемът е в условието за обновяване на описанието: то се обновява само ако е по-дълго, а почистеното (без цитати) може да е по-късо. Променям логиката да винаги обновява описанието с `--force` или ако старото съдържа цитати:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 15, lines removed: 1
+
+```diff
+@@ -413,6 +413,20 @@
+                      description = re.sub(r'\s+', ' ', description).strip()
+                      
+-                     if not book.get('description') or len(description) &gt; len(book.get('description', '')):
++                     existing_desc = book.get('description', '')
++                     # Check if existing description has citations
++                     has_citations = bool(re.search(r'\[\d+\]', existing_desc))
++                     
++                     # Update if:
++                     # 1. No existing description, OR
++                     # 2. Force flag is set, OR
++                     # 3. Existing has citations (needs cleaning), OR
++                     # 4. New description is significantly longer
++                     if (not existing_desc or 
++                         self.args.force or 
++                         has_citations or 
++                         len(description) &gt; len(existing_desc) + 50):
+                          updates['description'] = description
++                         if has_citations:
++                             logger.info(f"🧹 Cleaning description citations for: {book['title']}")
+                  
+                  # Update cover_url if missing or force update
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 22, lines removed: 2
+
+```diff
+@@ -523,7 +523,27 @@
+                          current_author_names = [a.get('name', '') for a in current_authors if a.get('name')]
+                          
++                         # Normalize current author names for comparison
++                         current_normalized = []
++                         for name in current_author_names:
++                             # If name has multiple parts, try to normalize
++                             if ',' in name or ';' in name:
++                                 parts = [a.strip() for a in re.split(r'[,;]', name)]
++                                 cyrillic_parts = [a for a in parts if any('\u0400' &lt;= char &lt;= '\u04FF' for char in a)]
++                                 if cyrillic_parts:
++                                     current_normalized.append(cyrillic_parts[0])
++                                 else:
++                                     current_normalized.append(parts[0])
++                             else:
++                                 current_normalized.append(name)
++                         
+                          # Check if author needs to be updated
+-                         # If multiple authors or author doesn't match AI author, update
+-                         if len(current_author_names) != 1 or current_author_names[0] != ai_author:
++                         # Update if: multiple authors, or single author doesn't match AI author, or force flag
++                         needs_update = (
++                             len(current_author_names) != 1 or 
++                             (len(current_normalized) == 1 and current_normalized[0] != ai_author) or
++                             self.args.force
++                         )
++                         
++                         if needs_update:
+                              logger.info(f"📝 Updating authors from {current_author_names} to [{ai_author}]")
+                              
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix enrichment: always update description if has citations or force flag, improve author update logic" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix enrichment: always update description if has citations or force flag, improve author update logic" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main c823582] Fix enrichment: always update description if has citations or force flag, improve author update logic
+ 2 files changed, 501 insertions(+), 3 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   da33d7b..c823582  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправих логиката. Проблемът беше, че описанието се обновяваше само ако новото беше по-дълго, а почистеното (без цитати) може да е по-късо.
+
+## Поправки
+
+1. Описание: винаги се обновява ако:
+   - Старото съдържа цитати `[3][5][7][9]`, или
+   - Използва се `--force`, или
+   - Няма съществуващо описание, или
+   - Новото е значително по-дълго
+
+2. Автор: подобрена логика за сравнение и нормализация на текущите автори.
+
+## На сървъра изпълнете:
+
+```bash
+# Изтеглете промените
+git pull origin main
+
+# Опитайте отново с --force
+export PERPLEXITY_MODEL="sonar-pro"
+python scripts/enrich_books.py --book-title "13 за късмет" --force --quality-min 0.3 -y
+```
+
+Сега трябва да:
+- Премахне цитатите от описанието (дори ако вече е запазено с цитати)
+- Поправи автора на "Агата Кристи"
+- Запази корицата
+
+Опитайте отново и ми кажете резултата.
+
+---
+

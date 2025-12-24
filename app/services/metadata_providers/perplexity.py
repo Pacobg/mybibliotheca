@@ -133,11 +133,22 @@ class PerplexityEnricher:
             else:
                 author_normalized = authors_list[0]  # Use first author
         
-        query = f"""
+        # Build query - handle missing author
+        if author_normalized and author_normalized.strip():
+            query = f"""
 Намери детайлна информация за българската книга:
 
 ЗАГЛАВИЕ: {title}
 АВТОР: {author_normalized}
+"""
+        else:
+            # No author provided - AI should find it
+            query = f"""
+Намери детайлна информация за българската книга:
+
+ЗАГЛАВИЕ: {title}
+
+ВАЖНО: Ако знаеш автора на тази книга, включи го в отговора!
 """
         
         if isbn:

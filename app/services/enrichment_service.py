@@ -70,11 +70,16 @@ class EnrichmentService:
             return None
         
         title = book_data.get('title')
-        author = book_data.get('author')
+        author = book_data.get('author') or book_data.get('author', 'Unknown')
         
-        if not title or not author:
-            logger.error("Missing title or author - cannot enrich")
+        if not title:
+            logger.error("Missing title - cannot enrich")
             return None
+        
+        # If author is Unknown or missing, try to enrich anyway (AI might find it)
+        if not author or author == 'Unknown':
+            logger.info(f"⚠️  Book '{title}' has no author - will try to find it via AI")
+            author = ''  # Empty author - AI will try to find it
         
         # Check if book already has good data (unless force)
         if not force and self._has_sufficient_data(book_data):
