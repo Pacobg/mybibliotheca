@@ -21171,16 +21171,143 @@ _**Agent (model composer-1, mode Agent)**_
 ---
 
 
+Проверявам как се зарежда `PERPLEXITY_API_KEY` от `.env` и дали се използва правилно:
+
 
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="grep">
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
 <details>
-<summary>Tool use: **grep**</summary>
+<summary>Tool use: **grep** • Grep for "load_dotenv|dotenv|PERPLEXITY_API_KEY" in "scripts/enrich_books.py" • 8 matches</summary>
 
-Status: **loading**
+Output mode: content
 
 
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `from dotenv import load_dotenv` | L46 |
+| `scripts/enrich_books.py` | `load_dotenv(env_path)` | L50 |
+| `scripts/enrich_books.py` | `# Verify PERPLEXITY_API_KEY is loaded` | L52 |
+| `scripts/enrich_books.py` | `perplexity_key = os.getenv('PERPLEXITY_API_KEY')` | L53 |
+| `scripts/enrich_books.py` | `logger.info(f"✅ PERPLEXITY_API_KEY found (length: \{len(perplexity_key)\})")` | L55 |
+| `scripts/enrich_books.py` | `logger.warning("⚠️  PERPLEXITY_API_KEY not found in .env file")` | L57 |
+| `scripts/enrich_books.py` | `logger.warning("⚠️  python-dotenv not installed - environment variables may not load")` | L59 |
+| `scripts/enrich_books.py` | `logger.error("   1. Set PERPLEXITY_API_KEY in .env (recommended - has web search)")` | L148 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "load_dotenv|from dotenv|PERPLEXITY_API_KEY" in "app/services/enrichment_service.py" • 3 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `perplexity_key = os.getenv('PERPLEXITY_API_KEY')` | L51 |
+| `app/services/enrichment_service.py` | `perplexity_key = ai_config.get('PERPLEXITY_API_KEY', '')` | L56 |
+| `app/services/enrichment_service.py` | `logger.warning("⚠️  PERPLEXITY_API_KEY not set - Perplexity enrichment disabled")` | L74 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/__init__.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "How is dotenv loaded in Flask app initialization?" • **9** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/__init__.py` | L116-1382 |
+| `config.py` | L11-169 |
+| `run.py` | L35 |
+| `dev_run.py` | L50 |
+| `app/admin.py` | L131-236 |
+| `app/__init__.py` | L60 |
+| `config.py` | L40 |
+| `config.py` | L58-169 |
+| `app/__init__.py` | L313-1382 |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+The string to replace was not found in the file.
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `app/services/enrichment_service.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Improve PERPLEXITY_API_KEY loading and logging from .env file" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Improve PERPLEXITY_API_KEY loading and logging from .env file" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 58de8bf] Improve PERPLEXITY_API_KEY loading and logging from .env file
+ 2 files changed, 375 insertions(+), 2 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   e9d9f00..58de8bf  main -&gt; main
+
+```
 </details>
 </tool-use>
 
@@ -21191,42 +21318,27 @@ Status: **loading**
 ---
 
 
+Поправих зареждането на `PERPLEXITY_API_KEY` от `.env` и добавих по-подробно логиране. Промените са качени в git main.
 
----
+## Какво е променено:
 
+1. По-добро зареждане на ключа — първо от `.env`, после от AI Settings
+2. Логиране — показва дали ключът е намерен (без да показва самия ключ)
+3. По-добра обработка на празни стойности — използва `.strip()` за премахване на whitespace
 
+## Важно:
 
----
+От снимката виждам, че в момента е избран "Ollama" като AI Provider. За да работи Perplexity обогатяването:
 
+1. Добавете `PERPLEXITY_API_KEY=вашият_ключ` в `.env` файла
+2. В Settings > AI Settings изберете "Perplexity (Web Search)" като AI Provider
+3. Запазете настройките
 
+След като изтеглите промените и опитате отново, в логовете ще видите:
+- `✅ PERPLEXITY_API_KEY found (length: X chars)` — ако ключът е намерен
+- `⚠️ PERPLEXITY_API_KEY not found` — ако ключът липсва
 
----
-
-
-
----
-
-
-
----
-
-
-
----
-
-
-
----
-
-
-
----
-
-
-
----
-
-
+Всички промени са качени в git main и са готови за изтегляне на сървъра.
 
 ---
 
