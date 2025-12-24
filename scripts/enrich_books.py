@@ -979,8 +979,12 @@ class EnrichmentCommand:
                         from app.services.kuzu_book_service import KuzuBookService
                         book_update_service = KuzuBookService(user_id='system')
                         
+                        logger.info(f"🔍 [_save_enriched_books] Calling update_book for '{book['title']}' (ID: {book['id']}) with {len(updates)} fields: {list(updates.keys())}")
+                        
                         # Update book using the service's update_book method
                         updated_book = await book_update_service.update_book(book['id'], updates)
+                        
+                        logger.info(f"🔍 [_save_enriched_books] update_book returned: {type(updated_book).__name__ if updated_book else 'None'}")
                         
                         if updated_book:
                             saved_count += 1
