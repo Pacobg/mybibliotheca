@@ -37736,3 +37736,318 @@ rmdir covers 2>/dev/null || true
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 23:08:58,888 [INFO] ============================================================
+2025-12-24 23:08:58,888 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 23:08:58,888 [INFO] ============================================================
+2025-12-24 23:08:58,888 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 23:08:58] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 23:08:58,936 [INFO] 192.168.1.9 - - [24/Dec/2025 23:08:58] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 23:08:58,957 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 23:08:58,957 [INFO] ⚙️  Configuration:
+2025-12-24 23:08:58,958 [INFO]    Limit: 5
+2025-12-24 23:08:58,958 [INFO]    Force: False
+2025-12-24 23:08:58,958 [INFO]    Dry run: False
+2025-12-24 23:08:58,958 [INFO]    Min quality: 0.3
+2025-12-24 23:08:58,958 [INFO]    No cover only: True (only books without covers)
+2025-12-24 23:08:58,958 [INFO] 📖 Querying database for books...
+2025-12-24 23:08:58,958 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 23:08:58,958 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 23:08:58,967 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 23:08:58,976 [INFO] ✅ Added book without valid cover: The Secret History (cover_url='/covers/5fbed5bc-b26b-4d7e-aef5-ca3a83147dc4.jpg...')
+2025-12-24 23:08:58,979 [INFO] ✅ Added book without valid cover: The Secret Garden (cover_url='/covers/493bff0d-8741-46aa-9fde-8c4eb1eccd36.jpg...')
+2025-12-24 23:08:58,982 [INFO] 🔍 [_get_books_to_enrich] 'The Priory of the Orange Tree (The Roots of Chaos, #1)': cover_url='https://images.thenile.io/r1000/9781408883358.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 23:08:58,982 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 23:08:59,029 [INFO] HTTP Request: HEAD https://images.thenile.io/r1000/9781408883358.jpg "HTTP/1.1 200 OK"
+2025-12-24 23:08:59,030 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 23:08:59,034 [INFO] ✅ Added book without valid cover: The Familiar (cover_url='/covers/6aa46df8-450f-4df4-bf22-039057a8cbee.jpg...')
+2025-12-24 23:08:59,037 [INFO] 🔍 [_get_books_to_enrich] 'The Costume History': cover_url='http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 23:08:59,037 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+192.168.1.51 - - [24/Dec/2025 23:08:59] "HEAD /covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg HTTP/1.1" 200 -
+2025-12-24 23:08:59,056 [INFO] 192.168.1.51 - - [24/Dec/2025 23:08:59] "HEAD /covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg HTTP/1.1" 200 -
+2025-12-24 23:08:59,057 [INFO] HTTP Request: HEAD http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg "HTTP/1.1 200 OK"
+2025-12-24 23:08:59,058 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750...')
+2025-12-24 23:08:59,058 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 23:08:59,058 [INFO] 📊 Statistics: 2 books WITH valid cover URLs (skipped)
+2025-12-24 23:08:59,058 [INFO] 📊 Statistics: 3 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 23:08:59,058 [INFO] ✅ Found 3 books to enrich
+2025-12-24 23:08:59,058 [INFO]
+📚 Found 3 books to enrich
+2025-12-24 23:08:59,058 [INFO]
+🚀 Starting enrichment...
+2025-12-24 23:08:59,058 [INFO]    Estimated time: ~0.1 minutes
+2025-12-24 23:08:59,058 [INFO]    Estimated cost: ~$0.00
+2025-12-24 23:08:59,059 [INFO] 🔍 [_progress_callback] Book 1/3: 'The Secret History', metadata=None
+2025-12-24 23:08:59,059 [WARNING] [1/3] ❌ The Secret History - No metadata found
+2025-12-24 23:08:59,059 [INFO] 🔍 [_progress_callback] Book data: title='The Secret History', author='Donna Tartt', cover_url='/covers/5fbed5bc-b26b-4d7e-aef5-ca3a83147dc4.jpg', description=present
+2025-12-24 23:09:00,060 [INFO] 🔍 [_progress_callback] Book 2/3: 'The Secret Garden', metadata=None
+2025-12-24 23:09:00,061 [WARNING] [2/3] ❌ The Secret Garden - No metadata found
+2025-12-24 23:09:00,061 [INFO] 🔍 [_progress_callback] Book data: title='The Secret Garden', author='Frances Hodgson Burnett', cover_url='/covers/493bff0d-8741-46aa-9fde-8c4eb1eccd36.jpg', description=present
+2025-12-24 23:09:01,063 [INFO] 🔍 [_progress_callback] Book 3/3: 'The Familiar', metadata=None
+2025-12-24 23:09:01,064 [WARNING] [3/3] ❌ The Familiar - No metadata found
+2025-12-24 23:09:01,064 [INFO] 🔍 [_progress_callback] Book data: title='The Familiar', author='Leigh Bardugo', cover_url='/covers/6aa46df8-450f-4df4-bf22-039057a8cbee.jpg', description=present
+2025-12-24 23:09:01,065 [INFO] 🔍 [_save_enriched_books] Processing 3 books for saving...
+2025-12-24 23:09:01,065 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Secret History'
+2025-12-24 23:09:01,065 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata']
+2025-12-24 23:09:01,065 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: False
+2025-12-24 23:09:01,066 [WARNING] ⚠️  [_save_enriched_books] Skipping 'The Secret History' - no ai_metadata found
+2025-12-24 23:09:01,066 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Secret Garden'
+2025-12-24 23:09:01,066 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata']
+2025-12-24 23:09:01,066 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: False
+2025-12-24 23:09:01,067 [WARNING] ⚠️  [_save_enriched_books] Skipping 'The Secret Garden' - no ai_metadata found
+2025-12-24 23:09:01,067 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Familiar'
+2025-12-24 23:09:01,067 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata']
+2025-12-24 23:09:01,067 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: False
+2025-12-24 23:09:01,067 [WARNING] ⚠️  [_save_enriched_books] Skipping 'The Familiar' - no ai_metadata found
+2025-12-24 23:09:01,068 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 23:09:01,069 [INFO] 📊 Tracked 0 enriched and 0 skipped books
+2025-12-24 23:09:01,069 [INFO]
+============================================================
+2025-12-24 23:09:01,069 [INFO] ENRICHMENT REPORT
+2025-12-24 23:09:01,069 [INFO] ============================================================
+2025-12-24 23:09:01,069 [INFO] 📊 Statistics:
+2025-12-24 23:09:01,069 [INFO]    Books checked: 3
+2025-12-24 23:09:01,069 [INFO]    Books enriched: 0
+2025-12-24 23:09:01,069 [INFO]    Books failed: 3
+2025-12-24 23:09:01,069 [INFO]    Success rate: 0.0%
+2025-12-24 23:09:01,069 [INFO]
+📝 Content:
+2025-12-24 23:09:01,069 [INFO]    Covers found: 0
+2025-12-24 23:09:01,069 [INFO]    Descriptions added: 0
+2025-12-24 23:09:01,069 [INFO]
+⏱️  Performance:
+2025-12-24 23:09:01,069 [INFO]    Duration: 2.0s
+2025-12-24 23:09:01,069 [INFO]    Speed: 89.7 books/min
+2025-12-24 23:09:01,070 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 23:09:01,070 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 23:09:03] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Проблем: книгите вече имат covers (`/covers/...`), но логиката ги маркира като невалидни, защото проверява само `http://`/`https://`. Локалните `/covers/` пътища трябва да се считат за валидни. Проверявам логиката за валидация:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проблем: проверката на ред 407 разглежда само `http://`/`https://`, а локалните `/covers/` пътища не се считат за валидни. Добавям проверка за локални covers пътища:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 23, lines removed: 4
+
+```diff
+@@ -400,10 +400,29 @@
+                                  
+                                  # Check if cover URL is valid:
+-                                 # 1. Must start with http:// or https://
+-                                 # 2. Must end with image extension (.jpg, .jpeg, .png, .webp, .gif) OR
++                                 # 1. Local covers (/covers/...) are always valid (served by Flask)
++                                 # 2. Must start with http:// or https:// for external URLs
++                                 # 3. Must end with image extension (.jpg, .jpeg, .png, .webp, .gif) OR
+                                  #    contain image extension in path (for URLs with query params)
+-                                 # 3. Exclude cache URLs that don't end with proper extension (broken cache URLs)
++                                 # 4. Exclude cache URLs that don't end with proper extension (broken cache URLs)
+                                  has_valid_cover = False
+-                                 if cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')):
++                                 
++                                 # Local covers (/covers/...) are always valid - they're served by Flask
++                                 if cover_url and cover_url.startswith('/covers/'):
++                                     # Verify the file actually exists
++                                     try:
++                                         from app.utils.image_processing import get_covers_dir
++                                         covers_dir = get_covers_dir()
++                                         filename = cover_url.split('/covers/')[-1]
++                                         cover_path = covers_dir / filename
++                                         if cover_path.exists() and cover_path.is_file():
++                                             has_valid_cover = True
++                                             logger.info(f"🔍 [_get_books_to_enrich] ✅ Local cover exists: {cover_url}")
++                                         else:
++                                             logger.info(f"🔍 [_get_books_to_enrich] ⚠️  Local cover file not found: {cover_path}")
++                                     except Exception as e:
++                                         logger.debug(f"🔍 [_get_books_to_enrich] Could not verify local cover: {e}")
++                                 
++                                 # External URLs (http/https)
++                                 elif cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')):
+                                      cover_url_lower = cover_url.lower()
+                                      image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+```
+
+</details>
+
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам дали `_has_sufficient_data` в `enrichment_service.py` разпознава локалните covers:
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "_has_sufficient_data|Local covers|/covers/" in "app/services/enrichment_service.py" • 16 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `has_sufficient = self._has_sufficient_data(book_data, require_cover=require_cover)` | L156 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [ENRICH_SINGLE_BOOK] _has_sufficient_data returned: \{has_sufficient\} for '\{title\}'")` | L157 |
+| `app/services/enrichment_service.py` | `def _has_sufficient_data(self, book_data: Dict, require_cover: bool = False) -> bool:` | L348 |
+| `app/services/enrichment_service.py` | `# Local covers (/covers/...) are always valid` | L373 |
+| `app/services/enrichment_service.py` | `if cover_url.startswith('/covers/'):` | L374 |
+| `app/services/enrichment_service.py` | `logger.debug(f"🔍 [_has_sufficient_data] URL returned non-image content-type: \{content_type\} - marking as INVALID")` | L430 |
+| `app/services/enrichment_service.py` | `logger.debug(f"🔍 [_has_sufficient_data] URL redirect failed with status \{get_response.status_code\} - marking as INVALID")` | L437 |
+| `app/services/enrichment_service.py` | `logger.debug(f"🔍 [_has_sufficient_data] URL redirect returned non-image content-type: \{content_type\} - marking as INVALID")` | L442 |
+| `app/services/enrichment_service.py` | `logger.debug(f"🔍 [_has_sufficient_data] URL returned status \{response.status_code\} - marking as INVALID")` | L445 |
+| `app/services/enrichment_service.py` | `logger.debug(f"🔍 [_has_sufficient_data] Could not verify accessibility: \{e\} - assuming valid based on extension")` | L448 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [_has_sufficient_data] Checking '\{title\}': require_cover=\{require_cover\}, has_description=\{has_description\}, has_cover=\{has_cover\} (cover_url='\{cover_url[:50] if cover_url else 'None'\}...'), has_publisher=\{has_publisher\}, has_isbn=\{has_isbn\}")` | L453 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [_has_sufficient_data] '\{title\}' has sufficient data: require_cover=True and has_cover=True - SKIPPING")` | L459 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [_has_sufficient_data] '\{title\}' needs enrichment: require_cover=True but has_cover=False - WILL ENRICH")` | L462 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [_has_sufficient_data] '\{title\}' needs enrichment: Bulgarian book without cover")` | L471 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [_has_sufficient_data] '\{title\}' Bulgarian book score: \{score\}/4, sufficient=\{result\}")` | L476 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [_has_sufficient_data] '\{title\}' Non-Bulgarian book score: \{score\}/4, sufficient=\{result\}")` | L482 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам дали `_has_sufficient_data` проверява съществуването на файла:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+`_has_sufficient_data` вече разпознава локалните covers. Промяната в `_get_books_to_enrich` трябва да реши проблема. Проверявам за грешки:
+
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix: Recognize local /covers/ paths as valid covers in _get_books_to_enrich (check if file exists)" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix: Recognize local /covers/ paths as valid covers in _get_books_to_enrich (check if file exists)" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 33d5279] Fix: Recognize local /covers/ paths as valid covers in _get_books_to_enrich (check if file exists)
+ 2 files changed, 456 insertions(+), 4 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   2780bdc..33d5279  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+

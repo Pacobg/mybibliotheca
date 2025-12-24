@@ -370,9 +370,24 @@ class EnrichmentService:
         cover_url = book_data.get('cover') or book_data.get('cover_url') or ''
         has_cover = False
         if cover_url:
-            # Local covers (/covers/...) are always valid
+            # Local covers (/covers/...) - verify file exists
             if cover_url.startswith('/covers/'):
-                has_cover = True
+                try:
+                    from app.utils.image_processing import get_covers_dir
+                    covers_dir = get_covers_dir()
+                    filename = cover_url.split('/covers/')[-1].split('?')[0]  # Remove query params if any
+                    cover_path = covers_dir / filename
+                    if cover_path.exists() and cover_path.is_file():
+                        file_size = cover_path.stat().st_size
+                        if file_size > 0:  # File exists and is not empty
+                            has_cover = True
+                            logger.debug(f"🔍 [_has_sufficient_data] Local cover exists: {cover_url} ({file_size} bytes)")
+                        else:
+                            logger.debug(f"🔍 [_has_sufficient_data] Local cover file is empty: {cover_path}")
+                    else:
+                        logger.debug(f"🔍 [_has_sufficient_data] Local cover file not found: {cover_path}")
+                except Exception as e:
+                    logger.debug(f"🔍 [_has_sufficient_data] Could not verify local cover '{cover_url}': {e}")
             elif cover_url.startswith('http://') or cover_url.startswith('https://'):
                 cover_url_lower = cover_url.lower()
                 image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']

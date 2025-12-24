@@ -412,15 +412,20 @@ class EnrichmentCommand:
                                     try:
                                         from app.utils.image_processing import get_covers_dir
                                         covers_dir = get_covers_dir()
-                                        filename = cover_url.split('/covers/')[-1]
+                                        filename = cover_url.split('/covers/')[-1].split('?')[0]  # Remove query params if any
                                         cover_path = covers_dir / filename
+                                        logger.info(f"🔍 [_get_books_to_enrich] Checking local cover: {cover_url} -> {cover_path}")
                                         if cover_path.exists() and cover_path.is_file():
-                                            has_valid_cover = True
-                                            logger.info(f"🔍 [_get_books_to_enrich] ✅ Local cover exists: {cover_url}")
+                                            file_size = cover_path.stat().st_size
+                                            if file_size > 0:  # File exists and is not empty
+                                                has_valid_cover = True
+                                                logger.info(f"🔍 [_get_books_to_enrich] ✅ Local cover exists and is valid: {cover_url} ({file_size} bytes)")
+                                            else:
+                                                logger.info(f"🔍 [_get_books_to_enrich] ⚠️  Local cover file is empty: {cover_path}")
                                         else:
-                                            logger.info(f"🔍 [_get_books_to_enrich] ⚠️  Local cover file not found: {cover_path}")
+                                            logger.info(f"🔍 [_get_books_to_enrich] ⚠️  Local cover file not found: {cover_path} (covers_dir={covers_dir})")
                                     except Exception as e:
-                                        logger.debug(f"🔍 [_get_books_to_enrich] Could not verify local cover: {e}")
+                                        logger.warning(f"🔍 [_get_books_to_enrich] Error verifying local cover '{cover_url}': {e}", exc_info=True)
                                 
                                 # External URLs (http/https)
                                 elif cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')):
