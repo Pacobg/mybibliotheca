@@ -380,9 +380,34 @@ class EnrichmentService:
             
             # Special case: cache URLs must end with extension to be valid
             # Broken cache URLs like "cache/926507dc7f..." are invalid
-            if '/cache/' in cover_url:
-                # Cache URLs must end with extension
-                has_cover = ends_with_extension
+            # Also check for suspicious patterns like ISBN numbers in path
+            is_cache_url = '/cache/' in cover_url
+            
+            if is_cache_url:
+                # Cache URLs must end with extension AND not contain suspicious patterns
+                # Suspicious patterns: ISBN numbers (13 digits starting with 978 or 979) in path
+                import re
+                # Check for ISBN in path (can be between / or at end before extension)
+                has_isbn_in_path = bool(re.search(r'/(978|979)\d{10}(/|\.)', cover_url))
+                
+                # Also check if filename itself is an ISBN (13 digits)
+                path_after_cache = cover_url.split('/cache/')[-1] if '/cache/' in cover_url else ''
+                path_segments = [s for s in path_after_cache.split('/') if s]
+                if path_segments:
+                    # Remove extension from last segment
+                    last_seg = path_segments[-1]
+                    for ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif']:
+                        if last_seg.lower().endswith(ext):
+                            last_seg = last_seg[:-len(ext)]
+                            break
+                    filename_is_isbn = bool(re.match(r'^(978|979)\d{10}$', last_seg))
+                else:
+                    filename_is_isbn = False
+                
+                # Check if path segments are mostly single digits (suspicious pattern like /9/7/9783836555401)
+                has_numeric_path = len(path_segments) > 2 and all(len(seg) <= 2 and seg.isdigit() for seg in path_segments[:-1])
+                
+                has_cover = ends_with_extension and not has_isbn_in_path and not has_numeric_path and not filename_is_isbn
             else:
                 # Non-cache URLs: check if ends with extension or contains it before query params
                 has_cover = ends_with_extension or contains_extension

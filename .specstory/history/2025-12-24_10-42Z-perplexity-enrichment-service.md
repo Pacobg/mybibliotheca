@@ -26521,15 +26521,222 @@ _**Agent (model composer-1, mode Agent)**_
 ---
 
 
+Виждам, че URL-ът за "The Costume History" завършва с разширение (`ends_with_extension=True`), но е невалиден/счупен. Проблемът не е в разширението, а в самия URL.
+
+Правилният URL е:
+`https://www.ciela.com/media/catalog/product/cache/32bb0748c82325b02c55df3c2a9a9856/t/h/the_costume_history.jpg`
+
+Невалидният е:
+`https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401...`
+
+Добавям проверка за подозрителни паттерни в cache URL-ите (например ISBN в пътя):
+
 
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="read_file">
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 18, lines removed: 4
+
+```diff
+@@ -417,15 +417,29 @@
+                                      # Special case: cache URLs must end with extension to be valid
+                                      # Broken cache URLs like "cache/926507dc7f..." are invalid
++                                     # Also check for suspicious patterns like ISBN numbers in path (9783836555401)
+                                      is_cache_url = '/cache/' in cover_url
+                                      
+                                      logger.info(f"🔍 [_get_books_to_enrich] '{title}': cover_url='{cover_url[:100]}...', is_cache_url={is_cache_url}, ends_with_extension={ends_with_extension}, contains_extension={contains_extension}")
+                                      
+                                      if is_cache_url:
+-                                         # Cache URLs must end with extension
+-                                         has_valid_cover = ends_with_extension
++                                         # Cache URLs must end with extension AND not contain suspicious patterns
++                                         # Suspicious patterns: ISBN numbers (13 digits starting with 978 or 979) in path
++                                         import re
++                                         has_isbn_in_path = bool(re.search(r'/(978|979)\d{10}/', cover_url))
++                                         
++                                         # Also check if path looks like ISBN instead of proper image filename
++                                         # Proper cache URLs should have format: cache/HASH/path/to/image.jpg
++                                         # Broken ones might have: cache/HASH/9/7/9783836555401.jpg
++                                         path_after_cache = cover_url.split('/cache/')[-1] if '/cache/' in cover_url else ''
++                                         # Check if path segments are mostly numbers (suspicious)
++                                         path_segments = [s for s in path_after_cache.split('/') if s]
++                                         has_numeric_path = len(path_segments) &gt; 0 and all(seg.isdigit() or seg.endswith(('.jpg', '.jpeg', '.png', '.webp', '.gif')) for seg in path_segments[:-1])
++                                         
++                                         has_valid_cover = ends_with_extension and not has_isbn_in_path and not has_numeric_path
++                                         
+                                          if not has_valid_cover:
+-                                             logger.info(f"🔍 [_get_books_to_enrich] ❌ Cache URL without extension: '{cover_url[:100]}...' - marking as INVALID")
++                                             logger.info(f"🔍 [_get_books_to_enrich] ❌ Cache URL invalid: '{cover_url[:100]}...' - ends_with_extension={ends_with_extension}, has_isbn_in_path={has_isbn_in_path}, has_numeric_path={has_numeric_path} - marking as INVALID")
+                                          else:
+-                                             logger.info(f"🔍 [_get_books_to_enrich] ✅ Cache URL with extension: '{cover_url[:100]}...' - marking as VALID")
++                                             logger.info(f"🔍 [_get_books_to_enrich] ✅ Cache URL valid: '{cover_url[:100]}...' - marking as VALID")
+                                      else:
+                                          # Non-cache URLs: check if ends with extension or contains it before query params
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
 <details>
-<summary>Tool use: **read_file**</summary>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
 
-Status: **loading**
+- `scripts/enrich_books.py`
 
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add detection for broken cache URLs with ISBN numbers or numeric paths in URL" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add detection for broken cache URLs with ISBN numbers or numeric paths in URL" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main bd34182] Add detection for broken cache URLs with ISBN numbers or numeric paths in URL
+ 2 files changed, 214 insertions(+), 4 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   a50e337..bd34182  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Виждам от логовете, че URL-ът за "The Costume History" е:
+`https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401...`
+
+Той завършва с разширение (`ends_with_extension=True`), но съдържа ISBN номер (`9783836555401`) в пътя, което е подозрително. Правилният URL трябва да е:
+`https://www.ciela.com/media/catalog/product/cache/32bb0748c82325b02c55df3c2a9a9856/t/h/the_costume_history.jpg`
+
+Добавих проверка за ISBN номера в пътя на cache URL-ите, което трябва да идентифицира този URL като невалиден.
+
+Промените са качени в git main. Опитайте отново и споделете резултатите — сега системата трябва да идентифицира "The Costume History" като книга без валиден cover URL (заради ISBN в пътя) и да я обогати с правилния cover URL от Perplexity.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 18:54:08,463 [INFO] ============================================================
+2025-12-24 18:54:08,463 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 18:54:08,463 [INFO] ============================================================
+2025-12-24 18:54:08,463 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 18:54:08] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:54:08,505 [INFO] 192.168.1.9 - - [24/Dec/2025 18:54:08] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:54:08,526 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 18:54:08,526 [INFO] ⚙️  Configuration:
+2025-12-24 18:54:08,526 [INFO]    Limit: 5
+2025-12-24 18:54:08,526 [INFO]    Force: False
+2025-12-24 18:54:08,526 [INFO]    Dry run: False
+2025-12-24 18:54:08,526 [INFO]    Min quality: 0.3
+2025-12-24 18:54:08,526 [INFO]    No cover only: True (only books without covers)
+2025-12-24 18:54:08,526 [INFO] 📖 Querying database for books...
+2025-12-24 18:54:08,526 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 18:54:08,527 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 18:54:08,534 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 18:54:08,537 [INFO] 🔍 [_get_books_to_enrich] 'The Secret History': cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 18:54:08,537 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 18:54:08,537 [INFO] ⏭️  Skipping book with valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+2025-12-24 18:54:08,542 [INFO] 🔍 [_get_books_to_enrich] 'The Secret Garden': cover_url='https://knigabg.com/pix/28162.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 18:54:08,542 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 18:54:08,542 [INFO] ⏭️  Skipping book with valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 18:54:08,546 [INFO] 🔍 [_get_books_to_enrich] 'The Priory of the Orange Tree (The Roots of Chaos, #1)': cover_url='https://images.thenile.io/r1000/9781408883358.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 18:54:08,546 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 18:54:08,547 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 18:54:08,551 [INFO] 🔍 [_get_books_to_enrich] 'The Familiar': cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 18:54:08,551 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 18:54:08,551 [INFO] ⏭️  Skipping book with valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 18:54:08,556 [INFO] 🔍 [_get_books_to_enrich] 'The Costume History': cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401...', is_cache_url=True, ends_with_extension=True, contains_extension=False
+2025-12-24 18:54:08,556 [INFO] 🔍 [_get_books_to_enrich] ✅ Cache URL valid: 'https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401...' - marking as VALID
+2025-12-24 18:54:08,556 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f...')
+2025-12-24 18:54:08,556 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 18:54:08,556 [INFO] 📊 Statistics: 5 books WITH valid cover URLs (skipped)
+2025-12-24 18:54:08,556 [INFO] 📊 Statistics: 0 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 18:54:08,556 [WARNING] ⚠️  No books found without valid cover URLs.
+2025-12-24 18:54:08,556 [WARNING] ⚠️  All 5 checked books have valid http/https cover URLs.
+2025-12-24 18:54:08,556 [INFO] 💡 Tip: Use --force flag to force enrichment of all books, or add books without covers to the database.
+2025-12-24 18:54:08,556 [INFO] ✅ Found 0 books to enrich
+2025-12-24 18:54:08,557 [INFO] ✅ No books need enrichment!
+192.168.1.9 - - [24/Dec/2025 18:54:13] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Не виждам новите логове за `has_isbn_in_path` и `has_numeric_path` — вероятно кодът не е обновен на сървъра. Проверявам дали логиката е правилна и добавям по-ранна проверка:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "has_isbn_in_path|has_numeric_path|ISBN numbers in path" in "scripts/enrich_books.py" • 5 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `# Also check for suspicious patterns like ISBN numbers in path (9783836555401)` | L419 |
+| `scripts/enrich_books.py` | `has_isbn_in_path = bool(re.search(r'/(978\|979)\d\{10\}/', cover_url))` | L428 |
+| `scripts/enrich_books.py` | `has_numeric_path = len(path_segments) > 0 and all(seg.isdigit() or seg.endswith(('.jpg', '.jpeg', '.png', '.webp', '.gif')) for seg in path_segments[:-1])` | L436 |
+| `scripts/enrich_books.py` | `has_valid_cover = ends_with_extension and not has_isbn_in_path and not has_numeric_path` | L438 |
+| `scripts/enrich_books.py` | `logger.info(f"🔍 [_get_books_to_enrich] ❌ Cache URL invalid: '\{cover_url[:100]\}...' - ends_with_extension=\{ends_with_extension\}, has_isbn_in_path=\{has_isbn_in_path\}, has_numeric_path=\{has_numeric_path\} - marking as INVALID")` | L441 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
 
 </details>
 </tool-use>
@@ -26541,6 +26748,110 @@ Status: **loading**
 ---
 
 
+Кодът е правилен, но регулярният израз може да не улавя ISBN в края на URL-а. Поправям го:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 22, lines removed: 5
+
+```diff
+@@ -426,18 +426,35 @@
+                                          # Suspicious patterns: ISBN numbers (13 digits starting with 978 or 979) in path
+                                          import re
+-                                         has_isbn_in_path = bool(re.search(r'/(978|979)\d{10}/', cover_url))
++                                         # Check for ISBN in path (can be between / or at end before extension)
++                                         has_isbn_in_path = bool(re.search(r'/(978|979)\d{10}(/|\.)', cover_url))
+                                          
+                                          # Also check if path looks like ISBN instead of proper image filename
+                                          # Proper cache URLs should have format: cache/HASH/path/to/image.jpg
+                                          # Broken ones might have: cache/HASH/9/7/9783836555401.jpg
+                                          path_after_cache = cover_url.split('/cache/')[-1] if '/cache/' in cover_url else ''
+-                                         # Check if path segments are mostly numbers (suspicious)
++                                         # Remove extension from last segment for checking
+                                          path_segments = [s for s in path_after_cache.split('/') if s]
+-                                         has_numeric_path = len(path_segments) &gt; 0 and all(seg.isdigit() or seg.endswith(('.jpg', '.jpeg', '.png', '.webp', '.gif')) for seg in path_segments[:-1])
++                                         if path_segments:
++                                             # Remove extension from last segment
++                                             last_seg = path_segments[-1]
++                                             for ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif']:
++                                                 if last_seg.lower().endswith(ext):
++                                                     last_seg = last_seg[:-len(ext)]
++                                                     break
++                                             path_segments[-1] = last_seg
++                                         
++                                         # Check if path segments are mostly single digits (suspicious pattern like /9/7/9783836555401)
++                                         # Valid paths should have meaningful names like /t/h/the_costume_history
++                                         has_numeric_path = len(path_segments) &gt; 2 and all(len(seg) &lt;= 2 and seg.isdigit() for seg in path_segments[:-1])
++                                         
++                                         # Also check if filename itself is an ISBN (13 digits)
++                                         filename_is_isbn = len(path_segments) &gt; 0 and bool(re.match(r'^(978|979)\d{10}$', path_segments[-1]))
+                                          
+-                                         has_valid_cover = ends_with_extension and not has_isbn_in_path and not has_numeric_path
++                                         has_valid_cover = ends_with_extension and not has_isbn_in_path and not has_numeric_path and not filename_is_isbn
++                                         
++                                         logger.info(f"🔍 [_get_books_to_enrich] Cache URL analysis: has_isbn_in_path={has_isbn_in_path}, has_numeric_path={has_numeric_path}, filename_is_isbn={filename_is_isbn}, path_segments={path_segments[-3:] if len(path_segments) &gt;= 3 else path_segments}")
+                                          
+                                          if not has_valid_cover:
+-                                             logger.info(f"🔍 [_get_books_to_enrich] ❌ Cache URL invalid: '{cover_url[:100]}...' - ends_with_extension={ends_with_extension}, has_isbn_in_path={has_isbn_in_path}, has_numeric_path={has_numeric_path} - marking as INVALID")
++                                             logger.info(f"🔍 [_get_books_to_enrich] ❌ Cache URL invalid: '{cover_url[:100]}...' - ends_with_extension={ends_with_extension}, has_isbn_in_path={has_isbn_in_path}, has_numeric_path={has_numeric_path}, filename_is_isbn={filename_is_isbn} - marking as INVALID")
+                                          else:
+                                              logger.info(f"🔍 [_get_books_to_enrich] ✅ Cache URL valid: '{cover_url[:100]}...' - marking as VALID")
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix ISBN detection in cache URLs: check for ISBN at end of URL and as filename" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix ISBN detection in cache URLs: check for ISBN at end of URL and as filename" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 76ffd1c] Fix ISBN detection in cache URLs: check for ISBN at end of URL and as filename
+ 2 files changed, 112 insertions(+), 5 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   bd34182..76ffd1c  main -&gt; main
+
+```
+</details>
+</tool-use>
 
 ---
 
@@ -26549,10 +26860,18 @@ Status: **loading**
 ---
 
 
+Подобрих логиката за детекция на ISBN в cache URL-ите:
 
----
+1. Проверява за ISBN между `/` или в края преди разширението
+2. Проверява дали filename-ът е ISBN (13 цифри)
+3. Проверява дали path сегментите са само цифри (подозрителен паттерн като `/9/7/9783836555401`)
 
+Сега системата трябва да идентифицира URL-а `https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401.jpg` като невалиден, защото:
+- Съдържа ISBN `9783836555401` в пътя
+- Path сегментите са само цифри (`9`, `7`)
+- Filename-ът е ISBN
 
+Промените са качени в git main. Опитайте отново и споделете резултатите — сега системата трябва да идентифицира "The Costume History" като книга без валиден cover URL и да я обогати с правилния cover URL от Perplexity.
 
 ---
 
