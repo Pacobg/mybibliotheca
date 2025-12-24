@@ -621,27 +621,57 @@ AUTHOR: {author}
         if isbn:
             query += f"ISBN: {isbn}\n"
         
-        query += """
-
+        if has_cyrillic:
+            query += """
+        
 ВАЖНО:
-- Търся ВИСОКО КАЧЕСТВО изображение на корицата
+- Търся ВИСОКО КАЧЕСТВО изображение на корицата за БЪЛГАРСКОТО издание
 - URL трябва да сочи ДИРЕКТНО към изображение (.jpg, .png, .webp)
+- URL трябва да е ДОСТЪПЕН и РАБОТЕЩ (не счупен линк!)
 - Предпочитай формат като:
   * https://biblioman.chitanka.info/thumb/covers/.../xxx.1000.jpg
   * https://chitanka.info/thumb/book/xxx.250.jpg
-  * https://ciela.com/media/catalog/product/.../xxx.jpg
+  * https://ciela.com/media/catalog/product/.../xxx.jpg (БЕЗ /cache/ в пътя!)
 
 ИЗТОЧНИЦИ ЗА ПРОВЕРКА (по приоритет):
 1. biblioman.chitanka.info
 2. chitanka.info  
-3. ciela.com
+3. ciela.com (избягвай cache URL-и!)
 4. helikon.bg
 5. publishers websites (Колибри, Изток-Запад, Хермес, Бард)
 
-ОТГОВОРИ САМО С URL или "NOT_FOUND":
+КРИТИЧНО: Провери дали URL-ът е достъпен преди да го върнеш! Ако URL-ът не работи (403, 404), не го връщай!
+
+ОТГОВОРИ САМО С РАБОТЕЩ URL или "NOT_FOUND":
 https://direkten-url-kam-izobrajenie.jpg
 
-Ако не намериш качествена корица, отговори: NOT_FOUND
+Ако не намериш качествена и РАБОТЕЩА корица, отговори: NOT_FOUND
+"""
+        else:
+            query += """
+        
+IMPORTANT:
+- Find HIGH QUALITY cover image for the ENGLISH edition
+- URL must point DIRECTLY to an image file (.jpg, .png, .webp)
+- URL must be ACCESSIBLE and WORKING (not a broken link!)
+- Prefer formats like:
+  * https://images.penguinrandomhouse.com/cover/...
+  * https://covers.openlibrary.org/b/isbn/...-L.jpg
+  * https://books.google.com/books/content?id=...&img=1&zoom=1
+
+SOURCES TO CHECK (by priority):
+1. Penguin Random House (images.penguinrandomhouse.com)
+2. OpenLibrary (covers.openlibrary.org)
+3. Google Books (books.google.com)
+4. Amazon (images-na.ssl-images-amazon.com)
+5. Publisher websites
+
+CRITICAL: Verify that the URL is accessible before returning it! If the URL doesn't work (403, 404), don't return it!
+
+RESPOND ONLY WITH A WORKING URL or "NOT_FOUND":
+https://direct-url-to-image.jpg
+
+If you cannot find a quality WORKING cover, respond: NOT_FOUND
 """
         
         try:

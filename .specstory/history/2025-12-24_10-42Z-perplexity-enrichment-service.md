@@ -31147,3 +31147,179 @@ _**Agent (model composer-1, mode Agent)**_
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+http://192.168.1.51:5054/static/bookshelf.png 
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Cover изображението все още не се показва. Проверявам логовете за сваляне и кеширане:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Cover downloaded|Downloading cover|process_image_from_url|local_cover_path" in "scripts/enrich_books.py" • 13 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `# Use process_image_from_url to download and cache the cover locally` | L841 |
+| `scripts/enrich_books.py` | `from app.utils.image_processing import process_image_from_url` | L843 |
+| `scripts/enrich_books.py` | `logger.info(f"📥 Downloading cover image for '\{book['title']\}': \{new_cover_url[:80]\}...")` | L851 |
+| `scripts/enrich_books.py` | `local_cover_path = process_image_from_url(new_cover_url)` | L852 |
+| `scripts/enrich_books.py` | `logger.info(f"📥 Downloading cover image for '\{book['title']\}': \{new_cover_url[:80]\}...")` | L858 |
+| `scripts/enrich_books.py` | `local_cover_path = process_image_from_url(new_cover_url)` | L859 |
+| `scripts/enrich_books.py` | `logger.info(f"📥 Downloading cover image for '\{book['title']\}': \{new_cover_url[:80]\}...")` | L865 |
+| `scripts/enrich_books.py` | `local_cover_path = process_image_from_url(new_cover_url)` | L866 |
+| `scripts/enrich_books.py` | `if local_cover_path and local_cover_path.startswith('/covers/'):` | L868 |
+| `scripts/enrich_books.py` | `logger.info(f"✅ Cover downloaded and cached locally: \{local_cover_path\}")` | L870 |
+| `scripts/enrich_books.py` | `updates['cover_url'] = local_cover_path` | L877 |
+| `scripts/enrich_books.py` | `logger.info(f"🖼️  Updating cover URL for: \{book['title']\} -> \{local_cover_path\}")` | L878 |
+| `scripts/enrich_books.py` | `logger.warning(f"⚠️  Failed to download cover image for '\{book['title']\}': \{local_cover_path\}")` | L882 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "What happens after process_image_from_url is called and how is the result logged?" • **15** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/utils/image_processing.py` | L108-208 |
+| `app/utils/image_processing.py` | L131-220 |
+| `app/utils/image_processing.py` | L81-208 |
+| `app/utils/image_processing.py` | L134-220 |
+| `app/utils/unified_metadata.py` | L859-956 |
+| `app/utils/book_utils.py` | L222-419 |
+| `app/utils/unified_metadata.py` | L606-956 |
+| `app/utils/safe_kuzu_manager.py` | L32-1449 |
+| `app/utils/book_utils.py` | L205-313 |
+| `app/utils/book_utils.py` | L315-491 |
+| `app/utils/unified_metadata.py` | L603-830 |
+| `app/utils/book_search.py` | L885-963 |
+| `app/utils/book_utils.py` | L439-609 |
+| `app/utils/image_processing.py` | L42 |
+| `app/utils/image_processing.py` | L61-105 |
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+В логовете липсва `📥 Downloading cover image for...`, което означава, че кодът не стига до свалянето. Добавям повече логове, за да проследим какво се случва:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -836,4 +836,6 @@
+                              url_is_accessible = True  # Try anyway
+                          
++                         logger.info(f"🔍 [_save_enriched_books] Cover URL validation result for '{book['title']}': url_is_accessible={url_is_accessible}, new_cover_url='{new_cover_url[:80] if new_cover_url else 'None'}...'")
++                         
+                          # Only try to download if URL is accessible
+                          if url_is_accessible:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add logging for cover URL validation result to debug download process" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add logging for cover URL validation result to debug download process" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main e1496de] Add logging for cover URL validation result to debug download process
+ 2 files changed, 481 insertions(+)
+To https://github.com/Pacobg/mybibliotheca.git
+   258ac4a..e1496de  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавих допълнително логиране. От логовете виждам, че валидацията е успешна (`✅ Cover URL is accessible`), но не виждам логове за сваляне. Възможно е процесът да все още работи или да има exception.
+
+Моля, изчакайте процесът да завърши и споделете пълните логове. Трябва да видите:
+- `📥 Downloading cover image for...`
+- `✅ Cover downloaded and cached locally: /covers/uuid.jpg`
+- `🖼️ Updating cover URL for...`
+
+Ако не виждате тези съобщения, вероятно има проблем при свалянето. Проверете пълните логове след завършване на процеса и споделете ги, за да можем да идентифицираме проблема.
+
+---
+
