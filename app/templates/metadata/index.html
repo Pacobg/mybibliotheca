@@ -88,6 +88,43 @@
                 </div>
             </div>
             
+            {% if ai_available %}
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card border-info">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="bi bi-robot me-2"></i>Обогатяване с AI</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">
+                                Използвайте AI за автоматично обогатяване на метаданни за книгите ви.
+                                {% if has_perplexity %}
+                                <span class="badge bg-success">Perplexity активен</span> - може да търси корици и информация в интернет.
+                                {% else %}
+                                <span class="badge bg-warning">Perplexity не е конфигуриран</span> - използва се OpenAI/Ollama (ограничени възможности).
+                                {% endif %}
+                            </p>
+                            
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="button" class="btn btn-primary" id="enrichNoCoverBtn">
+                                    <i class="bi bi-image me-1"></i>Обогатяване на книги без обложки - до 100 бр.
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="checkEnrichmentStatusBtn">
+                                    <i class="bi bi-info-circle me-1"></i>Провери статус
+                                </button>
+                            </div>
+                            
+                            <div id="enrichmentStatus" class="mt-3" style="display:none;">
+                                <div class="alert alert-info">
+                                    <strong>Статус:</strong> <span id="enrichmentStatusText">Проверяване...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
             <div class="row">
                 <div class="col-12 mb-4">
                     <div class="card">

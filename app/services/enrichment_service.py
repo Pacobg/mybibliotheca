@@ -47,10 +47,27 @@ class EnrichmentService:
         self.provider = provider.lower()
         
         # Initialize Perplexity
+        # Try from environment variable first, then from AI config
         perplexity_key = os.getenv('PERPLEXITY_API_KEY')
+        if not perplexity_key:
+            try:
+                from app.admin import load_ai_config
+                ai_config = load_ai_config()
+                perplexity_key = ai_config.get('PERPLEXITY_API_KEY', '')
+            except Exception:
+                pass
+        
         if perplexity_key and (self.provider == 'auto' or self.provider == 'perplexity'):
-            self.perplexity = PerplexityEnricher(api_key=perplexity_key)
-            logger.info("✅ Perplexity enricher initialized")
+            perplexity_model = os.getenv('PERPLEXITY_MODEL') or None
+            if not perplexity_model:
+                try:
+                    from app.admin import load_ai_config
+                    ai_config = load_ai_config()
+                    perplexity_model = ai_config.get('PERPLEXITY_MODEL', 'sonar-pro')
+                except Exception:
+                    perplexity_model = 'sonar-pro'
+            self.perplexity = PerplexityEnricher(api_key=perplexity_key, model=perplexity_model)
+            logger.info(f"✅ Perplexity enricher initialized with model: {perplexity_model}")
         else:
             self.perplexity = None
             if self.provider == 'perplexity':

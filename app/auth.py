@@ -2129,6 +2129,8 @@ def save_ai_settings():
             'OPENAI_BASE_URL': request.form.get('openai_base_url', 'https://api.openai.com/v1'),
             'OPENAI_MODEL': request.form.get('openai_model', 'gpt-4o'),
             'OLLAMA_BASE_URL': request.form.get('ollama_base_url', 'http://localhost:11434/v1'),
+            'PERPLEXITY_API_KEY': request.form.get('perplexity_api_key', ''),
+            'PERPLEXITY_MODEL': request.form.get('perplexity_model', 'sonar-pro'),
             'AI_TIMEOUT': request.form.get('ai_timeout', '30'),
             'AI_MAX_TOKENS': request.form.get('ai_max_tokens', '1000'),
             'AI_TEMPERATURE': request.form.get('ai_temperature', '0.1'),

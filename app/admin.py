@@ -215,6 +215,8 @@ def load_ai_config():
         'OPENAI_MODEL': 'gpt-4o',
         'OLLAMA_BASE_URL': 'http://localhost:11434',
         'OLLAMA_MODEL': 'llama3.2-vision:11b',
+        'PERPLEXITY_API_KEY': '',
+        'PERPLEXITY_MODEL': 'sonar-pro',
         'AI_PROVIDER': 'openai',
         'AI_TIMEOUT': '30',
         'AI_MAX_TOKENS': '1000',
@@ -1294,6 +1296,8 @@ def update_ai_settings():
         config['OPENAI_BASE_URL'] = request.form.get('openai_base_url', 'https://api.openai.com/v1')
         config['OPENAI_MODEL'] = request.form.get('openai_model', 'gpt-4o')
         config['OLLAMA_BASE_URL'] = request.form.get('ollama_base_url', 'http://localhost:11434/v1')
+        config['PERPLEXITY_API_KEY'] = request.form.get('perplexity_api_key', '')
+        config['PERPLEXITY_MODEL'] = request.form.get('perplexity_model', 'sonar-pro')
         
         # Handle Ollama model selection (dropdown vs manual input)
         ollama_model_manual = request.form.get('ollama_model_manual', '').strip()

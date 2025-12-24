@@ -8,6 +8,11 @@ from flask import Blueprint, render_template, request, redirect, url_for, jsonif
 from flask_login import login_required, current_user
 from datetime import datetime
 import uuid
+import os
+import subprocess
+import asyncio
+import json
+from pathlib import Path
 
 from .domain.models import CustomFieldDefinition, ImportMappingTemplate, CustomFieldType
 from .services import custom_field_service, import_mapping_service
@@ -32,11 +37,21 @@ def index():
         if import_templates is None:
             import_templates = []
         
+        # Check if AI enrichment is available
+        from app.admin import load_ai_config
+        ai_config = load_ai_config()
+        has_perplexity = bool(ai_config.get('PERPLEXITY_API_KEY') or os.getenv('PERPLEXITY_API_KEY'))
+        has_openai = bool(ai_config.get('OPENAI_API_KEY'))
+        has_ollama = bool(ai_config.get('OLLAMA_BASE_URL'))
+        ai_available = has_perplexity or has_openai or has_ollama
+        
         return render_template(
             'metadata/index.html',
             user_fields=user_fields,
             popular_fields=popular_fields,
-            import_templates=import_templates
+            import_templates=import_templates,
+            ai_available=ai_available,
+            has_perplexity=has_perplexity
         )
     except Exception as e:
         flash(f'Error loading metadata: {str(e)}', 'error')
@@ -319,6 +334,105 @@ def templates():
     except Exception as e:
         flash(f'Error loading import templates: {str(e)}', 'error')
         return redirect(url_for('metadata.index'))
+
+
+@metadata_bp.route('/enrichment/start', methods=['POST'])
+@login_required
+def start_enrichment():
+    """Start AI enrichment process"""
+    try:
+        if not current_user.is_admin:
+            return jsonify({'error': 'Admin access required'}), 403
+        
+        limit = int(request.form.get('limit', 100))
+        no_cover_only = request.form.get('no_cover_only', 'false').lower() == 'true'
+        
+        # Check if enrichment is already running
+        enrichment_status_file = Path('data/enrichment_status.json')
+        if enrichment_status_file.exists():
+            with open(enrichment_status_file, 'r') as f:
+                status = json.load(f)
+                if status.get('running', False):
+                    return jsonify({
+                        'error': 'Enrichment already running',
+                        'status': status
+                    }), 400
+        
+        # Start enrichment in background
+        import threading
+        def run_enrichment():
+            try:
+                # Update status
+                status = {
+                    'running': True,
+                    'started_at': datetime.now().isoformat(),
+                    'limit': limit,
+                    'no_cover_only': no_cover_only,
+                    'processed': 0,
+                    'enriched': 0,
+                    'failed': 0
+                }
+                with open(enrichment_status_file, 'w') as f:
+                    json.dump(status, f)
+                
+                # Run enrichment script
+                script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts', 'enrich_books.py')
+                cmd = ['python', script_path, '--limit', str(limit), '-y']
+                if no_cover_only:
+                    cmd.append('--no-cover-only')
+                
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=3600  # 1 hour timeout
+                )
+                
+                # Update status
+                status['running'] = False
+                status['completed_at'] = datetime.now().isoformat()
+                status['exit_code'] = result.returncode
+                status['output'] = result.stdout[-1000:] if result.stdout else ''  # Last 1000 chars
+                status['error'] = result.stderr[-1000:] if result.stderr else ''
+                
+                with open(enrichment_status_file, 'w') as f:
+                    json.dump(status, f)
+                    
+            except Exception as e:
+                status = {
+                    'running': False,
+                    'error': str(e),
+                    'completed_at': datetime.now().isoformat()
+                }
+                with open(enrichment_status_file, 'w') as f:
+                    json.dump(status, f)
+        
+        thread = threading.Thread(target=run_enrichment, daemon=True)
+        thread.start()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Enrichment started',
+            'limit': limit,
+            'no_cover_only': no_cover_only
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@metadata_bp.route('/enrichment/status', methods=['GET'])
+@login_required
+def enrichment_status():
+    """Get enrichment status"""
+    try:
+        enrichment_status_file = Path('data/enrichment_status.json')
+        if enrichment_status_file.exists():
+            with open(enrichment_status_file, 'r') as f:
+                return jsonify(json.load(f))
+        return jsonify({'running': False})
+    except Exception as e:
+        return jsonify({'error': str(e), 'running': False}), 500
 
 
 @metadata_bp.route('/templates/<template_id>/delete', methods=['POST'])

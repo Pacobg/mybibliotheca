@@ -15623,3 +15623,930 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+
+Поправям `EnrichmentService`, за да работи правилно с fallback логиката:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 3, lines removed: 2
+
+```diff
+@@ -111,6 +111,7 @@
+          """
+          
+-         if not self.perplexity:
+-             logger.error("Perplexity not initialized - cannot enrich")
++         # Check if any provider is available
++         if not self.perplexity and not self.openai_enricher:
++             logger.error("No enrichment providers available - cannot enrich")
+              return None
+          
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "await self\.perplexity\.fetch_metadata|self\.perplexity\.fetch_metadata" in "app/services/enrichment_service.py" • 0 matches</summary>
+
+Output mode: content
+
+
+_No matches found_
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправям `enrich_single_book` да работи с двата provider-а:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 31, lines removed: 7
+
+```diff
+@@ -134,12 +134,36 @@
+          
+          try:
+-             # Try Perplexity enrichment
+              logger.info(f"🔍 Enriching: {title} - {author}")
+-             
+-             metadata = await self.perplexity.enrich_book(
+-                 title=title,
+-                 author=author,
+-                 existing_data=book_data
+-             )
++             logger.info(f"🔍 Searching for: {title} - {author or ''}")
++             
++             # Try Perplexity first (has web search)
++             metadata = None
++             if self.perplexity:
++                 try:
++                     metadata = await self.perplexity.fetch_metadata(
++                         title=title,
++                         author=author,
++                         isbn=book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10'),
++                         publisher=book_data.get('publisher'),
++                         existing_data=book_data
++                     )
++                 except Exception as e:
++                     logger.warning(f"Perplexity enrichment failed: {e}")
++             
++             # Fall back to OpenAI/Ollama if Perplexity unavailable or failed
++             if not metadata and self.openai_enricher:
++                 try:
++                     logger.info(f"🔄 Trying OpenAI/Ollama enrichment (no web search)")
++                     metadata = await self.openai_enricher.fetch_metadata(
++                         title=title,
++                         author=author,
++                         isbn=book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10'),
++                         publisher=book_data.get('publisher'),
++                         existing_data=book_data
++                     )
++                     if metadata:
++                         logger.info("✅ OpenAI/Ollama enrichment succeeded (limited - no web search)")
++                 except Exception as e:
++                     logger.warning(f"OpenAI/Ollama enrichment failed: {e}")
+              
+              if not metadata:
+```
+
+**Chunk 2**
+Lines added: 17, lines removed: 5
+
+```diff
+@@ -160,9 +184,21 @@
+                  logger.info(f"🖼️  Searching for cover: {title}")
+                  isbn = book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10')
+-                 cover_url = await self.perplexity.find_cover_image(
+-                     title=title,
+-                     author=author,
+-                     isbn=isbn
+-                 )
++                 
++                 # Try Perplexity first (has web search)
++                 cover_url = None
++                 if self.perplexity:
++                     try:
++                         cover_url = await self.perplexity.find_cover_image(
++                             title=title,
++                             author=author,
++                             isbn=isbn
++                         )
++                     except Exception as e:
++                         logger.warning(f"Perplexity cover search failed: {e}")
++                 
++                 # OpenAI/Ollama cannot search for covers (no web search)
++                 if not cover_url and self.openai_enricher:
++                     logger.debug("OpenAI/Ollama cannot search for covers (no web search capability)")
++                 
+                  if cover_url:
+                      metadata['cover_url'] = cover_url
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 9, lines removed: 7
+
+```diff
+@@ -91,12 +91,14 @@
+          logger.info("="*60)
+          
+-         # Initialize service
+-         self.service = EnrichmentService()
++         # Initialize service (auto-detects provider from settings)
++         self.service = EnrichmentService(provider='auto')
+          
+-         # Check API keys
+-         if not os.getenv('PERPLEXITY_API_KEY'):
+-             logger.error("❌ PERPLEXITY_API_KEY not set!")
+-             logger.error("   Please add it to your .env file:")
+-             logger.error("   PERPLEXITY_API_KEY=pplx-xxxxxxxxxxxxx")
++         # Check if any provider is available
++         if not self.service.perplexity and not self.service.openai_enricher:
++             logger.error("❌ No enrichment providers available!")
++             logger.error("   Options:")
++             logger.error("   1. Set PERPLEXITY_API_KEY in .env (recommended - has web search)")
++             logger.error("   2. Configure OpenAI/Ollama in Settings &gt; AI Settings")
++             logger.error("      (Note: OpenAI/Ollama cannot search web for covers)")
+              return 1
+          
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 2 files</summary>
+      
+Lint paths:
+
+- `app/services/enrichment_service.py`
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix EnrichmentService to properly use OpenAI/Ollama fallback when Perplexity unavailable" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix EnrichmentService to properly use OpenAI/Ollama fallback when Perplexity unavailable" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main d43fac3] Fix EnrichmentService to properly use OpenAI/Ollama fallback when Perplexity unavailable
+ 3 files changed, 855 insertions(+), 21 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   69bd8a4..d43fac3  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавих поддръжка за OpenAI и Ollama от AI Settings. Ето какво е направено:
+
+## Какво е добавено:
+
+### 1. Нов OpenAI/Ollama Enricher (`app/services/metadata_providers/openai_enricher.py`)
+   - Използва настройките от Settings > AI Settings
+   - Поддържа OpenAI и Ollama
+   - Ограничение: няма web search (не може да търси корици или информация в интернет)
+
+### 2. Модифициран EnrichmentService
+   - Автоматично използва Perplexity, ако е наличен
+   - Fallback към OpenAI/Ollama, ако Perplexity не е наличен
+   - Поддържа двата provider-а едновременно
+
+## Как работи:
+
+1. Автоматично избиране (по подразбиране):
+   - Ако има `PERPLEXITY_API_KEY` → използва Perplexity (с web search)
+   - Ако няма Perplexity → използва OpenAI/Ollama от Settings (без web search)
+
+2. Ръчно избиране:
+   ```python
+   # Използва само Perplexity
+   service = EnrichmentService(provider='perplexity')
+   
+   # Използва само OpenAI/Ollama от settings
+   service = EnrichmentService(provider='openai')  # или 'ollama'
+   ```
+
+## Ограничения на OpenAI/Ollama:
+
+- Не може да търси корици в интернет
+- Не може да търси ISBN или издателства в интернет
+- Може да генерира описания базирани на знанията на модела
+- Може да парсва метаданни от предоставената информация
+
+## Как да използвате:
+
+1. Настройте AI Settings:
+   - Отидете на `http://192.168.1.51:5054/auth/settings`
+   - Изберете AI Provider (OpenAI или Ollama)
+   - Въведете API ключ/URL
+
+2. Стартирайте enrichment:
+   ```bash
+   # Ако имате Perplexity - ще използва него
+   # Ако нямате Perplexity - ще използва OpenAI/Ollama от settings
+   python scripts/enrich_books.py --limit 5 -y
+   ```
+
+Системата автоматично ще използва наличния provider. Perplexity е предпочитан заради web search способностите си.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+ да добавим няколко неща -  на http://192.168.1.51:5054/auth/settings
+Изберете AI Provider (OpenAI или Ollama) да добавим Perplexity
+Въведете API ключ/URL - както и за Perplexity да има обяснение, за "Ограничения на OpenAI/Ollama:
+Не може да търси корици в интернет
+Не може да търси ISBN или издателства в интернет
+Може да генерира описания базирани на знанията на модела
+Може да парсва метаданни от предоставената информация" ако има ключ за Perplexity той да се използва. тук http://192.168.1.51:5054/metadata/  да има раздел "Обогатяване с AI" там да има бутон "Обогатяване на книги без обложки - до 100 бр." който, да стартира скрипта --no-cover-only --limit 100 -y  и да запомня кои е "обогатил" за да не ги проверява отново
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Добавяне на Perplexity в AI Settings и раздел за обогатяване в metadata страницата. Започвам с проверка на текущата структура:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/templates/settings/partials/server_ai.html</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/auth.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "Where is the metadata page route and template located?" • **14** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/metadata_routes.py` | L65 |
+| `app/templates/metadata/index.html` | L21 |
+| `app/metadata_routes.py` | L267-351 |
+| `app/metadata_routes.py` | L17-186 |
+| `app/__init__.py` | L313-1382 |
+| `app/routes/book_routes.py` | L4052-4205 |
+| `app/routes/__init__.py` | L102 |
+| `app/routes/book_routes.py` | L3337-3726 |
+| `app/templates/settings/partials/server_metadata.html` | L32-46 |
+| `app/templates/metadata/fields.html` | L23 |
+| `app/templates/base.html` | L1674-1712 |
+| `app/templates/edit_person.html` | L37 |
+| `app/templates/base.html` | L21 |
+| `app/templates/metadata/index.html` | L128-155 |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "/metadata|metadata.*route|def.*metadata" in "app/routes" • 6 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/routes\import_routes.py` | `def merge_api_data_into_simplified_book(simplified_book, book_metadata, extra_metadata):` | L2283 |
+| `app/routes\import_routes.py` | `def batch_fetch_book_metadata(isbns):` | L2612 |
+| `app/routes\import_routes.py` | `env_default_workers = _read_int_env('IMPORT_METADATA_WORKERS', 4)` | L2708 |
+| `app/routes\book_routes.py` | `def edit_book_custom_metadata(uid):` | L4089 |
+| `app/routes\__init__.py` | `def refresh_person_metadata(person_id):` | L404 |
+| `app/routes\people_routes.py` | `def refresh_person_metadata(person_id):` | L841 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="glob_file_search">
+<details>
+<summary>Tool use: **glob_file_search** • Searched codebase "*metadata*.html" • **2** results in **1** directory</summary>
+
+Directory: **c:\Users\Paco\OneDrive\Documents\Dev-bibiotheca\mybibliotheca-main** (2 files)
+
+| File |
+|------|
+| `app\templates\settings\partials\server_metadata.html` |
+| `app\templates\edit_book_custom_metadata.html` |
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавям Perplexity в AI Settings и раздел за обогатяване в metadata страницата:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/templates/metadata/index.html</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/templates/settings/partials/server_ai.html</summary>
+
+**Chunk 1**
+Lines added: 6, lines removed: 1
+
+```diff
+@@ -10,8 +10,13 @@
+        &lt;div class="mb-3"&gt;
+          &lt;label class="form-label fw-bold"&gt;AI Provider&lt;/label&gt;
+-         &lt;select class="form-select" name="ai_provider" id="ai_provider"&gt;
++         &lt;select class="form-select" name="ai_provider" id="ai_provider" onchange="toggleProviderSettings()"&gt;
+            &lt;option value="openai" {{ 'selected' if ai_config and ai_config.get('AI_PROVIDER') == 'openai' else '' }}&gt;OpenAI&lt;/option&gt;
+            &lt;option value="ollama" {{ 'selected' if ai_config and ai_config.get('AI_PROVIDER') == 'ollama' else '' }}&gt;Ollama (Local)&lt;/option&gt;
++           &lt;option value="perplexity" {{ 'selected' if ai_config and ai_config.get('AI_PROVIDER') == 'perplexity' else '' }}&gt;Perplexity (Web Search)&lt;/option&gt;
+          &lt;/select&gt;
++         &lt;small class="form-text text-muted"&gt;
++           &lt;strong&gt;Perplexity:&lt;/strong&gt; Има web search - може да търси корици и информация в интернет&lt;br&gt;
++           &lt;strong&gt;OpenAI/Ollama:&lt;/strong&gt; Няма web search - може само да генерира описания базирани на знанията на модела
++         &lt;/small&gt;
+        &lt;/div&gt;
+        &lt;div id="openai-settings" class="provider-settings" style="display:none;"&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/templates/settings/partials/server_ai.html</summary>
+
+**Chunk 1**
+Lines added: 43, lines removed: undefined
+
+```diff
+@@ -46,6 +46,49 @@
+          &lt;/div&gt;
+        &lt;/div&gt;
++       &lt;div id="perplexity-settings" class="provider-settings" style="display:none;"&gt;
++         &lt;h6 class="fw-bold text-info mb-3"&gt;Perplexity Configuration&lt;/h6&gt;
++         &lt;div class="alert alert-info"&gt;
++           &lt;strong&gt;&lt;i class="bi bi-info-circle me-1"&gt;&lt;/i&gt;Perplexity AI&lt;/strong&gt;&lt;br&gt;
++           Perplexity има web search способности и може да:
++           &lt;ul class="mb-0 mt-2"&gt;
++             &lt;li&gt;✅ Търси корици в интернет&lt;/li&gt;
++             &lt;li&gt;✅ Търси ISBN и издателства&lt;/li&gt;
++             &lt;li&gt;✅ Намира реална информация от интернет&lt;/li&gt;
++             &lt;li&gt;✅ Генерира описания базирани на актуални данни&lt;/li&gt;
++           &lt;/ul&gt;
++         &lt;/div&gt;
++         &lt;div class="row g-3"&gt;
++           &lt;div class="col-12"&gt;
++             &lt;label class="form-label"&gt;API Key&lt;/label&gt;
++             &lt;input type="password" class="form-control" id="perplexity_api_key" name="perplexity_api_key" value="{{ ai_config.get('PERPLEXITY_API_KEY','') if ai_config else '' }}" placeholder="pplx-..." /&gt;
++             &lt;small class="form-text text-muted"&gt;
++               Получете API ключ от &lt;a href="https://www.perplexity.ai/settings/api" target="_blank"&gt;Perplexity AI Settings&lt;/a&gt;
++             &lt;/small&gt;
++           &lt;/div&gt;
++           &lt;div class="col-md-6"&gt;
++             &lt;label class="form-label"&gt;Model&lt;/label&gt;
++             &lt;select class="form-select" name="perplexity_model" id="perplexity_model"&gt;
++               &lt;option value="sonar-pro" {{ 'selected' if ai_config and ai_config.get('PERPLEXITY_MODEL') == 'sonar-pro' else '' }}&gt;Sonar Pro (Recommended)&lt;/option&gt;
++               &lt;option value="sonar-deep-research" {{ 'selected' if ai_config and ai_config.get('PERPLEXITY_MODEL') == 'sonar-deep-research' else '' }}&gt;Sonar Deep Research&lt;/option&gt;
++               &lt;option value="llama-3.1-70b-instruct" {{ 'selected' if ai_config and ai_config.get('PERPLEXITY_MODEL') == 'llama-3.1-70b-instruct' else '' }}&gt;Llama 3.1 70B&lt;/option&gt;
++             &lt;/select&gt;
++           &lt;/div&gt;
++         &lt;/div&gt;
++         &lt;div class="mt-3"&gt;
++           &lt;button type="button" class="btn btn-outline-info btn-sm" id="perplexityTestBtn"&gt;&lt;i class="bi bi-plug me-1"&gt;&lt;/i&gt;Test Perplexity Connection&lt;/button&gt;
++           &lt;div id="perplexity-test-results" class="mt-2 small"&gt;&lt;/div&gt;
++         &lt;/div&gt;
++       &lt;/div&gt;
+        &lt;div id="ollama-settings" class="provider-settings" style="display:none;"&gt;
+          &lt;h6 class="fw-bold text-success mb-3"&gt;Ollama Configuration&lt;/h6&gt;
++         &lt;div class="alert alert-warning"&gt;
++           &lt;strong&gt;&lt;i class="bi bi-exclamation-triangle me-1"&gt;&lt;/i&gt;Ограничения на Ollama:&lt;/strong&gt;&lt;br&gt;
++           &lt;ul class="mb-0 mt-2"&gt;
++             &lt;li&gt;❌ Не може да търси корици в интернет&lt;/li&gt;
++             &lt;li&gt;❌ Не може да търси ISBN или издателства в интернет&lt;/li&gt;
++             &lt;li&gt;✅ Може да генерира описания базирани на знанията на модела&lt;/li&gt;
++             &lt;li&gt;✅ Може да парсва метаданни от предоставената информация&lt;/li&gt;
++           &lt;/ul&gt;
++         &lt;/div&gt;
+          &lt;div class="row g-3"&gt;
+            &lt;div class="col-md-8"&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/templates/settings/partials/server_ai.html</summary>
+
+**Chunk 1**
+Lines added: 9, lines removed: undefined
+
+```diff
+@@ -22,4 +22,13 @@
+        &lt;div id="openai-settings" class="provider-settings" style="display:none;"&gt;
+          &lt;h6 class="fw-bold text-primary mb-3"&gt;OpenAI Configuration&lt;/h6&gt;
++         &lt;div class="alert alert-warning"&gt;
++           &lt;strong&gt;&lt;i class="bi bi-exclamation-triangle me-1"&gt;&lt;/i&gt;Ограничения на OpenAI:&lt;/strong&gt;&lt;br&gt;
++           &lt;ul class="mb-0 mt-2"&gt;
++             &lt;li&gt;❌ Не може да търси корици в интернет&lt;/li&gt;
++             &lt;li&gt;❌ Не може да търси ISBN или издателства в интернет&lt;/li&gt;
++             &lt;li&gt;✅ Може да генерира описания базирани на знанията на модела&lt;/li&gt;
++             &lt;li&gt;✅ Може да парсва метаданни от предоставената информация&lt;/li&gt;
++           &lt;/ul&gt;
++         &lt;/div&gt;
+          &lt;div class="row g-3"&gt;
+            &lt;div class="col-md-6"&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/templates/settings.html</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "toggleProviderSettings|provider-settings|ai_provider.*change" in "app/templates" • 9 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/templates\settings\partials\server_ai.html` | `<select class="form-select" name="ai_provider" id="ai_provider" onchange="toggleProviderSettings()">` | L12 |
+| `app/templates\settings\partials\server_ai.html` | `<div id="openai-settings" class="provider-settings" style="display:none;">` | L22 |
+| `app/templates\settings\partials\server_ai.html` | `<div id="perplexity-settings" class="provider-settings" style="display:none;">` | L57 |
+| `app/templates\settings\partials\server_ai.html` | `<div id="ollama-settings" class="provider-settings" style="display:none;">` | L91 |
+| `app/templates\admin\settings.html` | `<select class="form-select" id="ai_provider" name="ai_provider" onchange="toggleProviderSettings()">` | L417 |
+| `app/templates\admin\settings.html` | `<div id="openai-settings" class="provider-settings">` | L425 |
+| `app/templates\admin\settings.html` | `<div id="ollama-settings" class="provider-settings" style="display: none;">` | L453 |
+| `app/templates\admin\settings.html` | `function toggleProviderSettings() \{` | L911 |
+| `app/templates\admin\settings.html` | `toggleProviderSettings();` | L1176 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавям JavaScript функцията и обновявам save_ai_settings:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/templates/admin/settings.html</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/auth.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/auth.py</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -2130,4 +2130,6 @@
+              'OPENAI_MODEL': request.form.get('openai_model', 'gpt-4o'),
+              'OLLAMA_BASE_URL': request.form.get('ollama_base_url', 'http://localhost:11434/v1'),
++             'PERPLEXITY_API_KEY': request.form.get('perplexity_api_key', ''),
++             'PERPLEXITY_MODEL': request.form.get('perplexity_model', 'sonar-pro'),
+              'AI_TIMEOUT': request.form.get('ai_timeout', '30'),
+              'AI_MAX_TOKENS': request.form.get('ai_max_tokens', '1000'),
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/templates/admin/settings.html</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "function toggleProviderSettings|toggleProviderSettings.*function" in "app/templates" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/templates\admin\settings.html` | `function toggleProviderSettings() \{` | L911 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/templates/settings.html</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "<script>|</script>|toggleProviderSettings" in "app/templates/settings/partials/server_ai.html" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/templates/settings/partials/server_ai.html` | `<select class="form-select" name="ai_provider" id="ai_provider" onchange="toggleProviderSettings()">` | L12 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавям JavaScript функцията в server_ai.html и endpoint за enrichment:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/templates/settings/partials/server_ai.html</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/templates/settings/partials/server_ai.html</summary>
+
+**Chunk 1**
+Lines added: 61, lines removed: undefined
+
+```diff
+@@ -166,3 +166,64 @@
+    &lt;/div&gt;
+  &lt;/div&gt;
++ 
++ &lt;script&gt;
++ function toggleProviderSettings() {
++     const provider = document.getElementById('ai_provider').value;
++     const openaiSettings = document.getElementById('openai-settings');
++     const ollamaSettings = document.getElementById('ollama-settings');
++     const perplexitySettings = document.getElementById('perplexity-settings');
++     
++     // Hide all
++     if (openaiSettings) openaiSettings.style.display = 'none';
++     if (ollamaSettings) ollamaSettings.style.display = 'none';
++     if (perplexitySettings) perplexitySettings.style.display = 'none';
++     
++     // Show selected
++     if (provider === 'openai' &amp;&amp; openaiSettings) {
++         openaiSettings.style.display = 'block';
++     } else if (provider === 'ollama' &amp;&amp; ollamaSettings) {
++         ollamaSettings.style.display = 'block';
++     } else if (provider === 'perplexity' &amp;&amp; perplexitySettings) {
++         perplexitySettings.style.display = 'block';
++     }
++ }
++ 
++ // Initialize on page load
++ document.addEventListener('DOMContentLoaded', function() {
++     toggleProviderSettings();
++     
++     // Test Perplexity connection
++     const perplexityTestBtn = document.getElementById('perplexityTestBtn');
++     if (perplexityTestBtn) {
++         perplexityTestBtn.addEventListener('click', async function() {
++             const btn = this;
++             const originalText = btn.innerHTML;
++             const resultsDiv = document.getElementById('perplexity-test-results');
++             
++             btn.disabled = true;
++             btn.innerHTML = '&lt;i class="bi bi-arrow-clockwise spin me-1"&gt;&lt;/i&gt;Testing...';
++             
++             try {
++                 const apiKey = document.getElementById('perplexity_api_key').value;
++                 if (!apiKey) {
++                     resultsDiv.innerHTML = '&lt;div class="alert alert-warning"&gt;Please enter API key first&lt;/div&gt;';
++                     return;
++                 }
++                 
++                 // Simple test - just check if key format is valid
++                 if (apiKey.startsWith('pplx-')) {
++                     resultsDiv.innerHTML = '&lt;div class="alert alert-success"&gt;✅ API key format looks valid&lt;/div&gt;';
++                 } else {
++                     resultsDiv.innerHTML = '&lt;div class="alert alert-warning"&gt;⚠️ API key should start with "pplx-"&lt;/div&gt;';
++                 }
++             } catch (error) {
++                 resultsDiv.innerHTML = &#96;&lt;div class="alert alert-danger"&gt;Error: ${error.message}&lt;/div&gt;&#96;;
++             } finally {
++                 btn.disabled = false;
++                 btn.innerHTML = originalText;
++             }
++         });
++     }
++ });
++ &lt;/script&gt;
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/admin.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/admin.py</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -216,4 +216,6 @@
+          'OLLAMA_BASE_URL': 'http://localhost:11434',
+          'OLLAMA_MODEL': 'llama3.2-vision:11b',
++         'PERPLEXITY_API_KEY': '',
++         'PERPLEXITY_MODEL': 'sonar-pro',
+          'AI_PROVIDER': 'openai',
+          'AI_TIMEOUT': '30',
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/metadata_routes.py</summary>
+
+**Chunk 1**
+Lines added: 11, lines removed: 1
+
+```diff
+@@ -33,9 +33,19 @@
+              import_templates = []
+          
++         # Check if AI enrichment is available
++         from app.admin import load_ai_config
++         ai_config = load_ai_config()
++         has_perplexity = bool(ai_config.get('PERPLEXITY_API_KEY') or os.getenv('PERPLEXITY_API_KEY'))
++         has_openai = bool(ai_config.get('OPENAI_API_KEY'))
++         has_ollama = bool(ai_config.get('OLLAMA_BASE_URL'))
++         ai_available = has_perplexity or has_openai or has_ollama
++         
+          return render_template(
+              'metadata/index.html',
+              user_fields=user_fields,
+              popular_fields=popular_fields,
+-             import_templates=import_templates
++             import_templates=import_templates,
++             ai_available=ai_available,
++             has_perplexity=has_perplexity
+          )
+      except Exception as e:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/metadata_routes.py</summary>
+
+**Chunk 1**
+Lines added: 5, lines removed: undefined
+
+```diff
+@@ -9,4 +9,9 @@
+  from datetime import datetime
+  import uuid
++ import os
++ import subprocess
++ import asyncio
++ import json
++ from pathlib import Path
+  
+  from .domain.models import CustomFieldDefinition, ImportMappingTemplate, CustomFieldType
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="search_replace">
+<details>
+<summary>Tool use: **search_replace**</summary>
+
+
+Parameters:
+
+```json
+{
+  "relativeWorkspacePath": "app/metadata_routes.py"
+}
+```
+Additional data:
+
+```json
+{
+  "codeblockId": "2444310d-1b38-4897-8ecd-4c718308f4d8"
+}
+```
+User decision: **accepted**
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+

@@ -417,6 +417,7 @@
                                     <select class="form-select" id="ai_provider" name="ai_provider" onchange="toggleProviderSettings()">
                                         <option value="openai" {{ 'selected' if ai_config and ai_config.get('AI_PROVIDER') == 'openai' else '' }}>OpenAI</option>
                                         <option value="ollama" {{ 'selected' if ai_config and ai_config.get('AI_PROVIDER') == 'ollama' else '' }}>Ollama (Local)</option>
+                                        <option value="perplexity" {{ 'selected' if ai_config and ai_config.get('AI_PROVIDER') == 'perplexity' else '' }}>Perplexity (Web Search)</option>
                                     </select>
                                     <small class="form-text text-muted">Choose between cloud-based OpenAI or local Ollama</small>
                                 </div>
@@ -424,6 +425,15 @@
                                 <!-- OpenAI Settings -->
                                 <div id="openai-settings" class="provider-settings">
                                     <h6 class="fw-bold text-primary mb-3">OpenAI Configuration</h6>
+                                    <div class="alert alert-warning">
+                                        <strong><i class="bi bi-exclamation-triangle me-1"></i>Ограничения на OpenAI:</strong><br>
+                                        <ul class="mb-0 mt-2">
+                                            <li>❌ Не може да търси корици в интернет</li>
+                                            <li>❌ Не може да търси ISBN или издателства в интернет</li>
+                                            <li>✅ Може да генерира описания базирани на знанията на модела</li>
+                                            <li>✅ Може да парсва метаданни от предоставената информация</li>
+                                        </ul>
+                                    </div>
                                     <div class="row g-3">
                                         <div class="col-md-6">
                                             <label for="openai_api_key" class="form-label">API Key</label>
@@ -449,9 +459,57 @@
                                     </div>
                                 </div>
 
+                                <!-- Perplexity Settings -->
+                                <div id="perplexity-settings" class="provider-settings" style="display: none;">
+                                    <h6 class="fw-bold text-info mb-3">Perplexity Configuration</h6>
+                                    <div class="alert alert-info">
+                                        <strong><i class="bi bi-info-circle me-1"></i>Perplexity AI</strong><br>
+                                        Perplexity има web search способности и може да:
+                                        <ul class="mb-0 mt-2">
+                                            <li>✅ Търси корици в интернет</li>
+                                            <li>✅ Търси ISBN и издателства</li>
+                                            <li>✅ Намира реална информация от интернет</li>
+                                            <li>✅ Генерира описания базирани на актуални данни</li>
+                                        </ul>
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="perplexity_api_key" class="form-label">API Key</label>
+                                            <input type="password" class="form-control" id="perplexity_api_key" name="perplexity_api_key" 
+                                                   value="{{ ai_config.get('PERPLEXITY_API_KEY', '') if ai_config else '' }}" placeholder="pplx-...">
+                                            <small class="form-text text-muted">
+                                                Получете API ключ от <a href="https://www.perplexity.ai/settings/api" target="_blank">Perplexity AI Settings</a>
+                                            </small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="perplexity_model" class="form-label">Model</label>
+                                            <select class="form-select" id="perplexity_model" name="perplexity_model">
+                                                <option value="sonar-pro" {{ 'selected' if ai_config and ai_config.get('PERPLEXITY_MODEL') == 'sonar-pro' else '' }}>Sonar Pro (Recommended)</option>
+                                                <option value="sonar-deep-research" {{ 'selected' if ai_config and ai_config.get('PERPLEXITY_MODEL') == 'sonar-deep-research' else '' }}>Sonar Deep Research</option>
+                                                <option value="llama-3.1-70b-instruct" {{ 'selected' if ai_config and ai_config.get('PERPLEXITY_MODEL') == 'llama-3.1-70b-instruct' else '' }}>Llama 3.1 70B</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <button type="button" class="btn btn-outline-info btn-sm" onclick="testPerplexityConnection()">
+                                            <i class="bi bi-plug me-1"></i>Test Perplexity Connection
+                                        </button>
+                                        <div id="perplexity-test-results" class="mt-2 small"></div>
+                                    </div>
+                                </div>
+
                                 <!-- Ollama Settings -->
                                 <div id="ollama-settings" class="provider-settings" style="display: none;">
                                     <h6 class="fw-bold text-success mb-3">Ollama Configuration</h6>
+                                    <div class="alert alert-warning">
+                                        <strong><i class="bi bi-exclamation-triangle me-1"></i>Ограничения на Ollama:</strong><br>
+                                        <ul class="mb-0 mt-2">
+                                            <li>❌ Не може да търси корици в интернет</li>
+                                            <li>❌ Не може да търси ISBN или издателства в интернет</li>
+                                            <li>✅ Може да генерира описания базирани на знанията на модела</li>
+                                            <li>✅ Може да парсва метаданни от предоставената информация</li>
+                                        </ul>
+                                    </div>
                                     <div class="row g-3">
                                         <div class="col-md-8">
                                             <label for="ollama_base_url" class="form-label">Base URL</label>
@@ -912,14 +970,48 @@ function toggleProviderSettings() {
     const provider = document.getElementById('ai_provider').value;
     const openaiSettings = document.getElementById('openai-settings');
     const ollamaSettings = document.getElementById('ollama-settings');
+    const perplexitySettings = document.getElementById('perplexity-settings');
     
-    if (provider === 'openai') {
+    // Hide all
+    if (openaiSettings) openaiSettings.style.display = 'none';
+    if (ollamaSettings) ollamaSettings.style.display = 'none';
+    if (perplexitySettings) perplexitySettings.style.display = 'none';
+    
+    // Show selected
+    if (provider === 'openai' && openaiSettings) {
         openaiSettings.style.display = 'block';
-        ollamaSettings.style.display = 'none';
-    } else if (provider === 'ollama') {
-        openaiSettings.style.display = 'none';
+    } else if (provider === 'ollama' && ollamaSettings) {
         ollamaSettings.style.display = 'block';
+    } else if (provider === 'perplexity' && perplexitySettings) {
+        perplexitySettings.style.display = 'block';
     }
+}
+
+function testPerplexityConnection() {
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    const resultsDiv = document.getElementById('perplexity-test-results');
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-1"></i>Testing...';
+    
+    const apiKey = document.getElementById('perplexity_api_key').value;
+    if (!apiKey) {
+        resultsDiv.innerHTML = '<div class="alert alert-warning">Please enter API key first</div>';
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        return;
+    }
+    
+    // Simple test - just check if key format is valid
+    if (apiKey.startsWith('pplx-')) {
+        resultsDiv.innerHTML = '<div class="alert alert-success">✅ API key format looks valid</div>';
+    } else {
+        resultsDiv.innerHTML = '<div class="alert alert-warning">⚠️ API key should start with "pplx-"</div>';
+    }
+    
+    btn.disabled = false;
+    btn.innerHTML = originalText;
 }
 
 async function testSMTPConnection() {
