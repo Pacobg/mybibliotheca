@@ -501,6 +501,21 @@ class EnrichmentCommand:
                 if enriched.get('published_date') and not book.get('published_date'):
                     updates['published_date'] = enriched['published_date']
                 
+                # Update language to Bulgarian if book has Bulgarian title and author
+                title = book.get('title', '') or enriched.get('title', '')
+                ai_author = book.get('ai_metadata', {}).get('author') or enriched.get('author', '')
+                
+                # Check if title and author contain Cyrillic (Bulgarian)
+                has_cyrillic_title = any('\u0400' <= char <= '\u04FF' for char in title)
+                has_cyrillic_author = any('\u0400' <= char <= '\u04FF' for char in ai_author)
+                
+                if has_cyrillic_title and has_cyrillic_author:
+                    # Book is Bulgarian - set language to 'bg'
+                    current_language = book.get('language', '')
+                    if current_language != 'bg':
+                        updates['language'] = 'bg'
+                        logger.info(f"🌍 Setting language to 'bg' for Bulgarian book: {title}")
+                
                 # Save to database using book service
                 if updates:
                     try:
