@@ -26466,3 +26466,93 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 18:52:03,670 [INFO] ============================================================
+2025-12-24 18:52:03,670 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 18:52:03,670 [INFO] ============================================================
+2025-12-24 18:52:03,670 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 18:52:03] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:52:03,715 [INFO] 192.168.1.9 - - [24/Dec/2025 18:52:03] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:52:03,734 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 18:52:03,735 [INFO] ⚙️  Configuration:
+2025-12-24 18:52:03,735 [INFO]    Limit: 5
+2025-12-24 18:52:03,735 [INFO]    Force: False
+2025-12-24 18:52:03,735 [INFO]    Dry run: False
+2025-12-24 18:52:03,735 [INFO]    Min quality: 0.3
+2025-12-24 18:52:03,735 [INFO]    No cover only: True (only books without covers)
+2025-12-24 18:52:03,735 [INFO] 📖 Querying database for books...
+2025-12-24 18:52:03,735 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 18:52:03,735 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 18:52:03,744 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 18:52:03,747 [INFO] 🔍 [_get_books_to_enrich] 'The Secret History': cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 18:52:03,747 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 18:52:03,747 [INFO] ⏭️  Skipping book with valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+2025-12-24 18:52:03,751 [INFO] 🔍 [_get_books_to_enrich] 'The Secret Garden': cover_url='https://knigabg.com/pix/28162.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 18:52:03,751 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 18:52:03,751 [INFO] ⏭️  Skipping book with valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 18:52:03,754 [INFO] 🔍 [_get_books_to_enrich] 'The Priory of the Orange Tree (The Roots of Chaos, #1)': cover_url='https://images.thenile.io/r1000/9781408883358.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 18:52:03,754 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 18:52:03,754 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 18:52:03,757 [INFO] 🔍 [_get_books_to_enrich] 'The Familiar': cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 18:52:03,758 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 18:52:03,758 [INFO] ⏭️  Skipping book with valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 18:52:03,761 [INFO] 🔍 [_get_books_to_enrich] 'The Costume History': cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401...', is_cache_url=True, ends_with_extension=True, contains_extension=False
+2025-12-24 18:52:03,761 [INFO] 🔍 [_get_books_to_enrich] ✅ Cache URL with extension: 'https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401...' - marking as VALID
+2025-12-24 18:52:03,761 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f...')
+2025-12-24 18:52:03,761 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 18:52:03,761 [INFO] 📊 Statistics: 5 books WITH valid cover URLs (skipped)
+2025-12-24 18:52:03,761 [INFO] 📊 Statistics: 0 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 18:52:03,761 [WARNING] ⚠️  No books found without valid cover URLs.
+2025-12-24 18:52:03,761 [WARNING] ⚠️  All 5 checked books have valid http/https cover URLs.
+2025-12-24 18:52:03,762 [INFO] 💡 Tip: Use --force flag to force enrichment of all books, or add books without covers to the database.
+2025-12-24 18:52:03,762 [INFO] ✅ Found 0 books to enrich
+2025-12-24 18:52:03,762 [INFO] ✅ No books need enrichment!
+192.168.1.9 - - [24/Dec/2025 18:52:08] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="read_file">
+<details>
+<summary>Tool use: **read_file**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+

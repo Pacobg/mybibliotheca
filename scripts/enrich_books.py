@@ -425,20 +425,37 @@ class EnrichmentCommand:
                                         # Cache URLs must end with extension AND not contain suspicious patterns
                                         # Suspicious patterns: ISBN numbers (13 digits starting with 978 or 979) in path
                                         import re
-                                        has_isbn_in_path = bool(re.search(r'/(978|979)\d{10}/', cover_url))
+                                        # Check for ISBN in path (can be between / or at end before extension)
+                                        has_isbn_in_path = bool(re.search(r'/(978|979)\d{10}(/|\.)', cover_url))
                                         
                                         # Also check if path looks like ISBN instead of proper image filename
                                         # Proper cache URLs should have format: cache/HASH/path/to/image.jpg
                                         # Broken ones might have: cache/HASH/9/7/9783836555401.jpg
                                         path_after_cache = cover_url.split('/cache/')[-1] if '/cache/' in cover_url else ''
-                                        # Check if path segments are mostly numbers (suspicious)
+                                        # Remove extension from last segment for checking
                                         path_segments = [s for s in path_after_cache.split('/') if s]
-                                        has_numeric_path = len(path_segments) > 0 and all(seg.isdigit() or seg.endswith(('.jpg', '.jpeg', '.png', '.webp', '.gif')) for seg in path_segments[:-1])
+                                        if path_segments:
+                                            # Remove extension from last segment
+                                            last_seg = path_segments[-1]
+                                            for ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif']:
+                                                if last_seg.lower().endswith(ext):
+                                                    last_seg = last_seg[:-len(ext)]
+                                                    break
+                                            path_segments[-1] = last_seg
                                         
-                                        has_valid_cover = ends_with_extension and not has_isbn_in_path and not has_numeric_path
+                                        # Check if path segments are mostly single digits (suspicious pattern like /9/7/9783836555401)
+                                        # Valid paths should have meaningful names like /t/h/the_costume_history
+                                        has_numeric_path = len(path_segments) > 2 and all(len(seg) <= 2 and seg.isdigit() for seg in path_segments[:-1])
+                                        
+                                        # Also check if filename itself is an ISBN (13 digits)
+                                        filename_is_isbn = len(path_segments) > 0 and bool(re.match(r'^(978|979)\d{10}$', path_segments[-1]))
+                                        
+                                        has_valid_cover = ends_with_extension and not has_isbn_in_path and not has_numeric_path and not filename_is_isbn
+                                        
+                                        logger.info(f"🔍 [_get_books_to_enrich] Cache URL analysis: has_isbn_in_path={has_isbn_in_path}, has_numeric_path={has_numeric_path}, filename_is_isbn={filename_is_isbn}, path_segments={path_segments[-3:] if len(path_segments) >= 3 else path_segments}")
                                         
                                         if not has_valid_cover:
-                                            logger.info(f"🔍 [_get_books_to_enrich] ❌ Cache URL invalid: '{cover_url[:100]}...' - ends_with_extension={ends_with_extension}, has_isbn_in_path={has_isbn_in_path}, has_numeric_path={has_numeric_path} - marking as INVALID")
+                                            logger.info(f"🔍 [_get_books_to_enrich] ❌ Cache URL invalid: '{cover_url[:100]}...' - ends_with_extension={ends_with_extension}, has_isbn_in_path={has_isbn_in_path}, has_numeric_path={has_numeric_path}, filename_is_isbn={filename_is_isbn} - marking as INVALID")
                                         else:
                                             logger.info(f"🔍 [_get_books_to_enrich] ✅ Cache URL valid: '{cover_url[:100]}...' - marking as VALID")
                                     else:
