@@ -445,18 +445,20 @@ class EnrichmentCommand:
                 if updates:
                     try:
                         # Use the async method from book service
+                        # Note: update_book expects (book_id, updates, user_id) parameters
                         updated_book = await book_service.update_book(
                             book['id'],
-                            updates=updates,
-                            user_id='system'  # System user for enrichment
+                            updates,
+                            'system'  # System user for enrichment
                         )
                         if updated_book:
                             saved_count += 1
-                            logger.debug(f"✅ Saved: {book['title']}")
+                            logger.info(f"✅ Saved: {book['title']}")
+                            logger.debug(f"   Updated fields: {', '.join(updates.keys())}")
                         else:
                             logger.warning(f"⚠️  Failed to save: {book['title']}")
                     except Exception as e:
-                        logger.error(f"❌ Error updating book {book['id']}: {e}")
+                        logger.error(f"❌ Error updating book {book['id']}: {e}", exc_info=True)
                 
                 # Handle publisher separately (it's a relationship, not a property)
                 if publisher_name and not has_publisher:
