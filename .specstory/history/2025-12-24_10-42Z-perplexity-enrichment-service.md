@@ -22958,16 +22958,95 @@ _**Agent (model composer-1, mode Agent)**_
 ---
 
 
+Не виждам логове от `enrich_single_book` (например "🔍 Enriching:", "📡 Calling Perplexity API"). Вероятно книгите се пропускат от `_has_sufficient_data` преди обогатяване. Проверявам логиката на `_has_sufficient_data` и добавям по-подробно логиране:
+
 
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="read_file">
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -147,5 +147,7 @@
+          # Check if book already has good data (unless force)
+          if not force:
++             logger.info(f"🔍 Checking if '{title}' needs enrichment (force={force}, require_cover={require_cover})")
+              has_sufficient = self._has_sufficient_data(book_data, require_cover=require_cover)
++             logger.info(f"🔍 _has_sufficient_data returned: {has_sufficient} for '{title}'")
+              if has_sufficient:
+                  logger.info(f"⏭️  Skipping {title} - already has sufficient data")
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+Model supplied an ambiguous edit
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
 <details>
-<summary>Tool use: **read_file**</summary>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
 
-Status: **loading**
+- `app/services/enrichment_service.py`
+
+Lint results
 
 
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add detailed logging to _has_sufficient_data to debug why books are skipped" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add detailed logging to _has_sufficient_data to debug why books are skipped" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 946f543] Add detailed logging to _has_sufficient_data to debug why books are skipped
+ 2 files changed, 295 insertions(+)
+To https://github.com/Pacobg/mybibliotheca.git
+   95c3498..946f543  main -&gt; main
+
+```
 </details>
 </tool-use>
 
@@ -22978,6 +23057,186 @@ Status: **loading**
 ---
 
 
+Добавих по-подробно логиране. При следващото изпълнение ще видим:
+- "🔍 Checking if '...' needs enrichment" — преди проверката
+- "🔍 _has_sufficient_data returned: True/False" — резултатът от проверката
+- "🔍 Book '...' needs enrichment" — ако книгата не се пропуска
+- "🔍 Enriching: ..." — когато започва обогатяването
+- "📡 Calling Perplexity API for: ..." — когато се прави API заявка
+
+Това ще покаже къде е проблемът. Промените са качени в git main. Опитайте отново и споделете логовете.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+същото 
+2025-12-24 17:50:49,907 [INFO] ============================================================
+2025-12-24 17:50:49,908 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 17:50:49,908 [INFO] ============================================================
+2025-12-24 17:50:49,908 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 17:50:49] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 17:50:49,953 [INFO] 192.168.1.9 - - [24/Dec/2025 17:50:49] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 17:50:49,972 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 17:50:49,972 [INFO] ⚙️  Configuration:
+2025-12-24 17:50:49,972 [INFO]    Limit: 5
+2025-12-24 17:50:49,972 [INFO]    Force: False
+2025-12-24 17:50:49,972 [INFO]    Dry run: False
+2025-12-24 17:50:49,972 [INFO]    Min quality: 0.3
+2025-12-24 17:50:49,972 [INFO]    No cover only: True (only books without covers)
+2025-12-24 17:50:49,972 [INFO] 📖 Querying database for books...
+2025-12-24 17:50:50,024 [INFO] ✅ Found 5 books to enrich
+2025-12-24 17:50:50,024 [INFO]
+📚 Found 5 books to enrich
+2025-12-24 17:50:50,024 [INFO]
+🚀 Starting enrichment...
+2025-12-24 17:50:50,025 [INFO]    Estimated time: ~0.2 minutes
+2025-12-24 17:50:50,025 [INFO]    Estimated cost: ~$0.00
+2025-12-24 17:50:50,025 [WARNING] [1/5] ❌ The Secret History - No metadata found
+2025-12-24 17:50:51,026 [WARNING] [2/5] ❌ The Secret Garden - No metadata found
+2025-12-24 17:50:52,028 [WARNING] [3/5] ❌ The Priory of the Orange Tree (The Roots of Chaos, #1) - No metadata found
+2025-12-24 17:50:53,030 [WARNING] [4/5] ❌ The Familiar - No metadata found
+2025-12-24 17:50:54,032 [WARNING] [5/5] ❌ The Costume History - No metadata found
+2025-12-24 17:50:54,033 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 17:50:54,035 [INFO] 📊 Tracked 0 enriched and 0 skipped books
+2025-12-24 17:50:54,035 [INFO]
+============================================================
+2025-12-24 17:50:54,035 [INFO] ENRICHMENT REPORT
+2025-12-24 17:50:54,035 [INFO] ============================================================
+2025-12-24 17:50:54,036 [INFO] 📊 Statistics:
+2025-12-24 17:50:54,036 [INFO]    Books checked: 5
+2025-12-24 17:50:54,036 [INFO]    Books enriched: 0
+2025-12-24 17:50:54,036 [INFO]    Books failed: 5
+2025-12-24 17:50:54,036 [INFO]    Success rate: 0.0%
+2025-12-24 17:50:54,036 [INFO]
+📝 Content:
+2025-12-24 17:50:54,036 [INFO]    Covers found: 0
+2025-12-24 17:50:54,037 [INFO]    Descriptions added: 0
+2025-12-24 17:50:54,037 [INFO]
+⏱️  Performance:
+2025-12-24 17:50:54,037 [INFO]    Duration: 4.0s
+2025-12-24 17:50:54,037 [INFO]    Speed: 74.8 books/min
+2025-12-24 17:50:54,037 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 17:50:54,038 [INFO] ============================================================
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Не виждам логове от `enrich_single_book` (например "🔍 Checking if '...' needs enrichment", "🔍 Enriching:"). Вероятно логовете не се извеждат или има проблем с logger конфигурацията. Проверявам дали `enrich_single_book` се извиква и добавям по-подробно логиране в началото на метода:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 11, lines removed: 7
+
+```diff
+@@ -127,32 +127,36 @@
+              Enriched metadata dictionary or None
+          """
++         
++         logger.info(f"🔍 [ENRICH_SINGLE_BOOK] Called for book_data keys: {list(book_data.keys())}")
+          
+          # Check if any provider is available
+          if not self.perplexity and not self.openai_enricher:
+-             logger.error("No enrichment providers available - cannot enrich")
++             logger.error("❌ [ENRICH_SINGLE_BOOK] No enrichment providers available - cannot enrich")
+              return None
+          
+          title = book_data.get('title')
+          author = book_data.get('author') or book_data.get('author', 'Unknown')
++         
++         logger.info(f"🔍 [ENRICH_SINGLE_BOOK] Title: '{title}', Author: '{author}'")
+          
+          if not title:
+-             logger.error("Missing title - cannot enrich")
++             logger.error("❌ [ENRICH_SINGLE_BOOK] Missing title - cannot enrich")
+              return None
+          
+          # If author is Unknown or missing, try to enrich anyway (AI might find it)
+          if not author or author == 'Unknown':
+-             logger.info(f"⚠️  Book '{title}' has no author - will try to find it via AI")
++             logger.info(f"⚠️  [ENRICH_SINGLE_BOOK] Book '{title}' has no author - will try to find it via AI")
+              author = ''  # Empty author - AI will try to find it
+          
+          # Check if book already has good data (unless force)
+          if not force:
+-             logger.info(f"🔍 Checking if '{title}' needs enrichment (force={force}, require_cover={require_cover})")
++             logger.info(f"🔍 [ENRICH_SINGLE_BOOK] Checking if '{title}' needs enrichment (force={force}, require_cover={require_cover})")
+              has_sufficient = self._has_sufficient_data(book_data, require_cover=require_cover)
+-             logger.info(f"🔍 _has_sufficient_data returned: {has_sufficient} for '{title}'")
++             logger.info(f"🔍 [ENRICH_SINGLE_BOOK] _has_sufficient_data returned: {has_sufficient} for '{title}'")
+              if has_sufficient:
+-                 logger.info(f"⏭️  Skipping {title} - already has sufficient data")
++                 logger.info(f"⏭️  [ENRICH_SINGLE_BOOK] Skipping {title} - already has sufficient data")
+                  return None
+              else:
+-                 logger.info(f"🔍 Book '{title}' needs enrichment (has_sufficient_data=False, require_cover={require_cover})")
++                 logger.info(f"🔍 [ENRICH_SINGLE_BOOK] Book '{title}' needs enrichment (has_sufficient_data=False, require_cover={require_cover})")
+          
+          try:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `app/services/enrichment_service.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add [ENRICH_SINGLE_BOOK] prefix to all logs for better debugging visibility" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add [ENRICH_SINGLE_BOOK] prefix to all logs for better debugging visibility" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 38ef135] Add [ENRICH_SINGLE_BOOK] prefix to all logs for better debugging visibility
+ 2 files changed, 120 insertions(+), 7 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   946f543..38ef135  main -&gt; main
+
+```
+</details>
+</tool-use>
 
 ---
 
@@ -22986,18 +23245,198 @@ Status: **loading**
 ---
 
 
+Добавих префикс `[ENRICH_SINGLE_BOOK]` към всички логове в метода. При следващото изпълнение ще видим:
+- "🔍 [ENRICH_SINGLE_BOOK] Called for book_data keys: ..." — в началото на метода
+- "🔍 [ENRICH_SINGLE_BOOK] Title: '...', Author: '...'" — данните за книгата
+- "🔍 [ENRICH_SINGLE_BOOK] Checking if '...' needs enrichment" — преди проверката
+- "🔍 [ENRICH_SINGLE_BOOK] _has_sufficient_data returned: ..." — резултатът
+
+Ако не виждаме тези логове, вероятно `enrich_single_book` не се извиква или има проблем с logger конфигурацията.
+
+Промените са качени в git main. Опитайте отново и споделете логовете.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 17:55:02,054 [INFO] ============================================================
+2025-12-24 17:55:02,054 [INFO] BOOK ENRICHMENT - AI Web Search
+192.168.1.9 - - [24/Dec/2025 17:55:02] "POST /metadata/enrichment/start HTTP/1.1" 200 -
+2025-12-24 17:55:02,054 [INFO] ============================================================
+2025-12-24 17:55:02,054 [INFO] 192.168.1.9 - - [24/Dec/2025 17:55:02] "POST /metadata/enrichment/start HTTP/1.1" 200 -
+2025-12-24 17:55:02,055 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 17:55:02] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 17:55:02,100 [INFO] 192.168.1.9 - - [24/Dec/2025 17:55:02] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 17:55:02,119 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 17:55:02,119 [INFO] ⚙️  Configuration:
+2025-12-24 17:55:02,119 [INFO]    Limit: 5
+2025-12-24 17:55:02,119 [INFO]    Force: False
+2025-12-24 17:55:02,119 [INFO]    Dry run: False
+2025-12-24 17:55:02,120 [INFO]    Min quality: 0.3
+2025-12-24 17:55:02,120 [INFO]    No cover only: True (only books without covers)
+2025-12-24 17:55:02,120 [INFO] 📖 Querying database for books...
+2025-12-24 17:55:02,181 [INFO] ✅ Found 5 books to enrich
+2025-12-24 17:55:02,181 [INFO]
+📚 Found 5 books to enrich
+2025-12-24 17:55:02,181 [INFO]
+🚀 Starting enrichment...
+2025-12-24 17:55:02,181 [INFO]    Estimated time: ~0.2 minutes
+2025-12-24 17:55:02,182 [INFO]    Estimated cost: ~$0.00
+2025-12-24 17:55:02,182 [WARNING] [1/5] ❌ The Secret History - No metadata found
+2025-12-24 17:55:03,183 [WARNING] [2/5] ❌ The Secret Garden - No metadata found
+2025-12-24 17:55:04,186 [WARNING] [3/5] ❌ The Priory of the Orange Tree (The Roots of Chaos, #1) - No metadata found
+2025-12-24 17:55:05,188 [WARNING] [4/5] ❌ The Familiar - No metadata found
+2025-12-24 17:55:06,190 [WARNING] [5/5] ❌ The Costume History - No metadata found
+2025-12-24 17:55:06,191 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 17:55:06,192 [INFO] 📊 Tracked 0 enriched and 0 skipped books
+2025-12-24 17:55:06,192 [INFO]
+============================================================
+2025-12-24 17:55:06,193 [INFO] ENRICHMENT REPORT
+2025-12-24 17:55:06,193 [INFO] ============================================================
+2025-12-24 17:55:06,193 [INFO] 📊 Statistics:
+2025-12-24 17:55:06,193 [INFO]    Books checked: 5
+2025-12-24 17:55:06,194 [INFO]    Books enriched: 0
+2025-12-24 17:55:06,194 [INFO]    Books failed: 5
+2025-12-24 17:55:06,194 [INFO]    Success rate: 0.0%
+2025-12-24 17:55:06,194 [INFO]
+📝 Content:
+2025-12-24 17:55:06,194 [INFO]    Covers found: 0
+2025-12-24 17:55:06,194 [INFO]    Descriptions added: 0
+2025-12-24 17:55:06,195 [INFO]
+⏱️  Performance:
+2025-12-24 17:55:06,195 [INFO]    Duration: 4.0s
+2025-12-24 17:55:06,195 [INFO]    Speed: 74.8 books/min
+2025-12-24 17:55:06,195 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 17:55:06,195 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 17:55:07] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 17:55:07,138 [INFO] 192.168.1.9 - - [24/Dec/2025 17:55:07] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+ прави ми впечатление, че са само книги на английски - да не би да има някаква блокировка
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
 
 ---
 
 
-
----
-
+Проверявам дали има филтър, който пропуска само български книги или блокира английските:
 
 
 ---
 
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
 
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "is_bulgarian|Bulgarian|language.*bg|Cyrillic|кирилица" in "scripts/enrich_books.py" • 50 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `# Note: Filter for Bulgarian books happens in Python after query` | L290 |
+| `scripts/enrich_books.py` | `# If --no-cover-only is set, include all books (not just Bulgarian)` | L388 |
+| `scripts/enrich_books.py` | `# Check if it's a Bulgarian book` | L396 |
+| `scripts/enrich_books.py` | `# Bulgarian books have Cyrillic characters in title OR language='bg'` | L397 |
+| `scripts/enrich_books.py` | `has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in title)` | L398 |
+| `scripts/enrich_books.py` | `is_bg_language = book_dict.get('language') == 'bg'` | L399 |
+| `scripts/enrich_books.py` | `if has_cyrillic or is_bg_language:` | L401 |
+| `scripts/enrich_books.py` | `logger.debug(f"✅ Added Bulgarian book without author: \{title\}")` | L404 |
+| `scripts/enrich_books.py` | `logger.debug(f"✅ Added Bulgarian book: \{title\}")` | L406 |
+| `scripts/enrich_books.py` | `logger.debug(f"⏭️  Skipping non-Bulgarian book: \{title\} (language: \{language\})")` | L408 |
+| `scripts/enrich_books.py` | `has_cyrillic_title = any('\u0400' <= char <= '\u04FF' for char in title)` | L596 |
+| `scripts/enrich_books.py` | `desc_has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in description)` | L597 |
+| `scripts/enrich_books.py` | `desc_matches_title = (has_cyrillic_title and desc_has_cyrillic) or (not has_cyrillic_title and not desc_has_cyrillic)` | L598 |
+| `scripts/enrich_books.py` | `existing_desc_has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in existing_desc) if existing_desc else False` | L600 |
+| `scripts/enrich_books.py` | `existing_desc_matches_title = (has_cyrillic_title and existing_desc_has_cyrillic) or (not has_cyrillic_title and not existing_desc_has_cyrillic)` | L601 |
+| `scripts/enrich_books.py` | `logger.warning(f"🚫 Rejecting description for '\{book['title']\}': language doesn't match title (title is \{'Bulgarian' if has_cyrillic_title else 'English'\}, desc is \{'Bulgarian' if desc_has_cyrillic else 'English'\})")` | L619 |
+| `scripts/enrich_books.py` | `# Update language to Bulgarian if book has Bulgarian title and author` | L673 |
+| `scripts/enrich_books.py` | `# Check if title and author contain Cyrillic (Bulgarian)` | L677 |
+| `scripts/enrich_books.py` | `has_cyrillic_title = any('\u0400' <= char <= '\u04FF' for char in title)` | L678 |
+| `scripts/enrich_books.py` | `has_cyrillic_author = any('\u0400' <= char <= '\u04FF' for char in ai_author)` | L679 |
+| `scripts/enrich_books.py` | `if has_cyrillic_title and has_cyrillic_author:` | L681 |
+| `scripts/enrich_books.py` | `# Book is Bulgarian - set language to 'bg'` | L682 |
+| `scripts/enrich_books.py` | `if current_language != 'bg':` | L684 |
+| `scripts/enrich_books.py` | `updates['language'] = 'bg'` | L685 |
+| `scripts/enrich_books.py` | `logger.info(f"🌍 Setting language to 'bg' for Bulgarian book: \{title\}")` | L686 |
+| `scripts/enrich_books.py` | `# Rule: If title is Bulgarian → use Bulgarian author, else use English author` | L787 |
+| `scripts/enrich_books.py` | `has_cyrillic_title = any('\u0400' <= char <= '\u04FF' for char in title)` | L789 |
+| `scripts/enrich_books.py` | `if has_cyrillic_title:` | L796 |
+| `scripts/enrich_books.py` | `# Bulgarian title → prefer Bulgarian author` | L797 |
+| `scripts/enrich_books.py` | `cyrillic_authors = [a for a in authors_list if any('\u0400' <= char <= '\u04FF' for char in a)]` | L798 |
+| `scripts/enrich_books.py` | `if cyrillic_authors:` | L799 |
+| `scripts/enrich_books.py` | `ai_author = cyrillic_authors[0]` | L800 |
+| `scripts/enrich_books.py` | `logger.debug(f"✅ Using Bulgarian author for Bulgarian book: \{ai_author\}")` | L801 |
+| `scripts/enrich_books.py` | `# No Bulgarian author found, use first one` | L803 |
+| `scripts/enrich_books.py` | `# English title → use English author (first one, prefer non-Cyrillic)` | L806 |
+| `scripts/enrich_books.py` | `has_cyrillic_author = any('\u0400' <= char <= '\u04FF' for char in ai_author)` | L815 |
+| `scripts/enrich_books.py` | `if has_cyrillic_title and not has_cyrillic_author:` | L816 |
+| `scripts/enrich_books.py` | `# Bulgarian title but English author - try to find Bulgarian version` | L817 |
+| `scripts/enrich_books.py` | `logger.debug(f"⚠️  Bulgarian book '\{title\}' has English author '\{ai_author\}' - keeping for now")` | L818 |
+| `scripts/enrich_books.py` | `elif not has_cyrillic_title and has_cyrillic_author:` | L819 |
+| `scripts/enrich_books.py` | `# English title but Bulgarian author - skip update, keep original English author` | L820 |
+| `scripts/enrich_books.py` | `logger.info(f"⚠️  Skipping Bulgarian author '\{ai_author\}' for English book '\{title\}' - keeping original author")` | L821 |
+| `scripts/enrich_books.py` | `# Final check: Don't update author if title is English but AI returned Bulgarian` | L824 |
+| `scripts/enrich_books.py` | `if ai_author and not has_cyrillic_title:` | L825 |
+| `scripts/enrich_books.py` | `has_cyrillic_author_final = any('\u0400' <= char <= '\u04FF' for char in ai_author)` | L826 |
+| `scripts/enrich_books.py` | `if has_cyrillic_author_final:` | L827 |
+| `scripts/enrich_books.py` | `logger.warning(f"🚫 Rejecting Bulgarian author '\{ai_author\}' for English book '\{title\}'")` | L828 |
+| `scripts/enrich_books.py` | `cyrillic_parts = [a for a in parts if any('\u0400' <= char <= '\u04FF' for char in a)]` | L843 |
+| `scripts/enrich_books.py` | `if cyrillic_parts:` | L844 |
+| `scripts/enrich_books.py` | `current_normalized.append(cyrillic_parts[0])` | L845 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Skipping non-Bulgarian|language.*en|English book" in "scripts/enrich_books.py" • 6 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `language = row[9] if len(row) > 9 else None` | L342 |
+| `scripts/enrich_books.py` | `logger.debug(f"⏭️  Skipping non-Bulgarian book: \{title\} (language: \{language\})")` | L408 |
+| `scripts/enrich_books.py` | `logger.warning(f"🚫 Rejecting description for '\{book['title']\}': language doesn't match title (title is \{'Bulgarian' if has_cyrillic_title else 'English'\}, desc is \{'Bulgarian' if desc_has_cyrillic else 'English'\})")` | L619 |
+| `scripts/enrich_books.py` | `logger.debug(f"✅ Using English author for English book: \{ai_author\}")` | L810 |
+| `scripts/enrich_books.py` | `logger.info(f"⚠️  Skipping Bulgarian author '\{ai_author\}' for English book '\{title\}' - keeping original author")` | L821 |
+| `scripts/enrich_books.py` | `logger.warning(f"🚫 Rejecting Bulgarian author '\{ai_author\}' for English book '\{title\}'")` | L828 |
+
+
+</details>
+</tool-use>
 
 ---
 

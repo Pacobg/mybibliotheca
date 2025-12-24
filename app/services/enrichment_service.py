@@ -287,10 +287,14 @@ class EnrichmentService:
         
         for i, book in enumerate(books, 1):
             try:
+                book_title = book.get('title', 'Unknown')
+                logger.info(f"🔍 [enrich_batch] Processing book {i}/{len(books)}: '{book_title}' (force={force}, require_cover={require_cover})")
+                
                 # Enrich book (pass force flag and require_cover)
                 metadata = await self.enrich_single_book(book, force=force, require_cover=require_cover)
                 
                 stats['processed'] += 1
+                logger.info(f"🔍 [enrich_batch] Book {i}/{len(books)} '{book_title}': metadata={'found' if metadata else 'None'}")
                 
                 if metadata:
                     stats['enriched'] += 1
@@ -351,6 +355,8 @@ class EnrichmentService:
             True if book has enough data, False otherwise
         """
         
+        title = book_data.get('title', '')
+        
         # Check for critical fields
         has_description = bool(
             book_data.get('description') and 
@@ -364,25 +370,32 @@ class EnrichmentService:
         has_publisher = bool(book_data.get('publisher'))
         has_isbn = bool(book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10'))
         
+        logger.info(f"🔍 [_has_sufficient_data] Checking '{title}': require_cover={require_cover}, has_description={has_description}, has_cover={has_cover} (cover_url='{cover_url[:50] if cover_url else 'None'}...'), has_publisher={has_publisher}, has_isbn={has_isbn}")
+        
         # If cover is required (e.g., --no-cover-only mode), don't skip if missing valid cover
         if require_cover and not has_cover:
+            logger.info(f"🔍 [_has_sufficient_data] '{title}' needs enrichment: require_cover=True but has_cover=False")
             return False
         
         # For Bulgarian books, cover is critical - don't skip if missing cover
-        title = book_data.get('title', '')
         is_bulgarian = any('\u0400' <= char <= '\u04FF' for char in title) or book_data.get('language') == 'bg'
         
         if is_bulgarian:
             # Bulgarian books MUST have cover - it's critical
             if not has_cover:
+                logger.info(f"🔍 [_has_sufficient_data] '{title}' needs enrichment: Bulgarian book without cover")
                 return False
             # Need at least 3 out of 4 including cover
             score = sum([has_description, has_cover, has_publisher, has_isbn])
-            return score >= 3
+            result = score >= 3
+            logger.info(f"🔍 [_has_sufficient_data] '{title}' Bulgarian book score: {score}/4, sufficient={result}")
+            return result
         else:
             # For non-Bulgarian books, need at least 3 out of 4
             score = sum([has_description, has_cover, has_publisher, has_isbn])
-            return score >= 3
+            result = score >= 3
+            logger.info(f"🔍 [_has_sufficient_data] '{title}' Non-Bulgarian book score: {score}/4, sufficient={result}")
+            return result
     
     def merge_metadata_into_book(
         self, 
