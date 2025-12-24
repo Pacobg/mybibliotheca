@@ -425,6 +425,19 @@ class EnrichmentCommand:
                                 else:
                                     logger.debug(f"⏭️  Skipping non-Bulgarian book: {title} (language: {language})")
             
+            # Log statistics for --no-cover-only mode
+            if hasattr(self.args, 'no_cover_only') and self.args.no_cover_only:
+                logger.info(f"📊 Statistics: Checked {books_checked} books total")
+                logger.info(f"📊 Statistics: {books_with_valid_cover} books WITH valid cover URLs (skipped)")
+                logger.info(f"📊 Statistics: {books_without_valid_cover} books WITHOUT valid cover URLs (will enrich)")
+                if len(books) == 0:
+                    logger.warning("⚠️  No books found without valid cover URLs.")
+                    if books_checked > 0:
+                        logger.warning(f"⚠️  All {books_checked} checked books have valid http/https cover URLs.")
+                    else:
+                        logger.warning("⚠️  No books found in database (query returned 0 results).")
+                    logger.info("💡 Tip: Use --force flag to force enrichment of all books, or add books without covers to the database.")
+            
             logger.info(f"✅ Found {len(books)} books to enrich")
             return books
             
