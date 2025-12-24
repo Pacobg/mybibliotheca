@@ -148,9 +148,11 @@ class EnrichmentCommand:
         logger.info(f"   Estimated cost: ~${len(books) * 0.0008:.2f}")
         
         # Enrich books
+        require_cover = hasattr(self.args, 'no_cover_only') and self.args.no_cover_only
         results = await self.service.enrich_batch(
             books=books,
             force=self.args.force,
+            require_cover=require_cover,
             progress_callback=self._progress_callback
         )
         
@@ -206,12 +208,12 @@ class EnrichmentCommand:
                 # Check for publisher relationship existence
                 # Note: Filter for Bulgarian books happens in Python after query
                 
-                # If --no-cover-only flag is set, only get books without covers
+                # If --no-cover-only flag is set, only get books without valid cover URLs
                 if hasattr(self.args, 'no_cover_only') and self.args.no_cover_only:
                     query = """
                     MATCH (b:Book)
                     OPTIONAL MATCH (b)-[:PUBLISHED_BY]->(p:Publisher)
-                    WHERE (b.cover_url IS NULL OR b.cover_url = '')
+                    WHERE (b.cover_url IS NULL OR b.cover_url = '' OR NOT (b.cover_url STARTS WITH 'http://' OR b.cover_url STARTS WITH 'https://'))
                     RETURN b.id as id, b.title as title, b.description as description,
                            b.cover_url as cover_url, p.name as publisher,
                            b.isbn13 as isbn13, b.isbn10 as isbn10,

@@ -82,7 +82,7 @@ class EnrichmentService:
             author = ''  # Empty author - AI will try to find it
         
         # Check if book already has good data (unless force)
-        if not force and self._has_sufficient_data(book_data):
+        if not force and self._has_sufficient_data(book_data, require_cover=require_cover):
             logger.info(f"⏭️  Skipping {title} - already has sufficient data")
             return None
         
@@ -161,8 +161,8 @@ class EnrichmentService:
         
         for i, book in enumerate(books, 1):
             try:
-                # Enrich book (pass force flag)
-                metadata = await self.enrich_single_book(book, force=force)
+                # Enrich book (pass force flag and require_cover)
+                metadata = await self.enrich_single_book(book, force=force, require_cover=require_cover)
                 
                 stats['processed'] += 1
                 
@@ -213,12 +213,13 @@ class EnrichmentService:
         
         return stats
     
-    def _has_sufficient_data(self, book_data: Dict) -> bool:
+    def _has_sufficient_data(self, book_data: Dict, require_cover: bool = False) -> bool:
         """
         Check if book already has sufficient metadata
         
         Args:
             book_data: Book data dictionary
+            require_cover: If True, book must have a valid cover URL to be considered sufficient
             
         Returns:
             True if book has enough data, False otherwise
@@ -229,9 +230,17 @@ class EnrichmentService:
             book_data.get('description') and 
             len(book_data.get('description', '')) > 100
         )
-        has_cover = bool(book_data.get('cover') or book_data.get('cover_url'))
+        
+        # Check cover - must be a valid URL (starts with http/https), not just a local path
+        cover_url = book_data.get('cover') or book_data.get('cover_url') or ''
+        has_cover = bool(cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')))
+        
         has_publisher = bool(book_data.get('publisher'))
         has_isbn = bool(book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10'))
+        
+        # If cover is required (e.g., --no-cover-only mode), don't skip if missing valid cover
+        if require_cover and not has_cover:
+            return False
         
         # For Bulgarian books, cover is critical - don't skip if missing cover
         title = book_data.get('title', '')
