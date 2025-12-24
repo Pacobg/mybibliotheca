@@ -404,11 +404,16 @@ class EnrichmentCommand:
                 updates = {}
                 
                 # Update description if missing or improved
-                if enriched.get('description') and (
-                    not book.get('description') or 
-                    len(enriched['description']) > len(book.get('description', ''))
-                ):
-                    updates['description'] = enriched['description']
+                if enriched.get('description'):
+                    description = enriched['description']
+                    # Remove citation markers like [3][5][7][9] before saving
+                    import re
+                    description = re.sub(r'\[\d+\]', '', description)
+                    # Clean up multiple spaces
+                    description = re.sub(r'\s+', ' ', description).strip()
+                    
+                    if not book.get('description') or len(description) > len(book.get('description', '')):
+                        updates['description'] = description
                 
                 # Update cover_url if missing or force update
                 if enriched.get('cover_url'):
@@ -447,12 +452,13 @@ class EnrichmentCommand:
                 # Save to database using book service
                 if updates:
                     try:
-                        # Use async update_book method
-                        updated_book = await book_service.update_book(
-                            book['id'],
-                            updates,
-                            'system'  # System user for enrichment
-                        )
+                        # Use book_service directly (not facade) for simpler updates
+                        from app.services.kuzu_book_service import KuzuBookService
+                        book_update_service = KuzuBookService(user_id='system')
+                        
+                        # Update book using the service's update_book method
+                        updated_book = await book_update_service.update_book(book['id'], updates)
+                        
                         if updated_book:
                             saved_count += 1
                             logger.info(f"✅ Saved: {book['title']}")
@@ -472,7 +478,30 @@ class EnrichmentCommand:
                         logger.warning(f"⚠️  Failed to add publisher for {book['title']}: {e}")
                 
                 # Handle author update if AI found a normalized author
-                ai_author = enriched.get('author')
+                # Get author directly from AI metadata (before merge) - this is already normalized
+                ai_metadata = book.get('ai_metadata', {})
+                ai_author = ai_metadata.get('author')
+                
+                # Debug: log what we found
+                logger.debug(f"🔍 AI metadata author: {ai_author}")
+                logger.debug(f"🔍 Enriched author: {enriched.get('author')}")
+                
+                if not ai_author:
+                    # Fallback to enriched author
+                    ai_author = enriched.get('author')
+                
+                # Normalize author one more time to be sure
+                if ai_author:
+                    import re
+                    # If multiple authors, prefer Bulgarian/Cyrillic
+                    if ',' in ai_author or ';' in ai_author:
+                        authors_list = [a.strip() for a in re.split(r'[,;]', ai_author)]
+                        cyrillic_authors = [a for a in authors_list if any('\u0400' <= char <= '\u04FF' for char in a)]
+                        if cyrillic_authors:
+                            ai_author = cyrillic_authors[0]
+                        else:
+                            ai_author = authors_list[0]
+                
                 if ai_author:
                     try:
                         # Get current authors
