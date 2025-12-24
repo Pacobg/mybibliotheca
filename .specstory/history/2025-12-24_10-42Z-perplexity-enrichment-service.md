@@ -18169,25 +18169,21 @@ Lines added: 3, lines removed: 1
 
 <tool-use data-tool-type="search" data-tool-name="codebase_search">
 <details>
-                <summary>Tool use: **codebase_search** • Searched codebase "How to update enrichment status file with enriched books list during enrichment process?" • **15** results</summary>
+                <summary>Tool use: **codebase_search** • Searched codebase "How to update enrichment status file with enriched books list during enrichment process?" • **11** results</summary>
             
 | File | Lines |
 |------|-------|
-| `app/routes/import_routes.py` | L87-99 |
-| `app/services/audiobookshelf_listening_sync.py` | L255-285 |
-| `app/templates/import_books_progress.html` | L320-346 |
-| `app/services/audiobookshelf_listening_sync.py` | L222-255 |
-| `app/services/audiobookshelf_import_service.py` | L1352-1377 |
-| `app/onboarding_system.py` | L2518-2556 |
-| `app/routes/import_routes.py` | L1989-2009 |
-| `app/services/audiobookshelf_import_service.py` | L1305-1324 |
-| `app/templates/onboarding/import_books_progress.html` | L193-215 |
-| `app/routes/import_routes.py` | L3981-4020 |
-| `app/routes/import_routes.py` | L2219-2258 |
-| `app/templates/onboarding/import_books_progress.html` | L170-193 |
-| `app/onboarding_system.py` | L2467-2486 |
-| `app/routes/import_routes.py` | L1312-1361 |
-| `app/sqlite_migration_service.py` | L284-324 |
+| `app/routes/import_routes.py` | L76-142 |
+| `app/services/audiobookshelf_listening_sync.py` | L42-781 |
+| `app/templates/import_books_progress.html` | L318-346 |
+| `app/services/audiobookshelf_import_service.py` | L22-1775 |
+| `app/onboarding_system.py` | L2393-2570 |
+| `app/routes/import_routes.py` | L1903-2280 |
+| `app/templates/onboarding/import_books_progress.html` | L191-215 |
+| `app/routes/import_routes.py` | L3918-4025 |
+| `app/templates/onboarding/import_books_progress.html` | L168-193 |
+| `app/routes/import_routes.py` | L1163-1361 |
+| `app/sqlite_migration_service.py` | L30-581 |
 
 </details>
 </tool-use>
@@ -18278,28 +18274,71 @@ Lines added: 8, lines removed: 1
 
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="search_replace">
+Model supplied an ambiguous edit
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+Model supplied an ambiguous edit
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/templates/metadata/index.html</summary>
+
+</details>
+</tool-use>
+
+---
+
+Model supplied an ambiguous edit
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
 <details>
-<summary>Tool use: **search_replace**</summary>
+<summary>Tool use: **grep** • Grep for "class EnrichmentCommand|def __init__|self\.stats" in "scripts/enrich_books.py" • 20 matches</summary>
+
+Output mode: content
 
 
-Parameters:
-
-```json
-{
-  "relativeWorkspacePath": "scripts/enrich_books.py"
-}
-```
-Additional data:
-
-```json
-{
-  "codeblockId": "e20ca0be-924f-45f4-b025-1cd68ee395e5"
-}
-```
-User decision: **accepted**
-
-Status: **loading**
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `class EnrichmentCommand:` | L67 |
+| `scripts/enrich_books.py` | `def __init__(self, args):` | L72 |
+| `scripts/enrich_books.py` | `self.stats = \{` | L77 |
+| `scripts/enrich_books.py` | `self.stats.update(results)` | L162 |
+| `scripts/enrich_books.py` | `self.stats['end_time'] = datetime.now()` | L163 |
+| `scripts/enrich_books.py` | `self.stats['books_checked'] = processed` | L844 |
+| `scripts/enrich_books.py` | `self.stats['books_enriched'] += 1` | L850 |
+| `scripts/enrich_books.py` | `self.stats['covers_found'] += 1` | L860 |
+| `scripts/enrich_books.py` | `self.stats['descriptions_added'] += 1` | L864 |
+| `scripts/enrich_books.py` | `self.stats['books_failed'] += 1` | L867 |
+| `scripts/enrich_books.py` | `self.stats['end_time'] - self.stats['start_time']` | L877 |
+| `scripts/enrich_books.py` | `self.stats['books_enriched'] / self.stats['books_checked'] * 100` | L881 |
+| `scripts/enrich_books.py` | `if self.stats['books_checked'] > 0 else 0` | L882 |
+| `scripts/enrich_books.py` | `logger.info(f"   Books checked: \{self.stats['books_checked']\}")` | L890 |
+| `scripts/enrich_books.py` | `logger.info(f"   Books enriched: \{self.stats['books_enriched']\}")` | L891 |
+| `scripts/enrich_books.py` | `logger.info(f"   Books failed: \{self.stats['books_failed']\}")` | L892 |
+| `scripts/enrich_books.py` | `logger.info(f"   Covers found: \{self.stats['covers_found']\}")` | L896 |
+| `scripts/enrich_books.py` | `logger.info(f"   Descriptions added: \{self.stats['descriptions_added']\}")` | L897 |
+| `scripts/enrich_books.py` | `logger.info(f"   Speed: \{self.stats['books_checked'] / duration * 60:.1f\} books/min")` | L902 |
+| `scripts/enrich_books.py` | `cost = self.stats['books_checked'] * 0.0008` | L905 |
 
 
 </details>
@@ -18307,7 +18346,522 @@ Status: **loading**
 
 ---
 
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
 
+</details>
+</tool-use>
+
+---
+
+Model supplied an ambiguous edit
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+Model supplied an ambiguous edit
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 3 files</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+- `app/metadata_routes.py`
+- `app/templates/metadata/index.html`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Change enrichment limit to 5 books for testing and add detailed tracking of enriched/skipped books" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Change enrichment limit to 5 books for testing and add detailed tracking of enriched/skipped books" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/metadata_routes.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/templates/metadata/index.html', LF will be replaced by CRLF the next time Git touches it
+[main 6b30871] Change enrichment limit to 5 books for testing and add detailed tracking of enriched/skipped books
+ 4 files changed, 179 insertions(+), 4 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   6d7da16..6b30871  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправям tracking логиката, за да проследяваме пропуснатите книги:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -83,4 +83,6 @@
+              'descriptions_added': 0,
+          }
++         self.enriched_books_list = []  # Track enriched books
++         self.skipped_books_list = []   # Track skipped books (already enriched)
+      
+      async def run(self):
+```
+
+</details>
+
+</tool-use>
+
+---
+
+The string to replace was not found in the file.
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 9, lines removed: undefined
+
+```diff
+@@ -631,4 +631,13 @@
+                                  logger.info(f"   Cover URL updated to: {updates['cover_url']}")
+                              
++                             # Track enriched book
++                             self.enriched_books_list.append({
++                                 'title': book['title'],
++                                 'id': book['id'],
++                                 'updated_fields': list(updates.keys()),
++                                 'enriched_at': datetime.now().isoformat(),
++                                 'has_cover': 'cover_url' in updates
++                             })
++                             
+                              # Track that this book was enriched
+                              # Store enrichment timestamp in custom_metadata JSON field
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+Model supplied an ambiguous edit
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "return saved_count|saved_count|_save_enriched_books.*return" in "scripts/enrich_books.py" • 3 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `saved_count = 0` | L488 |
+| `scripts/enrich_books.py` | `saved_count += 1` | L627 |
+| `scripts/enrich_books.py` | `return saved_count` | L835 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+Model supplied an ambiguous edit
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix enrichment tracking: properly track enriched and skipped books in status file" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix enrichment tracking: properly track enriched and skipped books in status file" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main bab51b4] Fix enrichment tracking: properly track enriched and skipped books in status file
+ 2 files changed, 319 insertions(+)
+To https://github.com/Pacobg/mybibliotheca.git
+   6b30871..bab51b4  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправям tracking на пропуснатите книги:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -282,5 +282,5 @@
+                                      logger.info(f"⏭️  Skipping {title} - enriched recently ({last_enriched_at})")
+                                      # Track skipped book
+-                                     skipped_books_list.append({
++                                     self.skipped_books_list.append({
+                                          'title': title,
+                                          'id': book_id,
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix skipped books tracking: use self.skipped_books_list instead of local variable" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix skipped books tracking: use self.skipped_books_list instead of local variable" && git push origin main
+```
+
+```
+[main d7ec0f4] Fix skipped books tracking: use self.skipped_books_list instead of local variable
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   bab51b4..d7ec0f4  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам дали tracking логиката е на правилното място:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Update enrichment status file|enrichment_status_file|enriched_books_list|skipped_books_list" in "scripts/enrich_books.py" • 4 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `self.enriched_books_list = []  # Track enriched books` | L85 |
+| `scripts/enrich_books.py` | `self.skipped_books_list = []   # Track skipped books (already enriched)` | L86 |
+| `scripts/enrich_books.py` | `self.skipped_books_list.append(\{` | L284 |
+| `scripts/enrich_books.py` | `self.enriched_books_list.append(\{` | L634 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 27, lines removed: 1
+
+```diff
+@@ -169,5 +169,31 @@
+              saved = await self._save_enriched_books(books)
+              logger.info(f"💾 Saved {saved} enriched books to database")
+-         
++             
++             # Update enrichment status file with enriched/skipped books
++             try:
++                 enrichment_status_file = Path('data/enrichment_status.json')
++                 if enrichment_status_file.exists():
++                     with open(enrichment_status_file, 'r') as f:
++                         status = json.load(f)
++                     
++                     # Add enriched and skipped books to status
++                     if 'enriched_books' not in status:
++                         status['enriched_books'] = []
++                     if 'skipped_books' not in status:
++                         status['skipped_books'] = []
++                     
++                     status['enriched_books'].extend(self.enriched_books_list)
++                     status['skipped_books'].extend(self.skipped_books_list)
++                     status['processed'] = self.stats['books_checked']
++                     status['enriched'] = self.stats['books_enriched']
++                     status['failed'] = self.stats['books_failed']
++                     
++                     with open(enrichment_status_file, 'w') as f:
++                         json.dump(status, f, indent=2)
++                     
++                     logger.info(f"📊 Tracked {len(self.enriched_books_list)} enriched and {len(self.skipped_books_list)} skipped books")
++             except Exception as e:
++                 logger.warning(f"Could not update enrichment status file: {e}")
++         
+          # Show final report
+          self._show_report()
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add enrichment status file update after saving books to track enriched and skipped books" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add enrichment status file update after saving books to track enriched and skipped books" && git push origin main
+```
+
+```
+[main 4fc879e] Add enrichment status file update after saving books to track enriched and skipped books
+ 1 file changed, 26 insertions(+)
+To https://github.com/Pacobg/mybibliotheca.git
+   d7ec0f4..4fc879e  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Промените са качени в git main. Ето какво е направено:
+
+## Промени
+
+### 1. Лимит на 5 книги за тест
+- Бутонът вече казва "до 5 бр. (тест)" вместо "до 100 бр."
+- Лимитът е променен от 100 на 5 в JavaScript кода
+
+### 2. Проследяване на обогатените книги
+- Системата записва кои книги са обогатени в `enriched_books_list`
+- Записва кои книги са пропуснати (вече обогатени) в `skipped_books_list`
+- Информацията се записва в `data/enrichment_status.json`
+
+### 3. UI показва детайли
+- При завършване показва списък с обогатените книги
+- Показва списък с пропуснатите книги и причината
+- Показва статистика: обработени, обогатени, неуспешни
+
+### 4. Tracking в базата данни
+- Книгите получават `last_enriched_at` timestamp в `custom_metadata`
+- Книги обогатени в последните 24 часа се пропускат автоматично
+- При повторно стартиране системата показва кои книги са пропуснати и защо
+
+## Как работи
+
+1. Кликнете "Обогатяване на книги без обложки - до 5 бр. (тест)"
+2. Системата ще:
+   - Намери 5 книги без обложки
+   - Провери дали някоя е обогатена в последните 24 часа
+   - Пропусне вече обогатените и ще ги покаже като "пропуснати"
+   - Обогати новите книги
+   - Запише всичко в status файла
+3. При следващо стартиране ще видите кои книги са пропуснати и защо
+
+Всички промени са качени в git main и са готови за изтегляне на сървъра.
 
 ---
 
