@@ -20471,14 +20471,137 @@ _**Agent (model composer-1, mode Agent)**_
 ---
 
 
+Има два проблема:
+1. Грешка: `name 'Path' is not defined` — липсва импорт.
+2. Всички книги са неуспешни — "No metadata found".
+
+Поправям импорта и проверявам защо не се намират метаданни:
+
 
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="grep">
+<tool-use data-tool-type="search" data-tool-name="grep">
 <details>
-<summary>Tool use: **grep**</summary>
+<summary>Tool use: **grep** • Grep for "^from pathlib|^import.*Path|Path\(" in "scripts/enrich_books.py" • 1 match</summary>
 
-Status: **loading**
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `enrichment_status_file = Path('data/enrichment_status.json')` | L206 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "enrichment_status_file|Path\(.*enrichment" in "scripts/enrich_books.py" • 4 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `enrichment_status_file = Path('data/enrichment_status.json')` | L206 |
+| `scripts/enrich_books.py` | `if enrichment_status_file.exists():` | L207 |
+| `scripts/enrich_books.py` | `with open(enrichment_status_file, 'r') as f:` | L208 |
+| `scripts/enrich_books.py` | `with open(enrichment_status_file, 'w') as f:` | L223 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Could not update enrichment status|enrichment_status\.json" in "scripts/enrich_books.py" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `enrichment_status_file = Path('data/enrichment_status.json')` | L206 |
+| `scripts/enrich_books.py` | `logger.warning(f"Could not update enrichment status file: \{e\}")` | L228 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "Why would enrichment service return no metadata found for books?" • **13** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/services/kuzu_relationship_service.py` | L74-852 |
+| `app/utils/unified_metadata.py` | L606-956 |
+| `app/api/books.py` | L507-642 |
+| `app/templates/view_book_enhanced.html` | L2451-2496 |
+| `app/templates/view_book_enhanced.html` | L2574-2612 |
+| `app/routes/import_routes.py` | L1905-2581 |
+| `app/utils/unified_metadata.py` | L862-1058 |
+| `app/templates/view_book_enhanced.html` | L2532-2576 |
+| `app/utils/unified_metadata.py` | L859-956 |
+| `app/routes/import_routes.py` | L2609-2782 |
+| `app/onboarding_system.py` | L2397-2689 |
+| `app/services/kuzu_custom_field_service.py` | L60-1360 |
+| `app/api/books.py` | L568-642 |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "_has_sufficient_data|already has sufficient|No metadata found" in "scripts/enrich_books.py" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `f"- No metadata found"` | L939 |
 
 
 </details>
@@ -20491,47 +20614,70 @@ Status: **loading**
 ---
 
 
-
----
-
+Поправям импорта и проверявам защо не се намират метаданни:
 
 
 ---
 
+<tool-use data-tool-type="write" data-tool-name="search_replace">
 
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
 
----
+**Chunk 1**
+Lines added: 2, lines removed: undefined
 
+```diff
+@@ -34,5 +34,7 @@
+  import argparse
+  import logging
++ import json
+  from datetime import datetime
++ from pathlib import Path
+  from typing import List, Dict, Optional
+  
+```
 
+</details>
 
----
-
-
-
----
-
-
-
----
-
-
-
----
-
-
-
----
-
-
+</tool-use>
 
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="search_replace">
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
 <details>
-<summary>Tool use: **search_replace**</summary>
+<summary>Tool use: **grep** • Grep for "enrich_batch|_has_sufficient_data" in "scripts/enrich_books.py" • 1 match</summary>
 
-Status: **loading**
+Output mode: content
 
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `results = await self.service.enrich_batch(` | L190 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
 
 </details>
 </tool-use>
@@ -20543,6 +20689,63 @@ Status: **loading**
 ---
 
 
+Проверявам какви методи има `PerplexityEnricher`:
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "def fetch_metadata|def enrich_book|async def" in "app/services/metadata_providers/perplexity.py" • 5 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/metadata_providers/perplexity.py` | `async def enrich_book(` | L53 |
+| `app/services/metadata_providers/perplexity.py` | `async def _search(self, query: str) -> Optional[Dict]:` | L271 |
+| `app/services/metadata_providers/perplexity.py` | `async def find_cover_image(` | L583 |
+| `app/services/metadata_providers/perplexity.py` | `async def _verify_image_url(self, url: str) -> bool:` | L708 |
+| `app/services/metadata_providers/perplexity.py` | `async def close(self):` | L740 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "class PerplexityEnricher|def enrich_book|def fetch_metadata" in "app/services/metadata_providers/perplexity.py" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/metadata_providers/perplexity.py` | `class PerplexityEnricher:` | L21 |
+| `app/services/metadata_providers/perplexity.py` | `async def enrich_book(` | L53 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/metadata_providers/perplexity.py</summary>
+
+</details>
+</tool-use>
 
 ---
 
@@ -20551,10 +20754,118 @@ Status: **loading**
 ---
 
 
+Поправям извикването: в `enrichment_service.py` се извиква `fetch_metadata()`, но методът в `PerplexityEnricher` е `enrich_book()`. Заменям извикването с `enrich_book()`.
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 3
+
+```diff
+@@ -158,9 +158,7 @@
+              if self.perplexity:
+                  try:
+-                     metadata = await self.perplexity.fetch_metadata(
++                     metadata = await self.perplexity.enrich_book(
+                          title=title,
+                          author=author,
+-                         isbn=book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10'),
+-                         publisher=book_data.get('publisher'),
+                          existing_data=book_data
+                      )
+```
+
+**Chunk 2**
+Lines added: 1, lines removed: 3
+
+```diff
+@@ -172,9 +170,7 @@
+                  try:
+                      logger.info(f"🔄 Trying OpenAI/Ollama enrichment (no web search)")
+-                     metadata = await self.openai_enricher.fetch_metadata(
++                     metadata = await self.openai_enricher.enrich_book(
+                          title=title,
+                          author=author,
+-                         isbn=book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10'),
+-                         publisher=book_data.get('publisher'),
+                          existing_data=book_data
+                      )
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 2 files</summary>
+      
+Lint paths:
+
+- `app/services/enrichment_service.py`
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix Path import and correct method name (enrich_book instead of fetch_metadata)" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix Path import and correct method name (enrich_book instead of fetch_metadata)" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/metadata_routes.py', LF will be replaced by CRLF the next time Git touches it
+[main 7824089] Fix Path import and correct method name (enrich_book instead of fetch_metadata)
+ 3 files changed, 504 insertions(+), 6 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   2b72120..7824089  main -&gt; main
+
+```
+</details>
+</tool-use>
 
 ---
 
 
+
+---
+
+
+Поправих два проблема:
+
+## Какво е поправено:
+
+1. Липсващ импорт — добавен `from pathlib import Path` и `import json` в `scripts/enrich_books.py`
+2. Грешно име на метод — в `enrichment_service.py` се извикваше `fetch_metadata()`, но методът в `PerplexityEnricher` е `enrich_book()`. Поправено е извикването.
+
+## Защо не работеше:
+
+- `enrichment_service.py` извикваше несъществуващ метод `fetch_metadata()`, което води до AttributeError и резултат "No metadata found"
+- Липсващият импорт на `Path` причиняваше грешка при обновяване на статус файла
+
+## Следващи стъпки:
+
+1. Изтеглете промените на сървъра: `git pull origin main`
+2. Рестартирайте Flask приложението (ако е нужно)
+3. Опитайте отново обогатяването — трябва да работи и да намира метаданни
+
+Всички промени са качени в git main и са готови за изтегляне на сървъра.
 
 ---
 

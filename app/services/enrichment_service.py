@@ -153,17 +153,32 @@ class EnrichmentService:
             logger.info(f"🔍 Enriching: {title} - {author}")
             logger.info(f"🔍 Searching for: {title} - {author or ''}")
             
+            # Check if providers are available
+            if not self.perplexity and not self.openai_enricher:
+                logger.error(f"❌ No enrichment providers available for {title}")
+                return None
+            
+            if self.perplexity:
+                logger.info(f"✅ Using Perplexity enricher (has web search)")
+            elif self.openai_enricher:
+                logger.info(f"⚠️  Using OpenAI/Ollama enricher (no web search)")
+            
             # Try Perplexity first (has web search)
             metadata = None
             if self.perplexity:
                 try:
+                    logger.debug(f"📡 Calling Perplexity API for: {title}")
                     metadata = await self.perplexity.enrich_book(
                         title=title,
                         author=author,
                         existing_data=book_data
                     )
+                    if metadata:
+                        logger.info(f"✅ Perplexity returned metadata for {title}")
+                    else:
+                        logger.warning(f"⚠️  Perplexity returned None for {title}")
                 except Exception as e:
-                    logger.warning(f"Perplexity enrichment failed: {e}")
+                    logger.error(f"❌ Perplexity enrichment failed for {title}: {e}", exc_info=True)
             
             # Fall back to OpenAI/Ollama if Perplexity unavailable or failed
             if not metadata and self.openai_enricher:
