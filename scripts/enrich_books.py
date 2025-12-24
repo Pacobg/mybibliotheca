@@ -888,58 +888,73 @@ class EnrichmentCommand:
                         # Many servers block HEAD but allow GET
                         logger.info(f"🔍 [_save_enriched_books] Starting cover download for '{book['title']}': {new_cover_url[:80]}...")
                         
-                        # List of cover URLs to try (original + fallbacks)
+                        # Use the existing cover search system (same as UI)
                         import requests
                         import uuid
                         import re
                         from pathlib import Path
                         
-                        cover_urls_to_try = [new_cover_url]
-                        
-                        # Check if this is a Bulgarian book (title contains Cyrillic)
-                        title = book.get('title', '')
-                        is_bulgarian = bool(re.search(r'[\u0400-\u04FF]', title))
-                        
-                        # Add ISBN and prepare for fallbacks
+                        # Get ISBN and author for cover search
                         isbn = enriched.get('isbn13') or enriched.get('isbn10') or book.get('isbn13') or book.get('isbn10')
+                        title = book.get('title', '')
+                        author = book.get('author', '') or (enriched.get('author', '') if enriched else '')
+                        
+                        # Clean ISBN
                         clean_isbn = ''
                         if isbn:
                             clean_isbn = ''.join(c for c in str(isbn) if c.isdigit() or c.upper() == 'X')
                         
-                        # For Bulgarian books, add Bulgarian bookstore fallbacks FIRST (higher priority)
+                        # Use the same cover search system as the UI
+                        cover_urls_to_try = []
+                        
+                        # First, try Perplexity-provided URL
+                        if new_cover_url:
+                            cover_urls_to_try.append(new_cover_url)
+                            logger.info(f"🔍 Added Perplexity cover URL: {new_cover_url[:80]}...")
+                        
+                        # Then use get_cover_candidates (same as UI search by ISBN/title)
+                        try:
+                            from app.utils.book_utils import get_cover_candidates
+                            
+                            logger.info(f"🔍 Searching for cover candidates using ISBN/title search (same as UI)...")
+                            candidates = get_cover_candidates(
+                                isbn=clean_isbn if clean_isbn else None,
+                                title=title if title else None,
+                                author=author if author else None
+                            )
+                            
+                            if candidates:
+                                logger.info(f"✅ Found {len(candidates)} cover candidates from Google Books/OpenLibrary")
+                                # Add candidates in order (Google Books first, then OpenLibrary)
+                                for cand in candidates:
+                                    cand_url = cand.get('url')
+                                    if cand_url and cand_url not in cover_urls_to_try:
+                                        cover_urls_to_try.append(cand_url)
+                                        logger.info(f"📚 Added candidate: {cand.get('provider', 'unknown')} - {cand_url[:60]}...")
+                            else:
+                                logger.info(f"⚠️  No cover candidates found from Google Books/OpenLibrary")
+                        except Exception as e:
+                            logger.warning(f"⚠️  Error getting cover candidates: {e}")
+                        
+                        # For Bulgarian books, add Bulgarian bookstore fallbacks as last resort
+                        is_bulgarian = bool(re.search(r'[\u0400-\u04FF]', title))
                         if is_bulgarian and clean_isbn:
                             logger.info(f"🇧🇬 Bulgarian book detected, adding Bulgarian bookstore fallbacks for ISBN: {clean_isbn}")
                             
-                            # Bulgarian bookstores - try multiple formats
                             bg_sources = [
-                                # ciela.com - direct product image
                                 f"https://www.ciela.com/media/catalog/product/{clean_isbn[0]}/{clean_isbn[1]}/{clean_isbn}.jpg",
-                                # ozone.bg - product images
                                 f"https://www.ozone.bg/media/catalog/product/{clean_isbn[0]}/{clean_isbn[1]}/{clean_isbn}.jpg",
-                                # helikon.bg - product thumbnails
                                 f"https://www.helikon.bg/uploads/thumbnail/helikon/product/{clean_isbn[-3:-1]}/{clean_isbn[-1]}/{clean_isbn}.jpg",
-                                # hermesbooks.bg
                                 f"https://hermesbooks.bg/media/catalog/product/{clean_isbn[0]}/{clean_isbn[1]}/{clean_isbn}.jpg",
-                                # book.store.bg - commonly accessible
                                 f"https://www.book.store.bg/prdimg/{clean_isbn[-6:]}/{clean_isbn}.jpg",
-                                # knigabg.com  
                                 f"https://knigabg.com/pix/{clean_isbn}.jpg",
-                                # booktrading.bg
-                                f"https://booktrading.bg/media/catalog/product/{clean_isbn}.jpg",
-                                # chitanka.info - free Bulgarian ebooks with covers
                                 f"https://chitanka.info/thumb/book-cover/{clean_isbn}.250.jpg",
                             ]
                             
                             for bg_url in bg_sources:
-                                cover_urls_to_try.append(bg_url)
-                                logger.info(f"🇧🇬 Added Bulgarian fallback: {bg_url}")
-                        
-                        # Add Open Library fallback based on ISBN (always accessible, works for any language)
-                        if clean_isbn:
-                            # Open Library covers - always accessible, no auth required
-                            ol_cover = f"https://covers.openlibrary.org/b/isbn/{clean_isbn}-L.jpg"
-                            cover_urls_to_try.append(ol_cover)
-                            logger.info(f"📚 Added Open Library fallback cover URL: {ol_cover}")
+                                if bg_url not in cover_urls_to_try:
+                                    cover_urls_to_try.append(bg_url)
+                                    logger.info(f"🇧🇬 Added Bulgarian fallback: {bg_url}")
                         
                         # Get the covers directory (once, outside loop)
                         covers_dir = Path('covers')
@@ -972,12 +987,6 @@ class EnrichmentCommand:
                                     logger.warning(f"⚠️  URL returned non-image content-type: {content_type}")
                                     continue  # Try next URL
                                 
-                                # Check if image has content (Open Library returns 1x1 pixel for missing covers)
-                                content_length = int(response.headers.get('content-length', 0))
-                                if content_length < 1000:  # Less than 1KB is probably a placeholder
-                                    logger.warning(f"⚠️  Image too small ({content_length} bytes), likely placeholder - trying next URL")
-                                    continue
-                                
                                 # Determine file extension from content type
                                 if 'jpeg' in content_type or 'jpg' in content_type:
                                     ext = '.jpg'
@@ -994,13 +1003,26 @@ class EnrichmentCommand:
                                 filename = f"{uuid.uuid4()}{ext}"
                                 local_path = covers_dir / filename
                                 
-                                # Save the image
+                                # Download and save the image, checking actual size
+                                downloaded_size = 0
                                 with open(local_path, 'wb') as f:
                                     for chunk in response.iter_content(chunk_size=8192):
-                                        f.write(chunk)
+                                        if chunk:
+                                            f.write(chunk)
+                                            downloaded_size += len(chunk)
+                                
+                                # Check if image has meaningful content (at least 2KB)
+                                # Open Library and some sources return tiny placeholder images
+                                if downloaded_size < 2048:  # Less than 2KB is probably a placeholder
+                                    logger.warning(f"⚠️  Image too small ({downloaded_size} bytes), likely placeholder - trying next URL")
+                                    try:
+                                        local_path.unlink()  # Delete the placeholder
+                                    except:
+                                        pass
+                                    continue
                                 
                                 local_cover_path = f"/covers/{filename}"
-                                logger.info(f"✅ Cover downloaded and saved: {local_cover_path} (from {try_url[:60]}...)")
+                                logger.info(f"✅ Cover downloaded and saved: {local_cover_path} ({downloaded_size} bytes from {try_url[:60]}...)")
                                 
                             except requests.exceptions.HTTPError as e:
                                 status = e.response.status_code if e.response else 'unknown'

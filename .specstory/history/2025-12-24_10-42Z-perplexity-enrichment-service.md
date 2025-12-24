@@ -35747,6 +35747,593 @@ Lines added: 33, lines removed: 7
 
 ---
 
+<think><details><summary>Thought Process</summary>
+Now let me also update the Perplexity prompt to prioritize Bulgarian bookstores for cover images when the book is Bulgarian. Let me check the perplexity.py file.</details></think>
+
+---
+
+Сега нека обновя и Perplexity prompt-а да търси covers от тези български сайтове:
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "find_cover_image" in "app/services/metadata_providers/perplexity.py" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/metadata_providers/perplexity.py` | `async def find_cover_image(` | L583 |
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me read the find_cover_image method to see how it's building the prompt and update it for Bulgarian books.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/metadata_providers/perplexity.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The Perplexity prompt already includes Bulgarian sources like ciela.com and helikon.bg, but the user wants to emphasize ozone.bg and hermesbooks.bg as well. Let me update the prompt to include these sources.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/metadata_providers/perplexity.py</summary>
+
+**Chunk 1**
+Lines added: 15, lines removed: 6
+
+```diff
+@@ -633,13 +633,22 @@
+    * https://chitanka.info/thumb/book/xxx.250.jpg
+    * https://ciela.com/media/catalog/product/.../xxx.jpg (БЕЗ /cache/ в пътя!)
++   * https://www.ozone.bg/media/catalog/product/.../xxx.jpg
++   * https://www.book.store.bg/prdimg/.../xxx.jpg
+  
+  ИЗТОЧНИЦИ ЗА ПРОВЕРКА (по приоритет):
+- 1. biblioman.chitanka.info
+- 2. chitanka.info  
+- 3. ciela.com (избягвай cache URL-и!)
+- 4. helikon.bg
+- 5. publishers websites (Колибри, Изток-Запад, Хермес, Бард)
++ 1. biblioman.chitanka.info - безплатни корици
++ 2. chitanka.info - безплатни корици
++ 3. ciela.com (избягвай cache URL-и с хешове!)
++ 4. ozone.bg - голям избор български книги
++ 5. helikon.bg - онлайн книжарница
++ 6. hermesbooks.bg - издателство Хермес
++ 7. book.store.bg - книжарница
++ 8. knigabg.com - книжарница
++ 9. Издателства: Колибри, Изток-Запад, Бард
+  
+- КРИТИЧНО: Провери дали URL-ът е достъпен преди да го върнеш! Ако URL-ът не работи (403, 404), не го връщай!
++ КРИТИЧНО: 
++ - Провери дали URL-ът е достъпен преди да го върнеш!
++ - ИЗБЯГВАЙ URLs с /cache/ и дълги хешове - те често не работят!
++ - Ако URL-ът не работи (403, 404), НЕ го връщай!
+  
+  ОТГОВОРИ САМО С РАБОТЕЩ URL или "NOT_FOUND":
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me also add ozone.bg and hermesbooks.bg to the fallback URLs in enrich_books.py.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 9, lines removed: 2
+
+```diff
+@@ -911,7 +911,14 @@
+                              logger.info(f"🇧🇬 Bulgarian book detected, adding Bulgarian bookstore fallbacks for ISBN: {clean_isbn}")
+                              
+-                             # Ciela.com - format: https://www.ciela.com/media/catalog/product/cache/.../ISBN.jpg
+-                             # We'll try a direct ISBN-based search approach
++                             # Bulgarian bookstores - try multiple formats
+                              bg_sources = [
++                                 # ciela.com - direct product image
++                                 f"https://www.ciela.com/media/catalog/product/{clean_isbn[0]}/{clean_isbn[1]}/{clean_isbn}.jpg",
++                                 # ozone.bg - product images
++                                 f"https://www.ozone.bg/media/catalog/product/{clean_isbn[0]}/{clean_isbn[1]}/{clean_isbn}.jpg",
++                                 # helikon.bg - product thumbnails
++                                 f"https://www.helikon.bg/uploads/thumbnail/helikon/product/{clean_isbn[-3:-1]}/{clean_isbn[-1]}/{clean_isbn}.jpg",
++                                 # hermesbooks.bg
++                                 f"https://hermesbooks.bg/media/catalog/product/{clean_isbn[0]}/{clean_isbn[1]}/{clean_isbn}.jpg",
+                                  # book.store.bg - commonly accessible
+                                  f"https://www.book.store.bg/prdimg/{clean_isbn[-6:]}/{clean_isbn}.jpg",
+```
+
+**Chunk 2**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -920,4 +927,6 @@
+                                  # booktrading.bg
+                                  f"https://booktrading.bg/media/catalog/product/{clean_isbn}.jpg",
++                                 # chitanka.info - free Bulgarian ebooks with covers
++                                 f"https://chitanka.info/thumb/book-cover/{clean_isbn}.250.jpg",
+                              ]
+                              
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me check for lint errors and then commit and push.</details></think>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 2 files</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+- `app/services/metadata_providers/perplexity.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Good, no errors. Let me commit and push.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add Bulgarian bookstore cover fallbacks: ciela.com, ozone.bg, helikon.bg, hermesbooks.bg, chitanka.info" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add Bulgarian bookstore cover fallbacks: ciela.com, ozone.bg, helikon.bg, hermesbooks.bg, chitanka.info" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main c34a9da] Add Bulgarian bookstore cover fallbacks: ciela.com, ozone.bg, helikon.bg, hermesbooks.bg, chitanka.info
+ 3 files changed, 484 insertions(+), 28 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   71a25ba..c34a9da  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Done! The changes are pushed. Now for Bulgarian books, the system will:1. First try the cover URL from Perplexity
+2. Then try Bulgarian bookstore fallbacks based on ISBN:   - ciela.com   - ozone.bg   - helikon.bg   - hermesbooks.bg   - book.store.bg   - knigabg.com   - booktrading.bg   - chitanka.info
+3. Finally try Open Library as a last resort
+
+The Perplexity prompt was also updated to prioritize these Bulgarian sources when searching for covers.</details></think>
+
+---
+
+Добавих български източници за cover изображения. Сега за книги с кирилски заглавия системата ще проверява:
+
+**Perplexity prompt обновен:**
+- biblioman.chitanka.info
+- chitanka.info
+- ciela.com
+- ozone.bg
+- helikon.bg
+- hermesbooks.bg
+- book.store.bg
+- knigabg.com
+
+**Fallback URLs базирани на ISBN:**
+1. ciela.com
+2. ozone.bg
+3. helikon.bg
+4. hermesbooks.bg
+5. book.store.bg
+6. knigabg.com
+7. booktrading.bg
+8. chitanka.info
+9. Open Library (последна опция)
+
+Издърпайте промените (`git pull`) и опитайте с българска книга. Системата ще пробва всички тези източници последователно докато намери работеща корица.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 21:59:32,141 [INFO] ✅ PERPLEXITY_API_KEY found (length: 53)
+2025-12-24 21:59:32,168 [INFO] ✅ Successfully initialized KuzuBookRepository (attempt 1)
+2025-12-24 21:59:32,169 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 21:59:32] "POST /metadata/enrichment/start HTTP/1.1" 200 -
+2025-12-24 21:59:32,169 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 21:59:32,169 [INFO] 192.168.1.9 - - [24/Dec/2025 21:59:32] "POST /metadata/enrichment/start HTTP/1.1" 200 -
+2025-12-24 21:59:32,169 [INFO] ============================================================
+2025-12-24 21:59:32,170 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 21:59:32] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:59:32,209 [INFO] 192.168.1.9 - - [24/Dec/2025 21:59:32] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:59:32,234 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 21:59:32,234 [INFO] ⚙️  Configuration:
+2025-12-24 21:59:32,234 [INFO]    Limit: 5
+2025-12-24 21:59:32,234 [INFO]    Force: False
+2025-12-24 21:59:32,234 [INFO]    Dry run: False
+2025-12-24 21:59:32,234 [INFO]    Min quality: 0.3
+2025-12-24 21:59:32,234 [INFO]    No cover only: True (only books without covers)
+2025-12-24 21:59:32,234 [INFO] 📖 Querying database for books...
+2025-12-24 21:59:32,234 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 21:59:32,234 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 21:59:32,241 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 21:59:32,244 [INFO] 🔍 [_get_books_to_enrich] 'The Secret History': cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 21:59:32,244 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 21:59:32,450 [INFO] HTTP Request: HEAD https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg "HTTP/1.1 403 Forbidden"
+2025-12-24 21:59:32,451 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned status 403 - marking as INVALID
+2025-12-24 21:59:32,452 [INFO] ✅ Added book without valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+2025-12-24 21:59:32,460 [INFO] 🔍 [_get_books_to_enrich] 'The Secret Garden': cover_url='https://knigabg.com/pix/28162.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 21:59:32,460 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 21:59:32,519 [INFO] HTTP Request: HEAD https://knigabg.com/pix/28162.jpg "HTTP/1.1 404 Not Found"
+2025-12-24 21:59:32,519 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned status 404 - marking as INVALID
+2025-12-24 21:59:32,519 [INFO] ✅ Added book without valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 21:59:32,523 [INFO] 🔍 [_get_books_to_enrich] 'The Priory of the Orange Tree (The Roots of Chaos, #1)': cover_url='https://images.thenile.io/r1000/9781408883358.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 21:59:32,523 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 21:59:32,570 [INFO] HTTP Request: HEAD https://images.thenile.io/r1000/9781408883358.jpg "HTTP/1.1 200 OK"
+2025-12-24 21:59:32,571 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 21:59:32,575 [INFO] 🔍 [_get_books_to_enrich] 'The Familiar': cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 21:59:32,575 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 21:59:33,567 [INFO] HTTP Request: HEAD https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg "HTTP/1.1 200 OK"
+2025-12-24 21:59:33,568 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned non-image content-type: text/html; charset=utf-8 - marking as INVALID
+2025-12-24 21:59:33,568 [INFO] ✅ Added book without valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 21:59:33,572 [INFO] 🔍 [_get_books_to_enrich] 'The Costume History': cover_url='http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 21:59:33,572 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+192.168.1.51 - - [24/Dec/2025 21:59:33] "HEAD /covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg HTTP/1.1" 200 -
+2025-12-24 21:59:33,590 [INFO] 192.168.1.51 - - [24/Dec/2025 21:59:33] "HEAD /covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg HTTP/1.1" 200 -
+2025-12-24 21:59:33,590 [INFO] HTTP Request: HEAD http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg "HTTP/1.1 200 OK"
+2025-12-24 21:59:33,591 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750...')
+2025-12-24 21:59:33,591 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 21:59:33,591 [INFO] 📊 Statistics: 2 books WITH valid cover URLs (skipped)
+2025-12-24 21:59:33,591 [INFO] 📊 Statistics: 3 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 21:59:33,591 [INFO] ✅ Found 3 books to enrich
+2025-12-24 21:59:33,591 [INFO]
+📚 Found 3 books to enrich
+2025-12-24 21:59:33,592 [INFO]
+🚀 Starting enrichment...
+2025-12-24 21:59:33,592 [INFO]    Estimated time: ~0.1 minutes
+2025-12-24 21:59:33,592 [INFO]    Estimated cost: ~$0.00
+2025-12-24 21:59:33,837 [INFO] HTTP Request: HEAD https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg "HTTP/1.1 403 Forbidden"
+2025-12-24 21:59:36,314 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+192.168.1.9 - - [24/Dec/2025 21:59:37] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:59:37,260 [INFO] 192.168.1.9 - - [24/Dec/2025 21:59:37] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:59:38,322 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 21:59:38,887 [INFO] HTTP Request: HEAD https://covers.openlibrary.org/b/isbn/9780140167771-L.jpg "HTTP/1.1 302 Found"
+2025-12-24 21:59:39,078 [INFO] HTTP Request: GET https://covers.openlibrary.org/b/isbn/9780140167771-L.jpg "HTTP/1.1 302 Found"
+2025-12-24 21:59:39,656 [INFO] HTTP Request: GET https://archive.org/download/olcovers662/olcovers662-L.zip/6623129-L.jpg "HTTP/1.1 302 Found"
+2025-12-24 21:59:40,229 [INFO] HTTP Request: GET https://ia800402.us.archive.org/view_archive.php?archive=/12/items/olcovers662/olcovers662-L.zip&file=6623129-L.jpg "HTTP/1.1 200 OK"
+2025-12-24 21:59:40,232 [INFO] 🔍 [_progress_callback] Book 1/3: 'The Secret History', metadata=found
+2025-12-24 21:59:40,232 [INFO] [1/3] ✅ The Secret History (quality: 0.95)
+2025-12-24 21:59:40,232 [INFO]    🖼️  Cover found
+2025-12-24 21:59:40,232 [INFO]    📝 Description added
+2025-12-24 21:59:41,272 [INFO] HTTP Request: HEAD https://knigabg.com/pix/28162.jpg "HTTP/1.1 404 Not Found"
+192.168.1.9 - - [24/Dec/2025 21:59:42] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:59:42,562 [INFO] 192.168.1.9 - - [24/Dec/2025 21:59:42] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:59:44,014 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 21:59:45,817 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 21:59:45,821 [INFO] 🔍 [_progress_callback] Book 2/3: 'The Secret Garden', metadata=found
+2025-12-24 21:59:45,821 [INFO] [2/3] ✅ The Secret Garden (quality: 0.84)
+2025-12-24 21:59:45,821 [INFO]    📝 Description added
+192.168.1.9 - - [24/Dec/2025 21:59:47] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:59:47,618 [INFO] 192.168.1.9 - - [24/Dec/2025 21:59:47] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:59:47,868 [INFO] HTTP Request: HEAD https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg "HTTP/1.1 200 OK"
+2025-12-24 21:59:50,688 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 21:59:52,172 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 21:59:52,175 [INFO] 🔍 [_progress_callback] Book 3/3: 'The Familiar', metadata=found
+2025-12-24 21:59:52,175 [INFO] [3/3] ✅ The Familiar (quality: 0.95)
+2025-12-24 21:59:52,175 [INFO]    📝 Description added
+2025-12-24 21:59:52,176 [INFO] 🔍 [_save_enriched_books] Processing 3 books for saving...
+2025-12-24 21:59:52,176 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Secret History'
+2025-12-24 21:59:52,176 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata']
+2025-12-24 21:59:52,177 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: True
+2025-12-24 21:59:52,177 [INFO] 🔍 [_save_enriched_books] Merging metadata for 'The Secret History'...
+2025-12-24 21:59:52,177 [INFO] 🔍 [_save_enriched_books] AI metadata keys: ['title', 'subtitle', 'author', 'publisher', 'year', 'isbn', 'pages', 'genres', 'description', 'cover_url', 'confidence', 'sources', 'enrichment_source', 'enrichment_model', 'enrichment_date', 'original_query', 'quality_score']
+2025-12-24 21:59:52,177 [INFO] 🔍 [_save_enriched_books] AI metadata description present: True
+2025-12-24 21:59:52,177 [INFO] 🔍 [_save_enriched_books] AI metadata description: Under the influence of their charismatic classics professor, a group of clever, eccentric misfits at...
+2025-12-24 21:59:52,177 [INFO] 🔍 [_save_enriched_books] After merge, enriched keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata', 'cover_source', 'raw_categories', 'ai_enrichment']
+2025-12-24 21:59:52,177 [INFO] 🔍 [_save_enriched_books] After merge, enriched description present: True
+2025-12-24 21:59:52,177 [INFO] 🔍 [_save_enriched_books] After merge, enriched description: The Secret History follows Richard Papen, a transfer student to an elite New England liberal arts co...
+2025-12-24 21:59:52,178 [INFO] 🔍 [_save_enriched_books] Found description for 'The Secret History': The Secret History follows Richard Papen, a transfer student to an elite New England liberal arts co...
+2025-12-24 21:59:52,178 [INFO] 🔍 [_save_enriched_books] Existing description for 'The Secret History': The Secret History follows Richard Papen, a transfer student to an elite New England liberal arts co...
+2025-12-24 21:59:52,178 [INFO] 🔍 [_save_enriched_books] Language check for 'The Secret History': title_has_cyrillic=False, desc_has_cyrillic=False, desc_matches_title=True, existing_desc_matches_title=True, has_citations=False, force=False
+2025-12-24 21:59:52,178 [INFO] 🔍 [_save_enriched_books] Description lengths: existing=595, new=595, diff=0
+2025-12-24 21:59:52,178 [INFO] 🔍 [_save_enriched_books] Should update description for 'The Secret History': True
+2025-12-24 21:59:52,179 [INFO] ✅ [_save_enriched_books] Added description to updates for 'The Secret History'
+2025-12-24 21:59:52,179 [INFO] 🔍 Validating cover URL accessibility for 'The Secret History': https://covers.openlibrary.org/b/isbn/9780140167771-L.jpg...
+192.168.1.9 - - [24/Dec/2025 21:59:52] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:59:52,674 [INFO] 192.168.1.9 - - [24/Dec/2025 21:59:52] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:59:52,721 [INFO] HTTP Request: HEAD https://covers.openlibrary.org/b/isbn/9780140167771-L.jpg "HTTP/1.1 302 Found"
+2025-12-24 21:59:53,299 [INFO] HTTP Request: HEAD https://archive.org/download/olcovers662/olcovers662-L.zip/6623129-L.jpg "HTTP/1.1 302 Found"
+2025-12-24 21:59:53,841 [INFO] HTTP Request: HEAD https://ia800402.us.archive.org/view_archive.php?archive=/12/items/olcovers662/olcovers662-L.zip&file=6623129-L.jpg "HTTP/1.1 200 OK"
+2025-12-24 21:59:53,842 [INFO] ✅ Cover URL is accessible: https://covers.openlibrary.org/b/isbn/9780140167771-L.jpg... (content-type: image/jpeg)
+2025-12-24 21:59:53,843 [INFO] 🔍 [_save_enriched_books] Cover URL validation result for 'The Secret History': url_is_accessible=True, new_cover_url='https://covers.openlibrary.org/b/isbn/9780140167771-L.jpg...'
+2025-12-24 21:59:53,843 [INFO] 🔍 [_save_enriched_books] Starting cover download for 'The Secret History': https://covers.openlibrary.org/b/isbn/9780140167771-L.jpg...
+2025-12-24 21:59:53,844 [INFO] 📚 Added Open Library fallback cover URL: https://covers.openlibrary.org/b/isbn/9781400031702-L.jpg
+2025-12-24 21:59:53,844 [INFO] 🔍 Trying cover URL: https://covers.openlibrary.org/b/isbn/9780140167771-L.jpg...
+2025-12-24 21:59:55,539 [WARNING] ⚠️  Image too small (0 bytes), likely placeholder - trying next URL
+2025-12-24 21:59:55,539 [INFO] 🔍 Trying cover URL: https://covers.openlibrary.org/b/isbn/9781400031702-L.jpg...
+2025-12-24 21:59:57,524 [WARNING] ⚠️  Image too small (0 bytes), likely placeholder - trying next URL
+2025-12-24 21:59:57,525 [WARNING] ⚠️  Could not download cover for 'The Secret History' from any source
+2025-12-24 21:59:57,527 [INFO] 🔍 [_save_enriched_books] Updates dictionary for 'The Secret History': ['description'] (count: 1)
+2025-12-24 21:59:57,527 [INFO] 📝 Updating book 'The Secret History' with fields: ['description']
+2025-12-24 21:59:57,527 [INFO] 🔍 [_save_enriched_books] Calling update_book for 'The Secret History' (ID: 637d5e4b-11f1-4af6-af05-bb1d686f4ef5) with 1 fields: ['description']
+2025-12-24 21:59:57,549 [INFO] 🔍 [_save_enriched_books] update_book returned: Book
+2025-12-24 21:59:57,550 [INFO] ✅ Saved: The Secret History
+2025-12-24 21:59:57,550 [INFO]    Updated fields: description
+2025-12-24 21:59:57,560 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Secret Garden'
+2025-12-24 21:59:57,560 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata']
+2025-12-24 21:59:57,560 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: True
+2025-12-24 21:59:57,560 [INFO] 🔍 [_save_enriched_books] Merging metadata for 'The Secret Garden'...
+2025-12-24 21:59:57,560 [INFO] 🔍 [_save_enriched_books] AI metadata keys: ['title', 'subtitle', 'author', 'publisher', 'year', 'isbn', 'pages', 'genres', 'description', 'cover_url', 'confidence', 'sources', 'enrichment_source', 'enrichment_model', 'enrichment_date', 'original_query', 'quality_score']
+2025-12-24 21:59:57,560 [INFO] 🔍 [_save_enriched_books] AI metadata description present: True
+2025-12-24 21:59:57,560 [INFO] 🔍 [_save_enriched_books] AI metadata description: The Secret Garden is a children's novel about Mary Lennox, an orphaned girl sent to live with her un...
+2025-12-24 21:59:57,561 [INFO] 🔍 [_save_enriched_books] After merge, enriched keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata', 'raw_categories', 'ai_enrichment']
+2025-12-24 21:59:57,561 [INFO] 🔍 [_save_enriched_books] After merge, enriched description present: True
+2025-12-24 21:59:57,561 [INFO] 🔍 [_save_enriched_books] After merge, enriched description: The Secret Garden follows Mary Lennox, a sickly and self-centered orphan sent from colonial India to...
+2025-12-24 21:59:57,561 [INFO] 🔍 [_save_enriched_books] Found description for 'The Secret Garden': The Secret Garden follows Mary Lennox, a sickly and self-centered orphan sent from colonial India to...
+2025-12-24 21:59:57,561 [INFO] 🔍 [_save_enriched_books] Existing description for 'The Secret Garden': The Secret Garden follows Mary Lennox, a sickly and self-centered orphan sent from colonial India to...
+2025-12-24 21:59:57,561 [INFO] 🔍 [_save_enriched_books] Language check for 'The Secret Garden': title_has_cyrillic=False, desc_has_cyrillic=False, desc_matches_title=True, existing_desc_matches_title=True, has_citations=False, force=False
+2025-12-24 21:59:57,561 [INFO] 🔍 [_save_enriched_books] Description lengths: existing=706, new=706, diff=0
+2025-12-24 21:59:57,562 [INFO] 🔍 [_save_enriched_books] Should update description for 'The Secret Garden': True
+2025-12-24 21:59:57,562 [INFO] ✅ [_save_enriched_books] Added description to updates for 'The Secret Garden'
+2025-12-24 21:59:57,562 [INFO] 🔍 Validating cover URL accessibility for 'The Secret Garden': https://knigabg.com/pix/28162.jpg...
+2025-12-24 21:59:57,600 [INFO] HTTP Request: HEAD https://knigabg.com/pix/28162.jpg "HTTP/1.1 404 Not Found"
+2025-12-24 21:59:57,602 [WARNING] ⚠️  Cover URL returned status 404: https://knigabg.com/pix/28162.jpg...
+2025-12-24 21:59:57,603 [INFO] 🔍 [_save_enriched_books] Cover URL validation result for 'The Secret Garden': url_is_accessible=False, new_cover_url='https://knigabg.com/pix/28162.jpg...'
+2025-12-24 21:59:57,603 [INFO] 🔍 [_save_enriched_books] Starting cover download for 'The Secret Garden': https://knigabg.com/pix/28162.jpg...
+2025-12-24 21:59:57,603 [INFO] 📚 Added Open Library fallback cover URL: https://covers.openlibrary.org/b/isbn/9789542610762-L.jpg
+2025-12-24 21:59:57,603 [INFO] 🔍 Trying cover URL: https://knigabg.com/pix/28162.jpg...
+2025-12-24 21:59:57,640 [WARNING] ⚠️  HTTP error unknown for URL: https://knigabg.com/pix/28162.jpg... - trying next
+2025-12-24 21:59:57,640 [INFO] 🔍 Trying cover URL: https://covers.openlibrary.org/b/isbn/9789542610762-L.jpg...
+192.168.1.9 - - [24/Dec/2025 21:59:57] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:59:57,724 [INFO] 192.168.1.9 - - [24/Dec/2025 21:59:57] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 21:59:58,228 [WARNING] ⚠️  URL returned non-image content-type:
+2025-12-24 21:59:58,230 [WARNING] ⚠️  Could not download cover for 'The Secret Garden' from any source
+2025-12-24 21:59:58,232 [INFO] 🔍 [_save_enriched_books] Updates dictionary for 'The Secret Garden': ['description'] (count: 1)
+2025-12-24 21:59:58,232 [INFO] 📝 Updating book 'The Secret Garden' with fields: ['description']
+2025-12-24 21:59:58,232 [INFO] 🔍 [_save_enriched_books] Calling update_book for 'The Secret Garden' (ID: 2b6786f4-6340-41f8-8a6c-9eb0506ca52d) with 1 fields: ['description']
+2025-12-24 21:59:58,253 [INFO] 🔍 [_save_enriched_books] update_book returned: Book
+2025-12-24 21:59:58,254 [INFO] ✅ Saved: The Secret Garden
+2025-12-24 21:59:58,254 [INFO]    Updated fields: description
+2025-12-24 21:59:58,263 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Familiar'
+2025-12-24 21:59:58,263 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata']
+2025-12-24 21:59:58,263 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: True
+2025-12-24 21:59:58,263 [INFO] 🔍 [_save_enriched_books] Merging metadata for 'The Familiar'...
+2025-12-24 21:59:58,264 [INFO] 🔍 [_save_enriched_books] AI metadata keys: ['title', 'subtitle', 'author', 'publisher', 'year', 'isbn', 'pages', 'genres', 'description', 'cover_url', 'confidence', 'sources', 'enrichment_source', 'enrichment_model', 'enrichment_date', 'original_query', 'quality_score']
+2025-12-24 21:59:58,264 [INFO] 🔍 [_save_enriched_books] AI metadata description present: True
+2025-12-24 21:59:58,264 [INFO] 🔍 [_save_enriched_books] AI metadata description: In the new capital of Madrid during Spain's Golden Age, Luzia Cotado, a scullion with hidden magical...
+2025-12-24 21:59:58,264 [INFO] 🔍 [_save_enriched_books] After merge, enriched keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata', 'raw_categories', 'ai_enrichment']
+2025-12-24 21:59:58,264 [INFO] 🔍 [_save_enriched_books] After merge, enriched description present: True
+2025-12-24 21:59:58,265 [INFO] 🔍 [_save_enriched_books] After merge, enriched description: From the New York Times bestselling author of Ninth House, Hell Bent, and creator of the Grishaverse...
+2025-12-24 21:59:58,265 [INFO] 🔍 [_save_enriched_books] Found description for 'The Familiar': From the New York Times bestselling author of Ninth House, Hell Bent, and creator of the Grishaverse...
+2025-12-24 21:59:58,265 [INFO] 🔍 [_save_enriched_books] Existing description for 'The Familiar': From the New York Times bestselling author of Ninth House, Hell Bent, and creator of the Grishaverse...
+2025-12-24 21:59:58,265 [INFO] 🔍 [_save_enriched_books] Language check for 'The Familiar': title_has_cyrillic=False, desc_has_cyrillic=False, desc_matches_title=True, existing_desc_matches_title=True, has_citations=False, force=False
+2025-12-24 21:59:58,266 [INFO] 🔍 [_save_enriched_books] Description lengths: existing=1428, new=1428, diff=0
+2025-12-24 21:59:58,266 [INFO] 🔍 [_save_enriched_books] Should update description for 'The Familiar': True
+2025-12-24 21:59:58,266 [INFO] ✅ [_save_enriched_books] Added description to updates for 'The Familiar'
+2025-12-24 21:59:58,266 [INFO] 🔍 Validating cover URL accessibility for 'The Familiar': https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg...
+2025-12-24 21:59:59,191 [INFO] HTTP Request: HEAD https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg "HTTP/1.1 200 OK"
+2025-12-24 21:59:59,195 [WARNING] ⚠️  Cover URL returned non-image content-type: text/html; charset=utf-8
+2025-12-24 21:59:59,195 [INFO] 🔍 [_save_enriched_books] Cover URL validation result for 'The Familiar': url_is_accessible=False, new_cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg...'
+2025-12-24 21:59:59,195 [INFO] 🔍 [_save_enriched_books] Starting cover download for 'The Familiar': https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg...
+2025-12-24 21:59:59,195 [INFO] 📚 Added Open Library fallback cover URL: https://covers.openlibrary.org/b/isbn/9781250884251-L.jpg
+2025-12-24 21:59:59,196 [INFO] 🔍 Trying cover URL: https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg...
+2025-12-24 22:00:00,164 [WARNING] ⚠️  URL returned non-image content-type: text/html; charset=utf-8
+2025-12-24 22:00:00,164 [INFO] 🔍 Trying cover URL: https://covers.openlibrary.org/b/isbn/9781250884251-L.jpg...
+2025-12-24 22:00:02,040 [WARNING] ⚠️  Image too small (0 bytes), likely placeholder - trying next URL
+2025-12-24 22:00:02,041 [WARNING] ⚠️  Could not download cover for 'The Familiar' from any source
+2025-12-24 22:00:02,043 [INFO] 🔍 [_save_enriched_books] Updates dictionary for 'The Familiar': ['description'] (count: 1)
+2025-12-24 22:00:02,043 [INFO] 📝 Updating book 'The Familiar' with fields: ['description']
+2025-12-24 22:00:02,043 [INFO] 🔍 [_save_enriched_books] Calling update_book for 'The Familiar' (ID: 03eb7493-b894-4325-9d2d-33f7400d87b9) with 1 fields: ['description']
+2025-12-24 22:00:02,063 [INFO] 🔍 [_save_enriched_books] update_book returned: Book
+2025-12-24 22:00:02,064 [INFO] ✅ Saved: The Familiar
+2025-12-24 22:00:02,064 [INFO]    Updated fields: description
+2025-12-24 22:00:02,075 [INFO] 💾 Saved 3 enriched books to database
+2025-12-24 22:00:02,076 [INFO] 📊 Tracked 3 enriched and 0 skipped books
+2025-12-24 22:00:02,076 [INFO]
+============================================================
+2025-12-24 22:00:02,077 [INFO] ENRICHMENT REPORT
+2025-12-24 22:00:02,077 [INFO] ============================================================
+2025-12-24 22:00:02,077 [INFO] 📊 Statistics:
+2025-12-24 22:00:02,077 [INFO]    Books checked: 3
+2025-12-24 22:00:02,077 [INFO]    Books enriched: 3
+2025-12-24 22:00:02,077 [INFO]    Books failed: 0
+2025-12-24 22:00:02,077 [INFO]    Success rate: 100.0%
+2025-12-24 22:00:02,077 [INFO]
+📝 Content:
+2025-12-24 22:00:02,077 [INFO]    Covers found: 1
+2025-12-24 22:00:02,077 [INFO]    Descriptions added: 3
+2025-12-24 22:00:02,077 [INFO]
+⏱️  Performance:
+2025-12-24 22:00:02,077 [INFO]    Duration: 18.6s
+2025-12-24 22:00:02,077 [INFO]    Speed: 9.7 books/min
+2025-12-24 22:00:02,078 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 22:00:02,078 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 22:00:02] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+ на снимката има търсене по ISBN и по име и автор - то намира картинки за cover и ги упдейтва - може да се ползва този процес
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="codebase_search">
+<details>
+<summary>Tool use: **codebase_search**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="read_file">
+<details>
+<summary>Tool use: **read_file**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="read_file">
+<details>
+<summary>Tool use: **read_file**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="read_file">
+<details>
+<summary>Tool use: **read_file**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="read_file">
+<details>
+<summary>Tool use: **read_file**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="search_replace">
+<details>
+<summary>Tool use: **search_replace**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
 
 
 ---
