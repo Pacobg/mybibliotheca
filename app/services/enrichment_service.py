@@ -365,9 +365,19 @@ class EnrichmentService:
             len(book_data.get('description', '')) > 100
         )
         
-        # Check cover - must be a valid URL (starts with http/https), not just a local path
+        # Check cover - must be a valid URL (starts with http/https) AND ends with image extension
         cover_url = book_data.get('cover') or book_data.get('cover_url') or ''
-        has_cover = bool(cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')))
+        has_cover = False
+        if cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')):
+            # Check if URL ends with image extension or contains it in path
+            cover_url_lower = cover_url.lower()
+            image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+            # Check if URL ends with extension or contains it before query params
+            if any(cover_url_lower.endswith(ext) or f'{ext}?' in cover_url_lower or f'{ext}&' in cover_url_lower for ext in image_extensions):
+                # Additional check: exclude suspicious cache URLs that don't end with proper extension
+                # These are often broken cache URLs like "cache/926507dc7f..."
+                if not ('/cache/' in cover_url and not any(cover_url_lower.endswith(ext) for ext in image_extensions)):
+                    has_cover = True
         
         has_publisher = bool(book_data.get('publisher'))
         has_isbn = bool(book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10'))

@@ -25297,3 +25297,297 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 18:25:17,499 [INFO] ============================================================
+2025-12-24 18:25:17,499 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 18:25:17,499 [INFO] ============================================================
+2025-12-24 18:25:17,499 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 18:25:17] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:25:17,543 [INFO] 192.168.1.9 - - [24/Dec/2025 18:25:17] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:25:17,566 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 18:25:17,566 [INFO] ⚙️  Configuration:
+2025-12-24 18:25:17,566 [INFO]    Limit: 5
+2025-12-24 18:25:17,566 [INFO]    Force: False
+2025-12-24 18:25:17,566 [INFO]    Dry run: False
+2025-12-24 18:25:17,566 [INFO]    Min quality: 0.3
+2025-12-24 18:25:17,566 [INFO]    No cover only: True (only books without covers)
+2025-12-24 18:25:17,566 [INFO] 📖 Querying database for books...
+2025-12-24 18:25:17,566 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 18:25:17,566 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 18:25:17,574 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 18:25:17,578 [INFO] ⏭️  Skipping book with valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+2025-12-24 18:25:17,582 [INFO] ⏭️  Skipping book with valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 18:25:17,584 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 18:25:17,588 [INFO] ⏭️  Skipping book with valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 18:25:17,591 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f...')
+2025-12-24 18:25:17,592 [INFO] ✅ Found 0 books to enrich
+2025-12-24 18:25:17,592 [INFO] ✅ No books need enrichment!
+192.168.1.9 - - [24/Dec/2025 18:25:22] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:25:22,580 [INFO] 192.168.1.9 - - [24/Dec/2025 18:25:22] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Системата работи правилно: проверява 5 книги и всички имат валидни cover URLs, затова ги пропуска. Не виждам статистиката, която добавих. Проверявам дали е добавена правилно:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "📊 Statistics|books_checked|books_with_valid_cover|books_without_valid_cover" in "scripts/enrich_books.py" • 17 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `'books_checked': 0,` | L124 |
+| `scripts/enrich_books.py` | `status['processed'] = self.stats['books_checked']` | L238 |
+| `scripts/enrich_books.py` | `books_checked = 0` | L331 |
+| `scripts/enrich_books.py` | `books_with_valid_cover = 0` | L332 |
+| `scripts/enrich_books.py` | `books_without_valid_cover = 0` | L333 |
+| `scripts/enrich_books.py` | `books_checked += 1` | L339 |
+| `scripts/enrich_books.py` | `books_without_valid_cover += 1` | L405 |
+| `scripts/enrich_books.py` | `books_with_valid_cover += 1` | L408 |
+| `scripts/enrich_books.py` | `if books_checked <= 10:  # Log first 10 for debugging` | L409 |
+| `scripts/enrich_books.py` | `elif books_checked == 11:` | L411 |
+| `scripts/enrich_books.py` | `self.stats['books_checked'] = processed` | L950 |
+| `scripts/enrich_books.py` | `self.stats['books_enriched'] / self.stats['books_checked'] * 100` | L992 |
+| `scripts/enrich_books.py` | `if self.stats['books_checked'] > 0 else 0` | L993 |
+| `scripts/enrich_books.py` | `logger.info(f"📊 Statistics:")` | L1000 |
+| `scripts/enrich_books.py` | `logger.info(f"   Books checked: \{self.stats['books_checked']\}")` | L1001 |
+| `scripts/enrich_books.py` | `logger.info(f"   Speed: \{self.stats['books_checked'] / duration * 60:.1f\} books/min")` | L1013 |
+| `scripts/enrich_books.py` | `cost = self.stats['books_checked'] * 0.0008` | L1016 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Променливите са дефинирани, но не виждам къде се логва статистиката. Проверявам дали е добавена преди `return books`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Log statistics for --no-cover-only|📊 Statistics.*Checked|books_checked total" in "scripts/enrich_books.py" • 0 matches</summary>
+
+Output mode: content
+
+
+_No matches found_
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавям статистиката преди `return books`:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 13, lines removed: undefined
+
+```diff
+@@ -426,4 +426,17 @@
+                                      logger.debug(f"⏭️  Skipping non-Bulgarian book: {title} (language: {language})")
+              
++             # Log statistics for --no-cover-only mode
++             if hasattr(self.args, 'no_cover_only') and self.args.no_cover_only:
++                 logger.info(f"📊 Statistics: Checked {books_checked} books total")
++                 logger.info(f"📊 Statistics: {books_with_valid_cover} books WITH valid cover URLs (skipped)")
++                 logger.info(f"📊 Statistics: {books_without_valid_cover} books WITHOUT valid cover URLs (will enrich)")
++                 if len(books) == 0:
++                     logger.warning("⚠️  No books found without valid cover URLs.")
++                     if books_checked &gt; 0:
++                         logger.warning(f"⚠️  All {books_checked} checked books have valid http/https cover URLs.")
++                     else:
++                         logger.warning("⚠️  No books found in database (query returned 0 results).")
++                     logger.info("💡 Tip: Use --force flag to force enrichment of all books, or add books without covers to the database.")
++             
+              logger.info(f"✅ Found {len(books)} books to enrich")
+              return books
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add statistics logging before return in _get_books_to_enrich" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add statistics logging before return in _get_books_to_enrich" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main a313d57] Add statistics logging before return in _get_books_to_enrich
+ 2 files changed, 192 insertions(+)
+To https://github.com/Pacobg/mybibliotheca.git
+   518e46c..a313d57  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавих статистиката преди `return books`. При следващото изпълнение ще видите:
+- Колко книги са проверени общо
+- Колко имат валидни cover URLs (пропуснати)
+- Колко нямат валидни cover URLs (ще се обогатят)
+- Съвети какво да направите, ако не се намерят книги
+
+Промените са качени в git main. Опитайте отново и споделете резултатите — ще видим статистиката.
+
+**Резюме:**
+Системата работи правилно:
+- Проверява книгите от базата данни
+- Пропуска книгите с валидни cover URLs
+- Обогатява само книгите без валидни cover URLs
+- Показва статистика за проверените книги
+
+В момента всички проверени книги имат валидни cover URLs, затова няма книги за обогатяване. Това е очаквано поведение.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 18:28:06,287 [INFO] ============================================================
+2025-12-24 18:28:06,287 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 18:28:06] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:28:06,331 [INFO] 192.168.1.9 - - [24/Dec/2025 18:28:06] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:28:06,350 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 18:28:06,350 [INFO] ⚙️  Configuration:
+2025-12-24 18:28:06,350 [INFO]    Limit: 5
+2025-12-24 18:28:06,350 [INFO]    Force: False
+2025-12-24 18:28:06,350 [INFO]    Dry run: False
+2025-12-24 18:28:06,350 [INFO]    Min quality: 0.3
+2025-12-24 18:28:06,350 [INFO]    No cover only: True (only books without covers)
+2025-12-24 18:28:06,350 [INFO] 📖 Querying database for books...
+2025-12-24 18:28:06,350 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 18:28:06,350 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 18:28:06,356 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 18:28:06,359 [INFO] ⏭️  Skipping book with valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+2025-12-24 18:28:06,362 [INFO] ⏭️  Skipping book with valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 18:28:06,365 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 18:28:06,370 [INFO] ⏭️  Skipping book with valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 18:28:06,373 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f...')
+2025-12-24 18:28:06,373 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 18:28:06,373 [INFO] 📊 Statistics: 5 books WITH valid cover URLs (skipped)
+2025-12-24 18:28:06,374 [INFO] 📊 Statistics: 0 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 18:28:06,374 [WARNING] ⚠️  No books found without valid cover URLs.
+2025-12-24 18:28:06,374 [WARNING] ⚠️  All 5 checked books have valid http/https cover URLs.
+2025-12-24 18:28:06,374 [INFO] 💡 Tip: Use --force flag to force enrichment of all books, or add books without covers to the database.
+2025-12-24 18:28:06,374 [INFO] ✅ Found 0 books to enrich
+2025-12-24 18:28:06,374 [INFO] ✅ No books need enrichment!
+192.168.1.9 - - [24/Dec/2025 18:28:11] "GET /metadata/enrichment/st
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Статистиката показва, че системата работи правилно:
+
+- Проверени са 5 книги общо
+- Всички 5 имат валидни cover URLs (пропуснати)
+- 0 книги без валидни cover URLs (ще се обогатят)
+
+Системата правилно идентифицира, че всички проверени книги имат валидни cover URLs в базата данни и ги пропуска.
+
+Забелязвам, че на екрана за "The Costume History" се показва placeholder изображение, въпреки че в базата има валиден cover URL (`https://www.ciela.com/media/catalog/product/cache/926507dc7f...`). Това може да е проблем с:
+1. Зареждането на изображенията във frontend-а
+2. Показването на cover URL-ите в UI-то
+
+За да обогатите книги без обложки:
+1. Добавете книги без обложки в базата данни
+2. Или използвайте `--force` за принудително обогатяване на всички книги (включително тези с обложки)
+3. Или увеличаване на лимита (например `--limit 100`), за да проверите повече книги
+
+Системата работи както трябва.
+
+---
+

@@ -397,7 +397,22 @@ class EnrichmentCommand:
                             # If --no-cover-only is set, include all books (not just Bulgarian)
                             if hasattr(self.args, 'no_cover_only') and self.args.no_cover_only:
                                 cover_url = book_dict.get('cover_url', '')
-                                has_valid_cover = cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://'))
+                                
+                                # Check if cover URL is valid:
+                                # 1. Must start with http:// or https://
+                                # 2. Must end with image extension (.jpg, .jpeg, .png, .webp, .gif) OR
+                                #    contain image extension in path (for URLs with query params)
+                                has_valid_cover = False
+                                if cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')):
+                                    # Check if URL ends with image extension or contains it in path
+                                    cover_url_lower = cover_url.lower()
+                                    image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+                                    # Check if URL ends with extension or contains it before query params
+                                    if any(cover_url_lower.endswith(ext) or f'{ext}?' in cover_url_lower or f'{ext}&' in cover_url_lower for ext in image_extensions):
+                                        # Additional check: exclude suspicious cache URLs that don't end with proper extension
+                                        # These are often broken cache URLs like "cache/926507dc7f..."
+                                        if not ('/cache/' in cover_url and not any(cover_url_lower.endswith(ext) for ext in image_extensions)):
+                                            has_valid_cover = True
                                 
                                 # Double-check: only add books WITHOUT valid covers
                                 if not has_valid_cover:
