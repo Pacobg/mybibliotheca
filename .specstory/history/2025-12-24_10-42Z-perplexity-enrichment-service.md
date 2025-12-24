@@ -24796,3 +24796,89 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+product/251/5...')
+2025-12-24 18:17:56,782 [INFO] 🔍 [_get_books_to_enrich] Book 'The Costume History': cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f...', has_valid_cover=True
+2025-12-24 18:17:56,782 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f...')
+2025-12-24 18:17:56,782 [INFO] ✅ Found 0 books to enrich
+2025-12-24 18:17:56,782 [INFO] ✅ No books need enrichment!
+192.168.1.9 - - [24/Dec/2025 18:18:01] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:18:01,758 [INFO] 192.168.1.9 - - [24/Dec/2025 18:18:01] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:18:08,643 [INFO] ✅ Successfully initialized KuzuBookRepository (attempt 1)
+192.168.1.9 - - [24/Dec/2025 18:18:08] "POST /metadata/enrichment/start HTTP/1.1" 200 -
+2025-12-24 18:18:08,644 [INFO] ============================================================
+2025-12-24 18:18:08,644 [INFO] 192.168.1.9 - - [24/Dec/2025 18:18:08] "POST /metadata/enrichment/start HTTP/1.1" 200 -
+2025-12-24 18:18:08,644 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 18:18:08,645 [INFO] ============================================================
+2025-12-24 18:18:08,645 [INFO] 🔧 Initializing EnrichmentService...
+2025-12-24 18:18:08,657 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 18:18:08,657 [INFO] ⚙️  Configuration:
+2025-12-24 18:18:08,657 [INFO]    Limit: 5
+2025-12-24 18:18:08,658 [INFO]    Force: False
+2025-12-24 18:18:08,658 [INFO]    Dry run: False
+2025-12-24 18:18:08,658 [INFO]    Min quality: 0.3
+2025-12-24 18:18:08,658 [INFO]    No cover only: True (only books without covers)
+2025-12-24 18:18:08,658 [INFO] 📖 Querying database for books...
+2025-12-24 18:18:08,658 [INFO] 🔍 [_get_books_to_enrich] Querying for books WITHOUT cover URLs (NULL or empty) - will filter invalid URLs in Python
+2025-12-24 18:18:08,672 [INFO] 🔍 [_get_books_to_enrich] Book 'The Secret History': cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....', has_valid_cover=True
+2025-12-24 18:18:08,674 [INFO] ⏭️  Skipping book with valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+192.168.1.9 - - [24/Dec/2025 18:18:08] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:18:08,677 [INFO] 192.168.1.9 - - [24/Dec/2025 18:18:08] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:18:08,678 [INFO] 🔍 [_get_books_to_enrich] Book 'The Secret Garden': cover_url='https://knigabg.com/pix/28162.jpg...', has_valid_cover=True
+2025-12-24 18:18:08,678 [INFO] ⏭️  Skipping book with valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 18:18:08,681 [INFO] 🔍 [_get_books_to_enrich] Book 'The Priory of the Orange Tree (The Roots of Chaos, #1)': cover_url='https://images.thenile.io/r1000/9781408883358.jpg...', has_valid_cover=True
+2025-12-24 18:18:08,681 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 18:18:08,686 [INFO] 🔍 [_get_books_to_enrich] Book 'The Familiar': cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...', has_valid_cover=True
+2025-12-24 18:18:08,686 [INFO] ⏭️  Skipping book with valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 18:18:08,690 [INFO] 🔍 [_get_books_to_enrich] Book 'The Costume History': cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f...', has_valid_cover=True
+2025-12-24 18:18:08,690 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f...')
+2025-12-24 18:18:08,690 [INFO] ✅ Found 0 books to enrich
+2025-12-24 18:18:08,690 [INFO] ✅ No books need enrichment!
+192.168.1.9 - - [24/Dec/2025 18:18:13] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="read_file">
+<details>
+<summary>Tool use: **read_file**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
