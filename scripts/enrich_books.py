@@ -957,10 +957,10 @@ class EnrichmentCommand:
                                     logger.info(f"🇧🇬 Added Bulgarian fallback: {bg_url}")
                         
                         # Get the covers directory (once, outside loop)
-                        covers_dir = Path('covers')
-                        if not covers_dir.exists():
-                            covers_dir.mkdir(parents=True, exist_ok=True)
-                            logger.info(f"📁 Created covers directory: {covers_dir.absolute()}")
+                        # Use the same logic as get_covers_dir() to ensure consistency
+                        from app.utils.image_processing import get_covers_dir
+                        covers_dir = get_covers_dir()
+                        logger.info(f"📁 Using covers directory: {covers_dir.absolute()}")
                         
                         # Browser-like headers to avoid 403 Forbidden
                         headers = {
