@@ -8381,3 +8381,467 @@ python scripts/enrich_books.py --book-title "13 за късмет" --force --qua
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+cover се появи - автор изчезна съвасем, а числата в описанието седят  
+2025-12-24 14:16:55,211 [INFO] ============================================================
+2025-12-24 14:16:55,211 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 14:16:55,211 [INFO] ============================================================
+2025-12-24 14:16:55,269 [INFO] ✅ PerplexityEnricher initialized with model: sonar-pro
+2025-12-24 14:16:55,270 [INFO] ✅ Perplexity enricher initialized
+2025-12-24 14:16:55,270 [INFO] ⚙️  Config: min_quality=0.3, rate_limit=1.0s, download_covers=True
+2025-12-24 14:16:55,270 [INFO] ⚙️  Configuration:
+2025-12-24 14:16:55,270 [INFO]    Limit: No limit
+2025-12-24 14:16:55,270 [INFO]    Force: True
+2025-12-24 14:16:55,270 [INFO]    Dry run: False
+2025-12-24 14:16:55,270 [INFO]    Min quality: 0.3
+2025-12-24 14:16:55,270 [INFO] 📖 Querying database for books...
+2025-12-24 14:16:55,270 [INFO] SafeKuzuManager initialized for database: ./data/kuzu/bibliotheca.db
+2025-12-24 14:16:55,270 [INFO] Global SafeKuzuManager instance created
+2025-12-24 14:16:55,270 [INFO] [THREAD-139867213824256:MainThread] Initializing KuzuDB database...
+2025-12-24 14:16:55,394 [INFO] [THREAD-139867213824256:MainThread] Initializing database schema...
+2025-12-24 14:16:55,394 [INFO] 🔧 [DEBUG] SafeKuzuManager starting schema initialization...
+2025-12-24 14:16:55,394 [INFO] 🔧 [DEBUG] Schema init - force_reset=False, debug_mode=False
+2025-12-24 14:16:55,428 [INFO] ✅ All essential tables exist - schema appears complete
+2025-12-24 14:16:55,431 [INFO] 📊 Database contains 2 users
+2025-12-24 14:16:55,432 [INFO] ✅ Schema is complete - skipping initialization
+2025-12-24 14:16:55,432 [INFO] [THREAD-139867213824256:MainThread] KuzuDB database initialized successfully in 0.161s
+2025-12-24 14:16:55,460 [INFO] 🔍 [ADAPTER] Query returned 3 rows
+2025-12-24 14:16:55,460 [INFO] ✅ Found 1 book(s) by title pattern: '13 за късмет'
+2025-12-24 14:16:55,460 [INFO]
+📚 Found 1 books to enrich
+2025-12-24 14:16:55,461 [INFO]
+🚀 Starting enrichment...
+2025-12-24 14:16:55,461 [INFO]    Estimated time: ~0.0 minutes
+2025-12-24 14:16:55,461 [INFO]    Estimated cost: ~$0.00
+2025-12-24 14:16:55,461 [INFO] 📦 Starting batch enrichment: 1 books
+2025-12-24 14:16:55,461 [INFO] 🔍 Enriching: 13 за късмет - Christie, Agatha; Кристи, Агата
+2025-12-24 14:16:55,461 [INFO] 🔍 Searching for: 13 за късмет - Christie, Agatha; Кристи, Агата
+2025-12-24 14:17:05,277 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 14:17:05,279 [INFO] 📋 Found metadata fields: title, author, publisher, year, isbn, pages, genres, description, cover_url, confidence, sources
+2025-12-24 14:17:05,280 [INFO] ✅ Found metadata for: 13 за късмет (quality: 1.00)
+2025-12-24 14:17:05,280 [INFO] ✅ Enriched: 13 за късмет (quality: 1.00)
+2025-12-24 14:17:05,280 [INFO] [1/1] ✅ 13 за късмет (quality: 1.00)
+2025-12-24 14:17:05,280 [INFO]    🖼️  Cover found
+2025-12-24 14:17:05,280 [INFO]    📝 Description added
+2025-12-24 14:17:05,281 [INFO] ✅ Batch enrichment complete!
+2025-12-24 14:17:05,281 [INFO]    Processed: 1/1
+2025-12-24 14:17:05,281 [INFO]    Enriched: 1 (100.0%)
+2025-12-24 14:17:05,281 [INFO]    Covers found: 1
+2025-12-24 14:17:05,281 [INFO]    Duration: 9.8s
+2025-12-24 14:17:05,288 [INFO] OWNS migration skipped: {'status': 'skipped', 'reason': 'owns_schema_disabled'}
+2025-12-24 14:17:05,298 [INFO] 🔍 [ADAPTER] Query returned 1 rows
+2025-12-24 14:17:05,298 [INFO] 🔍 Query results for book bb543e76-8fb3-4fc0-a9cc-2a7fdccb7d16: [{'result': {'_id': {'offset': 1373, 'table': 1}, '_label': 'Book', 'id': 'bb543e76-8fb3-4fc0-a9cc-2a7fdccb7d16', 'title': '13 за късмет', 'normalized_title': '13 за късмет', 'subtitle': '', 'isbn13': '9789543895380', 'isbn10': '', 'asin': '', 'description': '„13 за късмет“ е сборник с тринадесет специално подбрани криминални разказа на Агата Кристи, в които участват най-емблематичните ѝ детективи – Еркюл Поаро, госпожица Марпъл, Харли Куин, Томи и Тапънс и инспектор Евънс.[3][5][7][9] Всеки герой разчита на свой специфичен стил, обаяние и метод за разкриване на най-заплетените престъпления, изпълнени с тайни кодове, добре прикрити улики и сложни главоблъсканици.[3][5][7] Сборникът е замислен като идеално въведение в света на Агата Кристи за нови читатели, но и като удоволствие за дългогодишните почитатели на „първата дама на криминалния жанр“.[2][7][9] Изданието е на български език и излиза у нас под знака на издателство „Ера“.[3][4][6][8][10]', 'published_date': datetime.date(2019, 1, 1), 'page_count': 280, 'language': 'en', 'cover_url': 'https://www.ciela.com/media/catalog/product/cache/4/image/480x/9df78eab33525d08d6e5fb8d27136e95/1/3/13_za_kusmet_era.jpg', 'google_books_id': '', 'openlibrary_id': '', 'opds_source_id': None, 'opds_source_updated_at': None, 'opds_source_entry_hash': None, 'media_type': 'physical', 'average_rating': 0.0, 'rating_count': 0, 'series': '', 'series_volume': None, 'series_order': None, 'custom_metadata': None, 'raw_categories': None, 'created_at': datetime.datetime(2025, 12, 23, 20, 25, 22, 107507), 'updated_at': datetime.datetime(2025, 12, 24, 12, 10, 38, 143232), 'audio_length_minutes': None, 'audio_is_abridged': None, 'audio_narrators': None, 'media_format': None, 'audiobookshelf_id': None, 'audio_duration_ms': None, 'audiobookshelf_updated_at': None, 'quantity': 1}}]
+2025-12-24 14:17:05,298 [INFO] 🔍 First result structure: {'result': {'_id': {'offset': 1373, 'table': 1}, '_label': 'Book', 'id': 'bb543e76-8fb3-4fc0-a9cc-2a7fdccb7d16', 'title': '13 за късмет', 'normalized_title': '13 за късмет', 'subtitle': '', 'isbn13': '9789543895380', 'isbn10': '', 'asin': '', 'description': '„13 за късмет“ е сборник с тринадесет специално подбрани криминални разказа на Агата Кристи, в които участват най-емблематичните ѝ детективи – Еркюл Поаро, госпожица Марпъл, Харли Куин, Томи и Тапънс и инспектор Евънс.[3][5][7][9] Всеки герой разчита на свой специфичен стил, обаяние и метод за разкриване на най-заплетените престъпления, изпълнени с тайни кодове, добре прикрити улики и сложни главоблъсканици.[3][5][7] Сборникът е замислен като идеално въведение в света на Агата Кристи за нови читатели, но и като удоволствие за дългогодишните почитатели на „първата дама на криминалния жанр“.[2][7][9] Изданието е на български език и излиза у нас под знака на издателство „Ера“.[3][4][6][8][10]', 'published_date': datetime.date(2019, 1, 1), 'page_count': 280, 'language': 'en', 'cover_url': 'https://www.ciela.com/media/catalog/product/cache/4/image/480x/9df78eab33525d08d6e5fb8d27136e95/1/3/13_za_kusmet_era.jpg', 'google_books_id': '', 'openlibrary_id': '', 'opds_source_id': None, 'opds_source_updated_at': None, 'opds_source_entry_hash': None, 'media_type': 'physical', 'average_rating': 0.0, 'rating_count': 0, 'series': '', 'series_volume': None, 'series_order': None, 'custom_metadata': None, 'raw_categories': None, 'created_at': datetime.datetime(2025, 12, 23, 20, 25, 22, 107507), 'updated_at': datetime.datetime(2025, 12, 24, 12, 10, 38, 143232), 'audio_length_minutes': None, 'audio_is_abridged': None, 'audio_narrators': None, 'media_format': None, 'audiobookshelf_id': None, 'audio_duration_ms': None, 'audiobookshelf_updated_at': None, 'quantity': 1}}
+2025-12-24 14:17:05,298 [INFO] ✅ Found book via 'result' key: <class 'dict'>
+2025-12-24 14:17:05,298 [INFO] ✅ Book data is already dict with keys: ['_id', '_label', 'id', 'title', 'normalized_title', 'subtitle', 'isbn13', 'isbn10', 'asin', 'description', 'published_date', 'page_count', 'language', 'cover_url', 'google_books_id', 'openlibrary_id', 'opds_source_id', 'opds_source_updated_at', 'opds_source_entry_hash', 'media_type', 'average_rating', 'rating_count', 'series', 'series_volume', 'series_order', 'custom_metadata', 'raw_categories', 'created_at', 'updated_at', 'audio_length_minutes', 'audio_is_abridged', 'audio_narrators', 'media_format', 'audiobookshelf_id', 'audio_duration_ms', 'audiobookshelf_updated_at', 'quantity']
+2025-12-24 14:17:05,323 [ERROR] ❌ Error updating book bb543e76-8fb3-4fc0-a9cc-2a7fdccb7d16: Expected coroutine or callable, got <class 'app.domain.models.Book'>
+Traceback (most recent call last):
+  File "/home/pacovw/mybibliotheca/scripts/enrich_books.py", line 451, in _save_enriched_books
+    updated_book = await book_service.update_book(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/home/pacovw/mybibliotheca/app/services/kuzu_service_facade.py", line 564, in update_book
+    return run_async(self.update_book_sync(book_id, user_id, **updates))
+  File "/home/pacovw/mybibliotheca/app/services/kuzu_async_helper.py", line 68, in run_async
+    raise TypeError(f"Expected coroutine or callable, got {type(coro_or_func)}")
+TypeError: Expected coroutine or callable, got <class 'app.domain.models.Book'>
+2025-12-24 14:17:05,328 [INFO] 🔍 [ADAPTER] Query returned 3 rows
+2025-12-24 14:17:05,328 [INFO] 📝 Updating authors from ['Christie', 'Agatha; Кристи', 'Агата'] to [Christie, Agatha; Кристи, Агата]
+2025-12-24 14:17:05,338 [INFO] 🔍 [DEBUG] CREATE: Checking auto-fetch conditions for Christie, Agatha; Кристи, Агата: openlibrary_id=None, bio='None', birth_year=None, image_url=None
+2025-12-24 14:17:05,338 [INFO] 🔍 Auto-fetching OpenLibrary metadata for: Christie, Agatha; Кристи, Агата
+2025-12-24 14:17:14,910 [INFO] 📝 No OpenLibrary data found for: Christie, Agatha; Кристи, Агата
+2025-12-24 14:17:14,935 [INFO] ✅ Created new person: Christie, Agatha; Кристи, Агата (ID: 0e33cb75-39fc-4331-bf84-26210f18ae02)
+2025-12-24 14:17:14,935 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 14:17:14,935 [INFO]
+============================================================
+2025-12-24 14:17:14,935 [INFO] ENRICHMENT REPORT
+2025-12-24 14:17:14,935 [INFO] ============================================================
+2025-12-24 14:17:14,935 [INFO] 📊 Statistics:
+2025-12-24 14:17:14,936 [INFO]    Books checked: 1
+2025-12-24 14:17:14,936 [INFO]    Books enriched: 1
+2025-12-24 14:17:14,936 [INFO]    Books failed: 0
+2025-12-24 14:17:14,936 [INFO]    Success rate: 100.0%
+2025-12-24 14:17:14,936 [INFO]
+📝 Content:
+2025-12-24 14:17:14,936 [INFO]    Covers found: 1
+2025-12-24 14:17:14,936 [INFO]    Descriptions added: 1
+2025-12-24 14:17:14,936 [INFO]
+⏱️  Performance:
+2025-12-24 14:17:14,936 [INFO]    Duration: 9.8s
+2025-12-24 14:17:14,936 [INFO]    Speed: 6.1 books/min
+2025-12-24 14:17:14,936 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 14:17:14,936 [INFO] ============================================================
+(venv) pacovw@localLab:~/mybibliotheca$ cd ~/mybibliotheca
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Има три проблема:
+1. Цитатите все още са в описанието — премахването не се изпълнява преди запазване.
+2. Авторът изчезна — използва се оригиналният автор вместо нормализирания от AI.
+3. Грешка при `update_book` — проблем с `run_async`.
+
+Поправям:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/kuzu_service_facade.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправям трите проблема:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/kuzu_service_facade.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 10, lines removed: 5
+
+```diff
+@@ -405,9 +405,14 @@
+                  
+                  # Update description if missing or improved
+-                 if enriched.get('description') and (
+-                     not book.get('description') or 
+-                     len(enriched['description']) &gt; len(book.get('description', ''))
+-                 ):
+-                     updates['description'] = enriched['description']
++                 if enriched.get('description'):
++                     description = enriched['description']
++                     # Remove citation markers like [3][5][7][9] before saving
++                     import re
++                     description = re.sub(r'\[\d+\]', '', description)
++                     # Clean up multiple spaces
++                     description = re.sub(r'\s+', ' ', description).strip()
++                     
++                     if not book.get('description') or len(description) &gt; len(book.get('description', '')):
++                         updates['description'] = description
+                  
+                  # Update cover_url if missing or force update
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 6, lines removed: 1
+
+```diff
+@@ -478,5 +478,10 @@
+                  
+                  # Handle author update if AI found a normalized author
+-                 ai_author = enriched.get('author')
++                 # Get author directly from AI metadata (before merge)
++                 ai_author = book.get('ai_metadata', {}).get('author')
++                 if not ai_author:
++                     # Fallback to enriched author
++                     ai_author = enriched.get('author')
++                 
+                  if ai_author:
+                      try:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/kuzu_service_facade.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправям проблема с `update_book` и използвам правилния async метод:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/kuzu_async_helper.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/kuzu_book_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 7, lines removed: 6
+
+```diff
+@@ -453,10 +453,11 @@
+                  if updates:
+                      try:
+-                         # Use async update_book method
+-                         updated_book = await book_service.update_book(
+-                             book['id'],
+-                             updates,
+-                             'system'  # System user for enrichment
+-                         )
++                         # Use book_service directly (not facade) for simpler updates
++                         from app.services.kuzu_book_service import KuzuBookService
++                         book_update_service = KuzuBookService(user_id='system')
++                         
++                         # Update book using the service's update_book method
++                         updated_book = await book_update_service.update_book(book['id'], updates)
++                         
+                          if updated_book:
+                              saved_count += 1
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправям проблема с автора — използвам правилния нормализиран автор от AI:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "ai_metadata.*author|author.*normalized" in "app/services/metadata_providers/perplexity.py" • 4 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/metadata_providers/perplexity.py` | `author_normalized = author` | L125 |
+| `app/services/metadata_providers/perplexity.py` | `author_normalized = cyrillic_authors[0]  # Use first Bulgarian name` | L132 |
+| `app/services/metadata_providers/perplexity.py` | `author_normalized = authors_list[0]  # Use first author` | L134 |
+| `app/services/metadata_providers/perplexity.py` | `АВТОР: \{author_normalized\}` | L140 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/metadata_providers/perplexity.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Подобрявам логиката за извличане на правилния автор и добавям debug logging:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 20, lines removed: 2
+
+```diff
+@@ -479,10 +479,28 @@
+                  
+                  # Handle author update if AI found a normalized author
+-                 # Get author directly from AI metadata (before merge)
+-                 ai_author = book.get('ai_metadata', {}).get('author')
++                 # Get author directly from AI metadata (before merge) - this is already normalized
++                 ai_metadata = book.get('ai_metadata', {})
++                 ai_author = ai_metadata.get('author')
++                 
++                 # Debug: log what we found
++                 logger.debug(f"🔍 AI metadata author: {ai_author}")
++                 logger.debug(f"🔍 Enriched author: {enriched.get('author')}")
++                 
+                  if not ai_author:
+                      # Fallback to enriched author
+                      ai_author = enriched.get('author')
+                  
++                 # Normalize author one more time to be sure
++                 if ai_author:
++                     import re
++                     # If multiple authors, prefer Bulgarian/Cyrillic
++                     if ',' in ai_author or ';' in ai_author:
++                         authors_list = [a.strip() for a in re.split(r'[,;]', ai_author)]
++                         cyrillic_authors = [a for a in authors_list if any('\u0400' &lt;= char &lt;= '\u04FF' for char in a)]
++                         if cyrillic_authors:
++                             ai_author = cyrillic_authors[0]
++                         else:
++                             ai_author = authors_list[0]
++                 
+                  if ai_author:
+                      try:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix enrichment: clean description citations before save, use normalized author from AI metadata, use KuzuBookService directly for updates" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix enrichment: clean description citations before save, use normalized author from AI metadata, use KuzuBookService directly for updates" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main da33d7b] Fix enrichment: clean description citations before save, use normalized author from AI metadata, use KuzuBookService directly for updates
+ 2 files changed, 446 insertions(+), 12 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   ae84ffb..da33d7b  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправих трите проблема:
+
+## Поправки
+
+1. Премахване на цитатите от описанието — премахвам `[3][5][7][9]` преди запазване в базата
+2. Използване на правилния нормализиран автор — използвам автора от `ai_metadata` (вече нормализиран) и добавя допълнителна нормализация за сигурност
+3. Поправка на `update_book` — използвам `KuzuBookService` директно вместо facade за по-прости updates
+
+## На сървъра изпълнете:
+
+```bash
+# Изтеглете промените
+git pull origin main
+
+# Опитайте отново
+export PERPLEXITY_MODEL="sonar-pro"
+python scripts/enrich_books.py --book-title "13 за късмет" --force --quality-min 0.3 -y
+```
+
+Сега трябва да:
+- Премахне цитатите `[3][5][7][9]` от описанието
+- Поправи автора на "Агата Кристи" (един автор вместо трима)
+- Запази корицата успешно
+- Запази всички данни в базата
+
+Опитайте отново и ми кажете резултата.
+
+---
+

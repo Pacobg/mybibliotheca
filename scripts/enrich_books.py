@@ -412,8 +412,22 @@ class EnrichmentCommand:
                     # Clean up multiple spaces
                     description = re.sub(r'\s+', ' ', description).strip()
                     
-                    if not book.get('description') or len(description) > len(book.get('description', '')):
+                    existing_desc = book.get('description', '')
+                    # Check if existing description has citations
+                    has_citations = bool(re.search(r'\[\d+\]', existing_desc))
+                    
+                    # Update if:
+                    # 1. No existing description, OR
+                    # 2. Force flag is set, OR
+                    # 3. Existing has citations (needs cleaning), OR
+                    # 4. New description is significantly longer
+                    if (not existing_desc or 
+                        self.args.force or 
+                        has_citations or 
+                        len(description) > len(existing_desc) + 50):
                         updates['description'] = description
+                        if has_citations:
+                            logger.info(f"🧹 Cleaning description citations for: {book['title']}")
                 
                 # Update cover_url if missing or force update
                 if enriched.get('cover_url'):
@@ -508,9 +522,29 @@ class EnrichmentCommand:
                         current_authors = await self.book_repo.get_book_authors(book['id'])
                         current_author_names = [a.get('name', '') for a in current_authors if a.get('name')]
                         
+                        # Normalize current author names for comparison
+                        current_normalized = []
+                        for name in current_author_names:
+                            # If name has multiple parts, try to normalize
+                            if ',' in name or ';' in name:
+                                parts = [a.strip() for a in re.split(r'[,;]', name)]
+                                cyrillic_parts = [a for a in parts if any('\u0400' <= char <= '\u04FF' for char in a)]
+                                if cyrillic_parts:
+                                    current_normalized.append(cyrillic_parts[0])
+                                else:
+                                    current_normalized.append(parts[0])
+                            else:
+                                current_normalized.append(name)
+                        
                         # Check if author needs to be updated
-                        # If multiple authors or author doesn't match AI author, update
-                        if len(current_author_names) != 1 or current_author_names[0] != ai_author:
+                        # Update if: multiple authors, or single author doesn't match AI author, or force flag
+                        needs_update = (
+                            len(current_author_names) != 1 or 
+                            (len(current_normalized) == 1 and current_normalized[0] != ai_author) or
+                            self.args.force
+                        )
+                        
+                        if needs_update:
                             logger.info(f"📝 Updating authors from {current_author_names} to [{ai_author}]")
                             
                             # Remove all existing author relationships
