@@ -235,7 +235,7 @@ class EnrichmentCommand:
                            b.cover_url as cover_url, p.name as publisher,
                            b.isbn13 as isbn13, b.isbn10 as isbn10,
                            b.page_count as page_count, b.published_date as published_date,
-                           b.language as language
+                           b.language as language, b.custom_metadata as custom_metadata
                     ORDER BY b.created_at DESC
                     """
             
