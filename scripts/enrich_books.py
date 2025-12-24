@@ -803,8 +803,6 @@ class EnrichmentCommand:
                         
                         # Update book using the service's update_book method
                         updated_book = await book_update_service.update_book(book['id'], updates)
-                else:
-                    logger.warning(f"⚠️  [_save_enriched_books] No updates to save for '{book['title']}' - updates dictionary is empty")
                         
                         if updated_book:
                             saved_count += 1
@@ -866,6 +864,8 @@ class EnrichmentCommand:
                             logger.warning(f"⚠️  Failed to save: {book['title']}")
                     except Exception as e:
                         logger.error(f"❌ Error updating book {book['id']}: {e}", exc_info=True)
+                else:
+                    logger.warning(f"⚠️  [_save_enriched_books] No updates to save for '{book['title']}' - updates dictionary is empty")
                 
                 # Handle publisher separately (it's a relationship, not a property)
                 if publisher_name and not has_publisher:

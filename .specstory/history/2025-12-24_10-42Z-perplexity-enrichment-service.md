@@ -27635,3 +27635,288 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Има синтактична грешка в `enrich_books.py` на ред 799: липсва `except` или `finally` след `try`. Проверявам и поправям:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "except|finally" in "scripts/enrich_books.py" • 16 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `except ImportError:` | L69 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L71 |
+| `scripts/enrich_books.py` | `except RuntimeError as e:` | L102 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L115 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L246 |
+| `scripts/enrich_books.py` | `except:` | L359 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L377 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L508 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L561 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L645 |
+| `scripts/enrich_books.py` | `except:` | L842 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L862 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L867 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L876 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L1012 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L1015 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проблем: `else:` блокът на ред 799 е поставен преди да завърши `try:` блокът. Премествам `else:` след `try/except`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: undefined, lines removed: 2
+
+```diff
+@@ -797,6 +797,4 @@
+                          if 'cover_url' in updates:
+                              logger.info(f"🖼️  Will update cover_url to: {updates['cover_url']}")
+-                 else:
+-                     logger.warning(f"⚠️  [_save_enriched_books] No updates to save for '{book['title']}' - updates dictionary is empty")
+                          
+                          # Use book_service directly (not facade) for simpler updates
+```
+
+**Chunk 2**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -806,4 +804,6 @@
+                          # Update book using the service's update_book method
+                          updated_book = await book_update_service.update_book(book['id'], updates)
++                 else:
++                     logger.warning(f"⚠️  [_save_enriched_books] No updates to save for '{book['title']}' - updates dictionary is empty")
+                          
+                          if updated_book:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix syntax error: move else block after try block in _save_enriched_books" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix syntax error: move else block after try block in _save_enriched_books" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 288f0af] Fix syntax error: move else block after try block in _save_enriched_books
+ 2 files changed, 233 insertions(+), 2 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   98ba0dc..288f0af  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправих синтактичната грешка: `else:` блокът беше поставен преди да завърши `try:` блокът. Сега структурата е правилна:
+
+- `if updates:`
+  - `try:` ... `except:`
+- `else:` (след `try/except`)
+
+Промените са качени в git main. Опитайте отново — сега кодът трябва да работи правилно и да запазва обогатените книги в базата данни.
+
+След поправката системата трябва да:
+1. Идентифицира "The Costume History" като книга без валиден cover URL
+2. Да я обогати с правилния cover URL от Perplexity
+3. Да запази промените в базата данни
+4. Да покаже логове за запазените книги
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Все още има синтактична грешка на ред 806. Проверявам структурата на кода около този ред:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "^                if updates:|^                    try:|^                else:|^                    except|^            except" in "scripts/enrich_books.py" • 14 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `except RuntimeError as e:` | L102 |
+| `scripts/enrich_books.py` | `else:` | L113 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L115 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L246 |
+| `scripts/enrich_books.py` | `else:` | L307 |
+| `scripts/enrich_books.py` | `if updates:` | L793 |
+| `scripts/enrich_books.py` | `try:` | L794 |
+| `scripts/enrich_books.py` | `else:` | L806 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L867 |
+| `scripts/enrich_books.py` | `try:` | L872 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L876 |
+| `scripts/enrich_books.py` | `try:` | L938 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L1012 |
+| `scripts/enrich_books.py` | `except Exception as e:` | L1015 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проблем: кодът след `updated_book = await book_update_service.update_book(...)` е в `else:` блока вместо в `try:` блока. Премествам го в `try:` блока:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="search_replace">
+<details>
+<summary>Tool use: **search_replace**</summary>
+
+
+Parameters:
+
+```json
+{
+  "relativeWorkspacePath": "scripts/enrich_books.py"
+}
+```
+Additional data:
+
+```json
+{
+  "codeblockId": "38e23ada-1f10-498b-9e28-f730153d31f8"
+}
+```
+User decision: **accepted**
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
