@@ -189,4 +189,143 @@
         </div>
     </div>
 </div>
+
+{% if ai_available %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Enrichment script loaded');
+    const enrichBtn = document.getElementById('enrichNoCoverBtn');
+    const statusBtn = document.getElementById('checkEnrichmentStatusBtn');
+    const statusDiv = document.getElementById('enrichmentStatus');
+    const statusText = document.getElementById('enrichmentStatusText');
+    
+    if (!enrichBtn) {
+        console.error('Enrichment button not found!');
+        return;
+    }
+    
+    console.log('Enrichment button found:', enrichBtn);
+    
+    enrichBtn.addEventListener('click', async function() {
+        console.log('Enrichment button clicked');
+        if (!confirm('Сигурни ли сте, че искате да стартирате обогатяване на до 5 книги без обложки?')) {
+            return;
+        }
+        
+        const btn = this;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-1"></i>Стартиране...';
+        
+        try {
+            const formData = new FormData();
+            formData.append('limit', '5');
+            formData.append('no_cover_only', 'true');
+            
+            // Get CSRF token from global window.csrfToken or meta tag
+            const csrfToken = window.csrfToken || 
+                             document.querySelector('meta[name="csrf-token"]')?.content ||
+                             '{{ csrf_token() }}';
+            if (csrfToken) {
+                formData.append('csrf_token', csrfToken);
+                console.log('CSRF token added');
+            } else {
+                console.warn('No CSRF token found!');
+            }
+            
+            console.log('Sending enrichment request to:', '{{ url_for("metadata.start_enrichment") }}');
+            const response = await fetch('{{ url_for("metadata.start_enrichment") }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            console.log('Response status:', response.status);
+            const result = await response.json();
+            console.log('Response data:', result);
+            
+            if (result.success) {
+                statusDiv.style.display = 'block';
+                statusText.innerHTML = '<span class="text-success">✅ Обогатяването е стартирано успешно!</span>';
+                checkStatus();
+            } else {
+                alert('Грешка: ' + (result.error || 'Неизвестна грешка'));
+                console.error('Enrichment error:', result);
+            }
+        } catch (error) {
+            console.error('Error starting enrichment:', error);
+            alert('Грешка: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    });
+    
+    if (statusBtn) {
+        statusBtn.addEventListener('click', checkStatus);
+    }
+    
+    async function checkStatus() {
+        try {
+            const response = await fetch('{{ url_for("metadata.enrichment_status") }}');
+            const status = await response.json();
+            
+            statusDiv.style.display = 'block';
+            
+            if (status.running) {
+                statusText.innerHTML = `
+                    <span class="text-info">🔄 Обогатяването работи...</span><br>
+                    <small>Стартирано: ${new Date(status.started_at).toLocaleString('bg-BG')}</small><br>
+                    <small>Лимит: ${status.limit || 'N/A'}</small><br>
+                    ${status.processed ? `<small>Обработени: ${status.processed}</small>` : ''}
+                    ${status.enriched ? `<small>Обогатени: ${status.enriched}</small>` : ''}
+                `;
+                // Auto-refresh every 5 seconds if running
+                setTimeout(checkStatus, 5000);
+            } else if (status.completed_at) {
+                let detailsHtml = '';
+                
+                // Show enriched books
+                if (status.enriched_books && status.enriched_books.length > 0) {
+                    detailsHtml += `<div class="mt-2"><strong>Обогатени книги (${status.enriched_books.length}):</strong><ul class="small mb-0">`;
+                    status.enriched_books.forEach(book => {
+                        detailsHtml += `<li>${book.title} ${book.has_cover ? '✅ (с обложка)' : ''}</li>`;
+                    });
+                    detailsHtml += '</ul></div>';
+                }
+                
+                // Show skipped books
+                if (status.skipped_books && status.skipped_books.length > 0) {
+                    detailsHtml += `<div class="mt-2"><strong>Пропуснати книги (${status.skipped_books.length}):</strong><ul class="small mb-0 text-muted">`;
+                    status.skipped_books.forEach(book => {
+                        detailsHtml += `<li>${book.title} - ${book.reason || 'вече обогатена'}</li>`;
+                    });
+                    detailsHtml += '</ul></div>';
+                }
+                
+                statusText.innerHTML = `
+                    <span class="text-success">✅ Завършено</span><br>
+                    <small>Завършено: ${new Date(status.completed_at).toLocaleString('bg-BG')}</small><br>
+                    ${status.processed ? `<small>Обработени: ${status.processed}</small>` : ''}
+                    ${status.enriched ? `<small>Обогатени: ${status.enriched}</small>` : ''}
+                    ${status.failed ? `<small class="text-warning">Неуспешни: ${status.failed}</small>` : ''}
+                    ${status.error ? `<small class="text-danger">Грешка: ${status.error}</small>` : ''}
+                    ${detailsHtml}
+                `;
+            } else {
+                statusText.innerHTML = '<span class="text-muted">Няма активно обогатяване</span>';
+            }
+        } catch (error) {
+            console.error('Error checking status:', error);
+            statusText.innerHTML = '<span class="text-danger">Грешка при проверка на статуса</span>';
+        }
+    }
+    
+    // Auto-check status on page load
+    checkStatus();
+});
+</script>
+{% endif %}
 {% endblock %}
