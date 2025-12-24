@@ -26267,6 +26267,202 @@ To https://github.com/Pacobg/mybibliotheca.git
 ---
 
 
+Добавих по-подробни логове за валидацията на cover URL-ите. При следващото изпълнение ще видим:
+- Пълния URL (първите 100 символа)
+- Дали е cache URL
+- Дали завършва с разширение на изображение
+- Дали съдържа разширение преди query параметри
+- Защо е идентифициран като валиден или невалиден
+
+Промените са качени в git main. Опитайте отново и споделете резултатите — ще видим защо "The Costume History" все още се идентифицира като валидна, въпреки че URL-ът изглежда невалиден.
+
+Възможно е URL-ът да завършва с разширение, но не го виждаме в логовете заради съкращаването. Логовете ще покажат пълния URL и резултата от валидацията.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 18:49:38,600 [INFO] ✅ Successfully initialized KuzuBookRepository (attempt 1)
+2025-12-24 18:49:38,601 [INFO] ============================================================
+2025-12-24 18:49:38,601 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 18:49:38,601 [INFO] ============================================================
+2025-12-24 18:49:38,601 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 18:49:38] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:49:38,643 [INFO] 192.168.1.9 - - [24/Dec/2025 18:49:38] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:49:38,664 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 18:49:38,664 [INFO] ⚙️  Configuration:
+2025-12-24 18:49:38,664 [INFO]    Limit: 5
+2025-12-24 18:49:38,664 [INFO]    Force: False
+2025-12-24 18:49:38,664 [INFO]    Dry run: False
+2025-12-24 18:49:38,664 [INFO]    Min quality: 0.3
+2025-12-24 18:49:38,664 [INFO]    No cover only: True (only books without covers)
+2025-12-24 18:49:38,664 [INFO] 📖 Querying database for books...
+2025-12-24 18:49:38,664 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 18:49:38,664 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 18:49:38,673 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 18:49:38,677 [INFO] ⏭️  Skipping book with valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+2025-12-24 18:49:38,680 [INFO] ⏭️  Skipping book with valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 18:49:38,683 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 18:49:38,687 [INFO] ⏭️  Skipping book with valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 18:49:38,691 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f...')
+2025-12-24 18:49:38,691 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 18:49:38,691 [INFO] 📊 Statistics: 5 books WITH valid cover URLs (skipped)
+2025-12-24 18:49:38,691 [INFO] 📊 Statistics: 0 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 18:49:38,691 [WARNING] ⚠️  No books found without valid cover URLs.
+2025-12-24 18:49:38,692 [WARNING] ⚠️  All 5 checked books have valid http/https cover URLs.
+2025-12-24 18:49:38,692 [INFO] 💡 Tip: Use --force flag to force enrichment of all books, or add books without covers to the database.
+2025-12-24 18:49:38,692 [INFO] ✅ Found 0 books to enrich
+2025-12-24 18:49:38,692 [INFO] ✅ No books need enrichment!
+192.168.1.9 - - [24/Dec/2025 18:49:43] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:49:43,843 [INFO] 192.168.1.9 - - [24/Dec/2025 18:49:43] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Не виждам новите логове — вероятно кодът не е обновен на сървъра или има проблем с логирането. Проверявам дали логовете са на правилното място и добавям по-ранни логове:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Validating cover URL for|URL analysis:|Cache URL without extension" in "scripts/enrich_books.py" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `logger.info(f"🔍 [_get_books_to_enrich] Cache URL without extension: '\{cover_url[:80]\}...' (ends_with_extension=\{ends_with_extension\})")` | L425 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавям логове преди проверката, за да видим какво точно се случва:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 6, lines removed: 1
+
+```diff
+@@ -418,13 +418,18 @@
+                                      # Broken cache URLs like "cache/926507dc7f..." are invalid
+                                      is_cache_url = '/cache/' in cover_url
++                                     
++                                     logger.info(f"🔍 [_get_books_to_enrich] '{title}': cover_url='{cover_url[:100]}...', is_cache_url={is_cache_url}, ends_with_extension={ends_with_extension}, contains_extension={contains_extension}")
+                                      
+                                      if is_cache_url:
+                                          # Cache URLs must end with extension
+                                          has_valid_cover = ends_with_extension
+                                          if not has_valid_cover:
+-                                             logger.info(f"🔍 [_get_books_to_enrich] Cache URL without extension: '{cover_url[:80]}...' (ends_with_extension={ends_with_extension})")
++                                             logger.info(f"🔍 [_get_books_to_enrich] ❌ Cache URL without extension: '{cover_url[:100]}...' - marking as INVALID")
++                                         else:
++                                             logger.info(f"🔍 [_get_books_to_enrich] ✅ Cache URL with extension: '{cover_url[:100]}...' - marking as VALID")
+                                      else:
+                                          # Non-cache URLs: check if ends with extension or contains it before query params
+                                          has_valid_cover = ends_with_extension or contains_extension
++                                         logger.info(f"🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover={has_valid_cover}")
+                                  
+                                  # Double-check: only add books WITHOUT valid covers
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add detailed logging before cache URL check to see full URL and validation results" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add detailed logging before cache URL check to see full URL and validation results" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main a50e337] Add detailed logging before cache URL check to see full URL and validation results
+ 2 files changed, 123 insertions(+), 1 deletion(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   7f49c55..a50e337  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавих по-подробни логове преди проверката за cache URL-ите. При следващото изпълнение ще видим:
+- Пълния URL (първите 100 символа)
+- Дали е cache URL
+- Дали завършва с разширение на изображение
+- Дали съдържа разширение преди query параметри
+- Защо е идентифициран като валиден или невалиден
+
+Промените са качени в git main. Опитайте отново и споделете резултатите — ще видим защо "The Costume History" все още се идентифицира като валидна, въпреки че URL-ът изглежда невалиден.
+
+Възможно е URL-ът да завършва с разширение, но не го виждаме заради съкращаването. Логовете ще покажат пълния URL и резултата от валидацията.
 
 ---
 

@@ -416,17 +416,31 @@ class EnrichmentCommand:
                                     
                                     # Special case: cache URLs must end with extension to be valid
                                     # Broken cache URLs like "cache/926507dc7f..." are invalid
+                                    # Also check for suspicious patterns like ISBN numbers in path (9783836555401)
                                     is_cache_url = '/cache/' in cover_url
                                     
                                     logger.info(f"🔍 [_get_books_to_enrich] '{title}': cover_url='{cover_url[:100]}...', is_cache_url={is_cache_url}, ends_with_extension={ends_with_extension}, contains_extension={contains_extension}")
                                     
                                     if is_cache_url:
-                                        # Cache URLs must end with extension
-                                        has_valid_cover = ends_with_extension
+                                        # Cache URLs must end with extension AND not contain suspicious patterns
+                                        # Suspicious patterns: ISBN numbers (13 digits starting with 978 or 979) in path
+                                        import re
+                                        has_isbn_in_path = bool(re.search(r'/(978|979)\d{10}/', cover_url))
+                                        
+                                        # Also check if path looks like ISBN instead of proper image filename
+                                        # Proper cache URLs should have format: cache/HASH/path/to/image.jpg
+                                        # Broken ones might have: cache/HASH/9/7/9783836555401.jpg
+                                        path_after_cache = cover_url.split('/cache/')[-1] if '/cache/' in cover_url else ''
+                                        # Check if path segments are mostly numbers (suspicious)
+                                        path_segments = [s for s in path_after_cache.split('/') if s]
+                                        has_numeric_path = len(path_segments) > 0 and all(seg.isdigit() or seg.endswith(('.jpg', '.jpeg', '.png', '.webp', '.gif')) for seg in path_segments[:-1])
+                                        
+                                        has_valid_cover = ends_with_extension and not has_isbn_in_path and not has_numeric_path
+                                        
                                         if not has_valid_cover:
-                                            logger.info(f"🔍 [_get_books_to_enrich] ❌ Cache URL without extension: '{cover_url[:100]}...' - marking as INVALID")
+                                            logger.info(f"🔍 [_get_books_to_enrich] ❌ Cache URL invalid: '{cover_url[:100]}...' - ends_with_extension={ends_with_extension}, has_isbn_in_path={has_isbn_in_path}, has_numeric_path={has_numeric_path} - marking as INVALID")
                                         else:
-                                            logger.info(f"🔍 [_get_books_to_enrich] ✅ Cache URL with extension: '{cover_url[:100]}...' - marking as VALID")
+                                            logger.info(f"🔍 [_get_books_to_enrich] ✅ Cache URL valid: '{cover_url[:100]}...' - marking as VALID")
                                     else:
                                         # Non-cache URLs: check if ends with extension or contains it before query params
                                         has_valid_cover = ends_with_extension or contains_extension
