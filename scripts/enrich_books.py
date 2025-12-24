@@ -11,6 +11,7 @@ Options:
     --force            Force re-enrichment of all books
     --dry-run          Show what would be done without making changes
     --quality-min F    Minimum quality score (default: 0.7)
+    --no-cover-only    Only enrich books without covers
     -y, --yes          Skip confirmation prompt
 
 Examples:
