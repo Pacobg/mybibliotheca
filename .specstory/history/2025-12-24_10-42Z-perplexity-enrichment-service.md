@@ -27404,3 +27404,234 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 19:09:42,066 [INFO] ============================================================
+2025-12-24 19:09:42,066 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 19:09:42,066 [INFO] ============================================================
+2025-12-24 19:09:42,066 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 19:09:42] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:09:42,106 [INFO] 192.168.1.9 - - [24/Dec/2025 19:09:42] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 19:09:42,132 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 19:09:42,132 [INFO] ⚙️  Configuration:
+2025-12-24 19:09:42,132 [INFO]    Limit: 5
+2025-12-24 19:09:42,132 [INFO]    Force: False
+2025-12-24 19:09:42,132 [INFO]    Dry run: False
+2025-12-24 19:09:42,132 [INFO]    Min quality: 0.3
+2025-12-24 19:09:42,132 [INFO]    No cover only: True (only books without covers)
+2025-12-24 19:09:42,132 [INFO] 📖 Querying database for books...
+2025-12-24 19:09:42,132 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 19:09:42,132 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 19:09:42,140 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 19:09:42,143 [INFO] 🔍 [_get_books_to_enrich] 'The Secret History': cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:09:42,143 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:09:42,143 [INFO] ⏭️  Skipping book with valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+2025-12-24 19:09:42,146 [INFO] 🔍 [_get_books_to_enrich] 'The Secret Garden': cover_url='https://knigabg.com/pix/28162.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:09:42,146 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:09:42,147 [INFO] ⏭️  Skipping book with valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 19:09:42,149 [INFO] 🔍 [_get_books_to_enrich] 'The Priory of the Orange Tree (The Roots of Chaos, #1)': cover_url='https://images.thenile.io/r1000/9781408883358.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:09:42,149 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:09:42,150 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 19:09:42,153 [INFO] 🔍 [_get_books_to_enrich] 'The Familiar': cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 19:09:42,153 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 19:09:42,153 [INFO] ⏭️  Skipping book with valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 19:09:42,156 [INFO] 🔍 [_get_books_to_enrich] 'The Costume History': cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401...', is_cache_url=True, ends_with_extension=True, contains_extension=False
+2025-12-24 19:09:42,156 [INFO] 🔍 [_get_books_to_enrich] Cache URL analysis: has_isbn_in_path=True, has_numeric_path=False, filename_is_isbn=True, path_segments=['9', '7', '9783836555401']
+2025-12-24 19:09:42,157 [INFO] 🔍 [_get_books_to_enrich] ❌ Cache URL invalid: 'https://www.ciela.com/media/catalog/product/cache/926507dc7f93631a094422215b778fe0/9/7/9783836555401...' - ends_with_extension=True, has_isbn_in_path=True, has_numeric_path=False, filename_is_isbn=True - marking as INVALID
+2025-12-24 19:09:42,157 [INFO] ✅ Added book without valid cover: The Costume History (cover_url='https://www.ciela.com/media/catalog/product/cache/926507dc7f...')
+2025-12-24 19:09:42,157 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 19:09:42,157 [INFO] 📊 Statistics: 4 books WITH valid cover URLs (skipped)
+2025-12-24 19:09:42,157 [INFO] 📊 Statistics: 1 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 19:09:42,157 [INFO] ✅ Found 1 books to enrich
+2025-12-24 19:09:42,157 [INFO]
+📚 Found 1 books to enrich
+2025-12-24 19:09:42,157 [INFO]
+🚀 Starting enrichment...
+2025-12-24 19:09:42,157 [INFO]    Estimated time: ~0.0 minutes
+2025-12-24 19:09:42,157 [INFO]    Estimated cost: ~$0.00
+2025-12-24 19:09:45,362 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 19:09:46,761 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 19:09:46,762 [INFO] 🔍 [_progress_callback] Book 1/1: 'The Costume History', metadata=found
+2025-12-24 19:09:46,762 [INFO] [1/1] ✅ The Costume History (quality: 0.95)
+2025-12-24 19:09:46,762 [INFO]    📝 Description added
+2025-12-24 19:09:46,762 [INFO] 🔍 [_save_enriched_books] Processing 1 books for saving...
+2025-12-24 19:09:46,762 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Costume History'
+2025-12-24 19:09:46,763 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata']
+2025-12-24 19:09:46,763 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: True
+2025-12-24 19:09:46,771 [INFO] 📝 Updating authors from [] to [Auguste Racinet]
+2025-12-24 19:09:46,801 [INFO] ✅ Updated author to: Auguste Racinet
+2025-12-24 19:09:46,802 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 19:09:46,802 [INFO] 📊 Tracked 0 enriched and 0 skipped books
+2025-12-24 19:09:46,802 [INFO]
+============================================================
+2025-12-24 19:09:46,802 [INFO] ENRICHMENT REPORT
+2025-12-24 19:09:46,802 [INFO] ============================================================
+2025-12-24 19:09:46,802 [INFO] 📊 Statistics:
+2025-12-24 19:09:46,802 [INFO]    Books checked: 1
+2025-12-24 19:09:46,802 [INFO]    Books enriched: 1
+2025-12-24 19:09:46,802 [INFO]    Books failed: 0
+2025-12-24 19:09:46,802 [INFO]    Success rate: 100.0%
+2025-12-24 19:09:46,802 [INFO]
+📝 Content:
+2025-12-24 19:09:46,803 [INFO]    Covers found: 0
+2025-12-24 19:09:46,803 [INFO]    Descriptions added: 1
+2025-12-24 19:09:46,803 [INFO]
+⏱️  Performance:
+2025-12-24 19:09:46,803 [INFO]    Duration: 4.6s
+2025-12-24 19:09:46,803 [INFO]    Speed: 13.0 books/min
+2025-12-24 19:09:46,803 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 19:09:46,803 [INFO] ============================================================
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Виждам, че:
+- Книгата е идентифицирана правилно
+- Обогатяването работи (quality: 0.95)
+- `ai_metadata` е добавен към книгата
+- Авторът е обновен успешно
+- Но `💾 Saved 0 enriched books to database` — книгата не е запазена
+
+Не виждам логове от `update_book` или от проверката дали има `updates`. Проверявам дали има проблем с `updates` дикшънъри или с `update_book` метода:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "if updates:|updated_book = await|Saved.*enriched books|saved_count \+= 1" in "scripts/enrich_books.py" • 4 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `logger.info(f"💾 Saved \{saved\} enriched books to database")` | L221 |
+| `scripts/enrich_books.py` | `if updates:` | L792 |
+| `scripts/enrich_books.py` | `updated_book = await book_update_service.update_book(book['id'], updates)` | L804 |
+| `scripts/enrich_books.py` | `saved_count += 1` | L807 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Не виждам логове от `if updates:` — вероятно `updates` е празен. Добавям логове преди проверката, за да видим какво точно се случва:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 4, lines removed: 1
+
+```diff
+@@ -790,10 +790,13 @@
+                  
+                  # Save to database using book service
++                 logger.info(f"🔍 [_save_enriched_books] Updates dictionary for '{book['title']}': {list(updates.keys())} (count: {len(updates)})")
+                  if updates:
+                      try:
+                          # Log what we're about to update
+-                         logger.debug(f"📝 Updating book '{book['title']}' with fields: {list(updates.keys())}")
++                         logger.info(f"📝 Updating book '{book['title']}' with fields: {list(updates.keys())}")
+                          if 'cover_url' in updates:
+                              logger.info(f"🖼️  Will update cover_url to: {updates['cover_url']}")
++                 else:
++                     logger.warning(f"⚠️  [_save_enriched_books] No updates to save for '{book['title']}' - updates dictionary is empty")
+                          
+                          # Use book_service directly (not facade) for simpler updates
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add logging to show updates dictionary before saving to debug why books are not saved" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add logging to show updates dictionary before saving to debug why books are not saved" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 98ba0dc] Add logging to show updates dictionary before saving to debug why books are not saved
+ 2 files changed, 261 insertions(+), 1 deletion(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   8279de6..98ba0dc  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавих логове преди проверката `if updates:` за да видим дали `updates` е празен. При следващото изпълнение ще видим:
+- Какви полета са в `updates` дикшънъри
+- Защо книгата не се запазва (ако `updates` е празен)
+
+Промените са качени в git main. Опитайте отново и споделете резултатите — ще видим защо `updates` е празен и защо книгата не се запазва в базата данни, въпреки че обогатяването работи.
+
+Вероятно `merge_metadata_into_book` не добавя полетата към `updates` правилно, или има проблем с логиката за обновяване на полетата. Логовете ще покажат какво точно се случва.
+
+---
+

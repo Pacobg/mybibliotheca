@@ -796,8 +796,6 @@ class EnrichmentCommand:
                         logger.info(f"📝 Updating book '{book['title']}' with fields: {list(updates.keys())}")
                         if 'cover_url' in updates:
                             logger.info(f"🖼️  Will update cover_url to: {updates['cover_url']}")
-                else:
-                    logger.warning(f"⚠️  [_save_enriched_books] No updates to save for '{book['title']}' - updates dictionary is empty")
                         
                         # Use book_service directly (not facade) for simpler updates
                         from app.services.kuzu_book_service import KuzuBookService
@@ -805,6 +803,8 @@ class EnrichmentCommand:
                         
                         # Update book using the service's update_book method
                         updated_book = await book_update_service.update_book(book['id'], updates)
+                else:
+                    logger.warning(f"⚠️  [_save_enriched_books] No updates to save for '{book['title']}' - updates dictionary is empty")
                         
                         if updated_book:
                             saved_count += 1
