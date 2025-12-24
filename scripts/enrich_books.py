@@ -168,6 +168,32 @@ class EnrichmentCommand:
         if not self.args.dry_run:
             saved = await self._save_enriched_books(books)
             logger.info(f"💾 Saved {saved} enriched books to database")
+            
+            # Update enrichment status file with enriched/skipped books
+            try:
+                enrichment_status_file = Path('data/enrichment_status.json')
+                if enrichment_status_file.exists():
+                    with open(enrichment_status_file, 'r') as f:
+                        status = json.load(f)
+                    
+                    # Add enriched and skipped books to status
+                    if 'enriched_books' not in status:
+                        status['enriched_books'] = []
+                    if 'skipped_books' not in status:
+                        status['skipped_books'] = []
+                    
+                    status['enriched_books'].extend(self.enriched_books_list)
+                    status['skipped_books'].extend(self.skipped_books_list)
+                    status['processed'] = self.stats['books_checked']
+                    status['enriched'] = self.stats['books_enriched']
+                    status['failed'] = self.stats['books_failed']
+                    
+                    with open(enrichment_status_file, 'w') as f:
+                        json.dump(status, f, indent=2)
+                    
+                    logger.info(f"📊 Tracked {len(self.enriched_books_list)} enriched and {len(self.skipped_books_list)} skipped books")
+            except Exception as e:
+                logger.warning(f"Could not update enrichment status file: {e}")
         
         # Show final report
         self._show_report()
