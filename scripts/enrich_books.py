@@ -418,14 +418,19 @@ class EnrichmentCommand:
                                     # Broken cache URLs like "cache/926507dc7f..." are invalid
                                     is_cache_url = '/cache/' in cover_url
                                     
+                                    logger.info(f"🔍 [_get_books_to_enrich] '{title}': cover_url='{cover_url[:100]}...', is_cache_url={is_cache_url}, ends_with_extension={ends_with_extension}, contains_extension={contains_extension}")
+                                    
                                     if is_cache_url:
                                         # Cache URLs must end with extension
                                         has_valid_cover = ends_with_extension
                                         if not has_valid_cover:
-                                            logger.info(f"🔍 [_get_books_to_enrich] Cache URL without extension: '{cover_url[:80]}...' (ends_with_extension={ends_with_extension})")
+                                            logger.info(f"🔍 [_get_books_to_enrich] ❌ Cache URL without extension: '{cover_url[:100]}...' - marking as INVALID")
+                                        else:
+                                            logger.info(f"🔍 [_get_books_to_enrich] ✅ Cache URL with extension: '{cover_url[:100]}...' - marking as VALID")
                                     else:
                                         # Non-cache URLs: check if ends with extension or contains it before query params
                                         has_valid_cover = ends_with_extension or contains_extension
+                                        logger.info(f"🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover={has_valid_cover}")
                                 
                                 # Double-check: only add books WITHOUT valid covers
                                 if not has_valid_cover:
