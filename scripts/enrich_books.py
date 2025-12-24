@@ -601,18 +601,41 @@ class EnrichmentCommand:
                                 logger.info(f"   Cover URL updated to: {updates['cover_url']}")
                             
                             # Track that this book was enriched
-                            # Store enrichment timestamp in custom_metadata or use a separate tracking mechanism
+                            # Store enrichment timestamp in custom_metadata JSON field
                             try:
-                                # Try to update enrichment tracking
-                                enrichment_tracking_query = """
+                                # Get current custom_metadata
+                                get_metadata_query = """
                                 MATCH (b:Book {id: $book_id})
-                                SET b.last_enriched_at = timestamp(),
-                                    b.enriched_by = 'ai_perplexity'
+                                RETURN b.custom_metadata as custom_metadata
+                                """
+                                result = safe_execute_kuzu_query(get_metadata_query, {"book_id": book['id']})
+                                
+                                custom_metadata = {}
+                                if result and result.has_next():
+                                    row = result.get_next()
+                                    import json
+                                    if row[0]:
+                                        try:
+                                            custom_metadata = json.loads(row[0]) if isinstance(row[0], str) else row[0]
+                                        except:
+                                            custom_metadata = {}
+                                
+                                # Add enrichment tracking
+                                custom_metadata['last_enriched_at'] = datetime.now().isoformat()
+                                custom_metadata['enriched_by'] = 'ai_perplexity'
+                                
+                                # Update custom_metadata
+                                update_tracking_query = """
+                                MATCH (b:Book {id: $book_id})
+                                SET b.custom_metadata = $custom_metadata
                                 RETURN b.id
                                 """
                                 safe_execute_kuzu_query(
-                                    enrichment_tracking_query,
-                                    {"book_id": book['id']}
+                                    update_tracking_query,
+                                    {
+                                        "book_id": book['id'],
+                                        "custom_metadata": json.dumps(custom_metadata)
+                                    }
                                 )
                             except Exception as e:
                                 # If tracking fails, log but don't fail the enrichment
