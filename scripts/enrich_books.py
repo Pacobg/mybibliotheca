@@ -220,7 +220,8 @@ class EnrichmentCommand:
             if result and hasattr(result, 'has_next'):
                 while result.has_next():
                     row = result.get_next()
-                    if len(row) >= 10:
+                    # Check if we have enough columns (9 for old query, 10 for new with language)
+                    if len(row) >= 9:
                         book_id = row[0]
                         title = row[1] or ''
                         
@@ -228,6 +229,9 @@ class EnrichmentCommand:
                         authors = await self.book_repo.get_book_authors(book_id)
                         author_names = [a.get('name', '') for a in authors if a.get('name')]
                         author = ', '.join(author_names) if author_names else 'Unknown'
+                        
+                        # Handle both old (9 columns) and new (10 columns) query formats
+                        language = row[9] if len(row) > 9 else None
                         
                         book_dict = {
                             'id': book_id,
@@ -240,20 +244,21 @@ class EnrichmentCommand:
                             'isbn10': row[6],
                             'page_count': row[7],
                             'published_date': row[8],
-                            'language': row[9] if len(row) > 9 else None,
+                            'language': language,
                         }
                         
                         # Only include books with title and author
-                        # Prefer Bulgarian books (language='bg' or Cyrillic in title)
                         if book_dict['title'] and book_dict['author'] != 'Unknown':
                             # Check if it's a Bulgarian book
+                            # Bulgarian books have Cyrillic characters in title OR language='bg'
                             has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in title)
                             is_bg_language = book_dict.get('language') == 'bg'
                             
                             if has_cyrillic or is_bg_language:
                                 books.append(book_dict)
+                                logger.debug(f"✅ Added Bulgarian book: {title}")
                             else:
-                                logger.debug(f"Skipping non-Bulgarian book: {title}")
+                                logger.debug(f"⏭️  Skipping non-Bulgarian book: {title} (language: {language})")
             
             logger.info(f"✅ Found {len(books)} books to enrich")
             return books
