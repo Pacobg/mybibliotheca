@@ -132,6 +132,7 @@ class EnrichmentService:
         self, 
         books: List[Dict],
         force: bool = False,
+        require_cover: bool = False,
         progress_callback: Optional[callable] = None
     ) -> Dict:
         """
@@ -139,12 +140,17 @@ class EnrichmentService:
         
         Args:
             books: List of book dictionaries
+            force: Force enrichment even if book already has data
+            require_cover: If True, books must have valid cover URL to be considered sufficient
             progress_callback: Optional callback for progress updates
                               Signature: callback(processed, total, current_book, metadata)
             
         Returns:
             Statistics dictionary
         """
+        
+        # Store require_cover flag for use in enrich_single_book
+        self._require_cover = require_cover
         
         stats = {
             'total': len(books),
