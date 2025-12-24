@@ -884,42 +884,65 @@ class EnrichmentCommand:
                         
                         logger.info(f"🔍 [_save_enriched_books] Cover URL validation result for '{book['title']}': url_is_accessible={url_is_accessible}, new_cover_url='{new_cover_url[:80] if new_cover_url else 'None'}...'")
                         
-                        # Only try to download if URL is accessible
                         # Try to download cover - don't rely on HEAD validation alone
                         # Many servers block HEAD but allow GET
                         logger.info(f"🔍 [_save_enriched_books] Starting cover download for '{book['title']}': {new_cover_url[:80]}...")
-                        try:
-                            # Download and save cover image directly using requests
-                            # This avoids Flask app context issues
-                            import requests
-                            import uuid
-                            from pathlib import Path
-                            
-                            # Browser-like headers to avoid 403 Forbidden
-                            headers = {
-                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                                'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-                                'Accept-Language': 'en-US,en;q=0.9',
-                                'Referer': 'https://www.google.com/',
-                            }
-                            
-                            # Get the covers directory
-                            covers_dir = Path('covers')
-                            if not covers_dir.exists():
-                                covers_dir.mkdir(parents=True, exist_ok=True)
-                                logger.info(f"📁 Created covers directory: {covers_dir.absolute()}")
-                            
-                            # Download the image with browser headers
-                            logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
-                            response = requests.get(new_cover_url, timeout=10, stream=True, headers=headers)
-                            response.raise_for_status()
-                            
-                            # Check content type
-                            content_type = response.headers.get('content-type', '').lower()
-                            if 'image' not in content_type:
-                                logger.warning(f"⚠️  URL returned non-image content-type: {content_type}")
-                                local_cover_path = None
-                            else:
+                        
+                        # List of cover URLs to try (original + fallbacks)
+                        import requests
+                        import uuid
+                        from pathlib import Path
+                        
+                        cover_urls_to_try = [new_cover_url]
+                        
+                        # Add Open Library fallback based on ISBN (always accessible)
+                        isbn = enriched.get('isbn13') or enriched.get('isbn10') or book.get('isbn13') or book.get('isbn10')
+                        if isbn:
+                            # Clean ISBN
+                            clean_isbn = ''.join(c for c in str(isbn) if c.isdigit() or c.upper() == 'X')
+                            if clean_isbn:
+                                # Open Library covers - always accessible, no auth required
+                                ol_cover = f"https://covers.openlibrary.org/b/isbn/{clean_isbn}-L.jpg"
+                                cover_urls_to_try.append(ol_cover)
+                                logger.info(f"📚 Added Open Library fallback cover URL: {ol_cover}")
+                        
+                        # Get the covers directory (once, outside loop)
+                        covers_dir = Path('covers')
+                        if not covers_dir.exists():
+                            covers_dir.mkdir(parents=True, exist_ok=True)
+                            logger.info(f"📁 Created covers directory: {covers_dir.absolute()}")
+                        
+                        # Browser-like headers to avoid 403 Forbidden
+                        headers = {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                            'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                            'Accept-Language': 'en-US,en;q=0.9',
+                            'Referer': 'https://www.google.com/',
+                        }
+                        
+                        local_cover_path = None
+                        for try_url in cover_urls_to_try:
+                            if local_cover_path:
+                                break  # Already found a working cover
+                                
+                            logger.info(f"🔍 Trying cover URL: {try_url[:80]}...")
+                            try:
+                                # Download the image with browser headers
+                                response = requests.get(try_url, timeout=10, stream=True, headers=headers)
+                                response.raise_for_status()
+                                
+                                # Check content type
+                                content_type = response.headers.get('content-type', '').lower()
+                                if 'image' not in content_type:
+                                    logger.warning(f"⚠️  URL returned non-image content-type: {content_type}")
+                                    continue  # Try next URL
+                                
+                                # Check if image has content (Open Library returns 1x1 pixel for missing covers)
+                                content_length = int(response.headers.get('content-length', 0))
+                                if content_length < 1000:  # Less than 1KB is probably a placeholder
+                                    logger.warning(f"⚠️  Image too small ({content_length} bytes), likely placeholder - trying next URL")
+                                    continue
+                                
                                 # Determine file extension from content type
                                 if 'jpeg' in content_type or 'jpg' in content_type:
                                     ext = '.jpg'
@@ -942,27 +965,31 @@ class EnrichmentCommand:
                                         f.write(chunk)
                                 
                                 local_cover_path = f"/covers/{filename}"
-                                logger.info(f"✅ Cover downloaded and saved: {local_cover_path} (from {new_cover_url[:60]}...)")
-                            
-                            if local_cover_path and local_cover_path.startswith('/covers/'):
-                                # Successfully downloaded and cached locally
-                                logger.info(f"✅ Cover downloaded and cached locally: {local_cover_path}")
+                                logger.info(f"✅ Cover downloaded and saved: {local_cover_path} (from {try_url[:60]}...)")
                                 
-                                # Update if:
-                                # 1. No current cover, OR
-                                # 2. Current cover is invalid (local path or broken cache URL), OR
-                                # 3. Force flag is set
-                                if (not current_cover_url or not current_is_valid or self.args.force):
-                                    updates['cover_url'] = local_cover_path
-                                    logger.info(f"🖼️  Updating cover URL for: {book['title']} -> {local_cover_path}")
-                                elif current_cover_url and current_is_valid:
-                                    logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
-                            else:
-                                logger.warning(f"⚠️  Failed to download cover image for '{book['title']}': {local_cover_path}")
-                        except requests.exceptions.HTTPError as e:
-                            logger.warning(f"⚠️  HTTP error downloading cover for '{book['title']}': {e.response.status_code if e.response else 'unknown'}")
-                        except Exception as e:
-                            logger.error(f"❌ Error downloading cover image for '{book['title']}': {e}")
+                            except requests.exceptions.HTTPError as e:
+                                status = e.response.status_code if e.response else 'unknown'
+                                logger.warning(f"⚠️  HTTP error {status} for URL: {try_url[:60]}... - trying next")
+                                continue  # Try next URL
+                            except Exception as e:
+                                logger.warning(f"⚠️  Error downloading from {try_url[:60]}...: {e} - trying next")
+                                continue  # Try next URL
+                        
+                        # After trying all URLs, update if we got a valid cover
+                        if local_cover_path and local_cover_path.startswith('/covers/'):
+                            logger.info(f"✅ Cover downloaded and cached locally: {local_cover_path}")
+                            
+                            # Update if:
+                            # 1. No current cover, OR
+                            # 2. Current cover is invalid (local path or broken cache URL), OR
+                            # 3. Force flag is set
+                            if (not current_cover_url or not current_is_valid or self.args.force):
+                                updates['cover_url'] = local_cover_path
+                                logger.info(f"🖼️  Updating cover URL for: {book['title']} -> {local_cover_path}")
+                            elif current_cover_url and current_is_valid:
+                                logger.debug(f"⏭️  Skipping cover update - already has valid URL")
+                        else:
+                            logger.warning(f"⚠️  Could not download cover for '{book['title']}' from any source")
                     else:
                         logger.warning(f"⚠️  Skipping invalid cover URL for '{book['title']}': {new_cover_url} (not http/https)")
                 
