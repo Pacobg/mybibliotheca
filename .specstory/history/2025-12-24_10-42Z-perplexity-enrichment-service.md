@@ -25591,3 +25591,208 @@ _**Agent (model composer-1, mode Agent)**_
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+https://www.ciela.com/media/catalog/product/cache/32bb0748c82325b02c55df3c2a9a9856/t/h/the_costume_history.jpg   е истинската картинка а тази не показва нищо https://www.ciela.com/media/catalog/product/cache/926507dc7f... 
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+В базата има невалиден cover URL (`https://www.ciela.com/media/catalog/product/cache/926507dc7f...`), който не зарежда изображение. Трябва да разпознаваме такива случаи и да ги третираме като липсващ cover. Подобрявам логиката за валидация на cover URLs, за да проверяваме дали URL-ът наистина зарежда изображение:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "How to check if a URL returns a valid image or if image URL is broken?" • **15** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/utils/image_processing.py` | L108-208 |
+| `app/utils/image_processing.py` | L67-131 |
+| `app/services/unified_cover_manager.py` | L28-310 |
+| `docs/BIBLIOMAN_COVER_FIX.md` | L51 |
+| `app/services/audiobookshelf_import_service.py` | L22-1775 |
+| `app/utils/image_processing.py` | L131-220 |
+| `app/utils/book_utils.py` | L872-1039 |
+| `app/services/cover_service.py` | L105-359 |
+| `app/utils.py` | L194-430 |
+| `app/services/unified_cover_manager.py` | L35-310 |
+| `app/templates/macros/cover_input.html` | L35 |
+| `docs/BIBLIOMAN_COVER_FIX.md` | L45-92 |
+| `app/utils/book_utils.py` | L107-204 |
+| `app/utils/book_utils.py` | L117-204 |
+| `app/utils/book_utils.py` | L224-419 |
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+В базата има невалиден cover URL (`https://www.ciela.com/media/catalog/product/cache/926507dc7f...`), който не зарежда изображение. Подобрявам логиката за валидация на cover URLs, за да разпознаваме такива случаи:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 16, lines removed: 1
+
+```diff
+@@ -398,5 +398,20 @@
+                              if hasattr(self.args, 'no_cover_only') and self.args.no_cover_only:
+                                  cover_url = book_dict.get('cover_url', '')
+-                                 has_valid_cover = cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://'))
++                                 
++                                 # Check if cover URL is valid:
++                                 # 1. Must start with http:// or https://
++                                 # 2. Must end with image extension (.jpg, .jpeg, .png, .webp, .gif) OR
++                                 #    contain image extension in path (for URLs with query params)
++                                 has_valid_cover = False
++                                 if cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')):
++                                     # Check if URL ends with image extension or contains it in path
++                                     cover_url_lower = cover_url.lower()
++                                     image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
++                                     # Check if URL ends with extension or contains it before query params
++                                     if any(cover_url_lower.endswith(ext) or f'{ext}?' in cover_url_lower or f'{ext}&amp;' in cover_url_lower for ext in image_extensions):
++                                         # Additional check: exclude suspicious cache URLs that don't end with proper extension
++                                         # These are often broken cache URLs like "cache/926507dc7f..."
++                                         if not ('/cache/' in cover_url and not any(cover_url_lower.endswith(ext) for ext in image_extensions)):
++                                             has_valid_cover = True
+                                  
+                                  # Double-check: only add books WITHOUT valid covers
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 12, lines removed: 2
+
+```diff
+@@ -366,7 +366,17 @@
+          )
+          
+-         # Check cover - must be a valid URL (starts with http/https), not just a local path
++         # Check cover - must be a valid URL (starts with http/https) AND ends with image extension
+          cover_url = book_data.get('cover') or book_data.get('cover_url') or ''
+-         has_cover = bool(cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')))
++         has_cover = False
++         if cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')):
++             # Check if URL ends with image extension or contains it in path
++             cover_url_lower = cover_url.lower()
++             image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
++             # Check if URL ends with extension or contains it before query params
++             if any(cover_url_lower.endswith(ext) or f'{ext}?' in cover_url_lower or f'{ext}&amp;' in cover_url_lower for ext in image_extensions):
++                 # Additional check: exclude suspicious cache URLs that don't end with proper extension
++                 # These are often broken cache URLs like "cache/926507dc7f..."
++                 if not ('/cache/' in cover_url and not any(cover_url_lower.endswith(ext) for ext in image_extensions)):
++                     has_cover = True
+          
+          has_publisher = bool(book_data.get('publisher'))
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 2 files</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+- `app/services/enrichment_service.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Improve cover URL validation: require image extension and exclude broken cache URLs" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Improve cover URL validation: require image extension and exclude broken cache URLs" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 948c5de] Improve cover URL validation: require image extension and exclude broken cache URLs
+ 3 files changed, 322 insertions(+), 3 deletions(-)
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+

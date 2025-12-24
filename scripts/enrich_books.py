@@ -402,17 +402,26 @@ class EnrichmentCommand:
                                 # 1. Must start with http:// or https://
                                 # 2. Must end with image extension (.jpg, .jpeg, .png, .webp, .gif) OR
                                 #    contain image extension in path (for URLs with query params)
+                                # 3. Exclude cache URLs that don't end with proper extension (broken cache URLs)
                                 has_valid_cover = False
                                 if cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')):
-                                    # Check if URL ends with image extension or contains it in path
                                     cover_url_lower = cover_url.lower()
                                     image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
-                                    # Check if URL ends with extension or contains it before query params
-                                    if any(cover_url_lower.endswith(ext) or f'{ext}?' in cover_url_lower or f'{ext}&' in cover_url_lower for ext in image_extensions):
-                                        # Additional check: exclude suspicious cache URLs that don't end with proper extension
-                                        # These are often broken cache URLs like "cache/926507dc7f..."
-                                        if not ('/cache/' in cover_url and not any(cover_url_lower.endswith(ext) for ext in image_extensions)):
-                                            has_valid_cover = True
+                                    
+                                    # Check if URL ends with image extension
+                                    ends_with_extension = any(cover_url_lower.endswith(ext) for ext in image_extensions)
+                                    
+                                    # Check if URL contains image extension before query params
+                                    contains_extension = any(f'{ext}?' in cover_url_lower or f'{ext}&' in cover_url_lower for ext in image_extensions)
+                                    
+                                    # Special case: cache URLs must end with extension to be valid
+                                    # Broken cache URLs like "cache/926507dc7f..." are invalid
+                                    if '/cache/' in cover_url:
+                                        # Cache URLs must end with extension
+                                        has_valid_cover = ends_with_extension
+                                    else:
+                                        # Non-cache URLs: check if ends with extension or contains it before query params
+                                        has_valid_cover = ends_with_extension or contains_extension
                                 
                                 # Double-check: only add books WITHOUT valid covers
                                 if not has_valid_cover:

@@ -369,15 +369,23 @@ class EnrichmentService:
         cover_url = book_data.get('cover') or book_data.get('cover_url') or ''
         has_cover = False
         if cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')):
-            # Check if URL ends with image extension or contains it in path
             cover_url_lower = cover_url.lower()
             image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
-            # Check if URL ends with extension or contains it before query params
-            if any(cover_url_lower.endswith(ext) or f'{ext}?' in cover_url_lower or f'{ext}&' in cover_url_lower for ext in image_extensions):
-                # Additional check: exclude suspicious cache URLs that don't end with proper extension
-                # These are often broken cache URLs like "cache/926507dc7f..."
-                if not ('/cache/' in cover_url and not any(cover_url_lower.endswith(ext) for ext in image_extensions)):
-                    has_cover = True
+            
+            # Check if URL ends with image extension
+            ends_with_extension = any(cover_url_lower.endswith(ext) for ext in image_extensions)
+            
+            # Check if URL contains image extension before query params
+            contains_extension = any(f'{ext}?' in cover_url_lower or f'{ext}&' in cover_url_lower for ext in image_extensions)
+            
+            # Special case: cache URLs must end with extension to be valid
+            # Broken cache URLs like "cache/926507dc7f..." are invalid
+            if '/cache/' in cover_url:
+                # Cache URLs must end with extension
+                has_cover = ends_with_extension
+            else:
+                # Non-cache URLs: check if ends with extension or contains it before query params
+                has_cover = ends_with_extension or contains_extension
         
         has_publisher = bool(book_data.get('publisher'))
         has_isbn = bool(book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10'))
