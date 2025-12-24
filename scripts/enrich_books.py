@@ -496,10 +496,24 @@ class EnrichmentCommand:
                             logger.info(f"🧹 Cleaning description citations for: {book['title']}")
                 
                 # Update cover_url if missing or force update
+                # Only update if new cover_url is a valid URL (http/https), not a local path
                 if enriched.get('cover_url'):
-                    # Always update cover if AI found one (even if exists, might be better quality)
-                    if not book.get('cover_url') or self.args.force:
-                        updates['cover_url'] = enriched['cover_url']
+                    new_cover_url = enriched['cover_url']
+                    # Check if it's a valid URL (not a local path like /covers/...)
+                    is_valid_url = new_cover_url.startswith('http://') or new_cover_url.startswith('https://')
+                    current_cover_url = book.get('cover_url', '')
+                    current_is_local = current_cover_url.startswith('/covers/') if current_cover_url else True
+                    
+                    # Update if:
+                    # 1. No current cover, OR
+                    # 2. Current is local path and new is valid URL, OR
+                    # 3. Force flag is set
+                    if (not current_cover_url or (current_is_local and is_valid_url) or self.args.force):
+                        if is_valid_url:
+                            updates['cover_url'] = new_cover_url
+                            logger.info(f"🖼️  Updating cover URL for: {book['title']}")
+                        else:
+                            logger.debug(f"⚠️  Skipping local cover path: {new_cover_url}")
                 
                 # Publisher is handled separately as a relationship
                 publisher_name = enriched.get('publisher')
@@ -586,16 +600,35 @@ class EnrichmentCommand:
                     ai_author = enriched.get('author')
                 
                 # Normalize author one more time to be sure
+                # BUT: Only use Bulgarian author if book title is also Bulgarian
+                title = book.get('title', '') or enriched.get('title', '')
+                has_cyrillic_title = any('\u0400' <= char <= '\u04FF' for char in title)
+                
                 if ai_author:
                     import re
-                    # If multiple authors, prefer Bulgarian/Cyrillic
+                    # If multiple authors, prefer Bulgarian/Cyrillic ONLY if title is Bulgarian
                     if ',' in ai_author or ';' in ai_author:
                         authors_list = [a.strip() for a in re.split(r'[,;]', ai_author)]
-                        cyrillic_authors = [a for a in authors_list if any('\u0400' <= char <= '\u04FF' for char in a)]
-                        if cyrillic_authors:
-                            ai_author = cyrillic_authors[0]
+                        if has_cyrillic_title:
+                            # Title is Bulgarian - prefer Bulgarian author
+                            cyrillic_authors = [a for a in authors_list if any('\u0400' <= char <= '\u04FF' for char in a)]
+                            if cyrillic_authors:
+                                ai_author = cyrillic_authors[0]
+                            else:
+                                ai_author = authors_list[0]
                         else:
+                            # Title is English - keep English author (first one)
                             ai_author = authors_list[0]
+                    elif has_cyrillic_title:
+                        # Single author, Bulgarian title - OK to use Bulgarian author
+                        pass
+                    else:
+                        # Single author, English title - if AI returned Bulgarian, keep original English author
+                        has_cyrillic_author = any('\u0400' <= char <= '\u04FF' for char in ai_author)
+                        if has_cyrillic_author:
+                            # AI returned Bulgarian author for English book - don't update
+                            logger.debug(f"⚠️  Skipping Bulgarian author '{ai_author}' for English book '{title}'")
+                            ai_author = None
                 
                 if ai_author:
                     try:
