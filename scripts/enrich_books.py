@@ -1035,16 +1035,12 @@ class EnrichmentCommand:
                         # After trying all URLs, update if we got a valid cover
                         if local_cover_path and local_cover_path.startswith('/covers/'):
                             logger.info(f"✅ Cover downloaded and cached locally: {local_cover_path}")
+                            logger.info(f"🔍 Cover update check for '{book['title']}': current_cover_url={current_cover_url[:60] if current_cover_url else 'None'}..., current_is_valid={current_is_valid}, force={self.args.force}")
                             
-                            # Update if:
-                            # 1. No current cover, OR
-                            # 2. Current cover is invalid (local path or broken cache URL), OR
-                            # 3. Force flag is set
-                            if (not current_cover_url or not current_is_valid or self.args.force):
-                                updates['cover_url'] = local_cover_path
-                                logger.info(f"🖼️  Updating cover URL for: {book['title']} -> {local_cover_path}")
-                            elif current_cover_url and current_is_valid:
-                                logger.debug(f"⏭️  Skipping cover update - already has valid URL")
+                            # Always update if we successfully downloaded a new cover
+                            # The book was selected for enrichment because it doesn't have a valid cover
+                            updates['cover_url'] = local_cover_path
+                            logger.info(f"🖼️  Updating cover URL for: {book['title']} -> {local_cover_path}")
                         else:
                             logger.warning(f"⚠️  Could not download cover for '{book['title']}' from any source")
                     else:

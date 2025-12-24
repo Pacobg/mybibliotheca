@@ -36199,14 +36199,66 @@ _**Agent (model composer-1, mode Agent)**_
 ---
 
 
+Търся къде е имплементирано търсенето на covers по ISBN и по име/автор в UI-то, за да го интегрираме в enrichment скрипта:
+
 
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="codebase_search">
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
 <details>
-<summary>Tool use: **codebase_search**</summary>
+                <summary>Tool use: **codebase_search** • Searched codebase "Where is the cover image search by ISBN and by title author implemented in the UI?" • **15** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/templates/view_book_enhanced.html` | L2270-2311 |
+| `app/templates/view_book_enhanced.html` | L2227-2275 |
+| `app/templates/add_book.html` | L1006-1060 |
+| `app/routes/book_routes.py` | L638-803 |
+| `app/utils/book_utils.py` | L205-313 |
+| `app/routes/import_routes.py` | L3804-3918 |
+| `app/utils/book_search.py` | L548-885 |
+| `app/api/books.py` | L507-642 |
+| `app/routes/book_routes.py` | L640-867 |
+| `app/routes/book_routes.py` | L4622-4984 |
+| `app/utils/book_search.py` | L885-963 |
+| `app/templates/add_book_fast.html` | L542-580 |
+| `app/utils/book_utils.py` | L808-1039 |
+| `app/templates/view_book_enhanced.html` | L2490-2537 |
+| `app/templates/add_book.html` | L1266-1303 |
 
-Status: **loading**
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "cover_candidates|get_best_cover_for_book" in "app/routes/book_routes.py" • 9 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/routes/book_routes.py` | `from app.utils.book_utils import get_best_cover_for_book` | L23 |
+| `app/routes/book_routes.py` | `best_cover = get_best_cover_for_book(isbn=isbn,` | L682 |
+| `app/routes/book_routes.py` | `best_cover = get_best_cover_for_book(isbn=isbn,` | L768 |
+| `app/routes/book_routes.py` | `from app.utils.book_utils import get_best_cover_for_book` | L1550 |
+| `app/routes/book_routes.py` | `cov = get_best_cover_for_book(isbn=best_isbn, title=doc_title, author=', '.join(doc_authors) if doc_authors else None)` | L1551 |
+| `app/routes/book_routes.py` | `@book_bp.route('/cover_candidates', methods=['GET'])` | L1749 |
+| `app/routes/book_routes.py` | `def cover_candidates():` | L1751 |
+| `app/routes/book_routes.py` | `from app.utils.book_utils import get_cover_candidates, normalize_cover_url` | L1763 |
+| `app/routes/book_routes.py` | `cands = get_cover_candidates(isbn=isbn or None, title=title or None, author=author or None) or []` | L1764 |
 
 
 </details>
@@ -36220,14 +36272,12 @@ Status: **loading**
 
 
 
+
+
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="grep">
-<details>
-<summary>Tool use: **grep**</summary>
-
-Status: **loading**
-
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/utils/book_utils.py</summary>
 
 </details>
 </tool-use>
@@ -36240,14 +36290,12 @@ Status: **loading**
 
 
 
+
+
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="read_file">
-<details>
-<summary>Tool use: **read_file**</summary>
-
-Status: **loading**
-
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/utils/book_utils.py</summary>
 
 </details>
 </tool-use>
@@ -36260,14 +36308,30 @@ Status: **loading**
 
 
 
+
+
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="read_file">
-<details>
-<summary>Tool use: **read_file**</summary>
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/utils/book_utils.py</summary>
 
-Status: **loading**
+</details>
+</tool-use>
 
+---
+
+
+
+---
+
+
+Интегриране на `get_cover_candidates` в enrichment скрипта за по-добри резултати:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
 
 </details>
 </tool-use>
@@ -36280,14 +36344,138 @@ Status: **loading**
 
 
 
+
+
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="read_file">
-<details>
-<summary>Tool use: **read_file**</summary>
+<tool-use data-tool-type="write" data-tool-name="search_replace">
 
-Status: **loading**
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
 
+**Chunk 1**
+Lines added: 42, lines removed: 27
+
+```diff
+@@ -889,57 +889,72 @@
+                          logger.info(f"🔍 [_save_enriched_books] Starting cover download for '{book['title']}': {new_cover_url[:80]}...")
+                          
+-                         # List of cover URLs to try (original + fallbacks)
++                         # Use the existing cover search system (same as UI)
+                          import requests
+                          import uuid
+                          import re
+                          from pathlib import Path
+                          
+-                         cover_urls_to_try = [new_cover_url]
+-                         
+-                         # Check if this is a Bulgarian book (title contains Cyrillic)
++                         # Get ISBN and author for cover search
++                         isbn = enriched.get('isbn13') or enriched.get('isbn10') or book.get('isbn13') or book.get('isbn10')
+                          title = book.get('title', '')
+-                         is_bulgarian = bool(re.search(r'[\u0400-\u04FF]', title))
++                         author = book.get('author', '') or (enriched.get('author', '') if enriched else '')
+                          
+-                         # Add ISBN and prepare for fallbacks
+-                         isbn = enriched.get('isbn13') or enriched.get('isbn10') or book.get('isbn13') or book.get('isbn10')
++                         # Clean ISBN
+                          clean_isbn = ''
+                          if isbn:
+                              clean_isbn = ''.join(c for c in str(isbn) if c.isdigit() or c.upper() == 'X')
+                          
+-                         # For Bulgarian books, add Bulgarian bookstore fallbacks FIRST (higher priority)
++                         # Use the same cover search system as the UI
++                         cover_urls_to_try = []
++                         
++                         # First, try Perplexity-provided URL
++                         if new_cover_url:
++                             cover_urls_to_try.append(new_cover_url)
++                             logger.info(f"🔍 Added Perplexity cover URL: {new_cover_url[:80]}...")
++                         
++                         # Then use get_cover_candidates (same as UI search by ISBN/title)
++                         try:
++                             from app.utils.book_utils import get_cover_candidates
++                             
++                             logger.info(f"🔍 Searching for cover candidates using ISBN/title search (same as UI)...")
++                             candidates = get_cover_candidates(
++                                 isbn=clean_isbn if clean_isbn else None,
++                                 title=title if title else None,
++                                 author=author if author else None
++                             )
++                             
++                             if candidates:
++                                 logger.info(f"✅ Found {len(candidates)} cover candidates from Google Books/OpenLibrary")
++                                 # Add candidates in order (Google Books first, then OpenLibrary)
++                                 for cand in candidates:
++                                     cand_url = cand.get('url')
++                                     if cand_url and cand_url not in cover_urls_to_try:
++                                         cover_urls_to_try.append(cand_url)
++                                         logger.info(f"📚 Added candidate: {cand.get('provider', 'unknown')} - {cand_url[:60]}...")
++                             else:
++                                 logger.info(f"⚠️  No cover candidates found from Google Books/OpenLibrary")
++                         except Exception as e:
++                             logger.warning(f"⚠️  Error getting cover candidates: {e}")
++                         
++                         # For Bulgarian books, add Bulgarian bookstore fallbacks as last resort
++                         is_bulgarian = bool(re.search(r'[\u0400-\u04FF]', title))
+                          if is_bulgarian and clean_isbn:
+                              logger.info(f"🇧🇬 Bulgarian book detected, adding Bulgarian bookstore fallbacks for ISBN: {clean_isbn}")
+                              
+-                             # Bulgarian bookstores - try multiple formats
+                              bg_sources = [
+-                                 # ciela.com - direct product image
+                                  f"https://www.ciela.com/media/catalog/product/{clean_isbn[0]}/{clean_isbn[1]}/{clean_isbn}.jpg",
+-                                 # ozone.bg - product images
+                                  f"https://www.ozone.bg/media/catalog/product/{clean_isbn[0]}/{clean_isbn[1]}/{clean_isbn}.jpg",
+-                                 # helikon.bg - product thumbnails
+                                  f"https://www.helikon.bg/uploads/thumbnail/helikon/product/{clean_isbn[-3:-1]}/{clean_isbn[-1]}/{clean_isbn}.jpg",
+-                                 # hermesbooks.bg
+                                  f"https://hermesbooks.bg/media/catalog/product/{clean_isbn[0]}/{clean_isbn[1]}/{clean_isbn}.jpg",
+-                                 # book.store.bg - commonly accessible
+                                  f"https://www.book.store.bg/prdimg/{clean_isbn[-6:]}/{clean_isbn}.jpg",
+-                                 # knigabg.com  
+                                  f"https://knigabg.com/pix/{clean_isbn}.jpg",
+-                                 # booktrading.bg
+-                                 f"https://booktrading.bg/media/catalog/product/{clean_isbn}.jpg",
+-                                 # chitanka.info - free Bulgarian ebooks with covers
+                                  f"https://chitanka.info/thumb/book-cover/{clean_isbn}.250.jpg",
+                              ]
+                              
+                              for bg_url in bg_sources:
+-                                 cover_urls_to_try.append(bg_url)
+-                                 logger.info(f"🇧🇬 Added Bulgarian fallback: {bg_url}")
++                                 if bg_url not in cover_urls_to_try:
++                                     cover_urls_to_try.append(bg_url)
++                                     logger.info(f"🇧🇬 Added Bulgarian fallback: {bg_url}")
+                          
+-                         # Add Open Library fallback based on ISBN (always accessible, works for any language)
+-                         if clean_isbn:
+-                             # Open Library covers - always accessible, no auth required
+-                             ol_cover = f"https://covers.openlibrary.org/b/isbn/{clean_isbn}-L.jpg"
+-                             cover_urls_to_try.append(ol_cover)
+-                             logger.info(f"📚 Added Open Library fallback cover URL: {ol_cover}")
+-                         
+                          # Get the covers directory (once, outside loop)
+                          covers_dir = Path('covers')
+```
+
+</details>
+
+</tool-use>
+
+---
+
+
+
+---
+
+
+Подобряване на проверката за размера на изображението — OpenLibrary понякога връща 0 bytes при redirects:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
 
 </details>
 </tool-use>
@@ -36300,15 +36488,93 @@ Status: **loading**
 
 
 
+
+
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="read_file">
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: undefined, lines removed: 6
+
+```diff
+@@ -988,10 +988,4 @@
+                                      continue  # Try next URL
+                                  
+-                                 # Check if image has content (Open Library returns 1x1 pixel for missing covers)
+-                                 content_length = int(response.headers.get('content-length', 0))
+-                                 if content_length &lt; 1000:  # Less than 1KB is probably a placeholder
+-                                     logger.warning(f"⚠️  Image too small ({content_length} bytes), likely placeholder - trying next URL")
+-                                     continue
+-                                 
+                                  # Determine file extension from content type
+                                  if 'jpeg' in content_type or 'jpg' in content_type:
+```
+
+**Chunk 2**
+Lines added: 16, lines removed: 3
+
+```diff
+@@ -1010,11 +1004,24 @@
+                                  local_path = covers_dir / filename
+                                  
+-                                 # Save the image
++                                 # Download and save the image, checking actual size
++                                 downloaded_size = 0
+                                  with open(local_path, 'wb') as f:
+                                      for chunk in response.iter_content(chunk_size=8192):
+-                                         f.write(chunk)
++                                         if chunk:
++                                             f.write(chunk)
++                                             downloaded_size += len(chunk)
++                                 
++                                 # Check if image has meaningful content (at least 2KB)
++                                 # Open Library and some sources return tiny placeholder images
++                                 if downloaded_size &lt; 2048:  # Less than 2KB is probably a placeholder
++                                     logger.warning(f"⚠️  Image too small ({downloaded_size} bytes), likely placeholder - trying next URL")
++                                     try:
++                                         local_path.unlink()  # Delete the placeholder
++                                     except:
++                                         pass
++                                     continue
+                                  
+                                  local_cover_path = f"/covers/{filename}"
+-                                 logger.info(f"✅ Cover downloaded and saved: {local_cover_path} (from {try_url[:60]}...)")
++                                 logger.info(f"✅ Cover downloaded and saved: {local_cover_path} ({downloaded_size} bytes from {try_url[:60]}...)")
+                                  
+                              except requests.exceptions.HTTPError as e:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
 <details>
-<summary>Tool use: **read_file**</summary>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
 
-Status: **loading**
+- `scripts/enrich_books.py`
+
+Lint results
 
 
+**No lint errors found**
 </details>
 </tool-use>
 
@@ -36320,21 +36586,45 @@ Status: **loading**
 
 
 
+
+
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="search_replace">
-<details>
-<summary>Tool use: **search_replace**</summary>
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Integrate get_cover_candidates (Google Books/OpenLibrary) into enrichment script - same system as UI cover search" && git push origin main</summary>
 
-Status: **loading**
+```bash
+git add -A && git commit -m "Integrate get_cover_candidates (Google Books/OpenLibrary) into enrichment script - same system as UI cover search" && git push origin main
+```
 
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main d78d758] Integrate get_cover_candidates (Google Books/OpenLibrary) into enrichment script - same system as UI cover search
+ 2 files changed, 645 insertions(+), 36 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   c34a9da..d78d758  main -&gt; main
 
+```
 </details>
 </tool-use>
 
 ---
 
 
+
+---
+
+
+Интегрирах същата система за търсене на covers като в UI-то. Сега enrichment скриптът:
+
+1. **Първо опитва** Perplexity-provided cover URL
+2. **След това използва `get_cover_candidates`** — същата функция като в UI-то, която търси в:
+   - Google Books (с различни размери: extraLarge, large, medium, small)
+   - OpenLibrary (L, M, S размери)
+3. **За български книги** добавя българските книжарници като последен fallback
+4. **Проверява действителния размер** на изтегленото изображение (не само header-а), за да пропусне placeholder изображения
+
+Издърпайте промените (`git pull`) и опитайте отново. Системата трябва да намира covers по-успешно, защото използва същите източници като UI търсенето по ISBN и име/автор.
 
 ---
 
