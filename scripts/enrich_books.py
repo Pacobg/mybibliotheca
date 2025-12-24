@@ -805,37 +805,45 @@ class EnrichmentCommand:
                             # Use process_image_from_url to download and cache the cover locally
                             # This will save the image to /covers/ directory and return a local path like /covers/uuid.jpg
                             from app.utils.image_processing import process_image_from_url
-                            from flask import Flask
                             
-                            # Create a minimal Flask app context if needed
-                            app = None
+                            # Create Flask app context for image processing
+                            # Check if we're already in an app context
                             try:
-                                from flask import current_app
-                                app = current_app
+                                from flask import has_app_context, current_app
+                                if has_app_context():
+                                    # Already in app context - use it directly
+                                    logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
+                                    local_cover_path = process_image_from_url(new_cover_url)
+                                else:
+                                    # No app context - create one
+                                    from app import create_app
+                                    app = create_app()
+                                    with app.app_context():
+                                        logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
+                                        local_cover_path = process_image_from_url(new_cover_url)
                             except RuntimeError:
-                                # No app context - create a minimal one for image processing
+                                # No app context available - create one
                                 from app import create_app
                                 app = create_app()
+                                with app.app_context():
+                                    logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
+                                    local_cover_path = process_image_from_url(new_cover_url)
                             
-                            with app.app_context():
-                                logger.info(f"📥 Downloading cover image for '{book['title']}': {new_cover_url[:80]}...")
-                                local_cover_path = process_image_from_url(new_cover_url)
+                            if local_cover_path and local_cover_path.startswith('/covers/'):
+                                # Successfully downloaded and cached locally
+                                logger.info(f"✅ Cover downloaded and cached locally: {local_cover_path}")
                                 
-                                if local_cover_path and local_cover_path.startswith('/covers/'):
-                                    # Successfully downloaded and cached locally
-                                    logger.info(f"✅ Cover downloaded and cached locally: {local_cover_path}")
-                                    
-                                    # Update if:
-                                    # 1. No current cover, OR
-                                    # 2. Current cover is invalid (local path or broken cache URL), OR
-                                    # 3. Force flag is set
-                                    if (not current_cover_url or not current_is_valid or self.args.force):
-                                        updates['cover_url'] = local_cover_path
-                                        logger.info(f"🖼️  Updating cover URL for: {book['title']} -> {local_cover_path}")
-                                    elif current_cover_url and current_is_valid:
-                                        logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
-                                else:
-                                    logger.warning(f"⚠️  Failed to download cover image for '{book['title']}': {local_cover_path}")
+                                # Update if:
+                                # 1. No current cover, OR
+                                # 2. Current cover is invalid (local path or broken cache URL), OR
+                                # 3. Force flag is set
+                                if (not current_cover_url or not current_is_valid or self.args.force):
+                                    updates['cover_url'] = local_cover_path
+                                    logger.info(f"🖼️  Updating cover URL for: {book['title']} -> {local_cover_path}")
+                                elif current_cover_url and current_is_valid:
+                                    logger.debug(f"⏭️  Skipping cover update for '{book['title']}' - already has valid URL: {current_cover_url[:80]}...")
+                            else:
+                                logger.warning(f"⚠️  Failed to download cover image for '{book['title']}': {local_cover_path}")
                         except Exception as e:
                             logger.error(f"❌ Error downloading cover image for '{book['title']}': {e}", exc_info=True)
                             # Fallback: if download fails, still try to save the external URL if it's accessible

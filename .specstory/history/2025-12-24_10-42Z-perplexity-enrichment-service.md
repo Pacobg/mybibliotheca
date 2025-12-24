@@ -29878,14 +29878,107 @@ _**Agent (model composer-1, mode Agent)**_
 ---
 
 
+Обогатяването не намира метаданни. Проверявам защо `enrich_single_book` не връща резултати:
+
 
 ---
 
-<tool-use data-tool-type="unknown" data-tool-name="read_file">
-<details>
-<summary>Tool use: **read_file**</summary>
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
 
-Status: **loading**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "No metadata found|enrich_single_book|_has_sufficient_data" in "app/services/enrichment_service.py" • 13 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `async def enrich_single_book(` | L112 |
+| `app/services/enrichment_service.py` | `has_sufficient = self._has_sufficient_data(book_data, require_cover=require_cover)` | L156 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [ENRICH_SINGLE_BOOK] _has_sufficient_data returned: \{has_sufficient\} for '\{title\}'")` | L157 |
+| `app/services/enrichment_service.py` | `logger.warning(f"❌ No metadata found for: \{title\}")` | L210 |
+| `app/services/enrichment_service.py` | `# Store require_cover flag for use in enrich_single_book` | L274 |
+| `app/services/enrichment_service.py` | `metadata = await self.enrich_single_book(book, force=force, require_cover=require_cover)` | L296 |
+| `app/services/enrichment_service.py` | `def _has_sufficient_data(self, book_data: Dict, require_cover: bool = False) -> bool:` | L348 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [_has_sufficient_data] Checking '\{title\}': require_cover=\{require_cover\}, has_description=\{has_description\}, has_cover=\{has_cover\} (cover_url='\{cover_url[:50] if cover_url else 'None'\}...'), has_publisher=\{has_publisher\}, has_isbn=\{has_isbn\}")` | L418 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [_has_sufficient_data] '\{title\}' has sufficient data: require_cover=True and has_cover=True - SKIPPING")` | L424 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [_has_sufficient_data] '\{title\}' needs enrichment: require_cover=True but has_cover=False - WILL ENRICH")` | L427 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [_has_sufficient_data] '\{title\}' needs enrichment: Bulgarian book without cover")` | L436 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [_has_sufficient_data] '\{title\}' Bulgarian book score: \{score\}/4, sufficient=\{result\}")` | L441 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [_has_sufficient_data] '\{title\}' Non-Bulgarian book score: \{score\}/4, sufficient=\{result\}")` | L447 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "Why does enrich_single_book return None when book already has description?" • **6** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/services/kuzu_relationship_service.py` | L74-852 |
+| `app/services/kuzu_book_service.py` | L93-679 |
+| `app/services/opds_sync_service.py` | L407-1081 |
+| `app/services/metadata_providers/biblioman.py` | L12-597 |
+| `app/services/audiobookshelf_import_service.py` | L22-1775 |
+| `app/services/unified_cover_manager.py` | L35-310 |
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Логовете не показват извиквания на `enrich_single_book` (липсват `🔍 [ENRICH_SINGLE_BOOK] CALLED`). Проверявам как се извиква в `enrich_batch`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "_progress_callback|enrich_batch|No metadata found" in "scripts/enrich_books.py" • 6 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `results = await self.service.enrich_batch(` | L207 |
+| `scripts/enrich_books.py` | `progress_callback=self._progress_callback` | L211 |
+| `scripts/enrich_books.py` | `async def _progress_callback(` | L1129 |
+| `scripts/enrich_books.py` | `logger.info(f"🔍 [_progress_callback] Book \{processed\}/\{total\}: '\{book_title\}', metadata=\{'found' if metadata else 'None'\}")` | L1153 |
+| `scripts/enrich_books.py` | `f"- No metadata found"` | L1176 |
+| `scripts/enrich_books.py` | `logger.info(f"🔍 [_progress_callback] Book data: title='\{book_title\}', author='\{current_book.get('author', 'Unknown')\}', cover_url='\{current_book.get('cover_url', 'None')\}', description=\{'present' if current_book.get('description') else 'missing'\}")` | L1179 |
 
 
 </details>
@@ -29898,10 +29991,261 @@ Status: **loading**
 ---
 
 
+Проверявам логиката в `_has_sufficient_data` при `require_cover=True`. Възможно е да пропуска обогатяването, дори когато липсва валиден cover. Преглеждам кода:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "🔍.*enrich_batch|Processing book|enrich_single_book" in "app/services/enrichment_service.py" • 5 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `async def enrich_single_book(` | L112 |
+| `app/services/enrichment_service.py` | `# Store require_cover flag for use in enrich_single_book` | L274 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [enrich_batch] Processing book \{i\}/\{len(books)\}: '\{book_title\}' (force=\{force\}, require_cover=\{require_cover\})")` | L293 |
+| `app/services/enrichment_service.py` | `metadata = await self.enrich_single_book(book, force=force, require_cover=require_cover)` | L296 |
+| `app/services/enrichment_service.py` | `logger.info(f"🔍 [enrich_batch] Book \{i\}/\{len(books)\} '\{book_title\}': metadata=\{'found' if metadata else 'None'\}")` | L299 |
+
+
+</details>
+</tool-use>
 
 ---
 
 
+
+---
+
+
+Проблемът е, че `_has_sufficient_data` в `enrich_single_book` не проверява достъпността на cover URL-а, за разлика от `_get_books_to_enrich`. Добавям същата проверка за достъпност и в `_has_sufficient_data`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 78, lines removed: 43
+
+```diff
+@@ -367,49 +367,84 @@
+          
+          # Check cover - must be a valid URL (starts with http/https) AND ends with image extension
++         # Also check accessibility if require_cover is True (for --no-cover-only mode)
+          cover_url = book_data.get('cover') or book_data.get('cover_url') or ''
+          has_cover = False
+-         if cover_url and (cover_url.startswith('http://') or cover_url.startswith('https://')):
+-             cover_url_lower = cover_url.lower()
+-             image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+-             
+-             # Check if URL ends with image extension
+-             ends_with_extension = any(cover_url_lower.endswith(ext) for ext in image_extensions)
+-             
+-             # Check if URL contains image extension before query params
+-             contains_extension = any(f'{ext}?' in cover_url_lower or f'{ext}&amp;' in cover_url_lower for ext in image_extensions)
+-             
+-             # Special case: cache URLs must end with extension to be valid
+-             # Broken cache URLs like "cache/926507dc7f..." are invalid
+-             # Also check for suspicious patterns like ISBN numbers in path
+-             is_cache_url = '/cache/' in cover_url
+-             
+-             if is_cache_url:
+-                 # Cache URLs must end with extension AND not contain suspicious patterns
+-                 # Suspicious patterns: ISBN numbers (13 digits starting with 978 or 979) in path
+-                 import re
+-                 # Check for ISBN in path (can be between / or at end before extension)
+-                 has_isbn_in_path = bool(re.search(r'/(978|979)\d{10}(/|\.)', cover_url))
+-                 
+-                 # Also check if filename itself is an ISBN (13 digits)
+-                 path_after_cache = cover_url.split('/cache/')[-1] if '/cache/' in cover_url else ''
+-                 path_segments = [s for s in path_after_cache.split('/') if s]
+-                 if path_segments:
+-                     # Remove extension from last segment
+-                     last_seg = path_segments[-1]
+-                     for ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif']:
+-                         if last_seg.lower().endswith(ext):
+-                             last_seg = last_seg[:-len(ext)]
+-                             break
+-                     filename_is_isbn = bool(re.match(r'^(978|979)\d{10}$', last_seg))
+-                 else:
+-                     filename_is_isbn = False
+-                 
+-                 # Check if path segments are mostly single digits (suspicious pattern like /9/7/9783836555401)
+-                 has_numeric_path = len(path_segments) &gt; 2 and all(len(seg) &lt;= 2 and seg.isdigit() for seg in path_segments[:-1])
+-                 
+-                 has_cover = ends_with_extension and not has_isbn_in_path and not has_numeric_path and not filename_is_isbn
+-             else:
+-                 # Non-cache URLs: check if ends with extension or contains it before query params
+-                 has_cover = ends_with_extension or contains_extension
++         if cover_url:
++             # Local covers (/covers/...) are always valid
++             if cover_url.startswith('/covers/'):
++                 has_cover = True
++             elif cover_url.startswith('http://') or cover_url.startswith('https://'):
++                 cover_url_lower = cover_url.lower()
++                 image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
++                 
++                 # Check if URL ends with image extension
++                 ends_with_extension = any(cover_url_lower.endswith(ext) for ext in image_extensions)
++                 
++                 # Check if URL contains image extension before query params
++                 contains_extension = any(f'{ext}?' in cover_url_lower or f'{ext}&amp;' in cover_url_lower for ext in image_extensions)
++                 
++                 # Special case: cache URLs must end with extension to be valid
++                 # Broken cache URLs like "cache/926507dc7f..." are invalid
++                 # Also check for suspicious patterns like ISBN numbers in path
++                 is_cache_url = '/cache/' in cover_url
++                 
++                 if is_cache_url:
++                     # Cache URLs must end with extension AND not contain suspicious patterns
++                     # Suspicious patterns: ISBN numbers (13 digits starting with 978 or 979) in path
++                     import re
++                     # Check for ISBN in path (can be between / or at end before extension)
++                     has_isbn_in_path = bool(re.search(r'/(978|979)\d{10}(/|\.)', cover_url))
++                     
++                     # Also check if filename itself is an ISBN (13 digits)
++                     path_after_cache = cover_url.split('/cache/')[-1] if '/cache/' in cover_url else ''
++                     path_segments = [s for s in path_after_cache.split('/') if s]
++                     if path_segments:
++                         # Remove extension from last segment
++                         last_seg = path_segments[-1]
++                         for ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif']:
++                             if last_seg.lower().endswith(ext):
++                                 last_seg = last_seg[:-len(ext)]
++                                 break
++                         filename_is_isbn = bool(re.match(r'^(978|979)\d{10}$', last_seg))
++                     else:
++                         filename_is_isbn = False
++                     
++                     # Check if path segments are mostly single digits (suspicious pattern like /9/7/9783836555401)
++                     has_numeric_path = len(path_segments) &gt; 2 and all(len(seg) &lt;= 2 and seg.isdigit() for seg in path_segments[:-1])
++                     
++                     has_cover = ends_with_extension and not has_isbn_in_path and not has_numeric_path and not filename_is_isbn
++                 else:
++                     # Non-cache URLs: check if ends with extension or contains it before query params
++                     has_cover = ends_with_extension or contains_extension
++                 
++                 # If require_cover is True, also check accessibility (same as _get_books_to_enrich)
++                 if has_cover and require_cover:
++                     try:
++                         import httpx
++                         with httpx.Client(timeout=3.0, follow_redirects=True) as client:
++                             response = client.head(cover_url)
++                             if response.status_code == 200:
++                                 content_type = response.headers.get('content-type', '').lower()
++                                 if 'image' not in content_type:
++                                     has_cover = False
++                                     logger.debug(f"🔍 [_has_sufficient_data] URL returned non-image content-type: {content_type} - marking as INVALID")
++                             elif response.status_code in [301, 302, 303, 307, 308]:
++                                 # Redirect - try GET to final URL
++                                 final_url = response.headers.get('location', cover_url)
++                                 get_response = client.get(final_url, timeout=3.0)
++                                 if get_response.status_code != 200:
++                                     has_cover = False
++                                     logger.debug(f"🔍 [_has_sufficient_data] URL redirect failed with status {get_response.status_code} - marking as INVALID")
++                                 else:
++                                     content_type = get_response.headers.get('content-type', '').lower()
++                                     if 'image' not in content_type:
++                                         has_cover = False
++                                         logger.debug(f"🔍 [_has_sufficient_data] URL redirect returned non-image content-type: {content_type} - marking as INVALID")
++                             else:
++                                 has_cover = False
++                                 logger.debug(f"🔍 [_has_sufficient_data] URL returned status {response.status_code} - marking as INVALID")
++                     except Exception as e:
++                         # If accessibility check fails, assume valid if it has image extension (might be temporary network issue)
++                         logger.debug(f"🔍 [_has_sufficient_data] Could not verify accessibility: {e} - assuming valid based on extension")
+          
+          has_publisher = bool(book_data.get('publisher'))
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `app/services/enrichment_service.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add cover URL accessibility check in _has_sufficient_data when require_cover=True - same logic as _get_books_to_enrich" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add cover URL accessibility check in _has_sufficient_data when require_cover=True - same logic as _get_books_to_enrich" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 36227d7] Add cover URL accessibility check in _has_sufficient_data when require_cover=True - same logic as _get_books_to_enrich
+ 2 files changed, 500 insertions(+), 40 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   764de33..36227d7  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавих проверка за достъпност на cover URL-а в `_has_sufficient_data` когато `require_cover=True`. Сега логиката е същата като в `_get_books_to_enrich`.
+
+При следващо обогатяване:
+1. Книгите без валидни covers ще бъдат идентифицирани правилно
+2. `_has_sufficient_data` ще провери достъпността на cover URL-а
+3. Ако URL-ът не е достъпен, книгата ще бъде обогатена
+4. Cover изображенията ще се свалят локално и ще се запазят в `/covers/` директорията
+
+Опитайте отново обогатяването — трябва да работи правилно и да обогатява книгите без валидни covers.
 
 ---
 
