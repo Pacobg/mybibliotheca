@@ -934,13 +934,16 @@ class EnrichmentCommand:
         # Show progress
         progress_pct = processed / total * 100
         
+        book_title = current_book.get('title', 'Unknown')
+        logger.info(f"🔍 [_progress_callback] Book {processed}/{total}: '{book_title}', metadata={'found' if metadata else 'None'}")
+        
         if metadata:
             self.stats['books_enriched'] += 1
             
             quality = metadata.get('quality_score', 0)
             
             logger.info(
-                f"[{processed}/{total}] ✅ {current_book['title']} "
+                f"[{processed}/{total}] ✅ {book_title} "
                 f"(quality: {quality:.2f})"
             )
             
@@ -954,9 +957,11 @@ class EnrichmentCommand:
         else:
             self.stats['books_failed'] += 1
             logger.warning(
-                f"[{processed}/{total}] ❌ {current_book['title']} "
+                f"[{processed}/{total}] ❌ {book_title} "
                 f"- No metadata found"
             )
+            # Log book data to debug why enrichment failed
+            logger.info(f"🔍 [_progress_callback] Book data: title='{book_title}', author='{current_book.get('author', 'Unknown')}', cover_url='{current_book.get('cover_url', 'None')}', description={'present' if current_book.get('description') else 'missing'}")
     
     def _show_report(self):
         """Show final enrichment report"""
