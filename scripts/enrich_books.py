@@ -105,6 +105,8 @@ class EnrichmentCommand:
         logger.info(f"   Force: {self.args.force}")
         logger.info(f"   Dry run: {self.args.dry_run}")
         logger.info(f"   Min quality: {self.args.quality_min}")
+        if hasattr(self.args, 'no_cover_only') and self.args.no_cover_only:
+            logger.info(f"   No cover only: True (only books without covers)")
         
         # Get books to enrich
         books = await self._get_books_to_enrich()
@@ -203,20 +205,35 @@ class EnrichmentCommand:
                 # Get books missing critical metadata
                 # Check for publisher relationship existence
                 # Note: Filter for Bulgarian books happens in Python after query
-                query = """
-                MATCH (b:Book)
-                OPTIONAL MATCH (b)-[:PUBLISHED_BY]->(p:Publisher)
-                WHERE (b.description IS NULL OR b.description = '')
-                   OR (b.cover_url IS NULL OR b.cover_url = '')
-                   OR (p IS NULL)
-                   OR ((b.isbn13 IS NULL OR b.isbn13 = '') AND (b.isbn10 IS NULL OR b.isbn10 = ''))
-                RETURN b.id as id, b.title as title, b.description as description,
-                       b.cover_url as cover_url, p.name as publisher,
-                       b.isbn13 as isbn13, b.isbn10 as isbn10,
-                       b.page_count as page_count, b.published_date as published_date,
-                       b.language as language
-                ORDER BY b.created_at DESC
-                """
+                
+                # If --no-cover-only flag is set, only get books without covers
+                if hasattr(self.args, 'no_cover_only') and self.args.no_cover_only:
+                    query = """
+                    MATCH (b:Book)
+                    OPTIONAL MATCH (b)-[:PUBLISHED_BY]->(p:Publisher)
+                    WHERE (b.cover_url IS NULL OR b.cover_url = '')
+                    RETURN b.id as id, b.title as title, b.description as description,
+                           b.cover_url as cover_url, p.name as publisher,
+                           b.isbn13 as isbn13, b.isbn10 as isbn10,
+                           b.page_count as page_count, b.published_date as published_date,
+                           b.language as language
+                    ORDER BY b.created_at DESC
+                    """
+                else:
+                    query = """
+                    MATCH (b:Book)
+                    OPTIONAL MATCH (b)-[:PUBLISHED_BY]->(p:Publisher)
+                    WHERE (b.description IS NULL OR b.description = '')
+                       OR (b.cover_url IS NULL OR b.cover_url = '')
+                       OR (p IS NULL)
+                       OR ((b.isbn13 IS NULL OR b.isbn13 = '') AND (b.isbn10 IS NULL OR b.isbn10 = ''))
+                    RETURN b.id as id, b.title as title, b.description as description,
+                           b.cover_url as cover_url, p.name as publisher,
+                           b.isbn13 as isbn13, b.isbn10 as isbn10,
+                           b.page_count as page_count, b.published_date as published_date,
+                           b.language as language
+                    ORDER BY b.created_at DESC
+                    """
             
             if self.args.limit:
                 query += f" LIMIT {self.args.limit}"
@@ -786,6 +803,12 @@ def main():
         '--book-title',
         type=str,
         help='Enrich specific book by title (partial match)'
+    )
+    
+    parser.add_argument(
+        '--no-cover-only',
+        action='store_true',
+        help='Only enrich books without covers'
     )
     
     args = parser.parse_args()
