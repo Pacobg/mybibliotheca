@@ -90,14 +90,16 @@ class EnrichmentCommand:
         logger.info("BOOK ENRICHMENT - AI Web Search")
         logger.info("="*60)
         
-        # Initialize service
-        self.service = EnrichmentService()
+        # Initialize service (auto-detects provider from settings)
+        self.service = EnrichmentService(provider='auto')
         
-        # Check API keys
-        if not os.getenv('PERPLEXITY_API_KEY'):
-            logger.error("❌ PERPLEXITY_API_KEY not set!")
-            logger.error("   Please add it to your .env file:")
-            logger.error("   PERPLEXITY_API_KEY=pplx-xxxxxxxxxxxxx")
+        # Check if any provider is available
+        if not self.service.perplexity and not self.service.openai_enricher:
+            logger.error("❌ No enrichment providers available!")
+            logger.error("   Options:")
+            logger.error("   1. Set PERPLEXITY_API_KEY in .env (recommended - has web search)")
+            logger.error("   2. Configure OpenAI/Ollama in Settings > AI Settings")
+            logger.error("      (Note: OpenAI/Ollama cannot search web for covers)")
             return 1
         
         logger.info(f"⚙️  Configuration:")

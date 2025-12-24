@@ -14828,3 +14828,798 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+http://192.168.1.51:5054/auth/settings   тук има AI settings - може ли да се използват -OpenAI и Local LLM ollama
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Проверявам как се използват AI настройките от settings страницата и дали можем да ги интегрираме в enrichment service-а:
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "Where are AI settings stored and how are OpenAI and Ollama configured in settings?" • **15** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/auth.py` | L806-2158 |
+| `app/admin.py` | L1274-1334 |
+| `app/admin.py` | L139-358 |
+| `app/templates/admin/settings.html` | L409-425 |
+| `app/templates/settings/partials/server_ai.html` | L17 |
+| `app/templates/admin/settings.html` | L441-455 |
+| `app/templates/settings/partials/server_ai.html` | L14-43 |
+| `app/templates/admin/settings.html` | L421-443 |
+| `app/auth.py` | L2119-2210 |
+| `app/admin.py` | L1565-1648 |
+| `app/admin.py` | L528-646 |
+| `app/templates/settings/partials/server_ai.html` | L41-69 |
+| `app/templates/admin/settings.html` | L998-1041 |
+| `app/templates/settings.html` | L327-370 |
+| `app/services/ai_service.py` | L413 |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "auth/settings|AI settings|OpenAI|Ollama|ollama" in "app/routes" • 0 matches</summary>
+
+Output mode: content
+
+
+_No matches found_
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "How to use OpenAI API or Ollama local LLM for book metadata enrichment?" • **11** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/services/ai_service.py` | L10-413 |
+| `app/services/ai_service.py` | L413 |
+| `app/admin.py` | L1274-1334 |
+| `app/auth.py` | L806-2158 |
+| `app/admin.py` | L139-358 |
+| `app/utils/unified_metadata.py` | L46 |
+| `app/services/metadata_providers/biblioman.py` | L597 |
+| `app/utils.py` | L160 |
+| `app/utils/metadata_settings.py` | L34 |
+| `app/utils/book_utils.py` | L493-806 |
+| `app/utils/book_search.py` | L737-885 |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="glob_file_search">
+<details>
+<summary>Tool use: **glob_file_search** • Searched codebase "*settings*.py" • **4** results in **1** directory</summary>
+
+Directory: **c:\Users\Paco\OneDrive\Documents\Dev-bibiotheca\mybibliotheca-main** (4 files)
+
+| File |
+|------|
+| `app\utils\metadata_settings.py` |
+| `app\utils\user_settings.py` |
+| `app\utils\opds_settings.py` |
+| `app\utils\audiobookshelf_settings.py` |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "openai|ollama|OPENAI|OLLAMA" in "app" • 7 matches</summary>
+
+Output mode: files_with_matches
+
+
+| File |
+|------|
+| `app\services\enrichment_service.py` |
+| `app\templates\settings\partials\server_ai.html` |
+| `app\templates\admin\settings.html` |
+| `app\templates\settings.html` |
+| `app\services\ai_service.py` |
+| `app\auth.py` |
+| `app\admin.py` |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам как работи `AIService` и дали можем да го използваме за enrichment:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/ai_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/admin.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/metadata_providers/perplexity.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Създавам алтернативен enrichment provider, който използва OpenAI/Ollama от settings. Забележка: те нямат web search като Perplexity, така че ще са по-ограничени.
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/metadata_providers/perplexity.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="write">
+
+<details><summary>Tool use: **write** • Edit file: app/services/metadata_providers/openai_enricher.py</summary>
+
+**Chunk 1**
+Lines added: 367, lines removed: 1
+
+```diff
+@@ -1,1 +1,367 @@
+- 
++ """
++ OpenAI/Ollama-based metadata enrichment provider
++ Uses AI settings from the application configuration (OpenAI or Ollama)
++ 
++ Note: Unlike Perplexity, this provider does NOT have web search capabilities.
++ It can generate descriptions and parse metadata, but cannot search for covers or 
++ real-time information from the internet.
++ """
++ 
++ import json
++ import logging
++ import re
++ from typing import Dict, Optional, Any
++ import httpx
++ from flask import current_app
++ 
++ logger = logging.getLogger(__name__)
++ 
++ 
++ class OpenAIEnricher:
++     """
++     Metadata enrichment using OpenAI or Ollama (from app settings)
++     
++     Limitations:
++     - No web search (cannot find covers or real-time information)
++     - Can only generate descriptions based on title/author
++     - Cannot fetch ISBNs or publishers from internet
++     """
++     
++     def __init__(self, config: Optional[Dict[str, str]] = None):
++         """
++         Initialize OpenAI/Ollama enricher
++         
++         Args:
++             config: Optional config dict. If None, loads from app settings
++         """
++         if config is None:
++             # Load from app settings
++             try:
++                 from app.admin import load_ai_config
++                 config = load_ai_config()
++             except Exception as e:
++                 logger.error(f"Failed to load AI config: {e}")
++                 config = {}
++         
++         self.config = config
++         self.provider = config.get('AI_PROVIDER', 'openai').lower()
++         self.timeout = int(config.get('AI_TIMEOUT', '30'))
++         self.max_tokens = int(config.get('AI_MAX_TOKENS', '2000'))
++         self.temperature = float(config.get('AI_TEMPERATURE', '0.1'))
++         
++         logger.info(f"✅ OpenAIEnricher initialized with provider: {self.provider}")
++     
++     async def fetch_metadata(
++         self,
++         title: str,
++         author: Optional[str] = None,
++         isbn: Optional[str] = None,
++         publisher: Optional[str] = None,
++         existing_data: Optional[Dict] = None
++     ) -&gt; Optional[Dict[str, Any]]:
++         """
++         Fetch metadata for a book using OpenAI/Ollama
++         
++         Note: This does NOT perform web search. It generates descriptions
++         based on the provided information.
++         
++         Args:
++             title: Book title
++             author: Book author (optional)
++             isbn: ISBN (optional)
++             publisher: Publisher (optional)
++             existing_data: Existing book data (optional)
++             
++         Returns:
++             Dictionary with metadata or None
++         """
++         try:
++             # Check if book is Bulgarian (has Cyrillic in title)
++             has_cyrillic = any('\u0400' &lt;= char &lt;= '\u04FF' for char in title)
++             
++             # Build query
++             query = self._build_metadata_query(title, author, isbn, publisher, has_cyrillic)
++             
++             # Call AI
++             response = await self._call_ai(query)
++             
++             if not response:
++                 return None
++             
++             # Parse response
++             metadata = self._parse_response(response, has_cyrillic)
++             
++             if not metadata:
++                 return None
++             
++             # Calculate quality score
++             quality = self._calculate_quality_score(metadata)
++             metadata['quality_score'] = quality
++             
++             logger.info(f"✅ Found metadata for: {title} (quality: {quality:.2f})")
++             return metadata
++             
++         except Exception as e:
++             logger.error(f"Error fetching metadata: {e}", exc_info=True)
++             return None
++     
++     def _build_metadata_query(
++         self,
++         title: str,
++         author: Optional[str],
++         isbn: Optional[str],
++         publisher: Optional[str],
++         has_cyrillic: bool
++     ) -&gt; str:
++         """Build query for AI"""
++         
++         if has_cyrillic:
++             # Bulgarian book query
++             query = f"""На базата на следната информация за книга, генерирай JSON с метаданни:
++ 
++ ЗАГЛАВИЕ: {title}
++ """
++             if author:
++                 query += f"АВТОР: {author}\n"
++             if isbn:
++                 query += f"ISBN: {isbn}\n"
++             if publisher:
++                 query += f"ИЗДАТЕЛСТВО: {publisher}\n"
++             
++             query += """
++ ВАЖНО: Това е БЪЛГАРСКА книга. Генерирай информация на български!
++ 
++ ТЪРСЯ СЛЕДНАТА ИНФОРМАЦИЯ:
++ 
++ 1. **Точно заглавие** на български
++ 2. **Автор** - ЕДИН основен автор на български
++ 3. **Описание** - 3-4 изречения на български за какво е книгата (базирано на знанията ти за книгата)
++ 4. **Жанр/Категории** (2-4 категории)
++ 
++ ОТГОВОРИ САМО С ВАЛИДЕН JSON ОБЕКТ:
++ 
++ {
++     "title": "Заглавие",
++     "author": "Автор",
++     "description": "Описание на български...",
++     "genres": ["Жанр1", "Жанр2"],
++     "confidence": 0.8
++ }
++ 
++ ВАЖНО: Ако не знаеш книгата, върни null за описанието!
++ """
++         else:
++             # English book query
++             query = f"""Based on the following book information, generate JSON metadata:
++ 
++ TITLE: {title}
++ """
++             if author:
++                 query += f"AUTHOR: {author}\n"
++             if isbn:
++                 query += f"ISBN: {isbn}\n"
++             if publisher:
++                 query += f"PUBLISHER: {publisher}\n"
++             
++             query += """
++ IMPORTANT: This is an ENGLISH book. Generate information in English!
++ 
++ I NEED THE FOLLOWING INFORMATION:
++ 
++ 1. **Exact title** in English
++ 2. **Author** - ONE main author in English
++ 3. **Description** - 3-4 sentences in English about what the book is about (based on your knowledge)
++ 4. **Genres/Categories** (2-4 categories)
++ 
++ RESPOND ONLY WITH A VALID JSON OBJECT:
++ 
++ {
++     "title": "Title",
++     "author": "Author",
++     "description": "Description in English...",
++     "genres": ["Genre1", "Genre2"],
++     "confidence": 0.8
++ }
++ 
++ IMPORTANT: If you don't know the book, return null for description!
++ """
++         
++         return query
++     
++     async def _call_ai(self, query: str) -&gt; Optional[str]:
++         """Call OpenAI or Ollama API"""
++         try:
++             if self.provider == 'openai':
++                 return await self._call_openai(query)
++             elif self.provider == 'ollama':
++                 return await self._call_ollama(query)
++             else:
++                 logger.error(f"Unknown provider: {self.provider}")
++                 return None
++         except Exception as e:
++             logger.error(f"Error calling AI: {e}", exc_info=True)
++             return None
++     
++     async def _call_openai(self, query: str) -&gt; Optional[str]:
++         """Call OpenAI API"""
++         try:
++             api_key = self.config.get('OPENAI_API_KEY')
++             if not api_key:
++                 logger.error("OpenAI API key not configured")
++                 return None
++             
++             base_url = self.config.get('OPENAI_BASE_URL', 'https://api.openai.com/v1')
++             model = self.config.get('OPENAI_MODEL', 'gpt-4o')
++             
++             url = f"{base_url}/chat/completions"
++             
++             headers = {
++                 'Authorization': f'Bearer {api_key}',
++                 'Content-Type': 'application/json'
++             }
++             
++             payload = {
++                 'model': model,
++                 'messages': [
++                     {
++                         'role': 'user',
++                         'content': query
++                     }
++                 ],
++                 'max_tokens': self.max_tokens,
++                 'temperature': self.temperature,
++                 'response_format': {'type': 'json_object'}
++             }
++             
++             async with httpx.AsyncClient(timeout=self.timeout) as client:
++                 response = await client.post(url, headers=headers, json=payload)
++                 response.raise_for_status()
++                 result = response.json()
++                 
++                 if 'choices' in result and len(result['choices']) &gt; 0:
++                     return result['choices'][0]['message']['content']
++                 
++                 return None
++                 
++         except Exception as e:
++             logger.error(f"OpenAI API error: {e}")
++             return None
++     
++     async def _call_ollama(self, query: str) -&gt; Optional[str]:
++         """Call Ollama API"""
++         try:
++             base_url = self.config.get('OLLAMA_BASE_URL', 'http://localhost:11434')
++             model = self.config.get('OLLAMA_MODEL', 'llama3.2-vision:11b')
++             
++             # Remove /v1 suffix if present
++             if base_url.endswith('/v1'):
++                 base_url = base_url[:-3]
++             
++             url = f"{base_url}/api/chat"
++             
++             payload = {
++                 'model': model,
++                 'messages': [
++                     {
++                         'role': 'user',
++                         'content': query
++                     }
++                 ],
++                 'stream': False,
++                 'options': {
++                     'temperature': self.temperature,
++                     'num_predict': self.max_tokens
++                 },
++                 'format': 'json'
++             }
++             
++             async with httpx.AsyncClient(timeout=self.timeout) as client:
++                 response = await client.post(url, json=payload)
++                 response.raise_for_status()
++                 result = response.json()
++                 
++                 if 'message' in result and 'content' in result['message']:
++                     return result['message']['content']
++                 
++                 return None
++                 
++         except Exception as e:
++             logger.error(f"Ollama API error: {e}")
++             return None
++     
++     def _parse_response(self, response_text: str, has_cyrillic: bool) -&gt; Optional[Dict[str, Any]]:
++         """Parse AI response"""
++         try:
++             # Try to extract JSON
++             text = response_text.strip()
++             
++             # Remove markdown code blocks
++             if '&#96;&#96;&#96;json' in text:
++                 start = text.find('&#96;&#96;&#96;json') + 7
++                 end = text.find('&#96;&#96;&#96;', start)
++                 if end &gt; start:
++                     text = text[start:end].strip()
++             elif '&#96;&#96;&#96;' in text:
++                 start = text.find('&#96;&#96;&#96;') + 3
++                 end = text.find('&#96;&#96;&#96;', start)
++                 if end &gt; start:
++                     text = text[start:end].strip()
++             
++             # Parse JSON
++             data = json.loads(text)
++             
++             # Normalize author
++             if data.get('author'):
++                 author = data['author']
++                 if ',' in author or ';' in author:
++                     authors_list = [a.strip() for a in re.split(r'[,;]', author)]
++                     if has_cyrillic:
++                         cyrillic_authors = [a for a in authors_list if any('\u0400' &lt;= char &lt;= '\u04FF' for char in a)]
++                         if cyrillic_authors:
++                             data['author'] = cyrillic_authors[0]
++                         else:
++                             data['author'] = authors_list[0]
++                     else:
++                         english_authors = [a for a in authors_list if not any('\u0400' &lt;= char &lt;= '\u04FF' for char in a)]
++                         if english_authors:
++                             data['author'] = english_authors[0]
++                         else:
++                             data['author'] = authors_list[0]
++             
++             return data
++             
++         except Exception as e:
++             logger.error(f"Error parsing response: {e}")
++             logger.debug(f"Response text: {response_text}")
++             return None
++     
++     def _calculate_quality_score(self, metadata: Dict[str, Any]) -&gt; float:
++         """Calculate quality score"""
++         score = 0.0
++         
++         if metadata.get('title'):
++             score += 0.2
++         if metadata.get('author'):
++             score += 0.2
++         if metadata.get('description'):
++             score += 0.4
++         if metadata.get('genres'):
++             score += 0.2
++         
++         return min(score, 1.0)
++     
++     async def find_cover_image(
++         self,
++         title: str,
++         author: str,
++         isbn: Optional[str] = None
++     ) -&gt; Optional[str]:
++         """
++         Find cover image URL
++         
++         NOTE: OpenAI/Ollama cannot search the web for covers.
++         This method always returns None.
++         """
++         logger.warning("⚠️ OpenAI/Ollama provider cannot search for covers (no web search capability)")
++         return None
++ 
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "PerplexityEnricher|from.*perplexity|import.*perplexity" in "app/services/enrichment_service.py" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `from .metadata_providers.perplexity import PerplexityEnricher` | L15 |
+| `app/services/enrichment_service.py` | `self.perplexity = PerplexityEnricher(api_key=perplexity_key)` | L37 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Модифицирам `EnrichmentService`, за да поддържа избор на provider от settings:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 8, lines removed: undefined
+
+```diff
+@@ -17,4 +17,12 @@
+  logger = logging.getLogger(__name__)
+  
++ # Try to import OpenAI enricher (optional)
++ try:
++     from .metadata_providers.openai_enricher import OpenAIEnricher
++     OPENAI_ENRICHER_AVAILABLE = True
++ except ImportError:
++     OPENAI_ENRICHER_AVAILABLE = False
++     logger.debug("OpenAI enricher not available")
++ 
+  
+  class EnrichmentService:
+```
+
+**Chunk 2**
+Lines added: 41, lines removed: 6
+
+```diff
+@@ -23,21 +31,56 @@
+      
+      Strategy:
+-     1. Try Perplexity (primary - best for web search)
+-     2. Fall back to OpenAI if needed (optional)
++     1. Try Perplexity (primary - best for web search with real-time internet access)
++     2. Fall back to OpenAI/Ollama from settings if Perplexity unavailable (limited - no web search)
+      3. Apply metadata to books
+      4. Download cover images
+      """
+      
+-     def __init__(self):
+-         """Initialize enrichment service"""
++     def __init__(self, provider: str = 'auto'):
++         """
++         Initialize enrichment service
++         
++         Args:
++             provider: 'perplexity', 'openai', 'ollama', or 'auto' (default)
++                     'auto' uses Perplexity if available, otherwise falls back to settings
++         """
++         self.provider = provider.lower()
+          
+          # Initialize Perplexity
+          perplexity_key = os.getenv('PERPLEXITY_API_KEY')
+-         if perplexity_key:
++         if perplexity_key and (self.provider == 'auto' or self.provider == 'perplexity'):
+              self.perplexity = PerplexityEnricher(api_key=perplexity_key)
+              logger.info("✅ Perplexity enricher initialized")
+          else:
+              self.perplexity = None
+-             logger.warning("⚠️  PERPLEXITY_API_KEY not set - enrichment disabled")
++             if self.provider == 'perplexity':
++                 logger.warning("⚠️  PERPLEXITY_API_KEY not set - Perplexity enrichment disabled")
++         
++         # Initialize OpenAI/Ollama enricher (from settings)
++         self.openai_enricher = None
++         if OPENAI_ENRICHER_AVAILABLE and (self.provider == 'auto' or self.provider in ['openai', 'ollama']):
++             try:
++                 # Load AI config from settings
++                 from app.admin import load_ai_config
++                 ai_config = load_ai_config()
++                 
++                 # Check if provider matches
++                 config_provider = ai_config.get('AI_PROVIDER', 'openai').lower()
++                 if self.provider == 'auto':
++                     # Use OpenAI/Ollama only if Perplexity is not available
++                     if not self.perplexity and config_provider in ['openai', 'ollama']:
++                         self.openai_enricher = OpenAIEnricher(config=ai_config)
++                         logger.info(f"✅ OpenAI/Ollama enricher initialized (provider: {config_provider})")
++                 elif self.provider in ['openai', 'ollama']:
++                     if config_provider == self.provider:
++                         self.openai_enricher = OpenAIEnricher(config=ai_config)
++                         logger.info(f"✅ OpenAI/Ollama enricher initialized (provider: {config_provider})")
++                     else:
++                         logger.warning(f"⚠️  Requested provider '{self.provider}' but settings have '{config_provider}'")
++             except Exception as e:
++                 logger.warning(f"⚠️  Failed to initialize OpenAI/Ollama enricher: {e}")
++         
++         if not self.perplexity and not self.openai_enricher:
++             logger.warning("⚠️  No enrichment providers available - enrichment disabled")
+          
+          # Configuration
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+Model supplied an ambiguous edit
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+Model supplied an ambiguous edit
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "EnrichmentService\(\)|enrichment_service|EnrichmentService" in "scripts/enrich_books.py" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `from app.services.enrichment_service import EnrichmentService` | L49 |
+| `scripts/enrich_books.py` | `self.service = EnrichmentService()` | L94 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 2 files</summary>
+      
+Lint paths:
+
+- `app/services/enrichment_service.py`
+- `app/services/metadata_providers/openai_enricher.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add OpenAI/Ollama enrichment provider support using AI settings from app config" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add OpenAI/Ollama enrichment provider support using AI settings from app config" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 69bd8a4] Add OpenAI/Ollama enrichment provider support using AI settings from app config
+ 3 files changed, 1644 insertions(+), 6 deletions(-)
+ create mode 100644 app/services/metadata_providers/openai_enricher.py
+To https://github.com/Pacobg/mybibliotheca.git
+   aea895d..69bd8a4  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+

@@ -110,8 +110,9 @@ class EnrichmentService:
             Enriched metadata dictionary or None
         """
         
-        if not self.perplexity:
-            logger.error("Perplexity not initialized - cannot enrich")
+        # Check if any provider is available
+        if not self.perplexity and not self.openai_enricher:
+            logger.error("No enrichment providers available - cannot enrich")
             return None
         
         title = book_data.get('title')
@@ -132,14 +133,38 @@ class EnrichmentService:
             return None
         
         try:
-            # Try Perplexity enrichment
             logger.info(f"🔍 Enriching: {title} - {author}")
+            logger.info(f"🔍 Searching for: {title} - {author or ''}")
             
-            metadata = await self.perplexity.enrich_book(
-                title=title,
-                author=author,
-                existing_data=book_data
-            )
+            # Try Perplexity first (has web search)
+            metadata = None
+            if self.perplexity:
+                try:
+                    metadata = await self.perplexity.fetch_metadata(
+                        title=title,
+                        author=author,
+                        isbn=book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10'),
+                        publisher=book_data.get('publisher'),
+                        existing_data=book_data
+                    )
+                except Exception as e:
+                    logger.warning(f"Perplexity enrichment failed: {e}")
+            
+            # Fall back to OpenAI/Ollama if Perplexity unavailable or failed
+            if not metadata and self.openai_enricher:
+                try:
+                    logger.info(f"🔄 Trying OpenAI/Ollama enrichment (no web search)")
+                    metadata = await self.openai_enricher.fetch_metadata(
+                        title=title,
+                        author=author,
+                        isbn=book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10'),
+                        publisher=book_data.get('publisher'),
+                        existing_data=book_data
+                    )
+                    if metadata:
+                        logger.info("✅ OpenAI/Ollama enrichment succeeded (limited - no web search)")
+                except Exception as e:
+                    logger.warning(f"OpenAI/Ollama enrichment failed: {e}")
             
             if not metadata:
                 logger.warning(f"❌ No metadata found for: {title}")
@@ -158,11 +183,23 @@ class EnrichmentService:
             if not metadata.get('cover_url') and self.download_covers:
                 logger.info(f"🖼️  Searching for cover: {title}")
                 isbn = book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10')
-                cover_url = await self.perplexity.find_cover_image(
-                    title=title,
-                    author=author,
-                    isbn=isbn
-                )
+                
+                # Try Perplexity first (has web search)
+                cover_url = None
+                if self.perplexity:
+                    try:
+                        cover_url = await self.perplexity.find_cover_image(
+                            title=title,
+                            author=author,
+                            isbn=isbn
+                        )
+                    except Exception as e:
+                        logger.warning(f"Perplexity cover search failed: {e}")
+                
+                # OpenAI/Ollama cannot search for covers (no web search)
+                if not cover_url and self.openai_enricher:
+                    logger.debug("OpenAI/Ollama cannot search for covers (no web search capability)")
+                
                 if cover_url:
                     metadata['cover_url'] = cover_url
             
