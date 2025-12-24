@@ -23444,3 +23444,526 @@ Output mode: content
 
 ---
 
+
+
+---
+
+
+При `--no-cover-only` се добавят всички книги (ред 388-394), така че филтърът не е проблемът. Не виждам логове от `enrich_single_book` с префикса `[ENRICH_SINGLE_BOOK]`, което означава, че или методът не се извиква, или логовете не се показват. Проверявам `_has_sufficient_data` дали пропуска книгите преди обогатяване:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам `_has_sufficient_data` какво проверява при `require_cover=True`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам `_has_sufficient_data`:
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "def _has_sufficient_data" in "app/services/enrichment_service.py" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `def _has_sufficient_data(self, book_data: Dict, require_cover: bool = False) -> bool:` | L342 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проблемът е в `_has_sufficient_data`: при `require_cover=True` и липса на валиден cover URL връща `False` (ред 368-369), но за не-български книги с поне 3 от 4 полета връща `True` (ред 383-385), което пропуска обогатяването. Добавям по-подробни логове в `_has_sufficient_data` и `enrich_batch`:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -351,4 +351,6 @@
+              True if book has enough data, False otherwise
+          """
++         
++         title = book_data.get('title', '')
+          
+          # Check for critical fields
+```
+
+**Chunk 2**
+Lines added: 10, lines removed: 3
+
+```diff
+@@ -364,24 +366,31 @@
+          has_publisher = bool(book_data.get('publisher'))
+          has_isbn = bool(book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10'))
++         
++         logger.info(f"🔍 [_has_sufficient_data] Checking '{title}': require_cover={require_cover}, has_description={has_description}, has_cover={has_cover} (cover_url='{cover_url[:50] if cover_url else 'None'}...'), has_publisher={has_publisher}, has_isbn={has_isbn}")
+          
+          # If cover is required (e.g., --no-cover-only mode), don't skip if missing valid cover
+          if require_cover and not has_cover:
++             logger.info(f"🔍 [_has_sufficient_data] '{title}' needs enrichment: require_cover=True but has_cover=False")
+              return False
+          
+          # For Bulgarian books, cover is critical - don't skip if missing cover
+-         title = book_data.get('title', '')
+          is_bulgarian = any('\u0400' &lt;= char &lt;= '\u04FF' for char in title) or book_data.get('language') == 'bg'
+          
+          if is_bulgarian:
+              # Bulgarian books MUST have cover - it's critical
+              if not has_cover:
++                 logger.info(f"🔍 [_has_sufficient_data] '{title}' needs enrichment: Bulgarian book without cover")
+                  return False
+              # Need at least 3 out of 4 including cover
+              score = sum([has_description, has_cover, has_publisher, has_isbn])
+-             return score &gt;= 3
++             result = score &gt;= 3
++             logger.info(f"🔍 [_has_sufficient_data] '{title}' Bulgarian book score: {score}/4, sufficient={result}")
++             return result
+          else:
+              # For non-Bulgarian books, need at least 3 out of 4
+              score = sum([has_description, has_cover, has_publisher, has_isbn])
+-             return score &gt;= 3
++             result = score &gt;= 3
++             logger.info(f"🔍 [_has_sufficient_data] '{title}' Non-Bulgarian book score: {score}/4, sufficient={result}")
++             return result
+      
+      def merge_metadata_into_book(
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 4, lines removed: undefined
+
+```diff
+@@ -288,8 +288,12 @@
+          for i, book in enumerate(books, 1):
+              try:
++                 book_title = book.get('title', 'Unknown')
++                 logger.info(f"🔍 [enrich_batch] Processing book {i}/{len(books)}: '{book_title}' (force={force}, require_cover={require_cover})")
++                 
+                  # Enrich book (pass force flag and require_cover)
+                  metadata = await self.enrich_single_book(book, force=force, require_cover=require_cover)
+                  
+                  stats['processed'] += 1
++                 logger.info(f"🔍 [enrich_batch] Book {i}/{len(books)} '{book_title}': metadata={'found' if metadata else 'None'}")
+                  
+                  if metadata:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `app/services/enrichment_service.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add detailed logging to _has_sufficient_data and enrich_batch to debug why books are skipped" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add detailed logging to _has_sufficient_data and enrich_batch to debug why books are skipped" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 20047a7] Add detailed logging to _has_sufficient_data and enrich_batch to debug why books are skipped
+ 2 files changed, 458 insertions(+), 6 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   38ef135..20047a7  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавих подробни логове в `_has_sufficient_data` и `enrich_batch`. При следващото изпълнение ще видим:
+
+1. **В `_has_sufficient_data`**: какво проверява за всяка книга (description, cover, publisher, isbn) и резултата
+2. **В `enrich_batch`**: дали `enrich_single_book` се извиква и какво връща
+
+Промените са качени в git main. Опитайте отново и споделете логовете — ще видим защо книгите се пропускат или защо не се обогатяват.
+
+Вероятно `_has_sufficient_data` връща `True` за тези английски книги (имат поне 3 от 4 полета), което ги пропуска преди обогатяване. Логовете ще потвърдят това.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 18:01:13,692 [INFO] 192.168.1.9 - - [24/Dec/2025 18:01:13] "POST /metadata/enrichment/start HTTP/1.1" 200 -
+2025-12-24 18:01:13,692 [INFO] ============================================================
+2025-12-24 18:01:13,693 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 18:01:13] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:01:13,724 [INFO] 192.168.1.9 - - [24/Dec/2025 18:01:13] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 18:01:13,755 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 18:01:13,755 [INFO] ⚙️  Configuration:
+2025-12-24 18:01:13,755 [INFO]    Limit: 5
+2025-12-24 18:01:13,755 [INFO]    Force: False
+2025-12-24 18:01:13,755 [INFO]    Dry run: False
+2025-12-24 18:01:13,755 [INFO]    Min quality: 0.3
+2025-12-24 18:01:13,755 [INFO]    No cover only: True (only books without covers)
+2025-12-24 18:01:13,755 [INFO] 📖 Querying database for books...
+2025-12-24 18:01:13,801 [INFO] ✅ Found 5 books to enrich
+2025-12-24 18:01:13,801 [INFO]
+📚 Found 5 books to enrich
+2025-12-24 18:01:13,801 [INFO]
+🚀 Starting enrichment...
+2025-12-24 18:01:13,801 [INFO]    Estimated time: ~0.2 minutes
+2025-12-24 18:01:13,801 [INFO]    Estimated cost: ~$0.00
+2025-12-24 18:01:13,801 [WARNING] [1/5] ❌ The Secret History - No metadata found
+2025-12-24 18:01:14,803 [WARNING] [2/5] ❌ The Secret Garden - No metadata found
+2025-12-24 18:01:15,805 [WARNING] [3/5] ❌ The Priory of the Orange Tree (The Roots of Chaos, #1) - No metadata found
+2025-12-24 18:01:16,807 [WARNING] [4/5] ❌ The Familiar - No metadata found
+2025-12-24 18:01:17,810 [WARNING] [5/5] ❌ The Costume History - No metadata found
+2025-12-24 18:01:17,810 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 18:01:17,811 [INFO] 📊 Tracked 0 enriched and 0 skipped books
+2025-12-24 18:01:17,812 [INFO]
+============================================================
+2025-12-24 18:01:17,812 [INFO] ENRICHMENT REPORT
+2025-12-24 18:01:17,812 [INFO] ============================================================
+2025-12-24 18:01:17,813 [INFO] 📊 Statistics:
+2025-12-24 18:01:17,813 [INFO]    Books checked: 5
+2025-12-24 18:01:17,813 [INFO]    Books enriched: 0
+2025-12-24 18:01:17,814 [INFO]    Books failed: 5
+2025-12-24 18:01:17,814 [INFO]    Success rate: 0.0%
+2025-12-24 18:01:17,814 [INFO]
+📝 Content:
+2025-12-24 18:01:17,814 [INFO]    Covers found: 0
+2025-12-24 18:01:17,814 [INFO]    Descriptions added: 0
+2025-12-24 18:01:17,814 [INFO]
+⏱️  Performance:
+2025-12-24 18:01:17,814 [INFO]    Duration: 4.0s
+2025-12-24 18:01:17,814 [INFO]    Speed: 74.8 books/min
+2025-12-24 18:01:17,815 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 18:01:17,815 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 18:01:18] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Не виждам логове от `_has_sufficient_data` или `enrich_batch` с новите префикси. Възможни причини: кодът не е обновен на сървъра или logger level е твърде висок. Проверявам дали логовете се извеждат и дали има проблем с logger конфигурацията:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "logging\.(basicConfig|getLogger|setLevel|INFO|DEBUG)" in "scripts/enrich_books.py" • 3 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `logging.basicConfig(` | L42 |
+| `scripts/enrich_books.py` | `level=logging.INFO,` | L43 |
+| `scripts/enrich_books.py` | `logger = logging.getLogger(__name__)` | L51 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Logger level е `INFO`, така че логовете трябва да се показват. Не виждам логове от `_has_sufficient_data` или `enrich_batch` — вероятно кодът не е обновен на сървъра или има проблем с кеша. Проверявам `_progress_callback` какво получава:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "def _progress_callback" in "scripts/enrich_books.py" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `async def _progress_callback(` | L914 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам какво логва `_progress_callback`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам какво логва `_progress_callback` когато `metadata` е `None`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавям логове в `_progress_callback` за по-добра видимост:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 3, lines removed: undefined
+
+```diff
+@@ -934,4 +934,7 @@
+          # Show progress
+          progress_pct = processed / total * 100
++         
++         book_title = current_book.get('title', 'Unknown')
++         logger.info(f"🔍 [_progress_callback] Book {processed}/{total}: '{book_title}', metadata={'found' if metadata else 'None'}")
+          
+          if metadata:
+```
+
+**Chunk 2**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -941,5 +944,5 @@
+              
+              logger.info(
+-                 f"[{processed}/{total}] ✅ {current_book['title']} "
++                 f"[{processed}/{total}] ✅ {book_title} "
+                  f"(quality: {quality:.2f})"
+              )
+```
+
+**Chunk 3**
+Lines added: 3, lines removed: 1
+
+```diff
+@@ -955,7 +958,9 @@
+              self.stats['books_failed'] += 1
+              logger.warning(
+-                 f"[{processed}/{total}] ❌ {current_book['title']} "
++                 f"[{processed}/{total}] ❌ {book_title} "
+                  f"- No metadata found"
+              )
++             # Log book data to debug why enrichment failed
++             logger.info(f"🔍 [_progress_callback] Book data: title='{book_title}', author='{current_book.get('author', 'Unknown')}', cover_url='{current_book.get('cover_url', 'None')}', description={'present' if current_book.get('description') else 'missing'}")
+      
+      def _show_report(self):
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add detailed logging to _progress_callback to debug enrichment failures" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add detailed logging to _progress_callback to debug enrichment failures" && git push origin main
+```
+
+```
+[main 079dcb2] Add detailed logging to _progress_callback to debug enrichment failures
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   20047a7..079dcb2  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавих логове в `_progress_callback` за по-добра видимост. При следващото изпълнение ще видим:
+- Данните за всяка книга (title, author, cover_url, description)
+- Дали `metadata` е `None` и защо
+
+Промените са качени в git main. Опитайте отново и споделете логовете — ще видим защо `metadata` е `None`.
+
+Вероятно `enrich_single_book` връща `None` без да логва, или логовете не се извеждат. Логовете в `_progress_callback` ще покажат данните на книгата преди обогатяване.
+
+---
+

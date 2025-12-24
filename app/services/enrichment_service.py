@@ -127,19 +127,21 @@ class EnrichmentService:
             Enriched metadata dictionary or None
         """
         
-        logger.info(f"🔍 [ENRICH_SINGLE_BOOK] Called for book_data keys: {list(book_data.keys())}")
+        title = book_data.get('title', 'Unknown')
+        author = book_data.get('author', 'Unknown')
+        cover_url = book_data.get('cover_url', 'None')
+        has_description = bool(book_data.get('description'))
+        
+        logger.info(f"🔍 [ENRICH_SINGLE_BOOK] CALLED for '{title}'")
+        logger.info(f"🔍 [ENRICH_SINGLE_BOOK] Book data: author='{author}', cover_url='{cover_url[:80] if cover_url != 'None' else 'None'}...', has_description={has_description}")
+        logger.info(f"🔍 [ENRICH_SINGLE_BOOK] Parameters: force={force}, require_cover={require_cover}")
         
         # Check if any provider is available
         if not self.perplexity and not self.openai_enricher:
             logger.error("❌ [ENRICH_SINGLE_BOOK] No enrichment providers available - cannot enrich")
             return None
         
-        title = book_data.get('title')
-        author = book_data.get('author') or book_data.get('author', 'Unknown')
-        
-        logger.info(f"🔍 [ENRICH_SINGLE_BOOK] Title: '{title}', Author: '{author}'")
-        
-        if not title:
+        if not title or title == 'Unknown':
             logger.error("❌ [ENRICH_SINGLE_BOOK] Missing title - cannot enrich")
             return None
         
