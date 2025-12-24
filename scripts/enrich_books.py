@@ -178,6 +178,12 @@ class EnrichmentCommand:
         logger.info("📖 Querying database for books...")
         
         try:
+            # Handle specific book requests
+            if self.args.book_id:
+                return await self._get_book_by_id(self.args.book_id)
+            elif self.args.book_title:
+                return await self._get_book_by_title(self.args.book_title)
+            
             # Build query to find books missing metadata
             # Note: publisher is a relationship, not a property, so we check for PUBLISHED_BY relationship
             if self.args.force:
