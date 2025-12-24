@@ -291,13 +291,12 @@ class EnrichmentCommand:
                 
                 # If --no-cover-only flag is set, only get books without valid cover URLs
                 if hasattr(self.args, 'no_cover_only') and self.args.no_cover_only:
-                    # Query for books WITHOUT valid cover URLs (NULL, empty, or not starting with http/https)
+                    # Query for ALL books first, then filter in Python (KuzuDB WHERE with NOT STARTS WITH is tricky)
+                    # This ensures we get books without valid cover URLs
                     query = """
                     MATCH (b:Book)
                     OPTIONAL MATCH (b)-[:PUBLISHED_BY]->(p:Publisher)
-                    WHERE (b.cover_url IS NULL OR b.cover_url = '' OR 
-                           (b.cover_url IS NOT NULL AND b.cover_url <> '' AND 
-                            NOT b.cover_url STARTS WITH 'http://' AND NOT b.cover_url STARTS WITH 'https://'))
+                    WHERE (b.cover_url IS NULL OR b.cover_url = '')
                     RETURN b.id as id, b.title as title, b.description as description,
                            b.cover_url as cover_url, p.name as publisher,
                            b.isbn13 as isbn13, b.isbn10 as isbn10,
@@ -305,7 +304,7 @@ class EnrichmentCommand:
                            b.language as language, b.custom_metadata as custom_metadata
                     ORDER BY b.created_at DESC
                     """
-                    logger.info("🔍 [_get_books_to_enrich] Querying for books WITHOUT valid cover URLs (--no-cover-only mode)")
+                    logger.info("🔍 [_get_books_to_enrich] Querying for books WITHOUT cover URLs (NULL or empty) - will filter invalid URLs in Python")
                 else:
                     query = """
                     MATCH (b:Book)
