@@ -599,6 +599,24 @@ class EnrichmentCommand:
                             logger.info(f"   Updated fields: {', '.join(updates.keys())}")
                             if 'cover_url' in updates:
                                 logger.info(f"   Cover URL updated to: {updates['cover_url']}")
+                            
+                            # Track that this book was enriched
+                            # Store enrichment timestamp in custom_metadata or use a separate tracking mechanism
+                            try:
+                                # Try to update enrichment tracking
+                                enrichment_tracking_query = """
+                                MATCH (b:Book {id: $book_id})
+                                SET b.last_enriched_at = timestamp(),
+                                    b.enriched_by = 'ai_perplexity'
+                                RETURN b.id
+                                """
+                                safe_execute_kuzu_query(
+                                    enrichment_tracking_query,
+                                    {"book_id": book['id']}
+                                )
+                            except Exception as e:
+                                # If tracking fails, log but don't fail the enrichment
+                                logger.debug(f"Could not track enrichment for {book['title']}: {e}")
                         else:
                             logger.warning(f"⚠️  Failed to save: {book['title']}")
                     except Exception as e:
