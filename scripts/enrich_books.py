@@ -324,12 +324,19 @@ class EnrichmentCommand:
                 query += f" LIMIT {self.args.limit}"
             
             # Execute query
+            logger.info(f"🔍 [_get_books_to_enrich] Executing query...")
             result = safe_execute_kuzu_query(query, {})
             
             books = []
+            books_checked = 0
+            books_with_valid_cover = 0
+            books_without_valid_cover = 0
+            
             if result and hasattr(result, 'has_next'):
+                logger.info(f"🔍 [_get_books_to_enrich] Query returned results, processing...")
                 while result.has_next():
                     row = result.get_next()
+                    books_checked += 1
                     # Check if we have enough columns (9 for old query, 10 for new with language)
                     if len(row) >= 9:
                         book_id = row[0]
@@ -395,9 +402,14 @@ class EnrichmentCommand:
                                 # Double-check: only add books WITHOUT valid covers
                                 if not has_valid_cover:
                                     books.append(book_dict)
+                                    books_without_valid_cover += 1
                                     logger.info(f"✅ Added book without valid cover: {title} (cover_url='{cover_url[:60] if cover_url else 'None'}...')")
                                 else:
-                                    logger.debug(f"⏭️  Skipping book with valid cover: {title} (cover_url='{cover_url[:60]}...')")
+                                    books_with_valid_cover += 1
+                                    if books_checked <= 10:  # Log first 10 for debugging
+                                        logger.info(f"⏭️  Skipping book with valid cover: {title} (cover_url='{cover_url[:60]}...')")
+                                    elif books_checked == 11:
+                                        logger.info(f"⏭️  ... (skipping remaining books with valid covers)")
                             else:
                                 # Check if it's a Bulgarian book
                                 # Bulgarian books have Cyrillic characters in title OR language='bg'
