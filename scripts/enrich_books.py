@@ -487,6 +487,18 @@ def main():
         help='Skip confirmation prompt'
     )
     
+    parser.add_argument(
+        '--book-id',
+        type=str,
+        help='Enrich specific book by ID'
+    )
+    
+    parser.add_argument(
+        '--book-title',
+        type=str,
+        help='Enrich specific book by title (partial match)'
+    )
+    
     args = parser.parse_args()
     
     # Set environment variable for quality threshold
