@@ -20869,3 +20869,364 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+
+192.168.1.9 - - [24/Dec/2025 17:11:38] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 17:11:42,882 [INFO] ✅ Successfully initialized KuzuBookRepository (attempt 1)
+2025-12-24 17:11:42,882 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 17:11:42] "POST /metadata/enrichment/start HTTP/1.1" 200 -
+2025-12-24 17:11:42,883 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 17:11:42,882 [INFO] 192.168.1.9 - - [24/Dec/2025 17:11:42] "POST /metadata/enrichment/start HTTP/1.1" 200 -
+2025-12-24 17:11:42,883 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 17:11:42] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 17:11:42,927 [INFO] 192.168.1.9 - - [24/Dec/2025 17:11:42] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 17:11:42,947 [INFO] ⚙️  Configuration:
+2025-12-24 17:11:42,947 [INFO]    Limit: 5
+2025-12-24 17:11:42,947 [INFO]    Force: False
+2025-12-24 17:11:42,947 [INFO]    Dry run: False
+2025-12-24 17:11:42,947 [INFO]    Min quality: 0.3
+2025-12-24 17:11:42,947 [INFO]    No cover only: True (only books without covers)
+2025-12-24 17:11:42,947 [INFO] 📖 Querying database for books...
+2025-12-24 17:11:43,010 [INFO] ✅ Found 5 books to enrich
+2025-12-24 17:11:43,010 [INFO]
+📚 Found 5 books to enrich
+2025-12-24 17:11:43,011 [INFO]
+🚀 Starting enrichment...
+2025-12-24 17:11:43,011 [INFO]    Estimated time: ~0.2 minutes
+2025-12-24 17:11:43,011 [INFO]    Estimated cost: ~$0.00
+2025-12-24 17:11:43,011 [WARNING] [1/5] ❌ The Secret History - No metadata found
+2025-12-24 17:11:44,013 [WARNING] [2/5] ❌ The Secret Garden - No metadata found
+2025-12-24 17:11:45,015 [WARNING] [3/5] ❌ The Priory of the Orange Tree (The Roots of Chaos, #1) - No metadata found
+2025-12-24 17:11:46,017 [WARNING] [4/5] ❌ The Familiar - No metadata found
+2025-12-24 17:11:47,019 [WARNING] [5/5] ❌ The Costume History - No metadata found
+2025-12-24 17:11:47,020 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 17:11:47,021 [INFO] 📊 Tracked 0 enriched and 0 skipped books
+2025-12-24 17:11:47,021 [INFO]
+============================================================
+2025-12-24 17:11:47,022 [INFO] ENRICHMENT REPORT
+2025-12-24 17:11:47,022 [INFO] ============================================================
+2025-12-24 17:11:47,022 [INFO] 📊 Statistics:
+2025-12-24 17:11:47,022 [INFO]    Books checked: 5
+2025-12-24 17:11:47,022 [INFO]    Books enriched: 0
+2025-12-24 17:11:47,022 [INFO]    Books failed: 5
+2025-12-24 17:11:47,022 [INFO]    Success rate: 0.0%
+2025-12-24 17:11:47,023 [INFO]
+📝 Content:
+2025-12-24 17:11:47,023 [INFO]    Covers found: 0
+2025-12-24 17:11:47,023 [INFO]    Descriptions added: 0
+2025-12-24 17:11:47,023 [INFO]
+⏱️  Performance:
+2025-12-24 17:11:47,023 [INFO]    Duration: 4.0s
+2025-12-24 17:11:47,023 [INFO]    Speed: 74.8 books/min
+2025-12-24 17:11:47,023 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 17:11:47,024 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 17:11:48] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 17:11:48,003 [INFO] 192.168.1.9 - - [24/Dec/2025 17:11:48] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Скриптът работи, но не намира метаданни. Проверявам защо — вероятно проблем с Perplexity API или логиката за обогатяване. Добавям по-подробно логиране:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "async def enrich_batch|def enrich_batch" in "app/services/enrichment_service.py" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `async def enrich_batch(` | L226 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "No metadata found|books_failed|progress_callback" in "app/services/enrichment_service.py" • 5 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `logger.warning(f"❌ No metadata found for: \{title\}")` | L183 |
+| `app/services/enrichment_service.py` | `progress_callback: Optional[callable] = None` | L231 |
+| `app/services/enrichment_service.py` | `progress_callback: Optional callback for progress updates` | L240 |
+| `app/services/enrichment_service.py` | `if progress_callback:` | L285 |
+| `app/services/enrichment_service.py` | `await progress_callback(` | L286 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавям по-подробно логиране, за да видим защо не се намират метаданни:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 16, lines removed: 1
+
+```diff
+@@ -154,15 +154,30 @@
+              logger.info(f"🔍 Searching for: {title} - {author or ''}")
+              
++             # Check if providers are available
++             if not self.perplexity and not self.openai_enricher:
++                 logger.error(f"❌ No enrichment providers available for {title}")
++                 return None
++             
++             if self.perplexity:
++                 logger.info(f"✅ Using Perplexity enricher (has web search)")
++             elif self.openai_enricher:
++                 logger.info(f"⚠️  Using OpenAI/Ollama enricher (no web search)")
++             
+              # Try Perplexity first (has web search)
+              metadata = None
+              if self.perplexity:
+                  try:
++                     logger.debug(f"📡 Calling Perplexity API for: {title}")
+                      metadata = await self.perplexity.enrich_book(
+                          title=title,
+                          author=author,
+                          existing_data=book_data
+                      )
++                     if metadata:
++                         logger.info(f"✅ Perplexity returned metadata for {title}")
++                     else:
++                         logger.warning(f"⚠️  Perplexity returned None for {title}")
+                  except Exception as e:
+-                     logger.warning(f"Perplexity enrichment failed: {e}")
++                     logger.error(f"❌ Perplexity enrichment failed for {title}: {e}", exc_info=True)
+              
+              # Fall back to OpenAI/Ollama if Perplexity unavailable or failed
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "PERPLEXITY_API_KEY|perplexity_key|self\.perplexity" in "app/services/enrichment_service.py" • 18 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/services/enrichment_service.py` | `perplexity_key = os.getenv('PERPLEXITY_API_KEY')` | L51 |
+| `app/services/enrichment_service.py` | `if not perplexity_key:` | L52 |
+| `app/services/enrichment_service.py` | `perplexity_key = ai_config.get('PERPLEXITY_API_KEY', '')` | L56 |
+| `app/services/enrichment_service.py` | `if perplexity_key and (self.provider == 'auto' or self.provider == 'perplexity'):` | L60 |
+| `app/services/enrichment_service.py` | `self.perplexity = PerplexityEnricher(api_key=perplexity_key, model=perplexity_model)` | L69 |
+| `app/services/enrichment_service.py` | `self.perplexity = None` | L72 |
+| `app/services/enrichment_service.py` | `logger.warning("⚠️  PERPLEXITY_API_KEY not set - Perplexity enrichment disabled")` | L74 |
+| `app/services/enrichment_service.py` | `if not self.perplexity and config_provider in ['openai', 'ollama']:` | L88 |
+| `app/services/enrichment_service.py` | `if not self.perplexity and not self.openai_enricher:` | L100 |
+| `app/services/enrichment_service.py` | `if not self.perplexity and not self.openai_enricher:` | L131 |
+| `app/services/enrichment_service.py` | `if not self.perplexity and not self.openai_enricher:` | L157 |
+| `app/services/enrichment_service.py` | `if self.perplexity:` | L161 |
+| `app/services/enrichment_service.py` | `if self.perplexity:` | L168 |
+| `app/services/enrichment_service.py` | `metadata = await self.perplexity.enrich_book(` | L171 |
+| `app/services/enrichment_service.py` | `if self.perplexity:` | L217 |
+| `app/services/enrichment_service.py` | `cover_url = await self.perplexity.find_cover_image(` | L219 |
+| `app/services/enrichment_service.py` | `if self.perplexity:` | L511 |
+| `app/services/enrichment_service.py` | `await self.perplexity.close()` | L512 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Add detailed logging for enrichment debugging" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Add detailed logging for enrichment debugging" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main e9d9f00] Add detailed logging for enrichment debugging
+ 2 files changed, 333 insertions(+), 7 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   7824089..e9d9f00  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Добавих по-подробно логиране. При следващото изпълнение ще видим:
+- Дали Perplexity е инициализиран
+- Дали се прави API заявка
+- Какво връща Perplexity
+
+В логовете не виждам съобщения за инициализация на Perplexity, което предполага проблем с API ключа или конфигурацията.
+
+Проверете:
+1. Дали `PERPLEXITY_API_KEY` е зададен в `.env` или в AI Settings
+2. Дали Perplexity е избран като AI Provider в Settings
+
+След като изтеглите промените и опитате отново, логовете ще покажат къде е проблемът. Промените са качени в git main.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+ключа трябва да е в .env
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+

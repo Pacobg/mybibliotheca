@@ -44,9 +44,21 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Load environment variables
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    import os
+    # Load .env from project root
+    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+    load_dotenv(env_path)
+    logger.info(f"✅ Loaded .env from: {env_path}")
+    # Verify PERPLEXITY_API_KEY is loaded
+    perplexity_key = os.getenv('PERPLEXITY_API_KEY')
+    if perplexity_key:
+        logger.info(f"✅ PERPLEXITY_API_KEY found (length: {len(perplexity_key)})")
+    else:
+        logger.warning("⚠️  PERPLEXITY_API_KEY not found in .env file")
 except ImportError:
-    pass
+    logger.warning("⚠️  python-dotenv not installed - environment variables may not load")
+except Exception as e:
+    logger.warning(f"⚠️  Error loading .env: {e}")
 
 from app.services.enrichment_service import EnrichmentService
 from app.infrastructure.kuzu_repositories import KuzuBookRepository
