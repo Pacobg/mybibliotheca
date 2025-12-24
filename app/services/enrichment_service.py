@@ -145,9 +145,13 @@ class EnrichmentService:
             author = ''  # Empty author - AI will try to find it
         
         # Check if book already has good data (unless force)
-        if not force and self._has_sufficient_data(book_data, require_cover=require_cover):
-            logger.info(f"⏭️  Skipping {title} - already has sufficient data")
-            return None
+        if not force:
+            has_sufficient = self._has_sufficient_data(book_data, require_cover=require_cover)
+            if has_sufficient:
+                logger.info(f"⏭️  Skipping {title} - already has sufficient data")
+                return None
+            else:
+                logger.debug(f"🔍 Book '{title}' needs enrichment (has_sufficient_data=False, require_cover={require_cover})")
         
         try:
             logger.info(f"🔍 Enriching: {title} - {author}")

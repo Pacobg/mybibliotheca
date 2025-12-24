@@ -21650,3 +21650,446 @@ Output mode: content
 
 ---
 
+
+`logger` е дефиниран в `enrichment_service.py`. Проверявам дали проблемът е в друг файл, вероятно в `metadata_routes.py`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "logger\.|logger =|import logging" in "app/metadata_routes.py" • 7 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/metadata_routes.py` | `current_app.logger.info(f"ℹ️ [METADATA_ROUTES] Received request to create custom field '\{name\}' for user \{current_user.id\}")` | L99 |
+| `app/metadata_routes.py` | `current_app.logger.info(f"ℹ️ [METADATA_ROUTES] Validation passed for custom field '\{name\}'. Creating definition.")` | L114 |
+| `app/metadata_routes.py` | `current_app.logger.info(f"ℹ️ [METADATA_ROUTES] Custom field definition for '\{name\}' created. Saving...")` | L160 |
+| `app/metadata_routes.py` | `current_app.logger.warning(f"⚠️ [METADATA_ROUTES] Custom field service is not implemented (stub service)")` | L165 |
+| `app/metadata_routes.py` | `current_app.logger.info(f"✅ [METADATA_ROUTES] Successfully saved custom field '\{name\}' for user \{current_user.id\}")` | L190 |
+| `app/metadata_routes.py` | `current_app.logger.error(f"❌ [METADATA_ROUTES] Failed to save custom field '\{name\}' for user \{current_user.id\}")` | L193 |
+| `app/metadata_routes.py` | `current_app.logger.error(f"❌ [METADATA_ROUTES] Unhandled exception in create_field: \{e\}", exc_info=True)` | L198 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "logger" in "app/metadata_routes.py" • 7 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/metadata_routes.py` | `current_app.logger.info(f"ℹ️ [METADATA_ROUTES] Received request to create custom field '\{name\}' for user \{current_user.id\}")` | L99 |
+| `app/metadata_routes.py` | `current_app.logger.info(f"ℹ️ [METADATA_ROUTES] Validation passed for custom field '\{name\}'. Creating definition.")` | L114 |
+| `app/metadata_routes.py` | `current_app.logger.info(f"ℹ️ [METADATA_ROUTES] Custom field definition for '\{name\}' created. Saving...")` | L160 |
+| `app/metadata_routes.py` | `current_app.logger.warning(f"⚠️ [METADATA_ROUTES] Custom field service is not implemented (stub service)")` | L165 |
+| `app/metadata_routes.py` | `current_app.logger.info(f"✅ [METADATA_ROUTES] Successfully saved custom field '\{name\}' for user \{current_user.id\}")` | L190 |
+| `app/metadata_routes.py` | `current_app.logger.error(f"❌ [METADATA_ROUTES] Failed to save custom field '\{name\}' for user \{current_user.id\}")` | L193 |
+| `app/metadata_routes.py` | `current_app.logger.error(f"❌ [METADATA_ROUTES] Unhandled exception in create_field: \{e\}", exc_info=True)` | L198 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам последната промяна в `enrichment_service.py`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "PERPLEXITY_API_KEY found|PERPLEXITY_API_KEY not found" in "app/services/enrichment_service.py" • 0 matches</summary>
+
+Output mode: content
+
+
+_No matches found_
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/services/enrichment_service.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проверявам дали проблемът е в `scripts/enrich_books.py`:
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "logger\.|logger =|import logging" in "scripts/enrich_books.py" • 110 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `import logging` | L35 |
+| `scripts/enrich_books.py` | `logger.info(f"✅ Loaded .env from: \{env_path\}")` | L51 |
+| `scripts/enrich_books.py` | `logger.info(f"✅ PERPLEXITY_API_KEY found (length: \{len(perplexity_key)\})")` | L55 |
+| `scripts/enrich_books.py` | `logger.warning("⚠️  PERPLEXITY_API_KEY not found in .env file")` | L57 |
+| `scripts/enrich_books.py` | `logger.warning("⚠️  python-dotenv not installed - environment variables may not load")` | L59 |
+| `scripts/enrich_books.py` | `logger.warning(f"⚠️  Error loading .env: \{e\}")` | L61 |
+| `scripts/enrich_books.py` | `logger = logging.getLogger(__name__)` | L78 |
+| `scripts/enrich_books.py` | `logger.info(f"✅ Successfully initialized KuzuBookRepository (attempt \{attempt + 1\})")` | L101 |
+| `scripts/enrich_books.py` | `logger.warning(f"⚠️  Database lock conflict (attempt \{attempt + 1\}/\{max_retries\}). Retrying in \{retry_delay\}s...")` | L106 |
+| `scripts/enrich_books.py` | `logger.error(f"❌ Failed to acquire database lock after \{max_retries\} attempts")` | L111 |
+| `scripts/enrich_books.py` | `logger.error("💡 Tip: Make sure Flask app is not running or wait a few seconds and try again")` | L112 |
+| `scripts/enrich_books.py` | `logger.error(f"❌ Error initializing KuzuBookRepository: \{e\}")` | L117 |
+| `scripts/enrich_books.py` | `logger.info("="*60)` | L137 |
+| `scripts/enrich_books.py` | `logger.info("BOOK ENRICHMENT - AI Web Search")` | L138 |
+| `scripts/enrich_books.py` | `logger.info("="*60)` | L139 |
+| `scripts/enrich_books.py` | `logger.error("❌ No enrichment providers available!")` | L146 |
+| `scripts/enrich_books.py` | `logger.error("   Options:")` | L147 |
+| `scripts/enrich_books.py` | `logger.error("   1. Set PERPLEXITY_API_KEY in .env (recommended - has web search)")` | L148 |
+| `scripts/enrich_books.py` | `logger.error("   2. Configure OpenAI/Ollama in Settings > AI Settings")` | L149 |
+| `scripts/enrich_books.py` | `logger.error("      (Note: OpenAI/Ollama cannot search web for covers)")` | L150 |
+| `scripts/enrich_books.py` | `logger.info(f"⚙️  Configuration:")` | L153 |
+| `scripts/enrich_books.py` | `logger.info(f"   Limit: \{self.args.limit or 'No limit'\}")` | L154 |
+| `scripts/enrich_books.py` | `logger.info(f"   Force: \{self.args.force\}")` | L155 |
+| `scripts/enrich_books.py` | `logger.info(f"   Dry run: \{self.args.dry_run\}")` | L156 |
+| `scripts/enrich_books.py` | `logger.info(f"   Min quality: \{self.args.quality_min\}")` | L157 |
+| `scripts/enrich_books.py` | `logger.info(f"   No cover only: True (only books without covers)")` | L159 |
+| `scripts/enrich_books.py` | `logger.info("✅ No books need enrichment!")` | L165 |
+| `scripts/enrich_books.py` | `logger.info(f"\n📚 Found \{len(books)\} books to enrich")` | L168 |
+| `scripts/enrich_books.py` | `logger.info("\n🔍 DRY RUN - showing first 10 books:")` | L171 |
+| `scripts/enrich_books.py` | `logger.info(f"   \{i\}. \{book['title']\} - \{book.get('author', 'Unknown')\}")` | L173 |
+| `scripts/enrich_books.py` | `logger.info(f"      Missing: \{', '.join(missing) or 'none'\}")` | L183 |
+| `scripts/enrich_books.py` | `logger.info(f"\n⚠️  DRY RUN MODE - No changes made")` | L185 |
+| `scripts/enrich_books.py` | `logger.info("❌ Cancelled by user")` | L192 |
+| `scripts/enrich_books.py` | `logger.info(f"\n🚀 Starting enrichment...")` | L196 |
+| `scripts/enrich_books.py` | `logger.info(f"   Estimated time: ~\{len(books) * 2 / 60:.1f\} minutes")` | L197 |
+| `scripts/enrich_books.py` | `logger.info(f"   Estimated cost: ~$\{len(books) * 0.0008:.2f\}")` | L198 |
+| `scripts/enrich_books.py` | `logger.info(f"💾 Saved \{saved\} enriched books to database")` | L216 |
+| `scripts/enrich_books.py` | `logger.info(f"📊 Tracked \{len(self.enriched_books_list)\} enriched and \{len(self.skipped_books_list)\} skipped books")` | L240 |
+| `scripts/enrich_books.py` | `logger.warning(f"Could not update enrichment status file: \{e\}")` | L242 |
+| `scripts/enrich_books.py` | `logger.info("📖 Querying database for books...")` | L260 |
+| `scripts/enrich_books.py` | `logger.info(f"⏭️  Skipping \{title\} - enriched recently (\{last_enriched_at\})")` | L354 |
+| `scripts/enrich_books.py` | `logger.debug(f"Could not parse enrichment timestamp: \{e\}")` | L364 |
+| `scripts/enrich_books.py` | `logger.debug(f"✅ Added book without cover and author: \{title\}")` | L387 |
+| `scripts/enrich_books.py` | `logger.debug(f"✅ Added book without cover: \{title\}")` | L389 |
+| `scripts/enrich_books.py` | `logger.debug(f"✅ Added Bulgarian book without author: \{title\}")` | L399 |
+| `scripts/enrich_books.py` | `logger.debug(f"✅ Added Bulgarian book: \{title\}")` | L401 |
+| `scripts/enrich_books.py` | `logger.debug(f"⏭️  Skipping non-Bulgarian book: \{title\} (language: \{language\})")` | L403 |
+| `scripts/enrich_books.py` | `logger.info(f"✅ Found \{len(books)\} books to enrich")` | L405 |
+| `scripts/enrich_books.py` | `logger.error(f"❌ Error querying database: \{e\}", exc_info=True)` | L409 |
+| `scripts/enrich_books.py` | `logger.debug(f"📝 Book without author will be enriched: \{title\}")` | L457 |
+| `scripts/enrich_books.py` | `logger.info(f"✅ Found \{len(books)\} book(s) by ID")` | L459 |
+| `scripts/enrich_books.py` | `logger.error(f"❌ Error getting book by ID: \{e\}", exc_info=True)` | L462 |
+| `scripts/enrich_books.py` | `logger.debug(f"🔍 Searching for book with title pattern: '\{title_pattern\}'")` | L468 |
+| `scripts/enrich_books.py` | `logger.debug(f"🔍 Query returned result type: \{type(result)\}")` | L488 |
+| `scripts/enrich_books.py` | `logger.debug(f"🔍 No results from main query, trying simpler search...")` | L492 |
+| `scripts/enrich_books.py` | `logger.debug(f"🔍 Sample titles in database:")` | L500 |
+| `scripts/enrich_books.py` | `logger.debug(f"   - '\{row[1]\}'")` | L505 |
+| `scripts/enrich_books.py` | `logger.debug(f"🔍 Processing row \{row_count\}: \{row\}")` | L514 |
+| `scripts/enrich_books.py` | `logger.debug(f"📝 Book without author will be enriched: \{title\}")` | L541 |
+| `scripts/enrich_books.py` | `logger.info(f"✅ Found \{len(books)\} book(s) by title pattern: '\{title_pattern\}'")` | L543 |
+| `scripts/enrich_books.py` | `logger.error(f"❌ Error getting book by title: \{e\}", exc_info=True)` | L546 |
+| `scripts/enrich_books.py` | `logger.info(f"🧹 Cleaning description citations for: \{book['title']\}")` | L610 |
+| `scripts/enrich_books.py` | `logger.warning(f"⚠️  Description language doesn't match title for '\{book['title']\}' - but updating anyway (no existing or force)")` | L612 |
+| `scripts/enrich_books.py` | `logger.warning(f"🚫 Rejecting description for '\{book['title']\}': language doesn't match title (title is \{'Bulgarian' if has_cyrillic_title else 'English'\}, desc is \{'Bulgarian' if desc_has_cyrillic else 'English'\})")` | L614 |
+| `scripts/enrich_books.py` | `logger.debug(f"🔍 Cover check for '\{book['title']\}': current='\{current_cover_url\}' (local=\{current_is_local\}), new='\{new_cover_url\}' (valid=\{is_valid_url\})")` | L625 |
+| `scripts/enrich_books.py` | `logger.info(f"🖼️  Updating cover URL for: \{book['title']\} -> \{new_cover_url\}")` | L634 |
+| `scripts/enrich_books.py` | `logger.warning(f"⚠️  Skipping invalid cover URL for '\{book['title']\}': \{new_cover_url\} (not http/https)")` | L636 |
+| `scripts/enrich_books.py` | `logger.debug(f"⏭️  Skipping cover update for '\{book['title']\}' - already has valid URL: \{current_cover_url\}")` | L638 |
+| `scripts/enrich_books.py` | `logger.info(f"🌍 Setting language to 'bg' for Bulgarian book: \{title\}")` | L681 |
+| `scripts/enrich_books.py` | `logger.debug(f"📝 Updating book '\{book['title']\}' with fields: \{list(updates.keys())\}")` | L687 |
+| `scripts/enrich_books.py` | `logger.info(f"🖼️  Will update cover_url to: \{updates['cover_url']\}")` | L689 |
+| `scripts/enrich_books.py` | `logger.info(f"✅ Saved: \{book['title']\}")` | L700 |
+| `scripts/enrich_books.py` | `logger.info(f"   Updated fields: \{', '.join(updates.keys())\}")` | L701 |
+| `scripts/enrich_books.py` | `logger.info(f"   Cover URL updated to: \{updates['cover_url']\}")` | L703 |
+| `scripts/enrich_books.py` | `logger.debug(f"Could not track enrichment for \{book['title']\}: \{e\}")` | L753 |
+| `scripts/enrich_books.py` | `logger.warning(f"⚠️  Failed to save: \{book['title']\}")` | L755 |
+| `scripts/enrich_books.py` | `logger.error(f"❌ Error updating book \{book['id']\}: \{e\}", exc_info=True)` | L757 |
+| `scripts/enrich_books.py` | `logger.debug(f"✅ Added publisher: \{publisher_name\} for \{book['title']\}")` | L764 |
+| `scripts/enrich_books.py` | `logger.warning(f"⚠️  Failed to add publisher for \{book['title']\}: \{e\}")` | L766 |
+| `scripts/enrich_books.py` | `logger.debug(f"🔍 AI metadata author: \{ai_author\}")` | L774 |
+| `scripts/enrich_books.py` | `logger.debug(f"🔍 Enriched author: \{enriched.get('author')\}")` | L775 |
+| `scripts/enrich_books.py` | `logger.debug(f"✅ Using Bulgarian author for Bulgarian book: \{ai_author\}")` | L796 |
+| `scripts/enrich_books.py` | `logger.debug(f"✅ Using English author for English book: \{ai_author\}")` | L805 |
+| `scripts/enrich_books.py` | `logger.debug(f"⚠️  Bulgarian book '\{title\}' has English author '\{ai_author\}' - keeping for now")` | L813 |
+| `scripts/enrich_books.py` | `logger.info(f"⚠️  Skipping Bulgarian author '\{ai_author\}' for English book '\{title\}' - keeping original author")` | L816 |
+| `scripts/enrich_books.py` | `logger.warning(f"🚫 Rejecting Bulgarian author '\{ai_author\}' for English book '\{title\}'")` | L823 |
+| `scripts/enrich_books.py` | `logger.info(f"📝 Updating authors from \{current_author_names\} to [\{ai_author\}]")` | L855 |
+| `scripts/enrich_books.py` | `logger.info(f"✅ Updated author to: \{ai_author\}")` | L900 |
+| `scripts/enrich_books.py` | `logger.warning(f"⚠️  Failed to update author for \{book['title']\}: \{e\}")` | L902 |
+| `scripts/enrich_books.py` | `logger.error(f"❌ Error saving \{book.get('title', 'unknown')\}: \{e\}", exc_info=True)` | L905 |
+| `scripts/enrich_books.py` | `logger.info(` | L937 |
+| `scripts/enrich_books.py` | `logger.info(f"   🖼️  Cover found")` | L944 |
+| `scripts/enrich_books.py` | `logger.info(f"   📝 Description added")` | L948 |
+| `scripts/enrich_books.py` | `logger.warning(` | L951 |
+| `scripts/enrich_books.py` | `logger.info("\n" + "="*60)` | L968 |
+| `scripts/enrich_books.py` | `logger.info("ENRICHMENT REPORT")` | L969 |
+| `scripts/enrich_books.py` | `logger.info("="*60)` | L970 |
+| `scripts/enrich_books.py` | `logger.info(f"📊 Statistics:")` | L972 |
+| `scripts/enrich_books.py` | `logger.info(f"   Books checked: \{self.stats['books_checked']\}")` | L973 |
+| `scripts/enrich_books.py` | `logger.info(f"   Books enriched: \{self.stats['books_enriched']\}")` | L974 |
+| `scripts/enrich_books.py` | `logger.info(f"   Books failed: \{self.stats['books_failed']\}")` | L975 |
+| `scripts/enrich_books.py` | `logger.info(f"   Success rate: \{success_rate:.1f\}%")` | L976 |
+| `scripts/enrich_books.py` | `logger.info(f"\n📝 Content:")` | L978 |
+| `scripts/enrich_books.py` | `logger.info(f"   Covers found: \{self.stats['covers_found']\}")` | L979 |
+| `scripts/enrich_books.py` | `logger.info(f"   Descriptions added: \{self.stats['descriptions_added']\}")` | L980 |
+| `scripts/enrich_books.py` | `logger.info(f"\n⏱️  Performance:")` | L982 |
+| `scripts/enrich_books.py` | `logger.info(f"   Duration: \{duration:.1f\}s")` | L983 |
+| `scripts/enrich_books.py` | `logger.info(f"   Speed: \{self.stats['books_checked'] / duration * 60:.1f\} books/min")` | L985 |
+| `scripts/enrich_books.py` | `logger.info(f"\n💰 Estimated cost: $\{cost:.2f\}")` | L989 |
+| `scripts/enrich_books.py` | `logger.info("="*60)` | L991 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "logger\.info.*PERPLEXITY|logger\.warning.*PERPLEXITY" in "scripts/enrich_books.py" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `logger.info(f"✅ PERPLEXITY_API_KEY found (length: \{len(perplexity_key)\})")` | L55 |
+| `scripts/enrich_books.py` | `logger.warning("⚠️  PERPLEXITY_API_KEY not found in .env file")` | L57 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проблемът е в `scripts/enrich_books.py`: `logger` се използва преди да е дефиниран. Премествам дефиницията преди използването:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 12, lines removed: undefined
+
+```diff
+@@ -38,4 +38,16 @@
+  from pathlib import Path
+  from typing import List, Dict, Optional
++ 
++ # Setup logging FIRST before any logger usage
++ logging.basicConfig(
++     level=logging.INFO,
++     format='%(asctime)s [%(levelname)s] %(message)s',
++     handlers=[
++         logging.StreamHandler(),
++         logging.FileHandler('enrichment.log')
++     ]
++ )
++ 
++ logger = logging.getLogger(__name__)
+  
+  # Add parent directory to path
+```
+
+**Chunk 2**
+Lines added: undefined, lines removed: 1
+
+```diff
+@@ -45,5 +57,4 @@
+  try:
+      from dotenv import load_dotenv
+-     import os
+      # Load .env from project root
+      env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+```
+
+**Chunk 3**
+Lines added: undefined, lines removed: 12
+
+```diff
+@@ -65,16 +76,4 @@
+  from app.infrastructure.kuzu_graph import safe_execute_kuzu_query
+  from app.services import book_service
+- 
+- # Setup logging
+- logging.basicConfig(
+-     level=logging.INFO,
+-     format='%(asctime)s [%(levelname)s] %(message)s',
+-     handlers=[
+-         logging.StreamHandler(),
+-         logging.FileHandler('enrichment.log')
+-     ]
+- )
+- 
+- logger = logging.getLogger(__name__)
+  
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix logger definition order - define logger before using it in scripts/enrich_books.py" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix logger definition order - define logger before using it in scripts/enrich_books.py" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 3812dd8] Fix logger definition order - define logger before using it in scripts/enrich_books.py
+ 2 files changed, 320 insertions(+), 13 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   3c17b54..3812dd8  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправих проблема с `logger`: се използваше преди да е дефиниран. Преместих дефиницията на `logger` преди използването му.
+
+## Какво е поправено:
+
+1. Преместена дефиницията на `logger` — вече е дефиниран преди да се използва в кода за зареждане на `.env`
+2. Премахнат дублираният `import os` — имаше два пъти `import os`
+
+## Проблемът беше:
+
+В `scripts/enrich_books.py` на редове 51, 55, 57, 59, 61 се използваше `logger`, но той беше дефиниран едва на ред 78. Това причиняваше грешката `name 'logger' is not defined`.
+
+## Следващи стъпки:
+
+1. Изтеглете промените на сървъра: `git pull origin main`
+2. Рестартирайте Flask приложението (ако е нужно)
+3. Опитайте отново обогатяването — трябва да работи без грешка с `logger`
+
+Всички промени са качени в git main и са готови за изтегляне на сървъра.
+
+---
+
