@@ -18000,6 +18000,314 @@ nothing to commit, working tree clean
 ---
 
 
+Всички промени са качени в git main.
+
+## Обобщение на качените промени:
+
+### Последни 5 комита:
+1. **Complete AI enrichment integration** - Пълна интеграция на Perplexity, UI в metadata страницата и tracking
+2. **Complete enrichment tracking** - Пълна логика за tracking на обогатените книги
+3. **Add custom_metadata to queries** - Добавяне на custom_metadata в queries
+4. **Fix enrichment tracking** - Поправка на tracking системата
+5. **Add tracking for enriched books** - Първоначална имплементация на tracking
+
+### Какво е включено:
+
+1. **Perplexity в AI Settings**
+   - Опция в dropdown
+   - Конфигурация и тест бутон
+   - Обяснения за web search способностите
+
+2. **Обяснения за ограниченията**
+   - Alert boxes за OpenAI/Ollama
+   - Ясно описание на ограниченията
+
+3. **UI в Metadata страницата**
+   - Раздел "Обогатяване с AI"
+   - Бутон за обогатяване на книги без обложки
+   - Статус мониторинг
+
+4. **Backend endpoints**
+   - `/metadata/enrichment/start` - стартира enrichment
+   - `/metadata/enrichment/status` - проверява статус
+
+5. **Tracking система**
+   - Записва кога е обогатена книгата
+   - Пропуска книги обогатени в последните 24 часа
+
+Можете да изтеглите промените на сървъра с:
+```bash
+git pull origin main
+```
+
+Всичко е готово за използване.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+да направим бутона да проверява временно 5 книги без обложки за теста и да можем да проследим дали няма да ги провери отново следа като вече ги е проверявал
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Променям бутона да проверява 5 книги и добавям проследяване на обогатените книги:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/templates/metadata/index.html</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/templates/metadata/index.html</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -108,5 +108,5 @@
+                              &lt;div class="d-flex gap-2 flex-wrap"&gt;
+                                  &lt;button type="button" class="btn btn-primary" id="enrichNoCoverBtn"&gt;
+-                                     &lt;i class="bi bi-image me-1"&gt;&lt;/i&gt;Обогатяване на книги без обложки - до 100 бр.
++                                     &lt;i class="bi bi-image me-1"&gt;&lt;/i&gt;Обогатяване на книги без обложки - до 5 бр. (тест)
+                                  &lt;/button&gt;
+                                  &lt;button type="button" class="btn btn-outline-secondary" id="checkEnrichmentStatusBtn"&gt;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+The string to replace was not found in the file.
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/metadata_routes.py</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 1
+
+```diff
+@@ -345,5 +345,5 @@
+              return jsonify({'error': 'Admin access required'}), 403
+          
+-         limit = int(request.form.get('limit', 100))
++         limit = int(request.form.get('limit', 5))  # Default to 5 for testing
+          no_cover_only = request.form.get('no_cover_only', 'false').lower() == 'true'
+          
+```
+
+**Chunk 2**
+Lines added: 3, lines removed: 1
+
+```diff
+@@ -371,5 +371,7 @@
+                      'processed': 0,
+                      'enriched': 0,
+-                     'failed': 0
++                     'failed': 0,
++                     'enriched_books': [],  # Track which books were enriched
++                     'skipped_books': []   # Track which books were skipped (already enriched)
+                  }
+                  with open(enrichment_status_file, 'w') as f:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "How to update enrichment status file with enriched books list during enrichment process?" • **15** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/routes/import_routes.py` | L87-99 |
+| `app/services/audiobookshelf_listening_sync.py` | L255-285 |
+| `app/templates/import_books_progress.html` | L320-346 |
+| `app/services/audiobookshelf_listening_sync.py` | L222-255 |
+| `app/services/audiobookshelf_import_service.py` | L1352-1377 |
+| `app/onboarding_system.py` | L2518-2556 |
+| `app/routes/import_routes.py` | L1989-2009 |
+| `app/services/audiobookshelf_import_service.py` | L1305-1324 |
+| `app/templates/onboarding/import_books_progress.html` | L193-215 |
+| `app/routes/import_routes.py` | L3981-4020 |
+| `app/routes/import_routes.py` | L2219-2258 |
+| `app/templates/onboarding/import_books_progress.html` | L170-193 |
+| `app/onboarding_system.py` | L2467-2486 |
+| `app/routes/import_routes.py` | L1312-1361 |
+| `app/sqlite_migration_service.py` | L284-324 |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "enrichment_status|enrichment_status_file|_save_enriched_books" in "scripts/enrich_books.py" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `saved = await self._save_enriched_books(books)` | L167 |
+| `scripts/enrich_books.py` | `async def _save_enriched_books(self, books: List[Dict]) -> int:` | L468 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+Model supplied an ambiguous edit
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 8, lines removed: 1
+
+```diff
+@@ -278,5 +278,12 @@
+                                  enriched_time = datetime.fromisoformat(last_enriched_at.replace('Z', '+00:00'))
+                                  if datetime.now(enriched_time.tzinfo) - enriched_time &lt; timedelta(hours=24):
+-                                     logger.debug(f"⏭️  Skipping {title} - enriched recently ({last_enriched_at})")
++                                     logger.info(f"⏭️  Skipping {title} - enriched recently ({last_enriched_at})")
++                                     # Track skipped book
++                                     skipped_books_list.append({
++                                         'title': title,
++                                         'id': book_id,
++                                         'reason': f'Already enriched at {last_enriched_at}',
++                                         'skipped_at': datetime.now().isoformat()
++                                     })
+                                      continue
+                              except Exception as e:
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="search_replace">
+<details>
+<summary>Tool use: **search_replace**</summary>
+
+
+Parameters:
+
+```json
+{
+  "relativeWorkspacePath": "scripts/enrich_books.py"
+}
+```
+Additional data:
+
+```json
+{
+  "codeblockId": "e20ca0be-924f-45f4-b025-1cd68ee395e5"
+}
+```
+User decision: **accepted**
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
 
 ---
 

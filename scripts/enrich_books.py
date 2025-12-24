@@ -82,6 +82,8 @@ class EnrichmentCommand:
             'covers_found': 0,
             'descriptions_added': 0,
         }
+        self.enriched_books_list = []  # Track enriched books
+        self.skipped_books_list = []   # Track skipped books (already enriched)
     
     async def run(self):
         """Execute enrichment command"""
@@ -627,6 +629,15 @@ class EnrichmentCommand:
                             logger.info(f"   Updated fields: {', '.join(updates.keys())}")
                             if 'cover_url' in updates:
                                 logger.info(f"   Cover URL updated to: {updates['cover_url']}")
+                            
+                            # Track enriched book
+                            self.enriched_books_list.append({
+                                'title': book['title'],
+                                'id': book['id'],
+                                'updated_fields': list(updates.keys()),
+                                'enriched_at': datetime.now().isoformat(),
+                                'has_cover': 'cover_url' in updates
+                            })
                             
                             # Track that this book was enriched
                             # Store enrichment timestamp in custom_metadata JSON field
