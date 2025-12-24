@@ -28,14 +28,11 @@ class PerplexityEnricher:
     
     API_URL = "https://api.perplexity.ai/chat/completions"
     
-    # Perplexity models
-    # Updated model names as of 2024
-    MODEL_LARGE = "llama-3.1-sonar-large-128k-online"  # Best quality (may need update)
-    MODEL_SMALL = "llama-3.1-sonar-small-128k-online"  # Faster, cheaper (may need update)
-    # Alternative models if above don't work:
-    MODEL_SONAR_LARGE = "sonar"  # Default sonar model
-    MODEL_SONAR_ONLINE = "sonar-online"  # Online search enabled
-    MODEL_LLAMA_3_1_70B = "llama-3.1-70b-instruct"  # Standard model
+    # Perplexity models (as of Dec 2024)
+    # Sonar model family - see https://docs.perplexity.ai/getting-started/models
+    MODEL_SONAR = "sonar"  # Fast, reliable answers with detailed research
+    MODEL_SONAR_PRO = "sonar-pro"  # Smart problem-solving with real-time evidence
+    MODEL_SONAR_DEEP_RESEARCH = "sonar-deep-research"  # Expert-level insights from hundreds of sources
     
     def __init__(self, api_key: str, model: str = None):
         """
@@ -46,9 +43,9 @@ class PerplexityEnricher:
             model: Model to use (default: sonar-online for web search)
         """
         self.api_key = api_key
-        # Default to sonar-online which supports web search
-        # Fallback to sonar if sonar-online doesn't work
-        self.model = model or os.getenv('PERPLEXITY_MODEL', 'sonar-online')
+        # Default to sonar-pro for best balance of quality and web search
+        # All sonar models support web search
+        self.model = model or os.getenv('PERPLEXITY_MODEL', 'sonar-pro')
         self.client = httpx.AsyncClient(timeout=30.0)
         
         logger.info(f"✅ PerplexityEnricher initialized with model: {self.model}")
