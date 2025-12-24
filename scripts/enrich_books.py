@@ -641,6 +641,13 @@ class EnrichmentCommand:
                             logger.info(f"⚠️  Skipping Bulgarian author '{ai_author}' for English book '{title}' - keeping original author")
                             ai_author = None
                 
+                # Final check: Don't update author if title is English but AI returned Bulgarian
+                if ai_author and not has_cyrillic_title:
+                    has_cyrillic_author_final = any('\u0400' <= char <= '\u04FF' for char in ai_author)
+                    if has_cyrillic_author_final:
+                        logger.warning(f"🚫 Rejecting Bulgarian author '{ai_author}' for English book '{title}'")
+                        ai_author = None
+                
                 if ai_author:
                     try:
                         # Get current authors
