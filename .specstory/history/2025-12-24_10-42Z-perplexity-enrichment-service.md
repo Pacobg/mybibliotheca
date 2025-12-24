@@ -20058,3 +20058,503 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+
+Статус: ✅ Завършено
+Завършено: 24.12.2025 г., 17:01:19 ч.
+Грешка: acovw/mybibliotheca/app/utils/safe_kuzu_manager.py", line 354, in _initialize_database self._database = kuzu.Database(self.database_path) ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^ File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/kuzu/database.py", line 104, in __init__ self.init_database() ~~~~~~~~~~~~~~~~~~^^ File "/home/pacovw/mybibliotheca/venv/lib/python3.13/site-packages/kuzu/database.py", line 155, in init_database self._database = _kuzu.Database( # type: ignore[union-attr] ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ self.database_path, ^^^^^^^^^^^^^^^^^^^ ...<6 lines>... self.checkpoint_threshold, ^^^^^^^^^^^^^^^^^^^^^^^^^^ ) ^ RuntimeError: IO exception: Could not set lock on file : /home/pacovw/mybibliotheca/data/kuzu/bibliotheca.db See the docs: https://docs.kuzudb.com/concurrency for more information. 2025-12-24 17:01:19,467 [INFO] ✅ No books need enrichment!
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Проблемът е, че `subprocess.run` създава нов процес, който не може да споделя lock-а с Flask. Преминаваме към изпълнение в същия процес чрез threading или директно async извикване вместо subprocess:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "def run\(|async def run|if __name__" in "scripts/enrich_books.py" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `async def run(self):` | L120 |
+| `scripts/enrich_books.py` | `if __name__ == "__main__":` | L1048 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "How to run enrichment script directly in Flask thread instead of subprocess?" • **15** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `app/routes/import_routes.py` | L1502-1702 |
+| `app/services/audiobookshelf_sync_runner.py` | L20-365 |
+| `app/routes/import_routes.py` | L1502-1670 |
+| `dev_run.py` | L50 |
+| `app/routes/import_routes.py` | L816-1163 |
+| `app/routes/import_routes.py` | L2953-3218 |
+| `app/services/opds_sync_runner.py` | L16-361 |
+| `app/services/audiobookshelf_import_service.py` | L22-1775 |
+| `app/routes/import_routes.py` | L3417-3564 |
+| `run.py` | L35 |
+| `app/routes/import_routes.py` | L2282-2782 |
+| `app/routes/import_routes.py` | L1772-1903 |
+| `app/onboarding_system.py` | L2240-2389 |
+| `app/simplified_book_service.py` | L167-1819 |
+| `app/onboarding_system.py` | L2240-2386 |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "EnrichmentCommand|enrich_books|EnrichmentService" in "app/metadata_routes.py" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/metadata_routes.py` | `script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts', 'enrich_books.py')` | L381 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Преминаваме към директно извикване на `EnrichmentCommand` в threading вместо subprocess, за да споделяме същата база данни:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/metadata_routes.py</summary>
+
+**Chunk 1**
+Lines added: 5, lines removed: 1
+
+```diff
+@@ -359,6 +359,10 @@
+                      }), 400
+          
+-         # Start enrichment in background
++         # Start enrichment in background thread (same process to share KuzuDB connection)
+          import threading
++         import asyncio
++         import argparse
++         from scripts.enrich_books import EnrichmentCommand
++         
+          def run_enrichment():
+              try:
+```
+
+**Chunk 2**
+Lines added: 25, lines removed: 15
+
+```diff
+@@ -378,31 +382,41 @@
+                      json.dump(status, f)
+                  
+-                 # Run enrichment script
+-                 script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts', 'enrich_books.py')
+-                 cmd = ['python', script_path, '--limit', str(limit), '-y']
+-                 if no_cover_only:
+-                     cmd.append('--no-cover-only')
+-                 
+-                 result = subprocess.run(
+-                     cmd,
+-                     capture_output=True,
+-                     text=True,
+-                     timeout=3600  # 1 hour timeout
+-                 )
++                 # Create args namespace for EnrichmentCommand
++                 args = argparse.Namespace(
++                     limit=limit,
++                     force=False,
++                     dry_run=False,
++                     quality_min=0.3,
++                     yes=True,
++                     book_id=None,
++                     book_title=None,
++                     no_cover_only=no_cover_only
++                 )
++                 
++                 # Run enrichment directly in same process (shares KuzuDB connection)
++                 command = EnrichmentCommand(args)
++                 
++                 # Run async command in event loop
++                 asyncio.run(command.run())
++                 
++                 # Load final status from script output
++                 if enrichment_status_file.exists():
++                     with open(enrichment_status_file, 'r') as f:
++                         status = json.load(f)
+                  
+                  # Update status
+                  status['running'] = False
+                  status['completed_at'] = datetime.now().isoformat()
+-                 status['exit_code'] = result.returncode
+-                 status['output'] = result.stdout[-1000:] if result.stdout else ''  # Last 1000 chars
+-                 status['error'] = result.stderr[-1000:] if result.stderr else ''
+                  
+                  with open(enrichment_status_file, 'w') as f:
+                      json.dump(status, f)
+                      
+              except Exception as e:
++                 import traceback
++                 error_trace = traceback.format_exc()
+                  status = {
+                      'running': False,
+                      'error': str(e),
++                     'error_trace': error_trace[-2000:] if len(error_trace) &gt; 2000 else error_trace,
+                      'completed_at': datetime.now().isoformat()
+                  }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: app/metadata_routes.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "^import|^from" in "app/metadata_routes.py" • 11 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `app/metadata_routes.py` | `from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, current_app` | L7 |
+| `app/metadata_routes.py` | `from flask_login import login_required, current_user` | L8 |
+| `app/metadata_routes.py` | `from datetime import datetime` | L9 |
+| `app/metadata_routes.py` | `import uuid` | L10 |
+| `app/metadata_routes.py` | `import os` | L11 |
+| `app/metadata_routes.py` | `import subprocess` | L12 |
+| `app/metadata_routes.py` | `import asyncio` | L13 |
+| `app/metadata_routes.py` | `import json` | L14 |
+| `app/metadata_routes.py` | `from pathlib import Path` | L15 |
+| `app/metadata_routes.py` | `from .domain.models import CustomFieldDefinition, ImportMappingTemplate, CustomFieldType` | L17 |
+| `app/metadata_routes.py` | `from .services import custom_field_service, import_mapping_service` | L18 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `app/metadata_routes.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix KuzuDB lock conflict by running enrichment in same process thread instead of subprocess" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix KuzuDB lock conflict by running enrichment in same process thread instead of subprocess" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/metadata_routes.py', LF will be replaced by CRLF the next time Git touches it
+[main 2b72120] Fix KuzuDB lock conflict by running enrichment in same process thread instead of subprocess
+ 2 files changed, 229 insertions(+), 47 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   e670e33..2b72120  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Променил съм кода да използва директно `EnrichmentCommand` в threading вместо subprocess. Това решава проблема с KuzuDB lock конфликтите.
+
+## Какво е променено:
+
+1. Премахнат `subprocess.run` — вече не се създава нов процес
+2. Директно извикване на `EnrichmentCommand` — използва се в същия процес като Flask
+3. Използване на `asyncio.run()` в threading — както в другите части на кода (например `import_routes.py`)
+4. По-добра обработка на грешки — добавен е traceback за по-лесно debug
+
+## Защо това работи:
+
+- Когато използваме `subprocess.run()`, се създава нов процес, който се опитва да отвори същата KuzuDB база данни → lock конфликт
+- Когато използваме threading + директно извикване, всичко е в същия процес → споделя се същата база данни → няма lock конфликт
+
+## Следващи стъпки:
+
+1. Изтеглете промените на сървъра: `git pull origin main`
+2. Рестартирайте Flask приложението (ако е нужно)
+3. Опитайте отново обогатяването — трябва да работи без lock грешки
+
+Всички промени са качени в git main и са готови за изтегляне на сървъра.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 17:03:19,034 [INFO] ============================================================
+2025-12-24 17:03:19,034 [INFO] BOOK ENRICHMENT - AI Web Search
+2025-12-24 17:03:19,035 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 17:03:19] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 17:03:19,088 [INFO] 192.168.1.9 - - [24/Dec/2025 17:03:19] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 17:03:19,094 [INFO] ⚙️  Configuration:
+2025-12-24 17:03:19,094 [INFO]    Limit: 5
+2025-12-24 17:03:19,094 [INFO]    Force: False
+2025-12-24 17:03:19,094 [INFO]    Dry run: False
+2025-12-24 17:03:19,094 [INFO]    Min quality: 0.3
+2025-12-24 17:03:19,094 [INFO]    No cover only: True (only books without covers)
+2025-12-24 17:03:19,094 [INFO] 📖 Querying database for books...
+2025-12-24 17:03:19,141 [INFO] ✅ Found 5 books to enrich
+2025-12-24 17:03:19,141 [INFO]
+📚 Found 5 books to enrich
+2025-12-24 17:03:19,141 [INFO]
+🚀 Starting enrichment...
+2025-12-24 17:03:19,141 [INFO]    Estimated time: ~0.2 minutes
+2025-12-24 17:03:19,141 [INFO]    Estimated cost: ~$0.00
+2025-12-24 17:03:19,141 [WARNING] [1/5] ❌ The Secret History - No metadata found
+2025-12-24 17:03:20,143 [WARNING] [2/5] ❌ The Secret Garden - No metadata found
+2025-12-24 17:03:21,145 [WARNING] [3/5] ❌ The Priory of the Orange Tree (The Roots of Chaos, #1) - No metadata found
+2025-12-24 17:03:22,146 [WARNING] [4/5] ❌ The Familiar - No metadata found
+2025-12-24 17:03:23,148 [WARNING] [5/5] ❌ The Costume History - No metadata found
+2025-12-24 17:03:23,148 [INFO] 💾 Saved 0 enriched books to database
+2025-12-24 17:03:23,148 [WARNING] Could not update enrichment status file: name 'Path' is not defined
+2025-12-24 17:03:23,149 [INFO]
+============================================================
+2025-12-24 17:03:23,149 [INFO] ENRICHMENT REPORT
+2025-12-24 17:03:23,149 [INFO] ============================================================
+2025-12-24 17:03:23,149 [INFO] 📊 Statistics:
+2025-12-24 17:03:23,149 [INFO]    Books checked: 5
+2025-12-24 17:03:23,149 [INFO]    Books enriched: 0
+2025-12-24 17:03:23,150 [INFO]    Books failed: 5
+2025-12-24 17:03:23,150 [INFO]    Success rate: 0.0%
+2025-12-24 17:03:23,150 [INFO]
+📝 Content:
+2025-12-24 17:03:23,150 [INFO]    Covers found: 0
+2025-12-24 17:03:23,150 [INFO]    Descriptions added: 0
+2025-12-24 17:03:23,150 [INFO]
+⏱️  Performance:
+2025-12-24 17:03:23,150 [INFO]    Duration: 4.0s
+2025-12-24 17:03:23,151 [INFO]    Speed: 74.9 books/min
+2025-12-24 17:03:23,151 [INFO]
+💰 Estimated cost: $0.00
+2025-12-24 17:03:23,151 [INFO] ============================================================
+192.168.1.9 - - [24/Dec/2025 17:03:24] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 17:03:24,142 [INFO] 192.168.1.9 - - [24/Dec/2025 17:03:24] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="search_replace">
+<details>
+<summary>Tool use: **search_replace**</summary>
+
+Status: **loading**
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+

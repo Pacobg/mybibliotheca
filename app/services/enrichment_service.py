@@ -157,11 +157,9 @@ class EnrichmentService:
             metadata = None
             if self.perplexity:
                 try:
-                    metadata = await self.perplexity.fetch_metadata(
+                    metadata = await self.perplexity.enrich_book(
                         title=title,
                         author=author,
-                        isbn=book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10'),
-                        publisher=book_data.get('publisher'),
                         existing_data=book_data
                     )
                 except Exception as e:
@@ -171,11 +169,9 @@ class EnrichmentService:
             if not metadata and self.openai_enricher:
                 try:
                     logger.info(f"🔄 Trying OpenAI/Ollama enrichment (no web search)")
-                    metadata = await self.openai_enricher.fetch_metadata(
+                    metadata = await self.openai_enricher.enrich_book(
                         title=title,
                         author=author,
-                        isbn=book_data.get('isbn') or book_data.get('isbn13') or book_data.get('isbn10'),
-                        publisher=book_data.get('publisher'),
                         existing_data=book_data
                     )
                     if metadata:
