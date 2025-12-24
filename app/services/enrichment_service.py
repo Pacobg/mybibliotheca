@@ -151,7 +151,7 @@ class EnrichmentService:
                 logger.info(f"⏭️  Skipping {title} - already has sufficient data")
                 return None
             else:
-                logger.debug(f"🔍 Book '{title}' needs enrichment (has_sufficient_data=False, require_cover={require_cover})")
+                logger.info(f"🔍 Book '{title}' needs enrichment (has_sufficient_data=False, require_cover={require_cover})")
         
         try:
             logger.info(f"🔍 Enriching: {title} - {author}")
@@ -171,16 +171,16 @@ class EnrichmentService:
             metadata = None
             if self.perplexity:
                 try:
-                    logger.debug(f"📡 Calling Perplexity API for: {title}")
+                    logger.info(f"📡 Calling Perplexity API for: {title} by {author or 'unknown author'}")
                     metadata = await self.perplexity.enrich_book(
                         title=title,
                         author=author,
                         existing_data=book_data
                     )
                     if metadata:
-                        logger.info(f"✅ Perplexity returned metadata for {title}")
+                        logger.info(f"✅ Perplexity returned metadata for {title} (quality: {metadata.get('quality_score', 0):.2f})")
                     else:
-                        logger.warning(f"⚠️  Perplexity returned None for {title}")
+                        logger.warning(f"⚠️  Perplexity returned None for {title} - no metadata found")
                 except Exception as e:
                     logger.error(f"❌ Perplexity enrichment failed for {title}: {e}", exc_info=True)
             
