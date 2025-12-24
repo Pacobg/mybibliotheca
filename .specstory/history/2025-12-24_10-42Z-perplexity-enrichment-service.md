@@ -32432,3 +32432,229 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 ---
 
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 20:46:27,595 [INFO] ============================================================
+2025-12-24 20:46:27,595 [INFO] BOOK ENRICHMENT - AI Web Search
+192.168.1.9 - - [24/Dec/2025 20:46:27] "POST /metadata/enrichment/start HTTP/1.1" 200 -
+2025-12-24 20:46:27,595 [INFO] 192.168.1.9 - - [24/Dec/2025 20:46:27] "POST /metadata/enrichment/start HTTP/1.1" 200 -
+2025-12-24 20:46:27,596 [INFO] ============================================================
+2025-12-24 20:46:27,596 [INFO] 🔧 Initializing EnrichmentService...
+192.168.1.9 - - [24/Dec/2025 20:46:27] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:46:27,637 [INFO] 192.168.1.9 - - [24/Dec/2025 20:46:27] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:46:27,657 [INFO] ✅ Perplexity enricher is ready
+2025-12-24 20:46:27,658 [INFO] ⚙️  Configuration:
+2025-12-24 20:46:27,658 [INFO]    Limit: 5
+2025-12-24 20:46:27,658 [INFO]    Force: False
+2025-12-24 20:46:27,658 [INFO]    Dry run: False
+2025-12-24 20:46:27,658 [INFO]    Min quality: 0.3
+2025-12-24 20:46:27,658 [INFO]    No cover only: True (only books without covers)
+2025-12-24 20:46:27,658 [INFO] 📖 Querying database for books...
+2025-12-24 20:46:27,658 [INFO] 🔍 [_get_books_to_enrich] Querying for ALL books - will filter books WITHOUT valid cover URLs in Python
+2025-12-24 20:46:27,658 [INFO] 🔍 [_get_books_to_enrich] Executing query...
+2025-12-24 20:46:27,667 [INFO] 🔍 [_get_books_to_enrich] Query returned results, processing...
+2025-12-24 20:46:27,671 [INFO] 🔍 [_get_books_to_enrich] 'The Secret History': cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 20:46:27,671 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 20:46:27,917 [INFO] HTTP Request: HEAD https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg "HTTP/1.1 403 Forbidden"
+2025-12-24 20:46:27,918 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned status 403 - marking as INVALID
+2025-12-24 20:46:27,919 [INFO] ✅ Added book without valid cover: The Secret History (cover_url='https://i.gr-assets.com/images/S/compressed.photo.goodreads....')
+2025-12-24 20:46:27,927 [INFO] 🔍 [_get_books_to_enrich] 'The Secret Garden': cover_url='https://knigabg.com/pix/28162.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 20:46:27,928 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 20:46:27,981 [INFO] HTTP Request: HEAD https://knigabg.com/pix/28162.jpg "HTTP/1.1 404 Not Found"
+2025-12-24 20:46:27,982 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned status 404 - marking as INVALID
+2025-12-24 20:46:27,982 [INFO] ✅ Added book without valid cover: The Secret Garden (cover_url='https://knigabg.com/pix/28162.jpg...')
+2025-12-24 20:46:27,986 [INFO] 🔍 [_get_books_to_enrich] 'The Priory of the Orange Tree (The Roots of Chaos, #1)': cover_url='https://images.thenile.io/r1000/9781408883358.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 20:46:27,986 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 20:46:28,033 [INFO] HTTP Request: HEAD https://images.thenile.io/r1000/9781408883358.jpg "HTTP/1.1 200 OK"
+2025-12-24 20:46:28,034 [INFO] ⏭️  Skipping book with valid cover: The Priory of the Orange Tree (The Roots of Chaos, #1) (cover_url='https://images.thenile.io/r1000/9781408883358.jpg...')
+2025-12-24 20:46:28,038 [INFO] 🔍 [_get_books_to_enrich] 'The Familiar': cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 20:46:28,038 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+2025-12-24 20:46:29,010 [INFO] HTTP Request: HEAD https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg "HTTP/1.1 200 OK"
+2025-12-24 20:46:29,011 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL returned non-image content-type: text/html; charset=utf-8 - marking as INVALID
+2025-12-24 20:46:29,011 [INFO] ✅ Added book without valid cover: The Familiar (cover_url='https://m.helikon.bg/uploads/thumbnail/helikon/product/251/5...')
+2025-12-24 20:46:29,016 [INFO] 🔍 [_get_books_to_enrich] 'The Costume History': cover_url='http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg...', is_cache_url=False, ends_with_extension=True, contains_extension=False
+2025-12-24 20:46:29,016 [INFO] 🔍 [_get_books_to_enrich] Non-cache URL: has_valid_cover=True
+192.168.1.51 - - [24/Dec/2025 20:46:29] "HEAD /covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg HTTP/1.1" 200 -
+2025-12-24 20:46:29,033 [INFO] 192.168.1.51 - - [24/Dec/2025 20:46:29] "HEAD /covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg HTTP/1.1" 200 -
+2025-12-24 20:46:29,034 [INFO] HTTP Request: HEAD http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg "HTTP/1.1 200 OK"
+2025-12-24 20:46:29,034 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750...')
+2025-12-24 20:46:29,034 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 20:46:29,034 [INFO] 📊 Statistics: 2 books WITH valid cover URLs (skipped)
+2025-12-24 20:46:29,034 [INFO] 📊 Statistics: 3 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 20:46:29,034 [INFO] ✅ Found 3 books to enrich
+2025-12-24 20:46:29,035 [INFO]
+📚 Found 3 books to enrich
+2025-12-24 20:46:29,035 [INFO]
+🚀 Starting enrichment...
+2025-12-24 20:46:29,035 [INFO]    Estimated time: ~0.1 minutes
+2025-12-24 20:46:29,035 [INFO]    Estimated cost: ~$0.00
+2025-12-24 20:46:29,146 [INFO] HTTP Request: HEAD https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1407129136l/29044.jpg "HTTP/1.1 403 Forbidden"
+192.168.1.9 - - [24/Dec/2025 20:46:32] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:46:32,682 [INFO] 192.168.1.9 - - [24/Dec/2025 20:46:32] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:46:34,177 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 20:46:34,181 [INFO] 🔍 [_progress_callback] Book 1/3: 'The Secret History', metadata=found
+2025-12-24 20:46:34,181 [INFO] [1/3] ✅ The Secret History (quality: 1.00)
+2025-12-24 20:46:34,181 [INFO]    🖼️  Cover found
+2025-12-24 20:46:34,181 [INFO]    📝 Description added
+2025-12-24 20:46:35,218 [INFO] HTTP Request: HEAD https://knigabg.com/pix/28162.jpg "HTTP/1.1 404 Not Found"
+192.168.1.9 - - [24/Dec/2025 20:46:37] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:46:37,725 [INFO] 192.168.1.9 - - [24/Dec/2025 20:46:37] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:46:40,159 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 20:46:40,162 [INFO] 🔍 [_progress_callback] Book 2/3: 'The Secret Garden', metadata=found
+2025-12-24 20:46:40,163 [INFO] [2/3] ✅ The Secret Garden (quality: 1.00)
+2025-12-24 20:46:40,163 [INFO]    🖼️  Cover found
+2025-12-24 20:46:40,163 [INFO]    📝 Description added
+2025-12-24 20:46:42,119 [INFO] HTTP Request: HEAD https://m.helikon.bg/uploads/thumbnail/helikon/product/251/517/251517.jpg "HTTP/1.1 200 OK"
+192.168.1.9 - - [24/Dec/2025 20:46:42] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:46:42,770 [INFO] 192.168.1.9 - - [24/Dec/2025 20:46:42] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+192.168.1.9 - - [24/Dec/2025 20:46:47] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:46:47,811 [INFO] 192.168.1.9 - - [24/Dec/2025 20:46:47] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+2025-12-24 20:46:50,814 [INFO] HTTP Request: POST https://api.perplexity.ai/chat/completions "HTTP/1.1 200 OK"
+2025-12-24 20:46:50,818 [INFO] 🔍 [_progress_callback] Book 3/3: 'The Familiar', metadata=found
+2025-12-24 20:46:50,818 [INFO] [3/3] ✅ The Familiar (quality: 1.00)
+2025-12-24 20:46:50,819 [INFO]    🖼️  Cover found
+2025-12-24 20:46:50,819 [INFO]    📝 Description added
+2025-12-24 20:46:50,819 [INFO] 🔍 [_save_enriched_books] Processing 3 books for saving...
+2025-12-24 20:46:50,819 [INFO] 🔍 [_save_enriched_books] Processing book: 'The Secret History'
+2025-12-24 20:46:50,819 [INFO] 🔍 [_save_enriched_books] Book keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata']
+2025-12-24 20:46:50,819 [INFO] 🔍 [_save_enriched_books] Has ai_metadata: True
+2025-12-24 20:46:50,819 [INFO] 🔍 [_save_enriched_books] Merging metadata for 'The Secret History'...
+2025-12-24 20:46:50,819 [INFO] 🔍 [_save_enriched_books] AI metadata keys: ['title', 'subtitle', 'author', 'publisher', 'year', 'isbn', 'pages', 'genres', 'description', 'cover_url', 'confidence', 'sources', 'enrichment_source', 'enrichment_model', 'enrichment_date', 'original_query', 'quality_score']
+2025-12-24 20:46:50,819 [INFO] 🔍 [_save_enriched_books] AI metadata description present: True
+2025-12-24 20:46:50,819 [INFO] 🔍 [_save_enriched_books] AI metadata description: The Secret History follows Richard Papen, a young man from California who transfers to an elite Verm...
+2025-12-24 20:46:50,820 [INFO] 🔍 [_save_enriched_books] After merge, enriched keys: ['id', 'title', 'author', 'description', 'cover_url', 'publisher', 'isbn13', 'isbn10', 'page_count', 'published_date', 'language', 'custom_metadata', 'ai_metadata', 'cover_source', 'raw_categories', 'ai_enrichment']
+2025-12-24 20:46:50,820 [INFO] 🔍 [_save_enriched_books] After merge, enriched description present: True
+2025-12-24 20:46:50,820 [INFO] 🔍 [_save_enriched_books] After merge, enriched description: Under the influence of their charismatic classics professor, a group of clever, eccentric misfits at...
+2025-12-24 20:46:50,820 [INFO] 🔍 [_save_enriched_books] Found description for 'The Secret History': Under the influence of their charismatic classics professor, a group of clever, eccentric misfits at...
+2025-12-24 20:46:50,820 [INFO] 🔍 [_save_enriched_books] Existing description for 'The Secret History': Under the influence of their charismatic classics professor, a group of clever, eccentric misfits at...
+2025-12-24 20:46:50,821 [INFO] 🔍 [_save_enriched_books] Language check for 'The Secret History': title_has_cyrillic=False, desc_has_cyrillic=False, desc_matches_title=True, existing_desc_matches_title=True, has_citations=False, force=False
+2025-12-24 20:46:50,821 [INFO] 🔍 [_save_enriched_books] Description lengths: existing=526, new=525, diff=-1
+2025-12-24 20:46:50,821 [INFO] 🔍 [_save_enriched_books] Should update description for 'The Secret History': False
+2025-12-24 20:46:50,821 [INFO] 🔍 Validating cover URL accessibility for 'The Secret History': https://images.penguinrandomhouse.com/cover/9781400031702...
+2025-12-24 20:46:50,933 [INFO] HTTP Request: HEAD https://images.penguinrandomhouse.com/cover/9781400031702 "HTTP/1.1 200 OK"
+2025-12-24 20:46:50,934 [INFO] ✅ Cover URL is accessible: https://images.penguinrandomhouse.com/cover/9781400031702... (content-type: image/jpeg)
+2025-12-24 20:46:50,935 [INFO] 🔍 [_save_enriched_books] Cover URL validation result for 'The Secret History': url_is_accessible=True, new_cover_url='https://images.penguinrandomhouse.com/cover/9781400031702...'
+[APP] Flask app factory completed; application is ready to serve.
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+Проблемът е, че новото описание е с 1 символ по-късо от съществуващото (`diff=-1`), така че условието не се изпълнява. Подобрявам логиката, за да обновява описанието, когато е от AI и е поне със същата дължина (или по-дълго), дори ако е малко по-късо:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 3, lines removed: 1
+
+```diff
+@@ -759,5 +759,7 @@
+                      #    a. Existing doesn't match title language, OR
+                      #    b. New is significantly longer (more than 50 chars), OR
+-                     #    c. New is longer (even slightly) - prefer AI-generated descriptions
++                     #    c. New is longer (even slightly), OR
++                     #    d. New is at least 90% of existing length (prefer AI-generated descriptions even if slightly shorter)
++                     length_ratio = len(description) / len(existing_desc) if existing_desc else 1.0
+                      should_update = (not existing_desc or 
+                          self.args.force or 
+```
+
+**Chunk 2**
+Lines added: 2, lines removed: 1
+
+```diff
+@@ -766,5 +768,6 @@
+                              not existing_desc_matches_title or 
+                              len(description) &gt; len(existing_desc) + 50 or
+-                             (len(description) &gt; len(existing_desc) and existing_desc_matches_title)  # Prefer AI description if longer, even if existing matches
++                             len(description) &gt; len(existing_desc) or
++                             (length_ratio &gt;= 0.9 and existing_desc_matches_title)  # Prefer AI description if at least 90% of existing length
+                          )))
+                      
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix description update logic to prefer AI descriptions even if slightly shorter (at least 90% of existing length)" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix description update logic to prefer AI descriptions even if slightly shorter (at least 90% of existing length)" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main ba7c44a] Fix description update logic to prefer AI descriptions even if slightly shorter (at least 90% of existing length)
+ 2 files changed, 111 insertions(+), 5 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   f05b3d5..ba7c44a  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Проблемът е, че новото описание е с 1 символ по-късо (`diff=-1`), така че условието не се изпълнява. Подобрих логиката, за да обновява описанието, когато:
+
+1. Няма съществуващо описание, или
+2. Е force режим, или
+3. Съществуващото има citations, или
+4. Новото описание съвпада с езика на заглавието И:
+   - Съществуващото не съвпада с езика, или
+   - Новото е с 50+ символа по-дълго, или
+   - Новото е по-дълго (дори леко), или
+   - Новото е поне 90% от дължината на съществуващото (предпочитаме AI описанията, дори ако са малко по-къси)
+
+В този случай новото описание е 525 символа, а съществуващото е 526, което е 99.8% — над 90%, така че трябва да се обнови.
+
+Стартирайте обогатяването отново — описанията трябва да се записват правилно. Също така виждам, че намерените cover URL-и са достъпни (Penguin Random House), така че и те трябва да се записват.
+
+---
+
