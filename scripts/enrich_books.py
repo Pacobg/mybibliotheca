@@ -273,6 +273,108 @@ class EnrichmentCommand:
             logger.error(f"❌ Error querying database: {e}", exc_info=True)
             return []
     
+    async def _get_book_by_id(self, book_id: str) -> List[Dict]:
+        """Get a specific book by ID for enrichment"""
+        try:
+            query = """
+            MATCH (b:Book {id: $book_id})
+            OPTIONAL MATCH (b)-[:PUBLISHED_BY]->(p:Publisher)
+            RETURN b.id as id, b.title as title, b.description as description,
+                   b.cover_url as cover_url, p.name as publisher,
+                   b.isbn13 as isbn13, b.isbn10 as isbn10,
+                   b.page_count as page_count, b.published_date as published_date,
+                   b.language as language
+            """
+            
+            result = safe_execute_kuzu_query(query, {"book_id": book_id})
+            
+            books = []
+            if result and hasattr(result, 'has_next'):
+                while result.has_next():
+                    row = result.get_next()
+                    if len(row) >= 10:
+                        book_id_val = row[0]
+                        title = row[1] or ''
+                        
+                        authors = await self.book_repo.get_book_authors(book_id_val)
+                        author_names = [a.get('name', '') for a in authors if a.get('name')]
+                        author = ', '.join(author_names) if author_names else 'Unknown'
+                        
+                        book_dict = {
+                            'id': book_id_val,
+                            'title': title,
+                            'author': author,
+                            'description': row[2],
+                            'cover_url': row[3],
+                            'publisher': row[4],
+                            'isbn13': row[5],
+                            'isbn10': row[6],
+                            'page_count': row[7],
+                            'published_date': row[8],
+                            'language': row[9],
+                        }
+                        
+                        if book_dict['title'] and book_dict['author'] != 'Unknown':
+                            books.append(book_dict)
+            
+            logger.info(f"✅ Found {len(books)} book(s) by ID")
+            return books
+        except Exception as e:
+            logger.error(f"❌ Error getting book by ID: {e}", exc_info=True)
+            return []
+    
+    async def _get_book_by_title(self, title_pattern: str) -> List[Dict]:
+        """Get books by title pattern (partial match)"""
+        try:
+            query = """
+            MATCH (b:Book)
+            WHERE b.title CONTAINS $title_pattern
+            OPTIONAL MATCH (b)-[:PUBLISHED_BY]->(p:Publisher)
+            RETURN b.id as id, b.title as title, b.description as description,
+                   b.cover_url as cover_url, p.name as publisher,
+                   b.isbn13 as isbn13, b.isbn10 as isbn10,
+                   b.page_count as page_count, b.published_date as published_date,
+                   b.language as language
+            LIMIT 10
+            """
+            
+            result = safe_execute_kuzu_query(query, {"title_pattern": title_pattern})
+            
+            books = []
+            if result and hasattr(result, 'has_next'):
+                while result.has_next():
+                    row = result.get_next()
+                    if len(row) >= 10:
+                        book_id = row[0]
+                        title = row[1] or ''
+                        
+                        authors = await self.book_repo.get_book_authors(book_id)
+                        author_names = [a.get('name', '') for a in authors if a.get('name')]
+                        author = ', '.join(author_names) if author_names else 'Unknown'
+                        
+                        book_dict = {
+                            'id': book_id,
+                            'title': title,
+                            'author': author,
+                            'description': row[2],
+                            'cover_url': row[3],
+                            'publisher': row[4],
+                            'isbn13': row[5],
+                            'isbn10': row[6],
+                            'page_count': row[7],
+                            'published_date': row[8],
+                            'language': row[9],
+                        }
+                        
+                        if book_dict['title'] and book_dict['author'] != 'Unknown':
+                            books.append(book_dict)
+            
+            logger.info(f"✅ Found {len(books)} book(s) by title pattern: '{title_pattern}'")
+            return books
+        except Exception as e:
+            logger.error(f"❌ Error getting book by title: {e}", exc_info=True)
+            return []
+    
     async def _save_enriched_books(self, books: List[Dict]) -> int:
         """
         Save enriched books back to database
