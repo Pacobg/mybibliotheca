@@ -119,6 +119,9 @@ class PerplexityEnricher:
             isbn = existing_data.get('isbn10') if existing_data else None
         publisher = existing_data.get('publisher') if existing_data else None
         
+        # Check if book title contains Cyrillic (Bulgarian)
+        has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in title)
+        
         query = f"""
 Намери детайлна информация за българската книга:
 
@@ -132,6 +135,11 @@ class PerplexityEnricher:
             query += f"ИЗДАТЕЛСТВО: {publisher}\n"
         
         query += """
+
+ВАЖНО: Търся ИЗКЛЮЧИТЕЛНО БЪЛГАРСКОТО издание на тази книга!
+- Ако книгата е превод, търси българския превод
+- Ако книгата е оригинално българска, търси българското издание
+- НЕ търси оригиналното издание на друг език!
 
 ТЪРСЯ СЛЕДНАТА ИНФОРМАЦИЯ:
 

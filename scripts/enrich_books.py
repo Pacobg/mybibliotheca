@@ -218,7 +218,7 @@ class EnrichmentCommand:
             if result and hasattr(result, 'has_next'):
                 while result.has_next():
                     row = result.get_next()
-                    if len(row) >= 9:
+                    if len(row) >= 10:
                         book_id = row[0]
                         title = row[1] or ''
                         
@@ -238,11 +238,20 @@ class EnrichmentCommand:
                             'isbn10': row[6],
                             'page_count': row[7],
                             'published_date': row[8],
+                            'language': row[9] if len(row) > 9 else None,
                         }
                         
                         # Only include books with title and author
+                        # Prefer Bulgarian books (language='bg' or Cyrillic in title)
                         if book_dict['title'] and book_dict['author'] != 'Unknown':
-                            books.append(book_dict)
+                            # Check if it's a Bulgarian book
+                            has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in title)
+                            is_bg_language = book_dict.get('language') == 'bg'
+                            
+                            if has_cyrillic or is_bg_language:
+                                books.append(book_dict)
+                            else:
+                                logger.debug(f"Skipping non-Bulgarian book: {title}")
             
             logger.info(f"✅ Found {len(books)} books to enrich")
             return books
