@@ -294,7 +294,8 @@ class EnrichmentCommand:
                     query = """
                     MATCH (b:Book)
                     OPTIONAL MATCH (b)-[:PUBLISHED_BY]->(p:Publisher)
-                    WHERE (b.cover_url IS NULL OR b.cover_url = '' OR NOT (b.cover_url STARTS WITH 'http://' OR b.cover_url STARTS WITH 'https://'))
+                    WHERE (b.cover_url IS NULL OR b.cover_url = '' OR 
+                           (NOT b.cover_url STARTS WITH 'http://' AND NOT b.cover_url STARTS WITH 'https://'))
                     RETURN b.id as id, b.title as title, b.description as description,
                            b.cover_url as cover_url, p.name as publisher,
                            b.isbn13 as isbn13, b.isbn10 as isbn10,
