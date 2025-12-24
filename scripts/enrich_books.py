@@ -444,12 +444,16 @@ class EnrichmentCommand:
                 # Save to database using book service
                 if updates:
                     try:
-                        # Use the async method from book service
-                        # Note: update_book expects (book_id, updates, user_id) parameters
-                        updated_book = await book_service.update_book(
-                            book['id'],
-                            updates,
-                            'system'  # System user for enrichment
+                        # Use the sync method wrapped in run_async for async context
+                        from app.services.kuzu_async_helper import run_async
+                        
+                        # update_book_sync expects (book_id, user_id, **updates)
+                        updated_book = run_async(
+                            book_service.update_book_sync(
+                                book['id'],
+                                'system',  # System user for enrichment
+                                **updates
+                            )
                         )
                         if updated_book:
                             saved_count += 1
