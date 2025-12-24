@@ -353,12 +353,33 @@ class EnrichmentCommand:
             """
             
             result = safe_execute_kuzu_query(query, {"title_pattern": title_pattern})
-            logger.debug(f"🔍 Query returned result: {result}")
+            logger.debug(f"🔍 Query returned result type: {type(result)}")
+            
+            # If no results, try a simpler query to see if book exists at all
+            if not result or (hasattr(result, 'has_next') and not result.has_next()):
+                logger.debug(f"🔍 No results from main query, trying simpler search...")
+                simple_query = """
+                MATCH (b:Book)
+                RETURN b.id as id, b.title as title
+                LIMIT 20
+                """
+                simple_result = safe_execute_kuzu_query(simple_query, {})
+                if simple_result and hasattr(simple_result, 'has_next'):
+                    logger.debug(f"🔍 Sample titles in database:")
+                    count = 0
+                    while simple_result.has_next() and count < 5:
+                        row = simple_result.get_next()
+                        if len(row) >= 2:
+                            logger.debug(f"   - '{row[1]}'")
+                            count += 1
             
             books = []
             if result and hasattr(result, 'has_next'):
+                row_count = 0
                 while result.has_next():
                     row = result.get_next()
+                    row_count += 1
+                    logger.debug(f"🔍 Processing row {row_count}: {row}")
                     if len(row) >= 10:
                         book_id = row[0]
                         title = row[1] or ''
