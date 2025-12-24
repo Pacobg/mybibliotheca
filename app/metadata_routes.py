@@ -346,6 +346,11 @@ def start_enrichment():
         
         limit = int(request.form.get('limit', 5))  # Default to 5 for testing
         no_cover_only = request.form.get('no_cover_only', 'false').lower() == 'true'
+        force = request.form.get('force', 'false').lower() == 'true'
+        
+        # If force is enabled, disable no_cover_only filter
+        if force:
+            no_cover_only = False
         
         # Check if enrichment is already running
         enrichment_status_file = Path('data/enrichment_status.json')
@@ -372,6 +377,7 @@ def start_enrichment():
                     'started_at': datetime.now().isoformat(),
                     'limit': limit,
                     'no_cover_only': no_cover_only,
+                    'force': force,
                     'processed': 0,
                     'enriched': 0,
                     'failed': 0,
@@ -384,7 +390,7 @@ def start_enrichment():
                 # Create args namespace for EnrichmentCommand
                 args = argparse.Namespace(
                     limit=limit,
-                    force=False,
+                    force=force,
                     dry_run=False,
                     quality_min=0.3,
                     yes=True,

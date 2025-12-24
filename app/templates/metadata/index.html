@@ -105,9 +105,26 @@
                                 {% endif %}
                             </p>
                             
+                            <div class="mb-3">
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <label class="form-label small">Лимит книги:</label>
+                                        <input type="number" class="form-control form-control-sm" id="enrichLimit" value="5" min="1" max="100">
+                                    </div>
+                                    <div class="col-md-3 d-flex align-items-end">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="enrichForce" value="1">
+                                            <label class="form-check-label small" for="enrichForce">
+                                                Принудително (включително с обложки)
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <div class="d-flex gap-2 flex-wrap">
                                 <button type="button" class="btn btn-primary" id="enrichNoCoverBtn">
-                                    <i class="bi bi-image me-1"></i>Обогатяване на книги без обложки - до 5 бр. (тест)
+                                    <i class="bi bi-image me-1"></i>Стартирай обогатяване
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary" id="checkEnrichmentStatusBtn">
                                     <i class="bi bi-info-circle me-1"></i>Провери статус
@@ -208,7 +225,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     enrichBtn.addEventListener('click', async function() {
         console.log('Enrichment button clicked');
-        if (!confirm('Сигурни ли сте, че искате да стартирате обогатяване на до 5 книги без обложки?')) {
+        
+        const limitInput = document.getElementById('enrichLimit');
+        const forceCheckbox = document.getElementById('enrichForce');
+        const limit = limitInput ? parseInt(limitInput.value) || 5 : 5;
+        const force = forceCheckbox ? forceCheckbox.checked : false;
+        const noCoverOnly = !force; // If force is checked, don't filter by cover
+        
+        const confirmMsg = force 
+            ? `Сигурни ли сте, че искате да стартирате принудително обогатяване на до ${limit} книги (включително с обложки)?`
+            : `Сигурни ли сте, че искате да стартирате обогатяване на до ${limit} книги без обложки?`;
+        
+        if (!confirm(confirmMsg)) {
             return;
         }
         
@@ -219,8 +247,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             const formData = new FormData();
-            formData.append('limit', '5');
-            formData.append('no_cover_only', 'true');
+            formData.append('limit', limit.toString());
+            formData.append('no_cover_only', noCoverOnly ? 'true' : 'false');
+            formData.append('force', force ? 'true' : 'false');
             
             // Get CSRF token from global window.csrfToken or meta tag
             const csrfToken = window.csrfToken || 

@@ -38820,3 +38820,281 @@ Lines added: 1, lines removed: 1
 
 ---
 
+
+Поправям същото в `_save_enriched_books`:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: scripts/enrich_books.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "get_covers_dir" in "scripts/enrich_books.py" • 3 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `scripts/enrich_books.py` | `# Use the same logic as get_covers_dir() to ensure consistency` | L1008 |
+| `scripts/enrich_books.py` | `from app.utils.image_processing import get_covers_dir` | L1009 |
+| `scripts/enrich_books.py` | `covers_dir = get_covers_dir()` | L1010 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: scripts/enrich_books.py</summary>
+
+**Chunk 1**
+Lines added: 32, lines removed: 3
+
+```diff
+@@ -1006,7 +1006,36 @@
+                          
+                          # Get the covers directory (once, outside loop)
+-                         # Use the same logic as get_covers_dir() to ensure consistency
+-                         from app.utils.image_processing import get_covers_dir
+-                         covers_dir = get_covers_dir()
++                         # Get covers directory without Flask app context
++                         # Try multiple possible paths (same logic as get_covers_dir but without Flask)
++                         possible_dirs = [
++                             Path('data/covers'),  # Relative path
++                             Path('/app/data/covers'),  # Docker path
++                         ]
++                         
++                         # Also try to get from environment or config
++                         import os
++                         data_dir = os.getenv('DATA_DIR')
++                         if data_dir:
++                             possible_dirs.insert(0, Path(data_dir) / 'covers')
++                         
++                         # Try to get base directory
++                         try:
++                             base_dir = Path(__file__).parent.parent
++                             possible_dirs.append(base_dir / 'data' / 'covers')
++                         except:
++                             pass
++                         
++                         # Find first existing directory or use the first one
++                         covers_dir = None
++                         for path in possible_dirs:
++                             if path.exists():
++                                 covers_dir = path
++                                 break
++                         
++                         if not covers_dir:
++                             # Use the first path and create it
++                             covers_dir = possible_dirs[0]
++                             covers_dir.mkdir(parents=True, exist_ok=True)
++                         
+                          logger.info(f"📁 Using covers directory: {covers_dir.absolute()}")
+                          
+```
+
+</details>
+
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправям и в `enrichment_service.py`:
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: app/services/enrichment_service.py</summary>
+
+**Chunk 1**
+Lines added: 28, lines removed: 1
+
+```diff
+@@ -375,5 +375,32 @@
+                  try:
+                      from app.utils.image_processing import get_covers_dir
+-                     covers_dir = get_covers_dir()
++                     from pathlib import Path
++                     # Try with Flask app context first (if available)
++                     try:
++                         covers_dir = get_covers_dir()
++                     except RuntimeError:
++                         # No app context - try alternative paths
++                         possible_dirs = [
++                             Path('data/covers'),
++                             Path('/app/data/covers'),
++                         ]
++                         import os
++                         data_dir = os.getenv('DATA_DIR')
++                         if data_dir:
++                             possible_dirs.insert(0, Path(data_dir) / 'covers')
++                         try:
++                             base_dir = Path(__file__).parent.parent.parent
++                             possible_dirs.append(base_dir / 'data' / 'covers')
++                         except:
++                             pass
++                         
++                         covers_dir = None
++                         for path in possible_dirs:
++                             if path.exists():
++                                 covers_dir = path
++                                 break
++                         if not covers_dir:
++                             covers_dir = possible_dirs[0]
++                     
+                      filename = cover_url.split('/covers/')[-1].split('?')[0]  # Remove query params if any
+                      cover_path = covers_dir / filename
+```
+
+</details>
+
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="read_lints">
+<details>
+          <summary>Tool use: **read_lints** • Read lints for 2 files</summary>
+      
+Lint paths:
+
+- `scripts/enrich_books.py`
+- `app/services/enrichment_service.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+
+
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: git add -A && git commit -m "Fix Flask app context error: use direct path resolution instead of get_covers_dir() which requires Flask app context" && git push origin main</summary>
+
+```bash
+git add -A && git commit -m "Fix Flask app context error: use direct path resolution instead of get_covers_dir() which requires Flask app context" && git push origin main
+```
+
+```
+warning: in the working copy of '.specstory/history/2025-12-24_10-42Z-perplexity-enrichment-service.md', LF will be replaced by CRLF the next time Git touches it
+[main 602a27f] Fix Flask app context error: use direct path resolution instead of get_covers_dir() which requires Flask app context
+ 3 files changed, 860 insertions(+), 11 deletions(-)
+To https://github.com/Pacobg/mybibliotheca.git
+   0ce5a83..602a27f  main -&gt; main
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+Поправих Flask app context проблема. Сега системата трябва да работи правилно.
+
+**Защо се избират същите книги:**
+Файловете не се намираха заради app context грешката, така че книгите се маркираха като без валидни covers и се избираха отново. След поправката файловете трябва да се намират правилно.
+
+**За да тестваме с други книги (включително български):**
+1. Стартирайте enrichment отново — ако файловете вече се намират, тези книги няма да се изберат и ще се изберат други.
+2. Или стартирайте с конкретна българска книга:
+```bash
+python scripts/enrich_books.py --book-title "13 за късмет" --no-cover-only --limit 5 -y
+```
+
+3. Или увеличете лимита в UI-то за да обогатите повече книги наведнъж.
+
+Издърпайте промените (`git pull`) и опитайте отново. Системата трябва да намира локалните covers правилно и да избира различни книги за enrichment.
+
+---
+
+_**User (2025-12-24 10:35Z)**_
+
+
+2025-12-24 23:26:20,862 [INFO] HTTP Request: HEAD http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750107b76e3.jpg "HTTP/1.1 200 OK"
+2025-12-24 23:26:20,862 [INFO] ⏭️  Skipping book with valid cover: The Costume History (cover_url='http://192.168.1.51:5054/covers/e7eba7a0-b332-40b4-b81a-d750...')
+2025-12-24 23:26:20,862 [INFO] 📊 Statistics: Checked 5 books total
+2025-12-24 23:26:20,862 [INFO] 📊 Statistics: 5 books WITH valid cover URLs (skipped)
+2025-12-24 23:26:20,862 [INFO] 📊 Statistics: 0 books WITHOUT valid cover URLs (will enrich)
+2025-12-24 23:26:20,862 [WARNING] ⚠️  No books found without valid cover URLs.
+2025-12-24 23:26:20,862 [WARNING] ⚠️  All 5 checked books have valid http/https cover URLs.
+2025-12-24 23:26:20,863 [INFO] 💡 Tip: Use --force flag to force enrichment of all books, or add books without covers to the database.
+2025-12-24 23:26:20,863 [INFO] ✅ Found 0 books to enrich
+2025-12-24 23:26:20,863 [INFO] ✅ No books need enrichment!
+192.168.1.9 - - [24/Dec/2025 23:26:25] "GET /metadata/enrichment/status HTTP/1.1" 200 -
+
+
+---
+
+_**Agent (model composer-1, mode Agent)**_
+
+
+
+---
+
+
+
+---
+
