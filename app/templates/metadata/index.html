@@ -320,7 +320,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (status.enriched_books && status.enriched_books.length > 0) {
                     detailsHtml += `<div class="mt-2"><strong>Обогатени книги (${status.enriched_books.length}):</strong><ul class="small mb-0">`;
                     status.enriched_books.forEach(book => {
-                        detailsHtml += `<li>${book.title} ${book.has_cover ? '✅ (с обложка)' : ''}</li>`;
+                        let coverStatus = '';
+                        if (book.has_cover) {
+                            coverStatus = ' ✅ (с обложка)';
+                        } else if (book.cover_found_in_metadata) {
+                            coverStatus = ' ⚠️ (обложка намерена, но не свалена)';
+                        } else {
+                            coverStatus = ' ❌ (не намерена обложка)';
+                        }
+                        detailsHtml += `<li>${book.title}${coverStatus}</li>`;
                     });
                     detailsHtml += '</ul></div>';
                 }

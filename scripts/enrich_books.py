@@ -779,6 +779,9 @@ class EnrichmentCommand:
                 # Prepare update data
                 updates = {}
                 
+                # Track if cover was found in metadata (even if not successfully downloaded)
+                cover_found_in_metadata = False
+                
                 # Update description if missing or improved
                 if enriched.get('description'):
                     description = enriched['description']
@@ -847,6 +850,7 @@ class EnrichmentCommand:
                 logger.info(f"🔍 [_save_enriched_books] Checking cover_url for '{book_title}': cover_url='{cover_url_value}', type={type(cover_url_value)}, bool={bool(cover_url_value)}")
                 # Check if cover_url is not empty (not None, not empty string)
                 if cover_url_value and isinstance(cover_url_value, str) and cover_url_value.strip():
+                    cover_found_in_metadata = True
                     new_cover_url = cover_url_value
                     # Check if it's a valid URL (not a local path like /covers/...)
                     is_valid_url = new_cover_url.startswith('http://') or new_cover_url.startswith('https://')
@@ -1201,12 +1205,15 @@ class EnrichmentCommand:
                                 logger.info(f"   Cover URL updated to: {updates['cover_url']}")
                             
                             # Track enriched book
+                            # has_cover: True if cover was successfully downloaded and saved
+                            # cover_found_in_metadata: True if cover URL was found in metadata (even if not downloaded)
                             self.enriched_books_list.append({
                                 'title': book['title'],
                                 'id': book['id'],
                                 'updated_fields': list(updates.keys()),
                                 'enriched_at': datetime.now().isoformat(),
-                                'has_cover': 'cover_url' in updates
+                                'has_cover': 'cover_url' in updates,
+                                'cover_found_in_metadata': cover_found_in_metadata
                             })
                             
                             # Track that this book was enriched
