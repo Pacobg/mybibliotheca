@@ -534,6 +534,28 @@ def enrich_single_book_endpoint():
         if merged.get('publisher') and not book_data.get('publisher'):
             updates['publisher'] = merged['publisher']
         
+        # Update ISBN if missing
+        if merged.get('isbn13') and not book_data.get('isbn13'):
+            updates['isbn13'] = merged['isbn13']
+        if merged.get('isbn10') and not book_data.get('isbn10'):
+            updates['isbn10'] = merged['isbn10']
+        
+        # Update page_count if missing
+        if merged.get('page_count') and not book_data.get('page_count'):
+            updates['page_count'] = merged['page_count']
+        
+        # Update language for Bulgarian books
+        title = merged.get('title', '') or book_data.get('title', '')
+        author = merged.get('author', '') or book_data.get('author', '')
+        has_cyrillic_title = any('\u0400' <= char <= '\u04FF' for char in title)
+        has_cyrillic_author = any('\u0400' <= char <= '\u04FF' for char in author)
+        
+        if has_cyrillic_title and has_cyrillic_author:
+            current_language = book_data.get('language', '')
+            if current_language != 'bg':
+                updates['language'] = 'bg'
+                current_app.logger.info(f"🌍 Setting language to 'bg' for Bulgarian book: {title}")
+        
         # Download and save cover if found
         cover_downloaded = False
         if merged.get('cover_url') and merged['cover_url'].strip():
@@ -563,6 +585,12 @@ def enrich_single_book_endpoint():
             enriched_fields.append('обложка')
         if 'publisher' in updates:
             enriched_fields.append('издателство')
+        if 'isbn13' in updates or 'isbn10' in updates:
+            enriched_fields.append('ISBN')
+        if 'page_count' in updates:
+            enriched_fields.append('брой страници')
+        if 'language' in updates:
+            enriched_fields.append('език')
         
         # Check what was found in metadata (even if not updated)
         found_fields = []
@@ -572,12 +600,15 @@ def enrich_single_book_endpoint():
             found_fields.append('обложка')
         if metadata.get('publisher'):
             found_fields.append('издателство')
-        if metadata.get('isbn'):
+        if metadata.get('isbn') or merged.get('isbn13') or merged.get('isbn10'):
             found_fields.append('ISBN')
         if metadata.get('year'):
             found_fields.append('година на издаване')
         if metadata.get('pages'):
             found_fields.append('брой страници')
+        # Check if Bulgarian language was detected
+        if has_cyrillic_title and has_cyrillic_author:
+            found_fields.append('език (български)')
         
         return jsonify({
             'success': True,
