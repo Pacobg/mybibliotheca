@@ -478,8 +478,31 @@ def enrich_single_book_endpoint():
         # Get book by UID with user overlay to verify ownership
         book = relationship_service.get_book_by_uid_sync(book_id, str(current_user.id))
         
+        # If book exists but user doesn't own it, add it to user's library
         if not book:
-            return jsonify({'error': 'Book not found or you do not have access to it'}), 404
+            from app.services.kuzu_book_service import KuzuBookService
+            temp_book_service = KuzuBookService(user_id=str(current_user.id))
+            book_without_overlay = temp_book_service.get_book_by_id_sync(book_id)
+            
+            if book_without_overlay:
+                # Book exists but not in user's library - add it
+                current_app.logger.info(f"Book {book_id} exists but not in user {current_user.id} library, adding it")
+                from app.infrastructure.kuzu_repositories import KuzuUserBookRepository
+                from app.services.kuzu_async_helper import run_async
+                user_book_repo = KuzuUserBookRepository()
+                added = run_async(user_book_repo.add_book_to_library(
+                    user_id=str(current_user.id),
+                    book_id=book_id,
+                    reading_status='',
+                    ownership_status='owned',
+                    media_type=getattr(book_without_overlay, 'media_type', None) or 'physical'
+                ))
+                if added:
+                    # Retry getting the book with user overlay
+                    book = relationship_service.get_book_by_uid_sync(book_id, str(current_user.id))
+        
+        if not book:
+            return jsonify({'error': 'Book not found'}), 404
         
         # Also get book service for updates
         from app.services.kuzu_book_service import KuzuBookService
