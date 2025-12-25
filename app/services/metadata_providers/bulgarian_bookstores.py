@@ -68,9 +68,20 @@ class BulgarianBookstoreScraper:
             
             soup = BeautifulSoup(response.content, 'html.parser')
             
-            # Extract title
-            title_elem = soup.find('h1', class_='page-title') or soup.find('h1')
-            title = title_elem.get_text(strip=True) if title_elem else None
+            # Extract title - try multiple selectors
+            title = None
+            title_selectors = [
+                ('h1', {'class': 'page-title'}),
+                ('h1', {}),
+                ('h1', {'class': re.compile(r'title', re.I)}),
+                ('div', {'class': re.compile(r'product.*title', re.I)}),
+            ]
+            for tag, attrs in title_selectors:
+                title_elem = soup.find(tag, attrs)
+                if title_elem:
+                    title = title_elem.get_text(strip=True)
+                    if title:
+                        break
             
             # Extract all data from product info table (two-column layout)
             # Ozone.bg uses a table with labels in first column and values in second column
@@ -87,10 +98,15 @@ class BulgarianBookstoreScraper:
             # Find all tables and divs that might contain product info
             info_containers = []
             info_containers.extend(soup.find_all('table'))
-            info_containers.extend(soup.find_all('div', class_=re.compile(r'product.*info|product.*details', re.I)))
+            info_containers.extend(soup.find_all('div', class_=re.compile(r'product.*info|product.*details|data|spec', re.I)))
+            info_containers.extend(soup.find_all('dl'))  # Definition lists
+            
+            # Also search in the entire body if no containers found
+            if not info_containers:
+                info_containers = [soup]
             
             for container in info_containers:
-                # Try table rows
+                # Try table rows (most common format)
                 rows = container.find_all('tr')
                 for row in rows:
                     cells = row.find_all(['td', 'th'])
@@ -98,63 +114,133 @@ class BulgarianBookstoreScraper:
                         label = cells[0].get_text(strip=True).lower()
                         value = cells[1].get_text(strip=True)
                         
-                        if 'isbn' in label or 'баркод' in label:
+                        if ('isbn' in label or 'баркод' in label) and not isbn:
                             isbn = value
                             isbn_clean = re.sub(r'[^\d]', '', isbn)
                             if len(isbn_clean) == 13:
                                 isbn13 = isbn_clean
                             elif len(isbn_clean) == 10:
                                 isbn10 = isbn_clean
-                        elif 'автор' in label:
+                        elif 'автор' in label and not author:
                             author = value
-                        elif 'издателство' in label:
+                        elif 'издателство' in label and not publisher:
                             publisher = value
-                        elif 'година' in label:
+                        elif 'година' in label and not year:
                             year_match = re.search(r'\d{4}', value)
                             if year_match:
                                 year = year_match.group(0)
-                        elif 'страници' in label or 'брой страници' in label:
+                        elif ('страници' in label or 'брой страници' in label) and not pages:
                             pages_match = re.search(r'\d+', value)
                             if pages_match:
                                 pages = int(pages_match.group(0))
-                        elif 'категории' in label or 'жанрове' in label:
+                        elif ('категории' in label or 'жанрове' in label) and not categories:
                             categories = [c.strip() for c in re.split(r'[,;\n]', value) if c.strip()]
-                        elif 'преводач' in label:
+                        elif 'преводач' in label and not translator:
                             translator = value
                 
-                # Also try div-based layouts (some sites use divs instead of tables)
-                info_items = container.find_all(['div', 'dl', 'li'], class_=re.compile(r'info|detail|spec', re.I))
-                for item in info_items:
-                    label_elem = item.find(['dt', 'span', 'strong', 'b'], class_=re.compile(r'label|title', re.I))
-                    value_elem = item.find(['dd', 'span', 'div'], class_=re.compile(r'value|content', re.I))
-                    
-                    if label_elem and value_elem:
-                        label = label_elem.get_text(strip=True).lower()
-                        value = value_elem.get_text(strip=True)
+                # Try definition lists (dl/dt/dd format)
+                dl_items = container.find_all('dl')
+                for dl in dl_items:
+                    dts = dl.find_all('dt')
+                    dds = dl.find_all('dd')
+                    for dt, dd in zip(dts, dds):
+                        label = dt.get_text(strip=True).lower()
+                        value = dd.get_text(strip=True)
                         
-                        if 'isbn' in label or 'баркод' in label:
+                        if ('isbn' in label or 'баркод' in label) and not isbn:
                             isbn = value
                             isbn_clean = re.sub(r'[^\d]', '', isbn)
                             if len(isbn_clean) == 13:
                                 isbn13 = isbn_clean
                             elif len(isbn_clean) == 10:
                                 isbn10 = isbn_clean
-                        elif 'автор' in label:
+                        elif 'автор' in label and not author:
                             author = value
-                        elif 'издателство' in label:
+                        elif 'издателство' in label and not publisher:
                             publisher = value
-                        elif 'година' in label:
+                        elif 'година' in label and not year:
                             year_match = re.search(r'\d{4}', value)
                             if year_match:
                                 year = year_match.group(0)
-                        elif 'страници' in label or 'брой страници' in label:
+                        elif ('страници' in label or 'брой страници' in label) and not pages:
                             pages_match = re.search(r'\d+', value)
                             if pages_match:
                                 pages = int(pages_match.group(0))
-                        elif 'категории' in label or 'жанрове' in label:
+                        elif ('категории' in label or 'жанрове' in label) and not categories:
                             categories = [c.strip() for c in re.split(r'[,;\n]', value) if c.strip()]
-                        elif 'преводач' in label:
+                        elif 'преводач' in label and not translator:
                             translator = value
+                
+                # Try div-based layouts (some sites use divs with labels and values)
+                info_divs = container.find_all(['div', 'li'], class_=re.compile(r'info|detail|spec|attribute', re.I))
+                for item in info_divs:
+                    # Look for label/strong/bold text followed by value
+                    label_elem = item.find(['dt', 'span', 'strong', 'b', 'label'], class_=re.compile(r'label|title|name', re.I))
+                    if not label_elem:
+                        # Try to find any strong/bold element that might be a label
+                        label_elem = item.find(['strong', 'b'])
+                    
+                    if label_elem:
+                        label = label_elem.get_text(strip=True).lower()
+                        # Find value - could be in next sibling or in same element
+                        value_elem = label_elem.find_next_sibling(['dd', 'span', 'div'])
+                        if not value_elem:
+                            # Value might be in parent's text after label
+                            parent_text = item.get_text(strip=True)
+                            if label in parent_text.lower():
+                                # Extract text after label
+                                value = parent_text.split(label, 1)[-1].strip(' :')
+                            else:
+                                continue
+                        else:
+                            value = value_elem.get_text(strip=True)
+                        
+                        if ('isbn' in label or 'баркод' in label) and not isbn:
+                            isbn = value
+                            isbn_clean = re.sub(r'[^\d]', '', isbn)
+                            if len(isbn_clean) == 13:
+                                isbn13 = isbn_clean
+                            elif len(isbn_clean) == 10:
+                                isbn10 = isbn_clean
+                        elif 'автор' in label and not author:
+                            author = value
+                        elif 'издателство' in label and not publisher:
+                            publisher = value
+                        elif 'година' in label and not year:
+                            year_match = re.search(r'\d{4}', value)
+                            if year_match:
+                                year = year_match.group(0)
+                        elif ('страници' in label or 'брой страници' in label) and not pages:
+                            pages_match = re.search(r'\d+', value)
+                            if pages_match:
+                                pages = int(pages_match.group(0))
+                        elif ('категории' in label or 'жанрове' in label) and not categories:
+                            categories = [c.strip() for c in re.split(r'[,;\n]', value) if c.strip()]
+                        elif 'преводач' in label and not translator:
+                            translator = value
+                
+                # Also try to find text patterns directly in the page
+                page_text = container.get_text()
+                
+                # Look for ISBN pattern
+                if not isbn:
+                    isbn_patterns = [
+                        r'ISBN[:\s]*(\d{13}|\d{10})',
+                        r'Баркод[:\s]*(\d{13}|\d{10})',
+                        r'(\d{13})',  # 13-digit number
+                    ]
+                    for pattern in isbn_patterns:
+                        match = re.search(pattern, page_text, re.I)
+                        if match:
+                            isbn_clean = re.sub(r'[^\d]', '', match.group(1) if match.lastindex else match.group(0))
+                            if len(isbn_clean) == 13:
+                                isbn13 = isbn_clean
+                                isbn = isbn_clean
+                                break
+                            elif len(isbn_clean) == 10:
+                                isbn10 = isbn_clean
+                                isbn = isbn_clean
+                                break
             
             # Also try to find ISBN in meta tags or script tags
             if not isbn:
