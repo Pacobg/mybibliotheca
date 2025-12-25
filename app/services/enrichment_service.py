@@ -600,9 +600,10 @@ class EnrichmentService:
                     merged['description'] = ai_desc
                     logger.warning(f"⚠️  Using mismatched description for '{title}' (no better option)")
         
-        # Cover - always prefer AI if available
-        if ai_metadata.get('cover_url'):
-            merged['cover_url'] = ai_metadata['cover_url']
+        # Cover - always prefer AI if available (but skip empty strings)
+        cover_url = ai_metadata.get('cover_url')
+        if cover_url and isinstance(cover_url, str) and cover_url.strip():
+            merged['cover_url'] = cover_url
             merged['cover_source'] = 'ai_perplexity'
         
         # Publisher

@@ -845,7 +845,8 @@ class EnrichmentCommand:
                 # Only update if new cover_url is a valid URL (http/https), not a local path
                 cover_url_value = enriched.get('cover_url')
                 logger.info(f"🔍 [_save_enriched_books] Checking cover_url for '{book_title}': cover_url='{cover_url_value}', type={type(cover_url_value)}, bool={bool(cover_url_value)}")
-                if cover_url_value:
+                # Check if cover_url is not empty (not None, not empty string)
+                if cover_url_value and isinstance(cover_url_value, str) and cover_url_value.strip():
                     new_cover_url = cover_url_value
                     # Check if it's a valid URL (not a local path like /covers/...)
                     is_valid_url = new_cover_url.startswith('http://') or new_cover_url.startswith('https://')
