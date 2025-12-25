@@ -2216,6 +2216,10 @@ function showCoverEditOptions() {
         </button>
         ` : ''}
         <div class="dropdown-divider"></div>
+        <button class="dropdown-item" type="button" id="searchByAI">
+            <i class="bi bi-robot me-2"></i>Search by AI
+        </button>
+        <div class="dropdown-divider"></div>
         <button class="dropdown-item" type="button" id="uploadFile">
             <i class="bi bi-upload me-2"></i>Upload from Device
         </button>
@@ -2253,6 +2257,14 @@ function showCoverEditOptions() {
                 fetchCoverFromAPI(`${title} ${author}`, 'title');
             });
         }
+    }
+    
+    const searchAIBtn = document.getElementById('searchByAI');
+    if (searchAIBtn) {
+        searchAIBtn.addEventListener('click', function() {
+            dropdown.remove();
+            enrichBookWithAI();
+        });
     }
     
     const uploadBtn = document.getElementById('uploadFile');
@@ -2340,6 +2352,86 @@ function fetchCoverFromAPI(query, type) {
                 dropdown.remove();
             }
         });
+}
+
+function enrichBookWithAI() {
+    const bookId = '{{ book.uid or book.id }}';
+    if (!bookId) {
+        alert('Book ID not found');
+        return;
+    }
+    
+    // Show loading state
+    const coverEditBtn = document.getElementById('coverEditBtn');
+    const originalHtml = coverEditBtn ? coverEditBtn.innerHTML : '';
+    if (coverEditBtn) {
+        coverEditBtn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+        coverEditBtn.disabled = true;
+    }
+    
+    // Show notification
+    const notification = document.createElement('div');
+    notification.className = 'alert alert-info alert-dismissible fade show position-fixed';
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <strong>🤖 AI Enrichment</strong><br>
+        <small>Searching for book metadata and cover using AI...</small>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(notification);
+    
+    // Call enrichment endpoint
+    fetch('{{ url_for("metadata.enrich_single_book_endpoint") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            book_id: bookId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        notification.remove();
+        
+        if (data.success) {
+            // Show success notification
+            const successNotification = document.createElement('div');
+            successNotification.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            successNotification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            let message = `<strong>✅ Enrichment Complete</strong><br>`;
+            if (data.cover_downloaded) {
+                message += `<small>Cover downloaded successfully</small><br>`;
+            }
+            if (data.updates && Object.keys(data.updates).length > 0) {
+                message += `<small>Updated: ${Object.keys(data.updates).join(', ')}</small><br>`;
+            }
+            message += `<small>Quality score: ${(data.quality_score || 0).toFixed(2)}</small>`;
+            successNotification.innerHTML = message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+            document.body.appendChild(successNotification);
+            
+            // Reload page after 2 seconds to show updated data
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            alert(data.error || 'Failed to enrich book');
+            if (coverEditBtn) {
+                coverEditBtn.innerHTML = originalHtml;
+                coverEditBtn.disabled = false;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error enriching book:', error);
+        notification.remove();
+        alert('Failed to enrich book. Please try again.');
+        if (coverEditBtn) {
+            coverEditBtn.innerHTML = originalHtml;
+            coverEditBtn.disabled = false;
+        }
+    });
 }
 
 function applyCoverUrl(coverUrl) {

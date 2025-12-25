@@ -457,6 +457,117 @@ def enrichment_status():
         return jsonify({'error': str(e), 'running': False}), 500
 
 
+@metadata_bp.route('/enrichment/enrich_book', methods=['POST'])
+@login_required
+def enrich_single_book_endpoint():
+    """Enrich a single book using AI"""
+    try:
+        if not current_user.is_admin:
+            return jsonify({'error': 'Admin access required'}), 403
+        
+        data = request.get_json()
+        book_id = data.get('book_id')
+        
+        if not book_id:
+            return jsonify({'error': 'book_id is required'}), 400
+        
+        # Get book data from database
+        from app.services.kuzu_book_service import KuzuBookService
+        book_service = KuzuBookService(user_id=str(current_user.id))
+        
+        # Get book by ID (try both uid and id)
+        book = None
+        try:
+            book = book_service.get_book_by_id_sync(book_id)
+        except:
+            pass
+        
+        if not book:
+            # Try to get by uid if id didn't work
+            try:
+                book = book_service.get_book_by_uid_sync(book_id)
+            except:
+                pass
+        
+        if not book:
+            return jsonify({'error': 'Book not found'}), 404
+        
+        # Convert book to dict format
+        book_data = {
+            'id': str(book.id) if hasattr(book, 'id') else str(book.uid) if hasattr(book, 'uid') else book_id,
+            'uid': str(book.uid) if hasattr(book, 'uid') else str(book.id) if hasattr(book, 'id') else book_id,
+            'title': book.title,
+            'author': book.author if hasattr(book, 'author') else '',
+            'cover_url': book.cover_url if hasattr(book, 'cover_url') else None,
+            'description': book.description if hasattr(book, 'description') else None,
+        }
+        
+        # Run enrichment asynchronously
+        from app.services.enrichment_service import EnrichmentService
+        from app.services.kuzu_async_helper import run_async
+        
+        enrichment_service = EnrichmentService()
+        
+        # Enrich book (force=True to always enrich, require_cover=True to prioritize cover)
+        coro = enrichment_service.enrich_single_book(
+            book_data=book_data,
+            force=True,
+            require_cover=True
+        )
+        metadata = run_async(coro)
+        
+        if not metadata:
+            return jsonify({
+                'success': False,
+                'error': 'No metadata found'
+            }), 404
+        
+        # Merge metadata and save book
+        merged = enrichment_service.merge_metadata_into_book(book_data, metadata)
+        
+        # Update book with enriched data
+        updates = {}
+        if merged.get('description') and not book_data.get('description'):
+            updates['description'] = merged['description']
+        if merged.get('cover_url') and merged['cover_url'].strip():
+            updates['cover_url'] = merged['cover_url']
+        if merged.get('publisher') and not book_data.get('publisher'):
+            updates['publisher'] = merged['publisher']
+        
+        # Download and save cover if found
+        cover_downloaded = False
+        if merged.get('cover_url') and merged['cover_url'].strip():
+            try:
+                from app.utils.image_processing import process_image_from_url
+                cover_url = merged['cover_url']
+                if cover_url.startswith('http://') or cover_url.startswith('https://'):
+                    local_cover = process_image_from_url(cover_url)
+                    if local_cover:
+                        updates['cover_url'] = local_cover
+                        cover_downloaded = True
+            except Exception as e:
+                current_app.logger.warning(f"Failed to download cover: {e}")
+        
+        # Save updates
+        if updates:
+            # Use the same ID format as the book was retrieved with
+            update_book_id = str(book.id) if hasattr(book, 'id') else str(book.uid) if hasattr(book, 'uid') else book_id
+            update_coro = book_service.update_book(update_book_id, updates)
+            run_async(update_coro)
+        
+        return jsonify({
+            'success': True,
+            'metadata': metadata,
+            'updates': updates,
+            'cover_downloaded': cover_downloaded,
+            'quality_score': metadata.get('quality_score', 0)
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error enriching book: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
 @metadata_bp.route('/templates/<template_id>/delete', methods=['POST'])
 @login_required
 def delete_template(template_id):
