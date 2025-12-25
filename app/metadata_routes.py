@@ -12,6 +12,7 @@ import os
 import subprocess
 import asyncio
 import json
+import re
 from pathlib import Path
 
 from .domain.models import CustomFieldDefinition, ImportMappingTemplate, CustomFieldType
@@ -628,13 +629,50 @@ def enrich_single_book_endpoint():
                 
                 # If no ozone.bg URL found, try to search for the book
                 if not ozone_url:
+                    current_app.logger.info(f"🔍 Searching external sources for ozone.bg URL")
                     # Search for book in external sources to find ozone.bg URL
-                    search_results = search_books_by_title(title, max_results=5, author=author)
+                    search_results = search_books_by_title(title, max_results=10, author=author)
                     for result in search_results:
-                        source_url = result.get('source_url') or result.get('url')
-                        if source_url and 'ozone.bg' in source_url.lower():
+                        # Check various possible URL fields
+                        source_url = (result.get('source_url') or 
+                                     result.get('url') or 
+                                     result.get('full_data', {}).get('source_url') or
+                                     result.get('full_data', {}).get('url'))
+                        if source_url and isinstance(source_url, str) and 'ozone.bg' in source_url.lower():
                             ozone_url = source_url
+                            current_app.logger.info(f"✅ Found ozone.bg URL in search results: {ozone_url}")
                             break
+                
+                # If still no URL found, try direct search on ozone.bg
+                if not ozone_url:
+                    try:
+                        current_app.logger.info(f"🔍 Attempting direct search on ozone.bg")
+                        # Build search query for ozone.bg
+                        from urllib.parse import quote_plus
+                        search_query = f"{title} {author}".strip()
+                        search_url = f"https://www.ozone.bg/catalogsearch/result/?q={quote_plus(search_query)}"
+                        
+                        scraper = BulgarianBookstoreScraper()
+                        response = scraper.session.get(search_url, timeout=10)
+                        if response.status_code == 200:
+                            from bs4 import BeautifulSoup
+                            soup = BeautifulSoup(response.content, 'html.parser')
+                            
+                            # Look for product links in search results
+                            product_links = soup.find_all('a', href=re.compile(r'/product/'))
+                            if product_links:
+                                # Use first result
+                                first_link = product_links[0].get('href')
+                                if first_link:
+                                    if first_link.startswith('/'):
+                                        ozone_url = f"https://www.ozone.bg{first_link}"
+                                    elif first_link.startswith('http'):
+                                        ozone_url = first_link
+                                    else:
+                                        ozone_url = f"https://www.ozone.bg/{first_link}"
+                                    current_app.logger.info(f"✅ Found ozone.bg URL from search: {ozone_url}")
+                    except Exception as search_error:
+                        current_app.logger.warning(f"⚠️  Direct ozone.bg search failed: {search_error}")
                 
                 # If we found an ozone.bg URL, scrape it
                 if ozone_url:
@@ -642,7 +680,11 @@ def enrich_single_book_endpoint():
                     scraper = BulgarianBookstoreScraper()
                     bookstore_metadata = scraper.scrape_book_from_url(ozone_url)
                     if bookstore_metadata:
-                        current_app.logger.info(f"✅ Scraped additional metadata from ozone.bg: ISBN={bookstore_metadata.get('isbn13')}, Publisher={bookstore_metadata.get('publisher')}")
+                        current_app.logger.info(f"✅ Scraped additional metadata from ozone.bg: ISBN={bookstore_metadata.get('isbn13')}, Publisher={bookstore_metadata.get('publisher')}, Year={bookstore_metadata.get('year')}, Pages={bookstore_metadata.get('pages')}")
+                    else:
+                        current_app.logger.warning(f"⚠️  Scraping ozone.bg returned no metadata")
+                else:
+                    current_app.logger.info(f"ℹ️  No ozone.bg URL found for '{title}' by '{author}'")
                 
             except Exception as e:
                 current_app.logger.warning(f"⚠️  Failed to scrape Bulgarian bookstore: {e}", exc_info=True)
