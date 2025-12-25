@@ -1052,8 +1052,9 @@ function searchByTitle() {
         `;
         
     // Build query params with optional author to improve match quality
+    // Note: isbn_required is false for title search - we want all results, not just those with ISBN
     const author = getSelectedAuthorsForSearch();
-    const params = new URLSearchParams({ title, limit: '10', isbn_required: 'true' });
+    const params = new URLSearchParams({ title, limit: '10', isbn_required: 'false' });
     if (author) params.set('author', author);
 
     // Call the external search API

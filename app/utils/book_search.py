@@ -877,8 +877,79 @@ def search_books_by_title(title: str, max_results: int = 10, author: Optional[st
         except Exception as exc:
             print(f"❌ [BOOK_SEARCH] OpenLibrary search failed: {exc}")
     
-    # Merge, deduplicate, and rank results (Biblioman first if available)
+    # Try Perplexity for Bulgarian/Cyrillic books if Biblioman didn't return results or for additional results
+    perplexity_results: List[Dict[str, Any]] = []
+    if has_cyrillic and (not biblioman_results or len(biblioman_results) < max_results):
+        try:
+            from app.services.metadata_providers.perplexity import PerplexityEnricher
+            from app.services.kuzu_async_helper import run_async
+            import os
+            
+            api_key = os.getenv('PERPLEXITY_API_KEY')
+            if api_key:
+                builtins.print(f"🔍 [BOOK_SEARCH] Trying Perplexity for Bulgarian book search")
+                try:
+                    enricher = PerplexityEnricher(api_key=api_key)
+                    # Use author if available, otherwise use empty string
+                    author_for_perplexity = author_arg or ''
+                    metadata = run_async(enricher.enrich_book(
+                        title=title,
+                        author=author_for_perplexity,
+                        existing_data=None
+                    ))
+                    if metadata:
+                        # Convert Perplexity metadata to search result format
+                        perplexity_result = {
+                            'title': metadata.get('title', title),
+                            'author': metadata.get('author', author_for_perplexity),
+                            'authors': [metadata.get('author', author_for_perplexity)] if metadata.get('author') else [],
+                            'isbn_13': metadata.get('isbn13', ''),
+                            'isbn_10': metadata.get('isbn10', ''),
+                            'description': metadata.get('description', ''),
+                            'cover_url': metadata.get('cover_url', ''),
+                            'publisher': metadata.get('publisher', ''),
+                            'published_date': metadata.get('published_date', ''),
+                            'publication_year': metadata.get('publication_year'),
+                            'page_count': metadata.get('page_count'),
+                            'language': metadata.get('language', 'bg'),
+                            'categories': metadata.get('categories', []),
+                            'source': 'Perplexity',
+                            'similarity_score': 1.0  # High score for Perplexity results
+                        }
+                        perplexity_results = [perplexity_result]
+                        builtins.print(f"✅ [BOOK_SEARCH] Perplexity returned 1 result for '{title}'")
+                except Exception as exc:
+                    builtins.print(f"❌ [BOOK_SEARCH] Perplexity search failed: {exc}")
+                    import traceback
+                    traceback.print_exc()
+            else:
+                builtins.print(f"⚠️ [BOOK_SEARCH] Perplexity API key not configured")
+        except ImportError:
+            builtins.print("⚠️ [BOOK_SEARCH] Perplexity provider not available")
+    
+    # Merge, deduplicate, and rank results (Biblioman first, then Perplexity, then others)
     final_results = merge_and_rank_results(title, google_results, openlibrary_results, max_results, biblioman_results)
+    
+    # Add Perplexity results if available (after Biblioman but before others)
+    if perplexity_results:
+        # Check if Perplexity result is already in final_results (by title similarity)
+        perplexity_added = False
+        for perplexity_result in perplexity_results:
+            # Check if similar result already exists
+            is_duplicate = False
+            for existing in final_results:
+                existing_title = existing.get('title', '').lower().strip()
+                perplexity_title = perplexity_result.get('title', '').lower().strip()
+                if existing_title == perplexity_title or (len(existing_title) > 5 and existing_title in perplexity_title) or (len(perplexity_title) > 5 and perplexity_title in existing_title):
+                    is_duplicate = True
+                    break
+            if not is_duplicate:
+                # Insert Perplexity result near the top (after Biblioman results)
+                biblioman_count = sum(1 for r in final_results if 'Biblioman' in str(r.get('source', '')))
+                final_results.insert(biblioman_count, perplexity_result)
+                perplexity_added = True
+        if perplexity_added:
+            builtins.print(f"✅ [BOOK_SEARCH] Added Perplexity result to final results")
     _search_cache_set(cache_key, final_results)
     
     builtins.print(f"🎯 [BOOK_SEARCH] Search complete. Returning {len(final_results)} results for '{title}'" + (f" by '{author}'" if author else ""))
