@@ -555,12 +555,40 @@ def enrich_single_book_endpoint():
             update_coro = book_service.update_book(update_book_id, updates)
             run_async(update_coro)
         
+        # Build detailed status information
+        enriched_fields = []
+        if 'description' in updates:
+            enriched_fields.append('описание')
+        if 'cover_url' in updates:
+            enriched_fields.append('обложка')
+        if 'publisher' in updates:
+            enriched_fields.append('издателство')
+        
+        # Check what was found in metadata (even if not updated)
+        found_fields = []
+        if metadata.get('description'):
+            found_fields.append('описание')
+        if metadata.get('cover_url'):
+            found_fields.append('обложка')
+        if metadata.get('publisher'):
+            found_fields.append('издателство')
+        if metadata.get('isbn'):
+            found_fields.append('ISBN')
+        if metadata.get('year'):
+            found_fields.append('година на издаване')
+        if metadata.get('pages'):
+            found_fields.append('брой страници')
+        
         return jsonify({
             'success': True,
             'metadata': metadata,
             'updates': updates,
             'cover_downloaded': cover_downloaded,
-            'quality_score': metadata.get('quality_score', 0)
+            'quality_score': metadata.get('quality_score', 0),
+            'enriched_fields': enriched_fields,
+            'found_fields': found_fields,
+            'cover_found': bool(metadata.get('cover_url')),
+            'description_found': bool(metadata.get('description'))
         })
         
     except Exception as e:

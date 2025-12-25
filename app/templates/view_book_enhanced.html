@@ -2396,27 +2396,66 @@ function enrichBookWithAI() {
         notification.remove();
         
         if (data.success) {
-            // Show success notification
+            // Show detailed success notification
             const successNotification = document.createElement('div');
             successNotification.className = 'alert alert-success alert-dismissible fade show position-fixed';
-            successNotification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-            let message = `<strong>✅ Enrichment Complete</strong><br>`;
-            if (data.cover_downloaded) {
-                message += `<small>Cover downloaded successfully</small><br>`;
+            successNotification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 350px; max-width: 500px;';
+            
+            let message = `<strong>✅ Обогатяването завърши успешно</strong><br><br>`;
+            
+            // Show what was found
+            if (data.found_fields && data.found_fields.length > 0) {
+                message += `<strong>Намерено:</strong><br>`;
+                message += `<small>• ${data.found_fields.join('<br>• ')}</small><br><br>`;
             }
-            if (data.updates && Object.keys(data.updates).length > 0) {
-                message += `<small>Updated: ${Object.keys(data.updates).join(', ')}</small><br>`;
+            
+            // Show what was updated
+            if (data.enriched_fields && data.enriched_fields.length > 0) {
+                message += `<strong>Обновено:</strong><br>`;
+                message += `<small>• ${data.enriched_fields.join('<br>• ')}</small><br><br>`;
+            } else if (data.found_fields && data.found_fields.length > 0) {
+                message += `<small class="text-muted">(Данните са намерени, но не са обновени - вероятно вече съществуват)</small><br><br>`;
             }
-            message += `<small>Quality score: ${(data.quality_score || 0).toFixed(2)}</small>`;
+            
+            // Show cover status
+            if (data.cover_found) {
+                if (data.cover_downloaded) {
+                    message += `<small>✅ Обложката е свалена и запазена успешно</small><br>`;
+                } else {
+                    message += `<small>⚠️ Обложка е намерена, но не е свалена (възможен проблем с изтеглянето)</small><br>`;
+                }
+            } else {
+                message += `<small>❌ Обложка не е намерена</small><br>`;
+            }
+            
+            // Show quality score
+            if (data.quality_score) {
+                const qualityPercent = (data.quality_score * 100).toFixed(0);
+                let qualityColor = 'text-success';
+                if (data.quality_score < 0.5) qualityColor = 'text-warning';
+                if (data.quality_score < 0.3) qualityColor = 'text-danger';
+                message += `<br><small>Качество на данните: <span class="${qualityColor}">${qualityPercent}%</span></small>`;
+            }
+            
             successNotification.innerHTML = message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
             document.body.appendChild(successNotification);
             
-            // Reload page after 2 seconds to show updated data
+            // Reload page after 3 seconds to show updated data
             setTimeout(() => {
                 window.location.reload();
-            }, 2000);
+            }, 3000);
         } else {
-            alert(data.error || 'Failed to enrich book');
+            // Show error notification
+            const errorNotification = document.createElement('div');
+            errorNotification.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+            errorNotification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            errorNotification.innerHTML = `
+                <strong>❌ Грешка при обогатяване</strong><br>
+                <small>${data.error || 'Неуспешно обогатяване. Моля опитайте отново.'}</small>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(errorNotification);
+            
             if (coverEditBtn) {
                 coverEditBtn.innerHTML = originalHtml;
                 coverEditBtn.disabled = false;
