@@ -398,6 +398,9 @@ RULES:
             # Debug: log parsed metadata
             logger.debug(f"Parsed metadata keys: {list(metadata.keys())}")
             logger.info(f"📋 Found metadata fields: {', '.join([k for k, v in metadata.items() if v])}")
+            # Debug: log cover_url specifically
+            cover_url_value = metadata.get('cover_url')
+            logger.info(f"🔍 [PERPLEXITY] cover_url in metadata: '{cover_url_value}', type={type(cover_url_value)}, bool={bool(cover_url_value)}")
             
             # If title is missing but we have content, try to extract it
             if not metadata.get('title') and title:
