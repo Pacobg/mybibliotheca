@@ -476,23 +476,26 @@ def enrich_from_url_endpoint():
         title = data.get('title', '').strip()
         author = data.get('author', '').strip()
         
-        # Initialize Perplexity enricher
-        from app.services.metadata_providers.perplexity import PerplexityEnricher
-        import os
-        from app.services.kuzu_async_helper import run_async
+        # Try web scraping first (more reliable for Bulgarian bookstores)
+        from app.services.metadata_providers.bulgarian_bookstores import BulgarianBookstoreScraper
+        scraper = BulgarianBookstoreScraper()
+        metadata = scraper.scrape_book_from_url(url)
         
-        api_key = os.getenv('PERPLEXITY_API_KEY')
-        if not api_key:
-            return jsonify({'error': 'Perplexity API key not configured'}), 500
-        
-        enricher = PerplexityEnricher(api_key=api_key)
-        
-        # Extract metadata from URL
-        metadata = run_async(enricher.enrich_book_from_url(
-            url=url,
-            title=title if title else None,
-            author=author if author else None
-        ))
+        # If scraping failed, try Perplexity as fallback
+        if not metadata:
+            current_app.logger.info(f"Web scraping failed for {url}, trying Perplexity...")
+            from app.services.metadata_providers.perplexity import PerplexityEnricher
+            import os
+            from app.services.kuzu_async_helper import run_async
+            
+            api_key = os.getenv('PERPLEXITY_API_KEY')
+            if api_key:
+                enricher = PerplexityEnricher(api_key=api_key)
+                metadata = run_async(enricher.enrich_book_from_url(
+                    url=url,
+                    title=title if title else None,
+                    author=author if author else None
+                ))
         
         if not metadata:
             return jsonify({

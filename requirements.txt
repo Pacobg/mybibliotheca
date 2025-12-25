@@ -45,3 +45,7 @@ mistune==3.0.2
 
 # Perplexity AI Enrichment
 httpx>=0.25.0
+
+# Web scraping for Bulgarian bookstores
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
