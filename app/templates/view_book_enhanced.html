@@ -2441,8 +2441,10 @@ function enrichBookWithAI() {
             document.body.appendChild(successNotification);
             
             // Reload page after 3 seconds to show updated data
+            // Use current URL to avoid 404 errors if book ID changed
             setTimeout(() => {
-                window.location.reload();
+                const currentUrl = window.location.href;
+                window.location.href = currentUrl;
             }, 3000);
         } else {
             // Show error notification

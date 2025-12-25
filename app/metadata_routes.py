@@ -471,36 +471,42 @@ def enrich_single_book_endpoint():
         if not book_id:
             return jsonify({'error': 'book_id is required'}), 400
         
-        # Get book data from database
+        # Get book data from database - use relationship service to check user ownership
+        from app.services.kuzu_relationship_service import KuzuRelationshipService
+        relationship_service = KuzuRelationshipService()
+        
+        # Get book by UID with user overlay to verify ownership
+        book = relationship_service.get_book_by_uid_sync(book_id, str(current_user.id))
+        
+        if not book:
+            return jsonify({'error': 'Book not found or you do not have access to it'}), 404
+        
+        # Also get book service for updates
         from app.services.kuzu_book_service import KuzuBookService
         book_service = KuzuBookService(user_id=str(current_user.id))
         
-        # Get book by ID (try both uid and id)
-        book = None
-        try:
-            book = book_service.get_book_by_id_sync(book_id)
-        except:
-            pass
-        
-        if not book:
-            # Try to get by uid if id didn't work
-            try:
-                book = book_service.get_book_by_uid_sync(book_id)
-            except:
-                pass
-        
-        if not book:
-            return jsonify({'error': 'Book not found'}), 404
-        
         # Convert book to dict format
-        book_data = {
-            'id': str(book.id) if hasattr(book, 'id') else str(book.uid) if hasattr(book, 'uid') else book_id,
-            'uid': str(book.uid) if hasattr(book, 'uid') else str(book.id) if hasattr(book, 'id') else book_id,
-            'title': book.title,
-            'author': book.author if hasattr(book, 'author') else '',
-            'cover_url': book.cover_url if hasattr(book, 'cover_url') else None,
-            'description': book.description if hasattr(book, 'description') else None,
-        }
+        # Handle both Book domain object and dict formats
+        if isinstance(book, dict):
+            book_data = {
+                'id': book.get('id') or book.get('uid') or book_id,
+                'uid': book.get('uid') or book.get('id') or book_id,
+                'title': book.get('title', ''),
+                'author': book.get('author', ''),
+                'cover_url': book.get('cover_url'),
+                'description': book.get('description'),
+                'language': book.get('language', ''),
+            }
+        else:
+            book_data = {
+                'id': str(book.id) if hasattr(book, 'id') else str(book.uid) if hasattr(book, 'uid') else book_id,
+                'uid': str(book.uid) if hasattr(book, 'uid') else str(book.id) if hasattr(book, 'id') else book_id,
+                'title': book.title if hasattr(book, 'title') else '',
+                'author': book.author if hasattr(book, 'author') else '',
+                'cover_url': book.cover_url if hasattr(book, 'cover_url') else None,
+                'description': book.description if hasattr(book, 'description') else None,
+                'language': book.language if hasattr(book, 'language') else '',
+            }
         
         # Run enrichment asynchronously
         from app.services.enrichment_service import EnrichmentService
@@ -572,8 +578,8 @@ def enrich_single_book_endpoint():
         
         # Save updates
         if updates:
-            # Use the same ID format as the book was retrieved with
-            update_book_id = str(book.id) if hasattr(book, 'id') else str(book.uid) if hasattr(book, 'uid') else book_id
+            # Use the book ID from book_data (handles both dict and object formats)
+            update_book_id = book_data.get('id') or book_data.get('uid') or book_id
             update_coro = book_service.update_book(update_book_id, updates)
             run_async(update_coro)
         
