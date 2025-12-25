@@ -605,6 +605,85 @@ def enrich_single_book_endpoint():
         )
         metadata = run_async(coro)
         
+        # For Bulgarian books, also try to scrape from Bulgarian bookstores
+        title = book_data.get('title', '')
+        author = book_data.get('author', '')
+        has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in title) or any('\u0400' <= char <= '\u04FF' for char in author)
+        
+        bookstore_metadata = None
+        if has_cyrillic:
+            try:
+                from app.services.metadata_providers.bulgarian_bookstores import BulgarianBookstoreScraper
+                from app.utils.book_search import search_books_by_title
+                
+                current_app.logger.info(f"🇧🇬 Bulgarian book detected, searching Bulgarian bookstores for additional metadata")
+                
+                # Try to find ozone.bg URL from Perplexity metadata sources
+                ozone_url = None
+                if metadata and metadata.get('sources'):
+                    for source_url in metadata.get('sources', []):
+                        if 'ozone.bg' in source_url.lower():
+                            ozone_url = source_url
+                            break
+                
+                # If no ozone.bg URL found, try to search for the book
+                if not ozone_url:
+                    # Search for book in external sources to find ozone.bg URL
+                    search_results = search_books_by_title(title, max_results=5, author=author)
+                    for result in search_results:
+                        source_url = result.get('source_url') or result.get('url')
+                        if source_url and 'ozone.bg' in source_url.lower():
+                            ozone_url = source_url
+                            break
+                
+                # If we found an ozone.bg URL, scrape it
+                if ozone_url:
+                    current_app.logger.info(f"🔍 Scraping ozone.bg URL: {ozone_url}")
+                    scraper = BulgarianBookstoreScraper()
+                    bookstore_metadata = scraper.scrape_book_from_url(ozone_url)
+                    if bookstore_metadata:
+                        current_app.logger.info(f"✅ Scraped additional metadata from ozone.bg: ISBN={bookstore_metadata.get('isbn13')}, Publisher={bookstore_metadata.get('publisher')}")
+                
+            except Exception as e:
+                current_app.logger.warning(f"⚠️  Failed to scrape Bulgarian bookstore: {e}", exc_info=True)
+        
+        # Merge bookstore metadata with Perplexity metadata
+        # Prioritize bookstore metadata for ISBN, publisher, year, pages (more reliable)
+        if bookstore_metadata:
+            if not metadata:
+                metadata = {}
+            
+            # Merge bookstore data into metadata (bookstore data takes priority for specific fields)
+            if bookstore_metadata.get('isbn13') and not metadata.get('isbn13'):
+                metadata['isbn13'] = bookstore_metadata['isbn13']
+            if bookstore_metadata.get('isbn10') and not metadata.get('isbn10'):
+                metadata['isbn10'] = bookstore_metadata['isbn10']
+            if bookstore_metadata.get('isbn') and not metadata.get('isbn'):
+                metadata['isbn'] = bookstore_metadata['isbn']
+            
+            if bookstore_metadata.get('publisher') and not metadata.get('publisher'):
+                metadata['publisher'] = bookstore_metadata['publisher']
+            
+            if bookstore_metadata.get('year') and not metadata.get('year'):
+                metadata['year'] = bookstore_metadata['year']
+            
+            if bookstore_metadata.get('pages') and not metadata.get('page_count'):
+                metadata['page_count'] = bookstore_metadata['pages']
+            
+            # Merge categories if available
+            if bookstore_metadata.get('categories') and not metadata.get('categories'):
+                metadata['categories'] = bookstore_metadata['categories']
+            
+            # Use bookstore cover if Perplexity didn't find one or if bookstore cover is better
+            if bookstore_metadata.get('cover_url'):
+                if not metadata.get('cover_url') or not metadata['cover_url'].strip():
+                    metadata['cover_url'] = bookstore_metadata['cover_url']
+                    current_app.logger.info(f"✅ Using cover from bookstore: {bookstore_metadata['cover_url']}")
+            
+            # Add translator if available
+            if bookstore_metadata.get('translator') and not metadata.get('translator'):
+                metadata['translator'] = bookstore_metadata['translator']
+        
         if not metadata:
             return jsonify({
                 'success': False,
