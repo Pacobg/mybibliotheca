@@ -1055,7 +1055,8 @@ class EnrichmentCommand:
                             logger.info(f"🔍 Trying cover URL: {try_url[:80]}...")
                             try:
                                 # Download the image with browser headers
-                                response = requests.get(try_url, timeout=10, stream=True, headers=headers)
+                                # Increased timeout to 30 seconds for slow servers
+                                response = requests.get(try_url, timeout=30, stream=True, headers=headers)
                                 response.raise_for_status()
                                 
                                 # Check content type
@@ -1118,6 +1119,8 @@ class EnrichmentCommand:
                             # The book was selected for enrichment because it doesn't have a valid cover
                             updates['cover_url'] = local_cover_path
                             logger.info(f"🖼️  Updating cover URL for: {book['title']} -> {local_cover_path}")
+                            # Track successful cover download
+                            self.stats['covers_found'] += 1
                         else:
                             logger.warning(f"⚠️  Could not download cover for '{book['title']}' from any source")
                     else:
@@ -1436,8 +1439,8 @@ class EnrichmentCommand:
             )
             
             if metadata.get('cover_url'):
-                self.stats['covers_found'] += 1
-                logger.info(f"   🖼️  Cover found")
+                # Note: Cover URL found in metadata, but will only count as "found" after successful download
+                logger.info(f"   🖼️  Cover URL found in metadata (will attempt download)")
             
             if metadata.get('description'):
                 self.stats['descriptions_added'] += 1
