@@ -772,10 +772,10 @@ def search_books_by_title(title: str, max_results: int = 10, author: Optional[st
     cached = None
     if not has_cyrillic:
         # Only use cache for non-Cyrillic searches (to avoid stale results without Biblioman)
-    cached = _search_cache_get(cache_key)
-    if cached is not None:
+        cached = _search_cache_get(cache_key)
+        if cached is not None:
             builtins.print(f"💾 [BOOK_SEARCH] Cache hit for '{title}'")
-        return cached
+            return cached
     else:
         builtins.print(f"🔤 [BOOK_SEARCH] Cyrillic detected - bypassing cache to ensure Biblioman results are included")
 
