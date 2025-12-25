@@ -457,6 +457,63 @@ def enrichment_status():
         return jsonify({'error': str(e), 'running': False}), 500
 
 
+@metadata_bp.route('/enrichment/enrich_from_url', methods=['POST'])
+@login_required
+def enrich_from_url_endpoint():
+    """Extract book metadata from a specific URL (e.g., ozone.bg, ciela.com)"""
+    try:
+        if not current_user.is_admin:
+            return jsonify({'error': 'Admin access required'}), 403
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        url = data.get('url', '').strip()
+        if not url:
+            return jsonify({'error': 'URL is required'}), 400
+        
+        title = data.get('title', '').strip()
+        author = data.get('author', '').strip()
+        
+        # Initialize Perplexity enricher
+        from app.services.metadata_providers.perplexity import PerplexityEnricher
+        import os
+        from app.services.kuzu_async_helper import run_async
+        
+        api_key = os.getenv('PERPLEXITY_API_KEY')
+        if not api_key:
+            return jsonify({'error': 'Perplexity API key not configured'}), 500
+        
+        enricher = PerplexityEnricher(api_key=api_key)
+        
+        # Extract metadata from URL
+        metadata = run_async(enricher.enrich_book_from_url(
+            url=url,
+            title=title if title else None,
+            author=author if author else None
+        ))
+        
+        if not metadata:
+            return jsonify({
+                'success': False,
+                'error': 'Could not extract metadata from URL'
+            }), 404
+        
+        return jsonify({
+            'success': True,
+            'metadata': metadata,
+            'url': url
+        }), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Error extracting metadata from URL: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @metadata_bp.route('/enrichment/enrich_book', methods=['POST'])
 @login_required
 def enrich_single_book_endpoint():

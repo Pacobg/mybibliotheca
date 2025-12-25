@@ -98,6 +98,118 @@ class PerplexityEnricher:
             logger.error(f"❌ Error enriching {title}: {e}", exc_info=True)
             return None
     
+    async def enrich_book_from_url(
+        self,
+        url: str,
+        title: Optional[str] = None,
+        author: Optional[str] = None
+    ) -> Optional[Dict]:
+        """
+        Extract book metadata from a specific URL (e.g., ozone.bg, ciela.com, etc.)
+        
+        Args:
+            url: URL to extract metadata from
+            title: Optional book title to help guide extraction
+            author: Optional author name to help guide extraction
+            
+        Returns:
+            Dictionary with enriched metadata or None if failed
+        """
+        try:
+            logger.info(f"🔍 Extracting metadata from URL: {url}")
+            
+            # Build query for URL extraction
+            query = f"""
+Извлечи детайлна информация за книгата от следния URL:
+
+URL: {url}
+"""
+            if title:
+                query += f"Заглавие: {title}\n"
+            if author:
+                query += f"Автор: {author}\n"
+            
+            query += """
+ВАЖНО: Извлечи ВСИЧКА налична информация за книгата от този URL!
+
+ТЪРСЯ СЛЕДНАТА ИНФОРМАЦИЯ:
+
+1. **Точно заглавие** на български (може да има подзаглавие)
+2. **Автор** - ЕДИН основен автор на български
+3. **Преводач** (ако книгата е превод)
+4. **Издателство** - българско издателство
+5. **Година на издаване** в България
+6. **ISBN номер** (ISBN-10 или ISBN-13) - МНОГО ВАЖНО!
+7. **Брой страници**
+8. **Жанр/Категории** (2-4 категории)
+9. **Описание** - пълно описание на български за какво е книгата
+10. **URL на корица** - директен линк към изображение (JPG/PNG) - МНОГО ВАЖНО!
+11. **Цена** (ако е налична)
+12. **Наличност** (ако е налична)
+
+ВАЖНО:
+- Извлечи ВСИЧКА налична информация от страницата
+- ISBN е КРИТИЧНО ВАЖЕН - ако го има, задължително го включи!
+- Корицата трябва да е директен линк към изображение
+- Ако някоя информация липсва, използвай null (не празен string!)
+
+КРИТИЧНО ВАЖНО: ОТГОВОРИ САМО С ВАЛИДЕН JSON ОБЕКТ! Без markdown code blocks, без текст преди или след JSON-а!
+
+JSON ФОРМАТ (задължително):
+{
+    "title": "Точно заглавие",
+    "subtitle": "Подзаглавие ако има",
+    "author": "Име Фамилия",
+    "translator": "Име на преводач ако има",
+    "publisher": "Име на издателство",
+    "year": "2024",
+    "isbn": "978-954-xxx-xxx-x",
+    "isbn13": "978954xxxxxxxxx",
+    "isbn10": "954-xxx-xxx-x",
+    "pages": 384,
+    "genres": ["Жанр1", "Жанр2", "Жанр3"],
+    "description": "Пълно описание на български...",
+    "cover_url": "https://direkten-url-kam-izobrajenie.jpg",
+    "price": "29.99 лв",
+    "availability": "Налична",
+    "source_url": "URL на страницата",
+    "confidence": 0.95
+}
+
+RULES:
+- ВИНАГИ включи "title" и "author" полета (задължителни!)
+- Ако НЕ можеш да намериш поле, използвай null (не празен string!)
+- НЕ измисляй информация - само точни данни от страницата!
+- JSON трябва да е валиден и parseable директно с json.loads()!
+"""
+            
+            # Execute search
+            response = await self._search(query)
+            
+            if not response:
+                logger.warning(f"❌ No response from Perplexity for URL: {url}")
+                return None
+            
+            # Parse response
+            metadata = self._parse_response(response, title or '', author or '')
+            
+            if metadata:
+                # Add source URL
+                metadata['source_url'] = url
+                metadata['source'] = 'Perplexity (URL extraction)'
+                logger.info(
+                    f"✅ Extracted metadata from URL: {url} "
+                    f"(quality: {metadata.get('quality_score', 0):.2f})"
+                )
+            else:
+                logger.warning(f"⚠️  Could not parse metadata from URL: {url}")
+            
+            return metadata
+            
+        except Exception as e:
+            logger.error(f"❌ Error extracting metadata from URL {url}: {e}", exc_info=True)
+            return None
+    
     def _build_metadata_query(
         self, 
         title: str, 
@@ -182,7 +294,7 @@ class PerplexityEnricher:
 - Търся БЪЛГАРСКОТО издание, НЕ оригинала!
 - Корицата трябва да е от българското издание
 - Ако има няколко издания, предпочитай по-новото
-- Проверявай в: chitanka.info, biblioman, ciela.com, helikon.bg
+- Проверявай в: chitanka.info, biblioman, ciela.com, helikon.bg, ozone.bg, knigomania.bg, book.store.bg
 
 КРИТИЧНО ВАЖНО: ОТГОВОРИ САМО С ВАЛИДЕН JSON ОБЕКТ! Без markdown code blocks, без текст преди или след JSON-а!
 
