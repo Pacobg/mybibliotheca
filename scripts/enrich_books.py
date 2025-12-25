@@ -1058,8 +1058,9 @@ class EnrichmentCommand:
                             logger.info(f"🔍 Trying cover URL: {try_url[:80]}...")
                             try:
                                 # Download the image with browser headers
-                                # Increased timeout to 30 seconds for slow servers
-                                response = requests.get(try_url, timeout=30, stream=True, headers=headers)
+                                # Increased timeout to 60 seconds for slow servers and large images
+                                # Use connect timeout of 10s and read timeout of 60s
+                                response = requests.get(try_url, timeout=(10, 60), stream=True, headers=headers)
                                 response.raise_for_status()
                                 
                                 # Check content type
