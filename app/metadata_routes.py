@@ -616,21 +616,25 @@ def enrich_single_book_endpoint():
             try:
                 from app.services.metadata_providers.bulgarian_bookstores import BulgarianBookstoreScraper
                 from app.utils.book_search import search_books_by_title
+                from urllib.parse import quote_plus
+                from bs4 import BeautifulSoup
                 
                 current_app.logger.info(f"🇧🇬 Bulgarian book detected, searching Bulgarian bookstores for additional metadata")
                 
-                # Try to find ozone.bg URL from Perplexity metadata sources
                 ozone_url = None
+                scraper = BulgarianBookstoreScraper()
+                
+                # Strategy 1: Try to find ozone.bg URL from Perplexity metadata sources
                 if metadata and metadata.get('sources'):
                     for source_url in metadata.get('sources', []):
-                        if 'ozone.bg' in source_url.lower():
+                        if isinstance(source_url, str) and 'ozone.bg' in source_url.lower():
                             ozone_url = source_url
+                            current_app.logger.info(f"✅ Found ozone.bg URL in Perplexity sources: {ozone_url}")
                             break
                 
-                # If no ozone.bg URL found, try to search for the book
+                # Strategy 2: Search external sources for ozone.bg URL
                 if not ozone_url:
                     current_app.logger.info(f"🔍 Searching external sources for ozone.bg URL")
-                    # Search for book in external sources to find ozone.bg URL
                     search_results = search_books_by_title(title, max_results=10, author=author)
                     for result in search_results:
                         # Check various possible URL fields
@@ -643,41 +647,49 @@ def enrich_single_book_endpoint():
                             current_app.logger.info(f"✅ Found ozone.bg URL in search results: {ozone_url}")
                             break
                 
-                # If still no URL found, try direct search on ozone.bg
+                # Strategy 3: Direct search on ozone.bg (ALWAYS try this for Bulgarian books)
                 if not ozone_url:
                     try:
-                        current_app.logger.info(f"🔍 Attempting direct search on ozone.bg")
-                        # Build search query for ozone.bg
-                        from urllib.parse import quote_plus
-                        search_query = f"{title} {author}".strip()
-                        search_url = f"https://www.ozone.bg/catalogsearch/result/?q={quote_plus(search_query)}"
+                        current_app.logger.info(f"🔍 Attempting direct search on ozone.bg for '{title}' by '{author}'")
+                        # Build search query - try title first, then title + author
+                        search_queries = [title]
+                        if author:
+                            search_queries.append(f"{title} {author}")
                         
-                        scraper = BulgarianBookstoreScraper()
-                        response = scraper.session.get(search_url, timeout=10)
-                        if response.status_code == 200:
-                            from bs4 import BeautifulSoup
-                            soup = BeautifulSoup(response.content, 'html.parser')
+                        for search_query in search_queries:
+                            search_url = f"https://www.ozone.bg/catalogsearch/result/?q={quote_plus(search_query.strip())}"
+                            current_app.logger.info(f"🔍 Searching ozone.bg: {search_url}")
                             
-                            # Look for product links in search results
-                            product_links = soup.find_all('a', href=re.compile(r'/product/'))
-                            if product_links:
-                                # Use first result
-                                first_link = product_links[0].get('href')
-                                if first_link:
-                                    if first_link.startswith('/'):
-                                        ozone_url = f"https://www.ozone.bg{first_link}"
-                                    elif first_link.startswith('http'):
-                                        ozone_url = first_link
-                                    else:
-                                        ozone_url = f"https://www.ozone.bg/{first_link}"
-                                    current_app.logger.info(f"✅ Found ozone.bg URL from search: {ozone_url}")
+                            response = scraper.session.get(search_url, timeout=10)
+                            if response.status_code == 200:
+                                soup = BeautifulSoup(response.content, 'html.parser')
+                                
+                                # Look for product links in search results - try multiple selectors
+                                product_links = []
+                                # Try different selectors for product links
+                                product_links.extend(soup.find_all('a', href=re.compile(r'/product/')))
+                                product_links.extend(soup.find_all('a', class_=re.compile(r'product', re.I)))
+                                
+                                if product_links:
+                                    # Use first result
+                                    first_link = product_links[0].get('href')
+                                    if first_link:
+                                        if first_link.startswith('/'):
+                                            ozone_url = f"https://www.ozone.bg{first_link}"
+                                        elif first_link.startswith('http'):
+                                            ozone_url = first_link
+                                        else:
+                                            ozone_url = f"https://www.ozone.bg/{first_link}"
+                                        current_app.logger.info(f"✅ Found ozone.bg URL from direct search: {ozone_url}")
+                                        break
+                            else:
+                                current_app.logger.warning(f"⚠️  Ozone.bg search returned status {response.status_code}")
                     except Exception as search_error:
-                        current_app.logger.warning(f"⚠️  Direct ozone.bg search failed: {search_error}")
+                        current_app.logger.warning(f"⚠️  Direct ozone.bg search failed: {search_error}", exc_info=True)
                 
                 # If we found an ozone.bg URL, scrape it
                 if ozone_url:
                     current_app.logger.info(f"🔍 Scraping ozone.bg URL: {ozone_url}")
-                    scraper = BulgarianBookstoreScraper()
                     bookstore_metadata = scraper.scrape_book_from_url(ozone_url)
                     if bookstore_metadata:
                         current_app.logger.info(f"✅ Scraped additional metadata from ozone.bg: ISBN={bookstore_metadata.get('isbn13')}, Publisher={bookstore_metadata.get('publisher')}, Year={bookstore_metadata.get('year')}, Pages={bookstore_metadata.get('pages')}")
