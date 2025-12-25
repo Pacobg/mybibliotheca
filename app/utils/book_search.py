@@ -861,10 +861,10 @@ def search_books_by_title(title: str, max_results: int = 10, author: Optional[st
     if remaining_budget <= 0:
         print("⏱️ [BOOK_SEARCH] Skipping Google Books due to global timeout budget")
     else:
-    try:
-        google_results = search_google_books(title, max_results * 2, author_arg)
-    except Exception as exc:
-        print(f"❌ [BOOK_SEARCH] Google search failed: {exc}")
+        try:
+            google_results = search_google_books(title, max_results * 2, author_arg)
+        except Exception as exc:
+            print(f"❌ [BOOK_SEARCH] Google search failed: {exc}")
 
     openlibrary_results: List[Dict[str, Any]] = []
     elapsed = time.perf_counter() - start_time
