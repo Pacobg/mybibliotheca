@@ -756,15 +756,46 @@ def enrich_single_book_endpoint():
         if merged.get('publisher') and not book_data.get('publisher'):
             updates['publisher'] = merged['publisher']
         
-        # Update ISBN if missing
-        if merged.get('isbn13') and not book_data.get('isbn13'):
-            updates['isbn13'] = merged['isbn13']
-        if merged.get('isbn10') and not book_data.get('isbn10'):
-            updates['isbn10'] = merged['isbn10']
+        # Update ISBN if missing (prioritize bookstore data)
+        if merged.get('isbn13'):
+            existing_isbn13 = book_data.get('isbn13') or book_data.get('isbn')
+            if not existing_isbn13:
+                updates['isbn13'] = merged['isbn13']
+                current_app.logger.info(f"📝 Adding ISBN-13: {merged['isbn13']}")
+        if merged.get('isbn10'):
+            existing_isbn10 = book_data.get('isbn10')
+            if not existing_isbn10:
+                updates['isbn10'] = merged['isbn10']
+                current_app.logger.info(f"📝 Adding ISBN-10: {merged['isbn10']}")
         
         # Update page_count if missing
-        if merged.get('page_count') and not book_data.get('page_count'):
-            updates['page_count'] = merged['page_count']
+        if merged.get('page_count'):
+            existing_pages = book_data.get('page_count') or book_data.get('pages')
+            if not existing_pages:
+                updates['page_count'] = merged['page_count']
+                current_app.logger.info(f"📝 Adding page count: {merged['page_count']}")
+        
+        # Update year/published_date if missing
+        if merged.get('year') or merged.get('published_date'):
+            existing_year = book_data.get('published_date') or book_data.get('year')
+            if not existing_year:
+                year_value = merged.get('year') or merged.get('published_date')
+                if year_value:
+                    # Try to parse year as date
+                    try:
+                        from datetime import date
+                        if isinstance(year_value, str):
+                            # Try to extract year from string
+                            year_match = re.search(r'\d{4}', str(year_value))
+                            if year_match:
+                                year_int = int(year_match.group(0))
+                                updates['published_date'] = f"{year_int}-01-01"
+                                current_app.logger.info(f"📝 Adding published year: {year_int}")
+                        elif isinstance(year_value, int):
+                            updates['published_date'] = f"{year_value}-01-01"
+                            current_app.logger.info(f"📝 Adding published year: {year_value}")
+                    except Exception as e:
+                        current_app.logger.warning(f"⚠️  Failed to parse year: {e}")
         
         # Update language for Bulgarian books
         title = merged.get('title', '') or book_data.get('title', '')
