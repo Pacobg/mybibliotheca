@@ -1195,8 +1195,13 @@ function displayTitleSearchResults(results) {
                                     <i class="bi bi-info-circle me-1"></i>
                                     Source: ${fullData.source || 'Unknown'}
                                 </small>
-                                ${isbn !== 'N/A' ? 
-                                    `<button type="button" class="btn btn-primary btn-sm" 
+                                <div class="d-flex align-items-center gap-2">
+                                    ${isbn === 'N/A' ? 
+                                        `<small class="text-warning me-2">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>No ISBN Available
+                                        </small>` : ''
+                                    }
+                                    <button type="button" class="btn btn-primary btn-sm" 
                                             onclick="(function(e){e.stopPropagation();e.preventDefault();
                                                      document.body.classList.remove('modal-open');
                                                      document.body.className=document.body.className.replace(/\\bmodal-open\\b/g,'');
@@ -1210,11 +1215,8 @@ function displayTitleSearchResults(results) {
                                                      return false;})(event)"
                                             style="z-index: 1055 !important; position: relative; pointer-events: auto !important;">
                                         <i class="bi bi-check-lg me-1"></i>Use This Book
-                                    </button>` :
-                                    `<small class="text-warning">
-                                        <i class="bi bi-exclamation-triangle me-1"></i>No ISBN Available
-                                    </small>`
-                                }
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
