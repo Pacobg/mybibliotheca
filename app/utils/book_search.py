@@ -673,8 +673,8 @@ def merge_and_rank_results(search_title: str, google_results: List[Dict],
                 else:
                     existing['source'] = 'Biblioman + OpenLibrary'
             else:
-            # Merge OpenLibrary ID
-            existing['openlibrary_id'] = result.get('openlibrary_id')
+                # Merge OpenLibrary ID
+                existing['openlibrary_id'] = result.get('openlibrary_id')
             
             # Smart merge publication date information
             best_date, best_year = select_best_publication_date(

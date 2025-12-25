@@ -5164,13 +5164,44 @@ def add_book_manual():
             )
             current_app.logger.error(f"📝 [ROUTE] add_book_to_user_library_sync returned: {added}")
         except BookAlreadyExistsError as dup:
-            # Handle duplicate detection - check if this is an AJAX request
+            # Handle duplicate detection - book exists but may not be in user's library
             try:
                 existing_id = getattr(dup, 'book_id', None)
             except Exception:
                 existing_id = None
             
             current_app.logger.info(f"[DUPLICATE] Book already exists: existing_id={existing_id}, cover_url='{cover_url}'")
+            
+            # Book exists - ensure it's in user's library
+            book_added_to_library = False
+            if existing_id:
+                try:
+                    from app.infrastructure.kuzu_repositories import KuzuUserBookRepository
+                    from app.services.kuzu_async_helper import run_async
+                    user_book_repo = KuzuUserBookRepository()
+                    # Check if book is already in user's library
+                    from app.services.kuzu_relationship_service import KuzuRelationshipService
+                    relationship_service = KuzuRelationshipService()
+                    user_book = relationship_service.get_book_by_uid_sync(existing_id, str(current_user.id))
+                    
+                    if not user_book:
+                        # Add to user's library
+                        current_app.logger.info(f"Adding existing book {existing_id} to user {current_user.id} library")
+                        added = run_async(user_book_repo.add_book_to_library(
+                            user_id=str(current_user.id),
+                            book_id=existing_id,
+                            reading_status=request.form.get('reading_status', ''),
+                            ownership_status=request.form.get('ownership_status', 'owned'),
+                            media_type=media_type or 'physical'
+                        ))
+                        if added:
+                            book_added_to_library = True
+                            current_app.logger.info(f"Successfully added existing book {existing_id} to user library")
+                    else:
+                        # Book already in user's library
+                        book_added_to_library = True
+                except Exception as e:
+                    current_app.logger.error(f"Error adding existing book to library: {e}", exc_info=True)
             
             # Try to update cover if new cover URL is provided and existing book might not have a valid cover
             if existing_id and cover_url and cover_url.startswith('http'):
@@ -5211,6 +5242,15 @@ def add_book_manual():
             )
             
             if wants_json:
+                # If book was successfully added to library, return success
+                if book_added_to_library:
+                    return jsonify({
+                        'success': True,
+                        'message': f'Book "{title}" added to your library',
+                        'book_id': existing_id,
+                        'already_existed': True
+                    }), 200
+                
                 # Return JSON with duplicate info and book data for modal
                 return jsonify({
                     'success': False,
@@ -5239,7 +5279,11 @@ def add_book_manual():
                 }), 409  # 409 Conflict status code
             else:
                 # Original behavior for non-AJAX requests: flash and redirect
-                flash('That book already exists. Taking you to it.', 'info')
+                if book_added_to_library:
+                    flash(f'Book "{title}" added to your library', 'success')
+                    return redirect(url_for('book.view_book_enhanced', uid=existing_id))
+                else:
+                    flash('That book already exists. Taking you to it.', 'info')
                 if existing_id:
                     return redirect(url_for('book.view_book_enhanced', uid=existing_id))
                 return redirect(url_for('main.library'))
