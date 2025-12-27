@@ -103,57 +103,119 @@
     }
 
     /**
-     * Auto-initialize debounced search for elements with data-debounce-search
+     * Auto-initialize debounced search
+     * Tries multiple selectors to find search input
      */
     function autoInitDebouncedSearch() {
-        const searchInputs = document.querySelectorAll('[data-debounce-search="true"]');
+        // Try multiple selectors
+        const searchInput = document.querySelector(
+            '#search-input, input[name="search"], input[name="q"], input[type="search"], [data-debounce-search="true"]'
+        );
         
-        searchInputs.forEach(input => {
-            // Get callback from data attribute or use default form submission
-            const callbackName = input.dataset.debounceCallback || 'default';
-            const delay = parseInt(input.dataset.debounceDelay) || DEFAULT_DELAY;
-            
-            let callback;
-            
-            if (callbackName === 'default') {
-                // Default: submit form or trigger search
-                callback = (query) => {
-                    // Try to find and submit the form
-                    const form = input.closest('form');
-                    if (form) {
-                        // Update URL parameter if it's a GET form
-                        if (form.method.toLowerCase() === 'get') {
-                            const url = new URL(window.location);
-                            if (query) {
-                                url.searchParams.set('search', query);
-                            } else {
-                                url.searchParams.delete('search');
-                            }
-                            // Reset to page 1 when searching
-                            url.searchParams.set('page', '1');
-                            window.location.href = url.toString();
-                        } else {
-                            form.submit();
-                        }
-                    } else {
-                        // No form, try to trigger custom event
-                        const event = new CustomEvent('debouncedSearch', {
-                            detail: { query: query }
-                        });
-                        input.dispatchEvent(event);
-                    }
-                };
-            } else {
-                // Custom callback from window object
-                callback = window[callbackName];
-                if (typeof callback !== 'function') {
-                    console.warn(`Callback function "${callbackName}" not found`);
-                    return;
-                }
+        if (!searchInput) {
+            console.log('ℹ️  No search input found for debouncing');
+            return;
+        }
+        
+        console.log('✅ Found search input, initializing debounced search');
+        
+        // Get delay from data attribute or use default
+        const delay = parseInt(searchInput.dataset.debounceDelay) || DEFAULT_DELAY;
+        const minQueryLength = parseInt(searchInput.dataset.minQueryLength) || 2;
+        
+        // State
+        let searchTimeout = null;
+        let lastQuery = '';
+        let searchInProgress = false;
+        
+        // Get search form
+        const searchForm = searchInput.closest('form');
+        
+        if (searchForm) {
+            // Prevent default form submission
+            searchForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                performSearch(searchInput.value.trim());
+            });
+        }
+        
+        /**
+         * Perform the actual search
+         */
+        function performSearch(query) {
+            if (searchInProgress) {
+                console.log('⏳ Search already in progress, skipping...');
+                return;
             }
             
-            initDebouncedSearch(input, callback, delay);
+            searchInProgress = true;
+            lastQuery = query;
+            
+            console.log(`🔍 Searching for: "${query}"`);
+            
+            // Update URL with search query
+            const url = new URL(window.location.href);
+            
+            if (query && query.length >= minQueryLength) {
+                url.searchParams.set('search', query);
+                url.searchParams.set('q', query);  // Support both params
+            } else {
+                url.searchParams.delete('search');
+                url.searchParams.delete('q');
+            }
+            
+            // Reset to page 1 for new search
+            url.searchParams.set('page', '1');
+            
+            // Navigate to search results
+            window.location.href = url.toString();
+        }
+        
+        // Handle input events
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            
+            // Clear previous timeout
+            clearTimeout(searchTimeout);
+            
+            // Ignore if query too short
+            if (query.length > 0 && query.length < minQueryLength) {
+                return;
+            }
+            
+            // Ignore if query hasn't changed
+            if (query === lastQuery) {
+                return;
+            }
+            
+            // Debounce search
+            searchTimeout = setTimeout(() => {
+                performSearch(query);
+            }, delay);
+            
+            console.log(`⏳ Search debounced: "${query}" (waiting ${delay}ms)`);
         });
+        
+        // Handle special keys
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                // Instant search on Enter
+                e.preventDefault();
+                clearTimeout(searchTimeout);
+                performSearch(searchInput.value.trim());
+            } else if (e.key === 'Escape') {
+                // Clear search on Escape
+                clearTimeout(searchTimeout);
+                searchInput.value = '';
+                lastQuery = '';
+                performSearch('');
+            }
+        });
+        
+        // Add visual feedback
+        searchInput.title = 'Press Enter to search immediately, Escape to clear';
+        searchInput.setAttribute('aria-label', 'Search books (debounced)');
+        searchInput.setAttribute('autocomplete', 'off');
     }
 
     // Initialize on DOM ready

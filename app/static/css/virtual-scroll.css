@@ -1,0 +1,36 @@
+/**
+ * CSS-only Virtual Scrolling using content-visibility
+ * Simpler alternative to JavaScript approach
+ * 
+ * Performance improvement: Smooth scrolling with 10,000+ books
+ */
+
+.book-card,
+.book-item,
+[data-book-id] {
+    /* Let browser handle virtualization */
+    content-visibility: auto;
+    contain-intrinsic-size: 350px; /* Approximate height */
+}
+
+/* Improve rendering performance */
+.book-grid,
+.book-list,
+.books-grid,
+.books-container {
+    contain: layout style paint;
+}
+
+/* Add will-change for smooth scrolling */
+.book-grid,
+.book-list,
+.books-grid {
+    will-change: scroll-position;
+}
+
+/* Optimize book cover rendering */
+.book-cover,
+.book-cover-shelf {
+    content-visibility: auto;
+    contain-intrinsic-size: 200px;
+}

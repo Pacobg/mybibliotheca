@@ -380,7 +380,7 @@
                 {% if current_location %}<input type="hidden" name="location" value="{{ current_location }}">{% endif %}
                 {% if current_media_type %}<input type="hidden" name="media_type" value="{{ current_media_type }}">{% endif %}
                 {% if current_sort %}<input type="hidden" name="sort" value="{{ current_sort }}">{% endif %}
-                <input type="text" class="form-control" name="search" 
+                <input type="text" class="form-control" name="search" id="search-input" data-debounce-search="true" data-debounce-delay="300" data-min-query-length="2" 
                        value="{{ current_search }}" 
                        placeholder="Search books by title, author, or description..."
                        aria-label="Search library">
