@@ -25,6 +25,8 @@ from app.utils.image_processing import process_image_from_url, process_image_fro
 from app.utils.safe_kuzu_manager import get_safe_kuzu_manager
 from app.domain.models import Book as DomainBook, MediaType, ReadingStatus
 from app.utils.user_settings import get_default_book_format, get_library_view_defaults
+from app.services.cache_service import get_cache_service
+from app.services.search_index_service import get_search_index
 
 # Quiet mode for book routes; enable with VERBOSE=true or IMPORT_VERBOSE=true
 import os as _os_for_verbose
@@ -2013,8 +2015,38 @@ def library():
     total_pages = max(1, math.ceil(total_books / per_page)) if per_page > 0 else 1
     page = max(1, min(page, total_pages))
 
-    # Decide data retrieval strategy: if any filter is active OR non-default sort is used, pull all then filter/sort across full set
+    # Optimize search using FTS index and cache
     offset = (page - 1) * per_page
+    cache_service = get_cache_service()
+    search_index = get_search_index()
+    
+    # If there's a search query, use search index to get matching book IDs first
+    search_matching_ids = None
+    if search_query:
+        try:
+            # Try cache first
+            cache_filters = {
+                'user_id': str(current_user.id),
+                'query': search_query
+            }
+            cached_ids = cache_service.get_search_results(search_query, cache_filters)
+            
+            if cached_ids:
+                search_matching_ids = set(cached_ids)
+                current_app.logger.debug(f"🎯 Cache HIT for search: '{search_query[:30]}...'")
+            else:
+                # Cache miss - use FTS index
+                matching_ids = search_index.search(search_query, limit=10000)
+                search_matching_ids = set(matching_ids)
+                
+                # Cache the results
+                cache_service.cache_search_results(search_query, list(matching_ids), cache_filters, ttl=3600)
+                current_app.logger.debug(f"❌ Cache MISS for search: '{search_query[:30]}...' ({len(matching_ids)} results)")
+        except Exception as e:
+            current_app.logger.warning(f"Search index error, falling back to full scan: {e}")
+            search_matching_ids = None
+    
+    # Decide data retrieval strategy: if any filter is active OR non-default sort is used, pull all then filter/sort across full set
     has_filter = any([
         status_filter and status_filter != 'all',
         bool(search_query),
@@ -2226,15 +2258,25 @@ def library():
     finished_before = _parse_finish_date(finished_before_raw)
 
     if search_query:
-        search_lower = search_query.casefold()
-        filtered_books = [
-            book for book in filtered_books 
-            if (search_lower in (((book.get('title', '') if isinstance(book, dict) else getattr(book, 'title', '')) or '').casefold())) or
-               (search_lower in (((book.get('normalized_title', '') if isinstance(book, dict) else getattr(book, 'normalized_title', '')) or '').casefold())) or
-               (search_lower in (((book.get('subtitle', '') if isinstance(book, dict) else getattr(book, 'subtitle', '')) or '').casefold())) or
-               (search_lower in (((book.get('author', '') if isinstance(book, dict) else getattr(book, 'author', '')) or '').casefold())) or
-               (search_lower in (((book.get('description', '') if isinstance(book, dict) else getattr(book, 'description', '')) or '').casefold()))
-        ]
+        # Use search index results if available (much faster than Python filtering)
+        if search_matching_ids is not None:
+            # Filter by matching IDs from search index
+            filtered_books = [
+                book for book in filtered_books
+                if (book.get('id') if isinstance(book, dict) else getattr(book, 'id', None)) in search_matching_ids
+            ]
+            current_app.logger.debug(f"Filtered {len(filtered_books)} books using search index")
+        else:
+            # Fallback to Python filtering if search index unavailable
+            search_lower = search_query.casefold()
+            filtered_books = [
+                book for book in filtered_books 
+                if (search_lower in (((book.get('title', '') if isinstance(book, dict) else getattr(book, 'title', '')) or '').casefold())) or
+                   (search_lower in (((book.get('normalized_title', '') if isinstance(book, dict) else getattr(book, 'normalized_title', '')) or '').casefold())) or
+                   (search_lower in (((book.get('subtitle', '') if isinstance(book, dict) else getattr(book, 'subtitle', '')) or '').casefold())) or
+                   (search_lower in (((book.get('author', '') if isinstance(book, dict) else getattr(book, 'author', '')) or '').casefold())) or
+                   (search_lower in (((book.get('description', '') if isinstance(book, dict) else getattr(book, 'description', '')) or '').casefold()))
+            ]
     
     if publisher_filter:
         filtered_books = [

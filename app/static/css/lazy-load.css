@@ -1,0 +1,65 @@
+/**
+ * Lazy Loading Styles
+ * 
+ * Provides smooth transitions and placeholder styles for lazy-loaded images
+ */
+
+/* Lazy image placeholder */
+img.lazy {
+    background-color: #f0f0f0;
+    background-image: linear-gradient(90deg, #f0f0f0 0%, #e0e0e0 50%, #f0f0f0 100%);
+    background-size: 200% 100%;
+    animation: lazy-loading-shimmer 1.5s infinite;
+    min-height: 200px; /* Prevent layout shift */
+    display: block;
+}
+
+/* Shimmer animation for loading state */
+@keyframes lazy-loading-shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Loading state */
+img.lazy-loading {
+    opacity: 0.7;
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Loaded state */
+img.lazy-loaded {
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Error state */
+img.lazy-error {
+    background-color: #fee;
+    border: 1px solid #fcc;
+}
+
+/* Book cover specific styles */
+.book-cover.lazy {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2/3; /* Standard book cover ratio */
+    object-fit: cover;
+}
+
+/* Prevent layout shift */
+.book-cover-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.book-cover-container img.lazy {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}

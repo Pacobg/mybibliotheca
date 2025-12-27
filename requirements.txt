@@ -24,6 +24,7 @@ cryptography>=46.0.3
 
 # Optional Redis for production sessions
 redis>=7.0.1
+hiredis>=2.3.0
 
 # Graph Database Dependencies
 kuzu>=0.11.3

@@ -26,6 +26,14 @@ from .kuzu_custom_field_service import KuzuCustomFieldService
 from .kuzu_reading_log_service import KuzuReadingLogService
 from .kuzu_async_helper import run_async
 
+# Performance optimization imports
+try:
+    from .cache_service import get_cache_service
+    from .search_index_service import get_search_index
+    _PERF_OPTIMIZATIONS_AVAILABLE = True
+except ImportError:
+    _PERF_OPTIMIZATIONS_AVAILABLE = False
+
 
 def _convert_query_result_to_list(result) -> List[Dict[str, Any]]:
     """
@@ -101,6 +109,37 @@ class KuzuServiceFacade:
                 book_id=book.id,
                 reading_status=""
             )
+            
+            # Update search index and invalidate cache
+            if _PERF_OPTIMIZATIONS_AVAILABLE:
+                try:
+                    search_index = get_search_index()
+                    cache_service = get_cache_service()
+                    # Convert book to dict for indexing
+                    book_dict = {
+                        'id': book.id,
+                        'title': book.title or '',
+                        'subtitle': book.subtitle or '',
+                        'description': book.description or '',
+                        'isbn13': book.isbn13 or '',
+                        'isbn10': book.isbn10 or '',
+                        'series': book.series.name if book.series else '',
+                        'language': book.language or 'en',
+                        'published_date': book.published_date,
+                        'page_count': book.page_count,
+                        'media_type': book.media_type,
+                        'updated_at': book.updated_at.isoformat() if book.updated_at else None
+                    }
+                    # Get authors
+                    if hasattr(book, 'contributors'):
+                        authors = [c.person.name for c in book.contributors if hasattr(c, 'person') and c.person]
+                        book_dict['authors'] = authors
+                    search_index.index_book(book_dict)
+                    cache_service.invalidate_all_searches()
+                except Exception as e:
+                    import logging
+                    logging.getLogger(__name__).warning(f"Failed to update search index for new book: {e}")
+            
             return book
         
         return book
@@ -314,6 +353,39 @@ class KuzuServiceFacade:
             except Exception as e:
                 print(f"Error updating categories for book {book_id}: {e}")
         
+        # Update search index and invalidate cache if book metadata was updated
+        if book_updates and _PERF_OPTIMIZATIONS_AVAILABLE:
+            try:
+                search_index = get_search_index()
+                cache_service = get_cache_service()
+                # Get updated book for indexing
+                updated_book_for_index = updated_book or self.get_book_by_id_sync(book_id)
+                if updated_book_for_index:
+                    book_dict = {
+                        'id': updated_book_for_index.id,
+                        'title': updated_book_for_index.title or '',
+                        'subtitle': updated_book_for_index.subtitle or '',
+                        'description': updated_book_for_index.description or '',
+                        'isbn13': updated_book_for_index.isbn13 or '',
+                        'isbn10': updated_book_for_index.isbn10 or '',
+                        'series': updated_book_for_index.series.name if updated_book_for_index.series else '',
+                        'language': updated_book_for_index.language or 'en',
+                        'published_date': updated_book_for_index.published_date,
+                        'page_count': updated_book_for_index.page_count,
+                        'media_type': updated_book_for_index.media_type,
+                        'updated_at': updated_book_for_index.updated_at.isoformat() if updated_book_for_index.updated_at else None
+                    }
+                    # Get authors
+                    if hasattr(updated_book_for_index, 'contributors'):
+                        authors = [c.person.name for c in updated_book_for_index.contributors if hasattr(c, 'person') and c.person]
+                        book_dict['authors'] = authors
+                    search_index.index_book(book_dict)
+                    cache_service.invalidate_book(book_id)
+                    cache_service.invalidate_all_searches()
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"Failed to update search index for updated book: {e}")
+        
         # Return the updated book or fetch it fresh if only metadata was updated
         if updated_book:
             return updated_book
@@ -333,6 +405,19 @@ class KuzuServiceFacade:
                     safe_execute_kuzu_query("MATCH ()-[o:OWNS]->(b:Book {id: $book_id}) DELETE o", {"book_id": book_id})
                 except Exception:
                     pass
+                
+                # Remove from search index and invalidate cache
+                if _PERF_OPTIMIZATIONS_AVAILABLE:
+                    try:
+                        search_index = get_search_index()
+                        cache_service = get_cache_service()
+                        search_index.remove_book(book_id)
+                        cache_service.invalidate_book(book_id)
+                        cache_service.invalidate_all_searches()
+                    except Exception as e:
+                        import logging
+                        logging.getLogger(__name__).warning(f"Failed to update search index for deleted book: {e}")
+                
                 return True
             return False
         except Exception:
