@@ -23,7 +23,6 @@
     try {
       var container = document.getElementById('books-container');
       if (!container) return;
-      var pageInfo = document.querySelector('.text-muted.small');
       var currentPage = parseInt((window.URL || window.webkitURL ? new URL(window.location.href).searchParams.get('page') : (function(){return null;})()) || '1', 10);
       if (isNaN(currentPage) || currentPage < 1) currentPage = 1;
       // Only prefetch if there appears to be a next page button enabled
@@ -33,10 +32,20 @@
       var url = new URL(window.location.href);
       url.searchParams.set('page', String(currentPage + 1));
       url.searchParams.set('format', 'json');
-      // Fire-and-forget; browser cache will keep it warm
-      fetch(url.toString(), { credentials: 'same-origin' }).catch(function(){ /* noop */ });
+      
+      // Use prefetch link instead of fetch to avoid credentials warnings
+      // Only prefetch if not already prefetched
+      var existingPrefetch = document.querySelector('link[rel="prefetch"][href="' + url.toString() + '"]');
+      if (existingPrefetch) return;
+      
+      var link = document.createElement('link');
+      link.rel = 'prefetch';
+      link.href = url.toString();
+      link.as = 'fetch';
+      link.crossOrigin = 'same-origin';
+      document.head.appendChild(link);
     } catch (e) {
-      /* noop */
+      // Silently fail - prefetch is optional optimization
     }
   }
 
