@@ -6,6 +6,7 @@ Registers all blueprint modules for the Bibliotheca application.
 import logging
 import os
 from flask import Blueprint, request, jsonify, session, current_app
+from app import csrf
 
 logger = logging.getLogger(__name__)
 
@@ -327,6 +328,7 @@ def download_db():
     return redirect(url_for('book.download_db'))
 
 @main_bp.route('/toggle_theme', methods=['POST'])
+@csrf.exempt  # Theme toggle doesn't need CSRF protection - it's a UI preference
 def toggle_theme():
     """Toggle user's theme preference between light and dark."""
     try:
