@@ -496,7 +496,27 @@ def settings():
                 stats['app_version'] = data.get('project', {}).get('version', stats['app_version'])
     except Exception as e:
         current_app.logger.debug(f"Version load failed: {e}")
-    return render_template('settings.html', title='Settings', site_name=site_name, stats=stats)
+    
+    # Get cache and search index statistics
+    cache_stats = {}
+    search_index_stats = {}
+    try:
+        from app.services.cache_service import get_cache_service
+        cache_service = get_cache_service()
+        cache_stats = cache_service.get_stats()
+    except Exception as e:
+        current_app.logger.debug(f"Cache stats failed: {e}")
+        cache_stats = {'enabled': False, 'error': str(e)}
+    
+    try:
+        from app.services.search_index_service import get_search_index
+        search_index = get_search_index()
+        search_index_stats = search_index.get_stats()
+    except Exception as e:
+        current_app.logger.debug(f"Search index stats failed: {e}")
+        search_index_stats = {'total_books': 0, 'error': str(e)}
+    
+    return render_template('settings.html', title='Settings', site_name=site_name, stats=stats, cache_stats=cache_stats, search_index_stats=search_index_stats)
 
 # ---------------- Inline Settings Partials (AJAX) -----------------
 @auth.route('/settings/partial/profile', methods=['GET', 'POST'])

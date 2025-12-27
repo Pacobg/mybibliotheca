@@ -126,6 +126,117 @@
                 </div>
                 {% endif %}
             </div>
+            
+            {% if current_user.is_admin %}
+            <!-- Performance Optimization Stats -->
+            <div class="mt-4">
+                <h3 class="h5 mb-3"><i class="bi bi-speedometer2"></i> Performance Optimizations</h3>
+                <div class="row g-4">
+                    <!-- Redis Cache Stats -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header d-flex align-items-center">
+                                <i class="bi bi-stack me-2"></i>
+                                <strong>Redis Cache</strong>
+                                {% if cache_stats.enabled %}
+                                <span class="badge bg-success ms-auto">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary ms-auto">Disabled</span>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                {% if cache_stats.enabled %}
+                                <div class="mb-2">
+                                    <small class="text-muted">Status:</small>
+                                    <div class="fw-bold text-success">Connected</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">Host:</small>
+                                    <div class="fw-bold">{{ cache_stats.host }}</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">Total Keys:</small>
+                                    <div class="fw-bold">{{ cache_stats.total_keys }}</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">Memory Used:</small>
+                                    <div class="fw-bold">{{ cache_stats.memory_used }}</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">Hit Rate:</small>
+                                    <div class="fw-bold">
+                                        {{ cache_stats.hit_rate }}%
+                                        <small class="text-muted">({{ cache_stats.hits }} hits / {{ cache_stats.misses }} misses)</small>
+                                    </div>
+                                </div>
+                                <div class="mb-0">
+                                    <small class="text-muted">Version:</small>
+                                    <div class="fw-bold">{{ cache_stats.version }}</div>
+                                </div>
+                                {% else %}
+                                <div class="text-muted">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    {% if cache_stats.reason %}
+                                        {{ cache_stats.reason }}
+                                    {% elif cache_stats.error %}
+                                        Error: {{ cache_stats.error }}
+                                    {% else %}
+                                        Cache is disabled or Redis is unavailable
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- SQLite Search Index Stats -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header d-flex align-items-center">
+                                <i class="bi bi-search me-2"></i>
+                                <strong>Search Index (SQLite FTS5)</strong>
+                                {% if search_index_stats.total_books > 0 %}
+                                <span class="badge bg-success ms-auto">Ready</span>
+                                {% else %}
+                                <span class="badge bg-warning ms-auto">Empty</span>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                {% if search_index_stats.error %}
+                                <div class="text-danger">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    Error: {{ search_index_stats.error }}
+                                </div>
+                                {% else %}
+                                <div class="mb-2">
+                                    <small class="text-muted">Indexed Books:</small>
+                                    <div class="fw-bold">{{ search_index_stats.total_books }}</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">Database Size:</small>
+                                    <div class="fw-bold">{{ search_index_stats.db_size_mb }} MB</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">Last Rebuild:</small>
+                                    <div class="fw-bold">
+                                        {% if search_index_stats.last_rebuild %}
+                                            {{ search_index_stats.last_rebuild[:19] }}
+                                        {% else %}
+                                            Never
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="mb-0">
+                                    <small class="text-muted">Database Path:</small>
+                                    <div class="fw-bold small text-break">{{ search_index_stats.db_path }}</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
 
     <div class="settings-section" id="personalSection">
