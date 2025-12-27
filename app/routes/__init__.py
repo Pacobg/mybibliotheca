@@ -5,7 +5,7 @@ Registers all blueprint modules for the Bibliotheca application.
 
 import logging
 import os
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify, session, current_app
 
 logger = logging.getLogger(__name__)
 
@@ -328,9 +328,34 @@ def download_db():
 
 @main_bp.route('/toggle_theme', methods=['POST'])
 def toggle_theme():
-    """Compatibility route for main.toggle_theme - redirect to people.toggle_theme"""
-    from flask import redirect, url_for, request
-    return redirect(url_for('people.toggle_theme'), code=307)
+    """Toggle user's theme preference between light and dark."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid request data'
+            }), 400
+        
+        current_theme = data.get('current_theme', 'light')
+        
+        # Toggle theme
+        new_theme = 'dark' if current_theme == 'light' else 'light'
+        
+        # Store theme preference in session
+        session['theme'] = new_theme
+        
+        return jsonify({
+            'success': True,
+            'new_theme': new_theme
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error toggling theme: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to toggle theme'
+        }), 500
 
 @main_bp.route('/detect_sqlite', methods=['POST'])
 def detect_sqlite():
