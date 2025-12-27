@@ -611,18 +611,239 @@ python3 scripts/rebuild_search_index.py
 
 ---
 
+## 🐛 Поправки и Финализации
+
+### Проблем 1: Preload Browser Warnings
+
+**Симптоми:**
+- Browser warning: "The resource was preloaded using link preload but not used within a few seconds"
+- Console warnings за credentials mode mismatch
+
+**Причина:**
+- HTTP Link header с `rel=preload` в `book_routes.py`
+- JavaScript prefetch използваше `<link rel="prefetch">` tag
+
+**Решение:**
+- Премахнат HTTP Link header с preload от `book_routes.py` (редове 2796-2800)
+- Премахната prefetch функцията от `library_perf.js`
+- Browser cache естествено обработва prefetch при навигация
+
+**Файлове:**
+- `app/routes/book_routes.py` - Премахнат preload header
+- `app/static/js/library_perf.js` - Премахната prefetch функция
+
+### Проблем 2: Label For Attributes
+
+**Симптоми:**
+- Browser warning: "The label's for attribute doesn't match any element id"
+- Accessibility проблеми с autofill и screen readers
+
+**Причина:**
+- Label елементи с `for="category"`, `for="publisher"`, etc. нямаха съответстващи `id` атрибути
+- Скритите input полета имаха само `name` атрибути
+
+**Решение:**
+- Добавени `id` атрибути към всички скрити input полета в `library_enhanced.html`
+- Сега label елементите имат валидни `for` атрибути
+
+**Файлове:**
+- `app/templates/library_enhanced.html` - Добавени id атрибути за:
+  - `category` (ред 480)
+  - `publisher` (ред 500)
+  - `language` (ред 520)
+  - `media_type` (ред 540)
+  - `location` (ред 566)
+
+### Проблем 3: Липсващи Bootstrap Map Файлове
+
+**Симптоми:**
+- 404 грешки: `GET /static/bootstrap.min.css.map HTTP/1.1" 404`
+- 404 грешки: `GET /static/bootstrap.bundle.min.js.map HTTP/1.1" 404`
+
+**Причина:**
+- Bootstrap CSS и JS файлове имат sourcemap references, но map файловете липсваха
+
+**Решение:**
+- Създадени празни `.map` файлове за Bootstrap
+- Файловете са валидни JSON sourcemaps (празни, но без грешки)
+
+**Файлове:**
+- `app/static/bootstrap.min.css.map` - Създаден празен sourcemap
+- `app/static/bootstrap.bundle.min.js.map` - Създаден празен sourcemap
+
+### Проблем 4: Lazy Loading JavaScript Error
+
+**Симптоми:**
+- Console error: "Cannot read properties of undefined (reading 'substring')"
+- Lazy loading не работеше правилно
+
+**Причина:**
+- `img.dataset.src` се използваше след като `data-src` атрибутът беше изтрит
+- `img.removeAttribute('data-src')` прави `img.dataset.src` undefined
+
+**Решение:**
+- Запазване на `imageSrc` в променлива преди изтриване на атрибута
+- Добавена safety проверка преди използване на `substring()`
+
+**Файлове:**
+- `app/static/js/lazy-load.js` - Поправена логика за обработка на `data-src`
+
+### Проблем 5: KuzuDB Relationship Query Error
+
+**Симптоми:**
+- `RuntimeError: Binder exception: Table CONTRIBUTED_TO does not exist`
+- Rebuild script не работеше
+
+**Причина:**
+- Query използваше несъществуваща relationship `CONTRIBUTED_TO`
+- Правилните relationships са `AUTHORED` или `WRITTEN_BY`
+
+**Решение:**
+- Променен query да използва `OPTIONAL MATCH (b)-[:WRITTEN_BY|AUTHORED]->(a:Author)`
+
+**Файлове:**
+- `scripts/rebuild_search_index.py` - Поправен KuzuDB query
+
+### Проблем 6: SQLite Database Locked
+
+**Симптоми:**
+- `sqlite3.OperationalError: database is locked`
+- Rebuild script спираше при много книги
+
+**Причина:**
+- `rebuild()` методът създаваше нов connection за всяка книга
+- Множество connections водеха до locking issues
+
+**Решение:**
+- Рефакториран `rebuild()` да използва един connection за целия процес
+- Добавен `timeout=30.0` към SQLite connection
+- Включен WAL mode (`PRAGMA journal_mode=WAL`)
+- Периодични commits на всеки 100 книги
+
+**Файлове:**
+- `app/services/search_index_service.py` - Оптимизиран `rebuild()` метод
+
+### Проблем 7: Flask Static URL Building
+
+**Симптоми:**
+- `werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'static'`
+- Template не можеше да генерира static file URLs
+
+**Причина:**
+- `base.html` използваше `url_for('static', ...)` но endpoint-ът е `serve_static`
+
+**Решение:**
+- Заменени всички `url_for('static', ...)` с `url_for('serve_static', ...)`
+
+**Файлове:**
+- `app/templates/base.html` - Поправени static file URLs
+
+---
+
+## 📋 Пълен Списък на Промените
+
+### Нови Файлове
+
+1. **`app/services/cache_service.py`**
+   - Redis cache service с graceful degradation
+   - Методи за search results и book data caching
+   - Автоматично invalidation
+   - Статистики и health check
+
+2. **`app/services/search_index_service.py`**
+   - SQLite FTS5 search index service
+   - Full-text search с BM25 ranking
+   - Автоматично индексиране и обновяване
+   - Rebuild функционалност
+
+3. **`scripts/rebuild_search_index.py`**
+   - Скрипт за ребилд на search index
+   - Зарежда книги от KuzuDB
+   - Показва прогреса и статистики
+
+4. **`app/static/js/lazy-load.js`**
+   - IntersectionObserver за lazy loading
+   - MutationObserver за динамично добавени images
+   - Error handling и retry механизъм
+
+5. **`app/static/css/lazy-load.css`**
+   - Стилове за loading states
+   - Shimmer animation за placeholders
+   - Transitions за smooth loading
+
+6. **`app/static/js/debounced-search.js`**
+   - Debounce функционалност за search input
+   - Auto-initialization
+   - Enter/Escape key handling
+   - Visual feedback
+
+7. **`app/static/css/virtual-scroll.css`**
+   - CSS virtual scrolling с `content-visibility`
+   - Оптимизация за long lists
+
+8. **`app/static/bootstrap.min.css.map`**
+   - Празен sourcemap за Bootstrap CSS
+
+9. **`app/static/bootstrap.bundle.min.js.map`**
+   - Празен sourcemap за Bootstrap JS
+
+### Модифицирани Файлове
+
+1. **`requirements.txt`**
+   - Добавен `hiredis>=2.3.0` за по-бърза Redis комуникация
+
+2. **`app/routes/book_routes.py`**
+   - Интегрирани cache и search index в `/library` route
+   - Премахнат HTTP Link preload header
+   - Оптимизирано търсене и pagination
+
+3. **`app/services/kuzu_service_facade.py`**
+   - Автоматично обновяване на search index при CRUD операции
+   - Автоматично invalidation на cache
+
+4. **`app/templates/base.html`**
+   - Добавени CSS файлове за lazy loading и virtual scrolling
+   - Добавени JavaScript файлове за lazy loading и debounced search
+   - Поправени static file URLs (`serve_static` вместо `static`)
+
+5. **`app/templates/library_enhanced.html`**
+   - Добавени `id` атрибути към скрити input полета
+   - Добавени атрибути за debounced search
+
+6. **`app/templates/macros/cover_input.html`**
+   - Модифициран `render_cover_display` за lazy loading
+   - Използва `data-src` и placeholder image
+
+7. **`app/auth.py`**
+   - Добавени Redis cache и SQLite search index статистики в settings
+   - Видими само за admin потребители
+
+8. **`app/templates/settings.html`**
+   - Добавена "Performance Optimizations" секция
+   - Показва cache и search index статистики
+
+9. **`app/static/js/library_perf.js`**
+   - Премахната prefetch функция
+   - Оптимизирани cover image priorities
+
+---
+
 ## ✅ Checklist за Deployment
 
-- [ ] Redis е инсталиран и конфигуриран
-- [ ] `.env` файлът има Redis настройки
-- [ ] `hiredis` е инсталиран
-- [ ] Search index е ребилднат (`rebuild_search_index.py`)
-- [ ] Приложението е рестартирано
-- [ ] Cache service работи (проверка в settings)
-- [ ] Search index работи (проверка в settings)
-- [ ] Търсенето е по-бързо (тест в browser)
-- [ ] Lazy loading работи (проверка на images)
-- [ ] Debounced search работи (тест на search input)
+- [x] Redis е инсталиран и конфигуриран
+- [x] `.env` файлът има Redis настройки
+- [x] `hiredis` е инсталиран
+- [x] Search index е ребилднат (`rebuild_search_index.py`)
+- [x] Приложението е рестартирано
+- [x] Cache service работи (проверка в settings)
+- [x] Search index работи (проверка в settings)
+- [x] Търсенето е по-бързо (тест в browser)
+- [x] Lazy loading работи (проверка на images)
+- [x] Debounced search работи (тест на search input)
+- [x] Всички browser warnings са премахнати
+- [x] Label for атрибути са поправени
+- [x] Bootstrap map файлове са създадени
+- [x] JavaScript errors са поправени
 
 ---
 
@@ -639,15 +860,29 @@ python3 scripts/rebuild_search_index.py
 - ✅ Автоматично обновяване на индекси
 - ✅ Graceful degradation (работи без Redis)
 - ✅ Мониторинг и статистики
+- ✅ Всички browser warnings премахнати
+- ✅ Подобрена accessibility
+- ✅ Чист код без errors
+
+**Технически детайли:**
+- Redis cache за search results и book data
+- SQLite FTS5 за бързо full-text search
+- IntersectionObserver за lazy loading
+- Debounced search за намаляване на API calls
+- CSS virtual scrolling за оптимизация на rendering
+- Автоматично invalidation на cache
+- WAL mode за SQLite concurrency
+- Graceful degradation за високо availability
 
 **Следващи стъпки (опционално):**
 - Добавяне на page-level caching
-- Virtual scrolling за 1000+ книги
 - CDN за static files
 - Compression (Gzip) за responses
+- Service Worker за offline support
+- Image optimization (WebP, responsive images)
 
 ---
 
 **Автор:** MyBibliotheca Performance Team  
 **Дата:** 27 декември 2025  
-**Версия:** 1.0
+**Версия:** 1.1 (Final)
