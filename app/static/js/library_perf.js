@@ -53,10 +53,10 @@
     document.addEventListener('DOMContentLoaded', function() {
       enhanceCovers();
       // Schedule JSON prefetch after render to avoid competing with critical path
-      setTimeout(prefetchNextPageJSON, 250);
+      setTimeout(prefetchNextPageJSON, 500);
     });
   } else {
     enhanceCovers();
-    setTimeout(prefetchNextPageJSON, 250);
+    setTimeout(prefetchNextPageJSON, 500);
   }
 })();
