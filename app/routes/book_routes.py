@@ -2788,16 +2788,8 @@ def library():
                     flat_params['search'] = search_query
                 else:
                     flat_params.pop('search', None)
-            flat_params['page'] = str(page + 1)
-            flat_params['format'] = 'json'
-            next_json_url = f"{request.base_url}?{urlencode(flat_params)}"
-            # Append to existing Link header if present
-            existing_link = resp.headers.get('Link')
-            preload_hint = f"<{next_json_url}>; rel=preload; as=fetch"
-            if existing_link:
-                resp.headers['Link'] = existing_link + ", " + preload_hint
-            else:
-                resp.headers['Link'] = preload_hint
+            # Preload header removed to avoid browser warnings
+            # Browser cache handles prefetching naturally when user navigates
     except Exception:
         pass
     return resp
