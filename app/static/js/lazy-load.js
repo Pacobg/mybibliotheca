@@ -49,28 +49,33 @@
                     
                     imageLoader.onload = function() {
                         // Success - update actual image
-                        img.src = img.dataset.src;
+                        const imageSrc = img.dataset.src;
+                        if (!imageSrc) return; // Safety check
+                        
+                        img.src = imageSrc;
                         img.classList.remove('lazy', 'lazy-loading');
                         img.classList.add('lazy-loaded');
-                        loadedImages.add(img.dataset.src);
+                        loadedImages.add(imageSrc);
                         
                         // Remove data-src to prevent reloading
                         img.removeAttribute('data-src');
                         
-                        console.log(`✅ Loaded: ${img.dataset.src.substring(0, 50)}...`);
+                        // Log success (safe substring)
+                        const logSrc = imageSrc.length > 50 ? imageSrc.substring(0, 50) + '...' : imageSrc;
+                        console.log(`✅ Loaded: ${logSrc}`);
                     };
                     
                     imageLoader.onerror = function() {
+                        const imageSrc = img.dataset.src;
                         img.classList.remove('lazy-loading');
                         img.classList.add('lazy-error');
                         
                         // Fallback to default placeholder
-                        if (img.dataset.src) {
+                        if (imageSrc) {
                             img.src = '/static/bookshelf.png';
                             img.removeAttribute('data-src');
+                            console.warn(`⚠️  Failed to load image: ${imageSrc.length > 50 ? imageSrc.substring(0, 50) + '...' : imageSrc}`);
                         }
-                        
-                        console.warn(`⚠️  Failed to load image: ${img.dataset.src}`);
                     };
                     
                     // Start loading
