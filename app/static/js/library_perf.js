@@ -33,17 +33,17 @@
       url.searchParams.set('page', String(currentPage + 1));
       url.searchParams.set('format', 'json');
       
-      // Use prefetch link instead of fetch to avoid credentials warnings
-      // Only prefetch if not already prefetched
-      var existingPrefetch = document.querySelector('link[rel="prefetch"][href="' + url.toString() + '"]');
-      if (existingPrefetch) return;
-      
-      var link = document.createElement('link');
-      link.rel = 'prefetch';
-      link.href = url.toString();
-      link.as = 'fetch';
-      link.crossOrigin = 'same-origin';
-      document.head.appendChild(link);
+      // Use fetch with keepalive instead of link prefetch to avoid browser warnings
+      // This prefetches the data into browser cache without creating a link tag
+      // Only prefetch if user is likely to navigate (after a delay)
+      fetch(url.toString(), { 
+        method: 'GET',
+        credentials: 'same-origin',
+        keepalive: true,
+        cache: 'default'
+      }).catch(function() { 
+        // Silently fail - prefetch is optional optimization
+      });
     } catch (e) {
       // Silently fail - prefetch is optional optimization
     }
@@ -52,11 +52,27 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
       enhanceCovers();
-      // Schedule JSON prefetch after render to avoid competing with critical path
-      setTimeout(prefetchNextPageJSON, 500);
+      // Schedule JSON prefetch after render and user interaction to avoid warnings
+      // Only prefetch if user hovers over next button or after 2 seconds
+      var nextBtn = document.getElementById('nextPageBtn');
+      if (nextBtn && !nextBtn.classList.contains('disabled')) {
+        // Prefetch on hover over next button
+        nextBtn.addEventListener('mouseenter', function() {
+          prefetchNextPageJSON();
+        }, { once: true });
+        
+        // Also prefetch after 2 seconds if user hasn't navigated
+        setTimeout(prefetchNextPageJSON, 2000);
+      }
     });
   } else {
     enhanceCovers();
-    setTimeout(prefetchNextPageJSON, 500);
+    var nextBtn = document.getElementById('nextPageBtn');
+    if (nextBtn && !nextBtn.classList.contains('disabled')) {
+      nextBtn.addEventListener('mouseenter', function() {
+        prefetchNextPageJSON();
+      }, { once: true });
+      setTimeout(prefetchNextPageJSON, 2000);
+    }
   }
 })();
