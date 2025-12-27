@@ -43,10 +43,11 @@ def get_all_books_from_kuzu() -> list:
     logger.info("📚 Loading books from KuzuDB...")
     
     # Query to get all books with their authors
+    # Use AUTHORED relationship (Person -> Book)
     query = """
     MATCH (b:Book)
-    OPTIONAL MATCH (b)-[:WRITTEN_BY|CONTRIBUTED_TO]->(a:Author)
-    WITH b, COLLECT(DISTINCT a.name) AS author_names
+    OPTIONAL MATCH (p:Person)-[:AUTHORED]->(b)
+    WITH b, COLLECT(DISTINCT p.name) AS author_names
     RETURN b, author_names
     ORDER BY b.title
     """
