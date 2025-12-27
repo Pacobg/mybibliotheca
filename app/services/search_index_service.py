@@ -50,8 +50,13 @@ class SearchIndexService:
     
     def _get_connection(self) -> sqlite3.Connection:
         """Get database connection"""
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, timeout=30.0)  # 30 second timeout
         conn.row_factory = sqlite3.Row
+        # Enable WAL mode for better concurrency
+        try:
+            conn.execute("PRAGMA journal_mode=WAL")
+        except:
+            pass  # WAL might not be supported
         return conn
     
     def _ensure_schema(self):
@@ -355,29 +360,108 @@ class SearchIndexService:
         logger.info(f"🔄 Rebuilding search index with {len(books)} books...")
         
         conn = self._get_connection()
+        # Enable WAL mode for better concurrency
+        try:
+            conn.execute("PRAGMA journal_mode=WAL")
+        except:
+            pass  # WAL might not be supported, continue anyway
+        
         try:
             cursor = conn.cursor()
             
             # Clear existing index
             cursor.execute("DELETE FROM books_fts")
             cursor.execute("DELETE FROM books_metadata")
+            conn.commit()
             
-            # Index all books
+            # Index all books using the same connection
             indexed = 0
             failed = 0
             
             for i, book in enumerate(books):
                 try:
-                    self.index_book(book)
+                    book_id = book.get('id')
+                    if not book_id:
+                        continue
+                    
+                    # Extract searchable fields
+                    title = book.get('title', '') or ''
+                    subtitle = book.get('subtitle', '') or ''
+                    description = book.get('description', '') or ''
+                    isbn13 = book.get('isbn13', '') or ''
+                    isbn10 = book.get('isbn10', '') or ''
+                    series = book.get('series', '') or ''
+                    
+                    # Extract authors
+                    authors = ''
+                    if 'authors' in book:
+                        authors_list = book['authors']
+                        if isinstance(authors_list, list):
+                            authors = ' '.join([str(a) for a in authors_list if a])
+                        elif authors_list:
+                            authors = str(authors_list)
+                    elif 'author' in book:
+                        authors = str(book['author'])
+                    
+                    # Extract metadata fields
+                    language = book.get('language', '') or ''
+                    published_date = book.get('published_date', '')
+                    if published_date:
+                        if isinstance(published_date, datetime):
+                            published_date = published_date.isoformat()
+                        elif isinstance(published_date, date):
+                            published_date = published_date.isoformat()
+                        else:
+                            published_date = str(published_date)
+                    else:
+                        published_date = ''
+                    
+                    page_count = book.get('page_count') or 0
+                    media_type = book.get('media_type', '') or ''
+                    
+                    # Delete existing entry first (FTS5 doesn't support ON CONFLICT)
+                    cursor.execute("DELETE FROM books_fts WHERE book_id = ?", (book_id,))
+                    
+                    # Insert into FTS index
+                    cursor.execute("""
+                        INSERT INTO books_fts (
+                            book_id, title, subtitle, authors, description,
+                            isbn13, isbn10, series
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (book_id, title, subtitle, authors, description,
+                          isbn13, isbn10, series))
+                    
+                    # Insert/update metadata
+                    cursor.execute("""
+                        INSERT INTO books_metadata (
+                            book_id, language, published_date, page_count,
+                            media_type, updated_at, indexed_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(book_id) DO UPDATE SET
+                            language = excluded.language,
+                            published_date = excluded.published_date,
+                            page_count = excluded.page_count,
+                            media_type = excluded.media_type,
+                            updated_at = excluded.updated_at,
+                            indexed_at = excluded.indexed_at
+                    """, (book_id, language, published_date, page_count, media_type,
+                          book.get('updated_at', ''), datetime.now().isoformat()))
+                    
                     indexed += 1
                     
+                    # Commit every 100 books to avoid locking
                     if (i + 1) % 100 == 0:
+                        conn.commit()
                         logger.info(f"   Indexed {i + 1}/{len(books)} books...")
-                        conn.commit()  # Periodic commit for large batches
                         
                 except Exception as e:
                     failed += 1
                     logger.warning(f"Failed to index book {book.get('id', 'unknown')}: {e}")
+                    conn.rollback()  # Rollback failed transaction
+                    continue
+            
+            # Final commit
+            conn.commit()
             
             # Update last rebuild timestamp
             cursor.execute("""
@@ -385,7 +469,6 @@ class SearchIndexService:
                 SET value = ? 
                 WHERE key = 'last_rebuild'
             """, (datetime.now().isoformat(),))
-            
             conn.commit()
             
             logger.info(f"✅ Index rebuild complete: {indexed} indexed, {failed} failed")
