@@ -13,7 +13,7 @@
   <!-- Bootstrap Icons (local) -->
   <link href="{{ url_for('serve_static', filename='bootstrap-icons/bootstrap-icons.min.css') }}" rel="stylesheet">
   <!-- Lazy loading CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/lazy-load.css') }}">
+  <link rel="stylesheet" href="{{ url_for('serve_static', filename='css/lazy-load.css') }}">
   <!-- Purposeful 2025 typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2645,8 +2645,8 @@
   
   <!-- Performance Optimization Scripts -->
   <!-- Lazy loading JS -->
-  <script src="{{ url_for('static', filename='js/lazy-load.js') }}"></script>
+  <script src="{{ url_for('serve_static', filename='js/lazy-load.js') }}"></script>
   <!-- Debounced search JS -->
-  <script src="{{ url_for('static', filename='js/debounced-search.js') }}"></script>
+  <script src="{{ url_for('serve_static', filename='js/debounced-search.js') }}"></script>
 </body>
 </html>
