@@ -1691,10 +1691,10 @@
             {% endif %}
           </div>
           
-          <div class="navbar-nav">
+          <div class="navbar-nav ms-auto d-flex align-items-center flex-wrap">
             {% if current_user.is_authenticated %}
               <!-- User info section at the top right - compact layout -->
-              <div class="d-flex align-items-center gap-1 me-2">
+              <div class="d-flex align-items-center gap-1 me-2 order-first">
                 <span class="navbar-text small text-nowrap">
                   {{ _('Welcome') }}, <strong>{{ current_user.display_name if current_user.display_name else current_user.username }}</strong>
                 </span>
@@ -1706,7 +1706,7 @@
                 </a>
               </div>
             {% else %}
-              <a class="nav-link nav-pill nav-ghost" href="{{ url_for('auth.login') }}">{{ _('Login') }}</a>
+              <a class="nav-link nav-pill nav-ghost order-first" href="{{ url_for('auth.login') }}">{{ _('Login') }}</a>
             {% endif %}
             
             <!-- Dark mode toggle -->
