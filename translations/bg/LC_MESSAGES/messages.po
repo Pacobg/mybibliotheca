@@ -512,6 +512,9 @@ msgstr "Хора"
 msgid "More"
 msgstr "Още"
 
+msgid "Locations"
+msgstr "Местоположение"
+
 msgid "Hierarchy View"
 msgstr "Йерархичен изглед"
 
