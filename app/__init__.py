@@ -468,6 +468,19 @@ def create_app():
         from flask_wtf.csrf import generate_csrf
         return dict(csrf_token=generate_csrf)
 
+    # Template context processor to make translation function available
+    @app.context_processor
+    def inject_gettext():
+        """Make gettext function available in all templates."""
+        if Babel is not None:
+            from flask_babel import gettext
+            return dict(_=gettext)
+        else:
+            # Fallback if Flask-Babel is not available
+            def noop_gettext(text):
+                return text
+            return dict(_=noop_gettext)
+
     @app.context_processor
     def inject_site_name():
         """Make site name available in all templates."""
