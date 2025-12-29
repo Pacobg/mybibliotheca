@@ -474,7 +474,7 @@ def create_app():
         babel = Babel(app, locale_selector=get_locale)
         
         # Also set default locale
-        app.config['BABEL_DEFAULT_LOCALE'] = 'en'
+        app.config['BABEL_DEFAULT_LOCALE'] = 'bg'
         app.config['BABEL_DEFAULT_TIMEZONE'] = 'UTC'
         
         print(f"🌐 [BABEL] App root: {app_root}")
