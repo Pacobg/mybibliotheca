@@ -1655,8 +1655,8 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <div class="navbar-nav me-auto">
+        <div class="collapse navbar-collapse d-flex justify-content-between" id="navbarNav">
+          <div class="navbar-nav">
             {% if current_user.is_authenticated %}
               <!-- Reading Streak Indicator (keep as special element) -->
               {% if current_reading_streak >= 0 %}
@@ -1691,10 +1691,10 @@
             {% endif %}
           </div>
           
-          <div class="navbar-nav ms-auto d-flex align-items-center flex-wrap">
+          <div class="navbar-nav d-flex align-items-center flex-nowrap">
             {% if current_user.is_authenticated %}
               <!-- User info section at the top right - compact layout -->
-              <div class="d-flex align-items-center gap-1 me-2 order-first">
+              <div class="d-flex align-items-center gap-1 me-2">
                 <span class="navbar-text small text-nowrap">
                   {{ _('Welcome') }}, <strong>{{ current_user.display_name if current_user.display_name else current_user.username }}</strong>
                 </span>
