@@ -483,17 +483,26 @@ def create_app():
             
             # Test if translations can be loaded
             try:
-                from flask_babel import gettext
+                from flask_babel import gettext, refresh
                 with app.app_context():
                     # Force locale to bg for testing
                     from flask_babel import force_locale
                     force_locale('bg')
-                    test_translation = gettext('Library')
-                    print(f"🌐 [BABEL] Test translation 'Library' -> '{test_translation}' (locale: bg)")
-                    if test_translation == 'Library':
-                        print(f"⚠️  [BABEL] WARNING: Translation not applied! Check if .mo files are correct.")
-                    else:
-                        print(f"✅ [BABEL] Translations working! 'Library' translated to '{test_translation}'")
+                    refresh()  # Force reload of translations
+                    
+                    # Test multiple strings
+                    test1 = gettext('Library')
+                    test2 = gettext('My Library')
+                    print(f"🌐 [BABEL] Test translation 'Library' -> '{test1}' (locale: bg)")
+                    print(f"🌐 [BABEL] Test translation 'My Library' -> '{test2}' (locale: bg)")
+                    
+                    if test1 == 'Library' and test2 == 'My Library':
+                        print(f"⚠️  [BABEL] WARNING: Translations not applied! Check if .mo files are correct.")
+                        print(f"⚠️  [BABEL] Current locale: {force_locale('bg')}")
+                    elif test1 != 'Library' or test2 != 'My Library':
+                        print(f"✅ [BABEL] Translations working!")
+                        print(f"   'Library' -> '{test1}'")
+                        print(f"   'My Library' -> '{test2}'")
             except Exception as e:
                 print(f"⚠️  [BABEL] Error testing translations: {e}")
                 import traceback
