@@ -482,9 +482,17 @@ def create_app():
             app.logger.info(f"Flask-Babel initialized with translations: {translations_dir}")
             
             # Test if translations can be loaded
+            # We need to create a test request context because get_locale() uses request/session
             try:
                 from flask_babel import gettext, refresh
-                with app.app_context():
+                from flask import request as flask_request
+                
+                # Create a test request context with session
+                with app.test_request_context('/test', method='GET'):
+                    # Set language in session for test
+                    from flask import session
+                    session['language'] = 'bg'
+                    
                     # Force locale to bg for testing
                     from flask_babel import force_locale
                     force_locale('bg')
@@ -498,7 +506,6 @@ def create_app():
                     
                     if test1 == 'Library' and test2 == 'My Library':
                         print(f"⚠️  [BABEL] WARNING: Translations not applied! Check if .mo files are correct.")
-                        print(f"⚠️  [BABEL] Current locale: {force_locale('bg')}")
                     elif test1 != 'Library' or test2 != 'My Library':
                         print(f"✅ [BABEL] Translations working!")
                         print(f"   'Library' -> '{test1}'")
