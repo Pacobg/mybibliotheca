@@ -710,6 +710,15 @@ msgstr "Вашият дневник за четене"
 msgid "Total Books"
 msgstr "Общо книги"
 
+msgid "Stats"
+msgstr "Статистика"
+
+msgid "Reading Log"
+msgstr "Дневник за четене"
+
+msgid "Welcome"
+msgstr "Добре дошли"
+
 msgid "Genres"
 msgstr "Категории"
 
