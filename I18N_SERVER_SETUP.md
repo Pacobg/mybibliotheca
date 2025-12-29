@@ -23,11 +23,49 @@ source venv/bin/activate
 
 ### 3. Инсталиране на новите зависимости
 
+**Важно:** Ако имате проблеми с компилирането на numpy, инсталирайте build dependencies първо:
+
+```bash
+# За Debian/Ubuntu:
+sudo apt-get update
+sudo apt-get install -y build-essential python3-dev
+
+# За CentOS/RHEL:
+sudo yum groupinstall -y "Development Tools"
+sudo yum install -y python3-devel
+
+# За Alpine (Docker):
+apk add --no-cache gcc musl-dev python3-dev
+```
+
+След това инсталирайте зависимостите:
+
 ```bash
 pip install -r requirements.txt
 ```
 
+**Ако numpy все още не се инсталира**, опитайте с pre-built wheel:
+
+```bash
+pip install --only-binary=numpy numpy
+pip install -r requirements.txt --no-deps
+pip install Flask-Babel Babel pytz
+```
+
 Това ще инсталира `Flask-Babel>=4.0.0` и неговите зависимости (`Babel`, `pytz`).
+
+**За Babel CLI инструменти (за pybabel командата):**
+
+```bash
+pip install Babel
+```
+
+Проверете дали `pybabel` е наличен:
+
+```bash
+which pybabel
+pybabel --version
+```
 
 ### 4. Компилиране на преводните файлове
 
@@ -97,8 +135,35 @@ docker-compose up -d --build
 ### Ако Flask-Babel не е инсталиран:
 
 ```bash
-pip install Flask-Babel
+pip install Flask-Babel Babel pytz
 pip freeze | grep -i babel >> requirements.txt
+```
+
+### Ако pybabel командата не е налична:
+
+```bash
+# Инсталирайте Babel пакета (който включва CLI инструментите)
+pip install Babel
+
+# Проверете инсталацията
+pybabel --version
+
+# Ако все още не работи, проверете PATH:
+export PATH="$PATH:$(python -m site --user-base)/bin"
+# или използвайте директно:
+python -m babel.messages.frontend --help
+```
+
+### Ако numpy не се компилира:
+
+```bash
+# Опция 1: Инсталирайте build dependencies (вижте стъпка 3 по-горе)
+
+# Опция 2: Използвайте pre-built wheel
+pip install --only-binary=numpy numpy
+
+# Опция 3: Ако numpy вече е инсталиран, просто продължете
+# numpy не е задължителен за i18n функционалността
 ```
 
 ## 📝 Важни бележки
