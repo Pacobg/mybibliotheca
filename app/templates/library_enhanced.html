@@ -145,6 +145,185 @@
     color: #b0b0b0 !important;
   }
 
+  /* ========================================
+     COMPACT LIBRARY HEADER STYLES
+     ======================================== */
+  
+  /* Compact header section */
+  .library-header {
+    padding: 1rem 0;
+    margin-bottom: 1rem;
+  }
+  
+  /* Title and search on same line */
+  .library-title-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .library-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  
+  /* Search box - inline with title */
+  .library-search-inline {
+    flex: 1;
+    max-width: 500px;
+    min-width: 250px;
+  }
+  
+  .library-search-inline .form-control {
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+  }
+  
+  /* Action buttons inline */
+  .library-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  
+  /* ========================================
+     COMPACT STATISTICS CARDS
+     ======================================== */
+  
+  /* Statistics row */
+  .stats-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  
+  /* Individual stat card */
+  .stat-card {
+    flex: 1;
+    min-width: 130px;
+    max-width: 180px;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    background: white;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s ease;
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  
+  /* Stat number */
+  .stat-number {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    line-height: 1;
+  }
+  
+  /* Stat label */
+  .stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Add button - make prominent */
+  .stat-card.add-book-card {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  .stat-card.add-book-card:hover {
+    background: linear-gradient(135deg, #0a58ca 0%, #084298 100%);
+    transform: translateY(-2px);
+  }
+  
+  .add-book-card .stat-label {
+    color: white !important;
+  }
+  
+  /* Dark mode adjustments */
+  [data-theme="dark"] .stat-card {
+    background: var(--card-bg);
+    border-color: #404040;
+  }
+  
+  [data-theme="dark"] .stat-label {
+    color: #b0b0b0;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 992px) {
+    .library-title-section {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    
+    .library-search-inline {
+      width: 100%;
+      max-width: none;
+    }
+    
+    .library-actions {
+      width: 100%;
+      justify-content: flex-start;
+    }
+    
+    .stats-row {
+      justify-content: flex-start;
+    }
+    
+    .stat-card {
+      flex: 1 1 calc(33.333% - 0.5rem);
+      min-width: 100px;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .library-header {
+      padding: 0.75rem 0;
+    }
+    
+    .library-title {
+      font-size: 1.5rem;
+    }
+    
+    .stats-row {
+      gap: 0.5rem;
+    }
+    
+    .stat-card {
+      flex: 1 1 calc(50% - 0.25rem);
+      min-width: auto;
+      padding: 0.5rem 0.75rem;
+    }
+    
+    .stat-number {
+      font-size: 1.5rem;
+    }
+    
+    .stat-label {
+      font-size: 0.75rem;
+    }
+  }
+
   /* Ensure filter button text colors work in dark mode */
   [data-theme="dark"] .text-warning {
     color: #ffd43b !important;
