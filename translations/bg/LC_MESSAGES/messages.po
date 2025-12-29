@@ -697,3 +697,15 @@ msgstr "Заета"
 
 msgid "Loaned"
 msgstr "Дадена назаем"
+
+msgid "Total Books Finished"
+msgstr "Общо завършени книги"
+
+msgid "Reading Logs"
+msgstr "Дневник за четене"
+
+msgid "Your Reading Logs"
+msgstr "Вашият дневник за четене"
+
+msgid "Total Books"
+msgstr "Общо книги"

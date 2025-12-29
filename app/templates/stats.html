@@ -237,7 +237,7 @@
                                 <div class="col-lg-3 col-md-6 mb-3">
                                     <div class="stat-card text-center">
                                         <p class="stat-number">{{ books_finished_total }}</p>
-                                        <p class="stat-label">Total Books Finished</p>
+                                        <p class="stat-label">{{ _('Total Books Finished') }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -265,7 +265,7 @@
                                 <div class="col-lg-3 col-md-6 mb-3">
                                     <div class="stat-card text-center" onclick="showUserReadingLogs()">
                                         <p class="stat-number">{{ reading_log_stats.total_log_entries or 0 }}</p>
-                                        <p class="stat-label">Reading Logs</p>
+                                        <p class="stat-label">{{ _('Reading Logs') }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -277,7 +277,7 @@
                 <div id="reading-logs-detail-container" style="display: none;" class="mb-4">
                     <div class="card shadow-sm">
                         <div class="card-header">
-                            <h5 id="reading-logs-detail-title" class="mb-0"><i class="bi bi-journal-text"></i> Your Reading Logs</h5>
+                            <h5 id="reading-logs-detail-title" class="mb-0"><i class="bi bi-journal-text"></i> {{ _('Your Reading Logs') }}</h5>
                         </div>
                         <div class="card-body">
                             <div id="reading-logs-detail-content">
