@@ -235,6 +235,31 @@
       padding-bottom: 0.5rem;
     }
     
+    .navbar-nav.flex-wrap {
+      flex-wrap: wrap;
+      gap: 0.25rem;
+    }
+    
+    .navbar-nav.flex-nowrap {
+      flex-wrap: nowrap;
+      white-space: nowrap;
+      min-width: 0; /* Allow shrinking */
+    }
+    
+    .navbar .container-fluid {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .navbar-collapse {
+      flex-basis: 100%;
+      flex-grow: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
     /* Responsive navbar compensation and improvements */
     @media (max-width: 991px) {
       body {
