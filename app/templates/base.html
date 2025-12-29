@@ -1726,14 +1726,14 @@
             
             {% if current_user.is_authenticated %}
               <!-- User info section in separate container for better layout -->
-              <div class="d-flex align-items-center gap-2 ms-3">
-                <span class="navbar-text">
+              <div class="d-flex align-items-center gap-2 ms-3 ps-3 border-start border-secondary border-opacity-25">
+                <span class="navbar-text text-nowrap">
                   {{ _('Welcome') }}, {{ current_user.display_name if current_user.display_name else current_user.username }}
                   {% if current_user.is_admin %}
-                    <span class="badge bg-danger ms-1">{{ _('Admin') }}</span>
+                    <a href="{{ url_for('admin.dashboard') }}" class="badge bg-danger ms-1 text-decoration-none">{{ _('Admin') }}</a>
                   {% endif %}
                 </span>
-                <a class="nav-link nav-pill nav-ghost" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> {{ _('Logout') }}</a>
+                <a class="nav-link nav-pill nav-ghost text-nowrap" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> {{ _('Logout') }}</a>
               </div>
             {% else %}
               <a class="nav-link nav-pill nav-ghost" href="{{ url_for('auth.login') }}">{{ _('Login') }}</a>
