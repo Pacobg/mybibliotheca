@@ -1670,22 +1670,22 @@
                 </a>
               {% endif %}
 
-              <a class="nav-link nav-pill" href="{{ url_for('main.library') }}">Library</a>
-              <a class="nav-link nav-pill" href="{{ url_for('main.people') }}">People</a>
+              <a class="nav-link nav-pill" href="{{ url_for('main.library') }}">{{ _('Library') }}</a>
+              <a class="nav-link nav-pill" href="{{ url_for('main.people') }}">{{ _('People') }}</a>
               <a class="nav-link nav-pill" href="{{ genre_url_for('index') }}">{{ get_genre_term_plural() }}</a>
-              <a class="nav-link nav-pill" href="{{ url_for('main.stats') }}">Stats</a>
+              <a class="nav-link nav-pill" href="{{ url_for('main.stats') }}">{{ _('Stats') }}</a>
 
               <a class="nav-link nav-pill nav-pill-accent nav-cta" href="#" data-bs-toggle="modal" data-bs-target="#readingLogModal">
-                <i class="bi bi-journal-plus"></i> Reading Log
+                <i class="bi bi-journal-plus"></i> {{ _('Reading Log') }}
               </a>
 
               <div class="nav-item dropdown">
-                <a class="nav-link nav-pill nav-ghost dropdown-toggle" href="#" id="moreDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">More</a>
+                <a class="nav-link nav-pill nav-ghost dropdown-toggle" href="#" id="moreDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">{{ _('More') }}</a>
                 <ul class="dropdown-menu" aria-labelledby="moreDropdown">
-                  <li><a class="dropdown-item" href="{{ url_for('series.list_series') }}">Series</a></li>
-                  <li><a class="dropdown-item" href="{{ url_for('locations.manage_locations') }}">Locations</a></li>
-                  <li><a class="dropdown-item" href="{{ url_for('metadata.index') }}">Metadata</a></li>
-                  <li><a class="dropdown-item" href="{{ url_for('auth.settings') }}">Settings</a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('series.list_series') }}">{{ _('Series') }}</a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('locations.manage_locations') }}">{{ _('Locations') }}</a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('metadata.index') }}">{{ _('Metadata') }}</a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('auth.settings') }}">{{ _('Settings') }}</a></li>
                 </ul>
               </div>
             {% endif %}
@@ -1726,14 +1726,14 @@
             
             {% if current_user.is_authenticated %}
               <span class="navbar-text me-3">
-                Welcome, {{ current_user.display_name if current_user.display_name else current_user.username }}
+                {{ _('Welcome') }}, {{ current_user.display_name if current_user.display_name else current_user.username }}
                 {% if current_user.is_admin %}
-                  <span class="badge bg-danger ms-1">Admin</span>
+                  <span class="badge bg-danger ms-1">{{ _('Admin') }}</span>
                 {% endif %}
               </span>
-              <a class="nav-link nav-pill nav-ghost" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a>
+              <a class="nav-link nav-pill nav-ghost" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> {{ _('Logout') }}</a>
             {% else %}
-              <a class="nav-link nav-pill nav-ghost" href="{{ url_for('auth.login') }}">Login</a>
+              <a class="nav-link nav-pill nav-ghost" href="{{ url_for('auth.login') }}">{{ _('Login') }}</a>
             {% endif %}
           </div>
         </div>

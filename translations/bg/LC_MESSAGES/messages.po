@@ -502,3 +502,90 @@ msgstr "Извлечи корица"
 
 msgid "Auto-fill"
 msgstr "Автоматично попълване"
+
+# ========================================
+# Additional UI Strings
+# ========================================
+msgid "People"
+msgstr "Хора"
+
+msgid "More"
+msgstr "Още"
+
+msgid "Hierarchy View"
+msgstr "Йерархичен изглед"
+
+msgid "View"
+msgstr "Виж"
+
+msgid "Cards"
+msgstr "Картички"
+
+msgid "List"
+msgstr "Списък"
+
+msgid "Tree"
+msgstr "Дърво"
+
+msgid "Show"
+msgstr "Покажи"
+
+msgid "per page"
+msgstr "на страница"
+
+msgid "Parent"
+msgstr "Родител"
+
+msgid "Child"
+msgstr "Дете"
+
+msgid "Select All"
+msgstr "Избери всички"
+
+msgid "Clear Selection"
+msgstr "Изчисти избора"
+
+msgid "Delete Selected"
+msgstr "Изтрий избраните"
+
+msgid "Level"
+msgstr "Ниво"
+
+msgid "Also known as"
+msgstr "Също известен като"
+
+msgid "No Categories Yet"
+msgstr "Все още няма категории"
+
+msgid "Start organizing your books by creating categories and genres."
+msgstr "Започнете да организирате книгите си като създадете категории и жанрове."
+
+msgid "Add Your First Category"
+msgstr "Добавете първата си категория"
+
+msgid "Select All Categories"
+msgstr "Избери всички категории"
+
+msgid "Category"
+msgstr "Категория"
+
+msgid "Actions"
+msgstr "Действия"
+
+msgid "Confirm Deletion"
+msgstr "Потвърди изтриването"
+
+msgid "Force delete"
+msgstr "Принудително изтриване"
+
+msgid "remove categories even if they have books or children"
+msgstr "премахни категории дори ако имат книги или деца"
+
+msgid "Warning: This will remove categories from books and may orphan child categories."
+msgstr "Внимание: Това ще премахне категориите от книгите и може да остави детските категории без родител."
+
+msgid "Delete Categories"
+msgstr "Изтрий категории"
+
+msgid "category(ies) selected"
+msgstr "категория(и) избрани"

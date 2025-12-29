@@ -13,13 +13,13 @@
                 </h1>
                 <div>
                     <a href="{{ genre_url_for('add_category') }}" class="btn btn-success me-2">
-                        <i class="bi bi-plus-circle"></i> Add {{ get_genre_term() }}
+                        <i class="bi bi-plus-circle"></i> {{ _('Add') }} {{ get_genre_term() }}
                     </a>
                     <a href="{{ genre_url_for('hierarchy_view') }}" class="btn btn-info me-2">
-                        <i class="bi bi-diagram-3"></i> Hierarchy View
+                        <i class="bi bi-diagram-3"></i> {{ _('Hierarchy View') }}
                     </a>
                     <a href="{{ genre_url_for('merge_categories') }}" class="btn btn-warning">
-                        <i class="bi bi-arrow-down-up"></i> Merge {{ get_genre_term_plural() }}
+                        <i class="bi bi-arrow-down-up"></i> {{ _('Merge') }} {{ get_genre_term_plural() }}
                     </a>
                 </div>
             </div>
@@ -34,41 +34,41 @@
                         <input type="text" 
                                class="form-control" 
                                id="categorySearch" 
-                               placeholder="Search {{ get_genre_term_plural_lower() }}..."
+                               placeholder="{{ _('Search') }} {{ get_genre_term_plural_lower() }}..."
                                onkeyup="filterCategories()">
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="d-flex align-items-center">
-                        <label class="form-label me-2 mb-0">View:</label>
+                        <label class="form-label me-2 mb-0">{{ _('View') }}:</label>
                         <div class="btn-group" role="group">
                             <input type="radio" class="btn-check" name="viewType" id="cardView" checked onclick="toggleView('card')">
                             <label class="btn btn-outline-primary" for="cardView">
-                                <i class="bi bi-grid-3x2"></i> Cards
+                                <i class="bi bi-grid-3x2"></i> {{ _('Cards') }}
                             </label>
                             
                             <input type="radio" class="btn-check" name="viewType" id="listView" onclick="toggleView('list')">
                             <label class="btn btn-outline-primary" for="listView">
-                                <i class="bi bi-list"></i> List
+                                <i class="bi bi-list"></i> {{ _('List') }}
                             </label>
                             
                             <input type="radio" class="btn-check" name="viewType" id="treeView" onclick="toggleView('tree')">
                             <label class="btn btn-outline-primary" for="treeView">
-                                <i class="bi bi-diagram-2"></i> Tree
+                                <i class="bi bi-diagram-2"></i> {{ _('Tree') }}
                             </label>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="d-flex align-items-center justify-content-end">
-                        <label for="per-page-select" class="form-label me-2 mb-0">Show:</label>
+                        <label for="per-page-select" class="form-label me-2 mb-0">{{ _('Show') }}:</label>
                         <select id="per-page-select" class="form-select" style="width: auto;" onchange="changePerPage()">
                             {% for option in valid_per_page %}
                             <option value="{{ option }}" {% if pagination.per_page == option %}selected{% endif %}>{{ option }}</option>
                             {% endfor %}
-                            <option value="all" {% if pagination.per_page == pagination.total_count %}selected{% endif %}>All</option>
+                            <option value="all" {% if pagination.per_page == pagination.total_count %}selected{% endif %}>{{ _('All') }}</option>
                         </select>
-                        <span class="ms-2 text-muted">{{ get_genre_term_plural_lower() }} per page</span>
+                        <span class="ms-2 text-muted">{{ get_genre_term_plural_lower() }} {{ _('per page') }}</span>
                     </div>
                 </div>
             </div>
@@ -79,7 +79,7 @@
                     <div class="card stat-card">
                         <div class="card-body text-center">
                             <h3 class="text-info">{{ total_book_count }}</h3>
-                            <p class="mb-0">Total Books</p>
+                            <p class="mb-0">{{ _('Total Books') }}</p>
                         </div>
                     </div>
                 </div>
@@ -87,7 +87,7 @@
                     <div class="card stat-card">
                         <div class="card-body text-center">
                             <h3 class="text-primary">{{ total_category_count }}</h3>
-                            <p class="mb-0">Total {{ get_genre_term_plural() }}</p>
+                            <p class="mb-0">{{ _('Total') }} {{ get_genre_term_plural() }}</p>
                         </div>
                     </div>
                 </div>
@@ -95,7 +95,7 @@
                     <div class="card stat-card">
                         <div class="card-body text-center">
                             <h3 class="text-success">{{ root_categories|length }}</h3>
-                            <p class="mb-0">Parent {{ get_genre_term_plural() }}</p>
+                            <p class="mb-0">{{ _('Parent') }} {{ get_genre_term_plural() }}</p>
                         </div>
                     </div>
                 </div>
@@ -103,7 +103,7 @@
                     <div class="card stat-card">
                         <div class="card-body text-center">
                             <h3 class="text-warning">{{ subcategory_count }}</h3>
-                            <p class="mb-0">Child {{ get_genre_term_plural() }}</p>
+                            <p class="mb-0">{{ _('Child') }} {{ get_genre_term_plural() }}</p>
                         </div>
                     </div>
                 </div>
@@ -114,12 +114,12 @@
             <div id="selection-toolbar" class="selection-toolbar" style="display: none;">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <span id="selection-count">0</span> category(ies) selected
+                        <span id="selection-count">0</span> {{ _('category(ies) selected') }}
                     </div>
                     <div>
-                        <button type="button" class="btn btn-outline-light btn-sm" onclick="selectAll()">Select All</button>
-                        <button type="button" class="btn btn-outline-light btn-sm" onclick="clearSelection()">Clear Selection</button>
-                        <button type="button" class="btn btn-danger btn-sm" onclick="bulkDeleteCategories()">Delete Selected</button>
+                        <button type="button" class="btn btn-outline-light btn-sm" onclick="selectAll()">{{ _('Select All') }}</button>
+                        <button type="button" class="btn btn-outline-light btn-sm" onclick="clearSelection()">{{ _('Clear Selection') }}</button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="bulkDeleteCategories()">{{ _('Delete Selected') }}</button>
                     </div>
                 </div>
             </div>
@@ -135,7 +135,7 @@
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
                                     <label class="form-check-label" for="selectAllCheckbox">
-                                        Select All
+                                        {{ _('Select All') }}
                                     </label>
                                 </div>
                             </div>
@@ -171,7 +171,7 @@
                                                 {% for i in range(category.level) %}
                                                     <i class="bi bi-chevron-right"></i>
                                                 {% endfor %}
-                                                Level {{ category.level }}
+                                                {{ _('Level') }} {{ category.level }}
                                             </small>
                                         </div>
                                         {% endif %}
@@ -186,7 +186,7 @@
                                         <!-- Aliases -->
                                         {% if category.aliases %}
                                         <div class="mb-2">
-                                            <small class="text-muted">Also known as:</small>
+                                            <small class="text-muted">{{ _('Also known as') }}:</small>
                                             <div class="aliases">
                                                 {% for alias in category.aliases[:3] %}
                                                 <span class="badge bg-light text-dark border me-1">{{ alias }}</span>
@@ -201,11 +201,11 @@
                                         <div class="row text-center small text-muted">
                                             <div class="col-6">
                                                 <strong>{{ category.book_count }}</strong>
-                                                <div>Books</div>
+                                                <div>{{ _('Books') }}</div>
                                             </div>
                                             <div class="col-6">
                                                 <strong>{{ category.children|length if category.children else 0 }}</strong>
-                                                <div>Children</div>
+                                                <div>{{ _('Children') }}</div>
                                             </div>
                                         </div>
                                         
@@ -213,7 +213,7 @@
                                         <div class="mt-3 d-flex justify-content-between">
                                             <div class="btn-group btn-group-sm">
                                                 <a href="{{ genre_url_for('category_details', category_id=category.id) }}" class="btn btn-sm btn-outline-primary">
-                                                    <i class="bi bi-eye"></i> View
+                                                    <i class="bi bi-eye"></i> {{ _('View') }}
                                                 </a>
                                                 <div class="btn-group">
                                                     <a href="{{ genre_url_for('edit_category', category_id=category.id) }}" class="btn btn-sm btn-outline-secondary">
@@ -236,7 +236,7 @@
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="selectAllCheckboxList" onchange="toggleSelectAll()">
                                     <label class="form-check-label" for="selectAllCheckboxList">
-                                        <strong>Select All Categories</strong>
+                                        <strong>{{ _('Select All Categories') }}</strong>
                                     </label>
                                 </div>
                             </div>
@@ -245,12 +245,12 @@
                                     <thead>
                                         <tr>
                                             <th width="40"></th>
-                                            <th>Category</th>
-                                            <th>Level</th>
-                                            <th>Books</th>
-                                            <th>Children</th>
-                                            <th>Description</th>
-                                            <th width="120">Actions</th>
+                                            <th>{{ _('Category') }}</th>
+                                            <th>{{ _('Level') }}</th>
+                                            <th>{{ _('Books') }}</th>
+                                            <th>{{ _('Children') }}</th>
+                                            <th>{{ _('Description') }}</th>
+                                            <th width="120">{{ _('Actions') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -337,9 +337,9 @@
                     <div class="text-center py-5">
                         <i class="bi bi-tags display-1 text-muted"></i>
                         <h3 class="mt-3">No Categories Yet</h3>
-                        <p class="text-muted">Start organizing your books by creating categories and genres.</p>
+                        <p class="text-muted">{{ _('Start organizing your books by creating categories and genres.') }}</p>
                         <a href="{{ url_for('genres.add_category') }}" class="btn btn-primary">
-                            <i class="bi bi-plus-circle"></i> Add Your First Category
+                            <i class="bi bi-plus-circle"></i> {{ _('Add Your First Category') }}
                         </a>
                     </div>
                 {% endif %}
@@ -412,10 +412,10 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="bi bi-exclamation-triangle text-warning"></i>
-                    Confirm Deletion
-                </h5>
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle text-warning"></i>
+                        {{ _('Confirm Deletion') }}
+                    </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -428,16 +428,16 @@
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="forceDelete">
                         <label class="form-check-label" for="forceDelete">
-                            <strong>Force delete</strong> (remove categories even if they have books or children)
-                            <br><small class="text-muted">Warning: This will remove categories from books and may orphan child categories.</small>
+                            <strong>{{ _('Force delete') }}</strong> ({{ _('remove categories even if they have books or children') }})
+                            <br><small class="text-muted">{{ _('Warning: This will remove categories from books and may orphan child categories.') }}</small>
                         </label>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
                 <button type="button" class="btn btn-danger" onclick="confirmBulkDelete()">
-                    <i class="bi bi-trash"></i> Delete Categories
+                    <i class="bi bi-trash"></i> {{ _('Delete Categories') }}
                 </button>
             </div>
         </div>
