@@ -2779,6 +2779,8 @@ def library():
     ))
     resp.headers['ETag'] = _html_etag
     resp.headers['Cache-Control'] = 'private, max-age=0, must-revalidate'
+    # Add Vary header to indicate content varies by language
+    resp.headers['Vary'] = 'Accept-Language, Cookie'
     # Hint the browser to warm the next page JSON in the background
     try:
         if page < total_pages:
