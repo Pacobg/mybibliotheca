@@ -439,13 +439,16 @@ def create_app():
         
         # Flask-Babel uses BABEL_TRANSLATION_DIRECTORIES config
         # Flask app root is /home/pacovw/mybibliotheca/app, but translations are in /home/pacovw/mybibliotheca/translations
-        # So we need to use absolute path
-        app.config['BABEL_TRANSLATION_DIRECTORIES'] = translations_dir
+        # Use relative path '../translations' from Flask app root (app.root_path)
+        app.config['BABEL_TRANSLATION_DIRECTORIES'] = '../translations'
         app.config['BABEL_DEFAULT_LOCALE'] = 'en'
         app.config['BABEL_DEFAULT_TIMEZONE'] = 'UTC'
         
         print(f"🌐 [BABEL] Configuring translations BEFORE Babel init")
+        print(f"🌐 [BABEL] Translations dir (absolute): {translations_dir}")
         print(f"🌐 [BABEL] Translations dir (config): {app.config['BABEL_TRANSLATION_DIRECTORIES']}")
+        print(f"🌐 [BABEL] Flask app root: {app.root_path}")
+        print(f"🌐 [BABEL] Expected translations path: {os.path.abspath(os.path.join(app.root_path, '../translations'))}")
         
         def get_locale():
             """Determine the best language based on user preference or browser."""
