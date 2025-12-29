@@ -494,7 +494,7 @@ def create_app():
             # Test if translations can be loaded
             # We need to create a test request context because get_locale() uses request/session
             try:
-                from flask_babel import gettext, refresh
+                from flask_babel import gettext, refresh, get_domain
                 from flask import request as flask_request
                 
                 # Create a test request context with session
@@ -508,6 +508,23 @@ def create_app():
                     force_locale('bg')
                     refresh()  # Force reload of translations
                     
+                    # Debug: Check what domain is being used
+                    domain = get_domain()
+                    print(f"🌐 [BABEL] Domain: {domain}")
+                    print(f"🌐 [BABEL] Domain translations dir: {getattr(domain, 'dir', 'N/A')}")
+                    
+                    # Try to get translations directly
+                    try:
+                        translations = domain.get_translations()
+                        print(f"🌐 [BABEL] Translations object: {translations}")
+                        if translations:
+                            print(f"🌐 [BABEL] Translations locale: {getattr(translations, '_locale', 'N/A')}")
+                            # Try to get translation directly
+                            direct_translation = translations.gettext('Library')
+                            print(f"🌐 [BABEL] Direct translation 'Library' -> '{direct_translation}'")
+                    except Exception as e:
+                        print(f"⚠️  [BABEL] Error getting translations object: {e}")
+                    
                     # Test multiple strings
                     test1 = gettext('Library')
                     test2 = gettext('My Library')
@@ -516,6 +533,7 @@ def create_app():
                     
                     if test1 == 'Library' and test2 == 'My Library':
                         print(f"⚠️  [BABEL] WARNING: Translations not applied! Check if .mo files are correct.")
+                        print(f"⚠️  [BABEL] Try: pybabel compile -d translations --statistics")
                     elif test1 != 'Library' or test2 != 'My Library':
                         print(f"✅ [BABEL] Translations working!")
                         print(f"   'Library' -> '{test1}'")
