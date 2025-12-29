@@ -28,7 +28,7 @@ def set_language(language):
     session.permanent = True  # Make session persistent
     session.modified = True  # Explicitly mark session as modified
     
-    # Force Flask-Babel to use the new locale immediately
+    # Force Flask-Babel to use the new locale immediately (if available)
     try:
         from flask import current_app
         from flask_babel import force_locale, refresh
@@ -41,10 +41,13 @@ def set_language(language):
         print(f"🌐 [LANGUAGE] Language set to: {language}")
         print(f"🌐 [LANGUAGE] Session language value: {session.get('language')}")
         print(f"🌐 [LANGUAGE] Forced Babel locale to: {language}")
+    except ImportError:
+        # Flask-Babel not installed - session will still work
+        print(f"🌐 [LANGUAGE] Language set to: {language} (Flask-Babel not installed)")
+        print(f"🌐 [LANGUAGE] Session language value: {session.get('language')}")
+        print(f"⚠️  [LANGUAGE] WARNING: Flask-Babel not installed! Install with: pip install Flask-Babel")
     except Exception as e:
         print(f"🌐 [LANGUAGE] Error setting locale: {e}")
-        import traceback
-        traceback.print_exc()
         logger.warning(f"Could not force locale: {e}")
     
     logger.info(f"Language set to: {language}, session ID: {session.get('_id', 'unknown')}")
