@@ -589,3 +589,60 @@ msgstr "Изтрий категории"
 
 msgid "category(ies) selected"
 msgstr "категория(и) избрани"
+
+# ========================================
+# Library Page Strings
+# ========================================
+msgid "My Library"
+msgstr "Моята библиотека"
+
+msgid "Search books by title, author, or description..."
+msgstr "Търсене на книги по заглавие, автор или описание..."
+
+msgid "Journey Timeline"
+msgstr "Времева линия на пътуването"
+
+msgid "Full Stats"
+msgstr "Пълна статистика"
+
+msgid "Currently Reading"
+msgstr "В момента чета"
+
+msgid "Books Read"
+msgstr "Прочетени книги"
+
+msgid "Plan to Read"
+msgstr "Планирам да прочета"
+
+msgid "Wishlist"
+msgstr "Списък с желания"
+
+msgid "On Hold"
+msgstr "В очакване"
+
+msgid "Library Stats"
+msgstr "Статистика на библиотеката"
+
+msgid "Advanced Filters"
+msgstr "Разширени филтри"
+
+msgid "Page"
+msgstr "Страница"
+
+msgid "Rows"
+msgstr "Редове"
+
+msgid "Per page"
+msgstr "На страница"
+
+msgid "Prev"
+msgstr "Предишна"
+
+msgid "No books found matching your current filter."
+msgstr "Не са намерени книги, отговарящи на текущия филтър."
+
+msgid "No books found"
+msgstr "Не са намерени книги"
+
+msgid "Back to Library"
+msgstr "Назад към библиотеката"

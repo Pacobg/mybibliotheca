@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}My Library - MyBibliotheca{% endblock %}
+{% block title %}{{ _('My Library') }} - MyBibliotheca{% endblock %}
 {% block content %}
 <style>
   :root {
@@ -370,7 +370,7 @@
     <div class="mb-4">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
             <h1 class="h2 mb-0">
-                <i class="bi bi-book me-2"></i>My Library
+                <i class="bi bi-book me-2"></i>{{ _('My Library') }}
             </h1>
             <form method="GET" action="{{ url_for('main.library') }}" class="library-search-box">
                 <input type="hidden" name="status_filter" value="{{ current_status_filter or 'all' }}">
@@ -382,15 +382,15 @@
                 {% if current_sort %}<input type="hidden" name="sort" value="{{ current_sort }}">{% endif %}
                 <input type="text" class="form-control" name="search" id="search-input" data-debounce-search="true" data-debounce-delay="300" data-min-query-length="2" 
                        value="{{ current_search }}" 
-                       placeholder="Search books by title, author, or description..."
+                       placeholder="{{ _('Search books by title, author, or description...') }}"
                        aria-label="Search library">
             </form>
             <div class="btn-group">
                 <a href="{{ url_for('stats.library_journey') }}" class="btn btn-outline-primary">
-                    <i class="bi bi-diagram-3 me-1"></i>Journey Timeline
+                    <i class="bi bi-diagram-3 me-1"></i>{{ _('Journey Timeline') }}
                 </a>
                 <a href="{{ url_for('stats.index') }}" class="btn btn-outline-secondary">
-                    <i class="bi bi-graph-up me-1"></i>Full Stats
+                    <i class="bi bi-graph-up me-1"></i>{{ _('Full Stats') }}
                 </a>
             </div>
         </div>
@@ -404,12 +404,12 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     {% set stat_buttons = [
-                        {'filter': 'reading', 'outline': 'warning', 'text': 'warning', 'label': 'Currently Reading', 'value': stats.currently_reading},
-                        {'filter': 'read', 'outline': 'success', 'text': 'success', 'label': 'Books Read', 'value': stats.books_read},
-                        {'filter': 'plan_to_read', 'outline': 'info', 'text': 'info', 'label': 'Plan to Read', 'value': stats.want_to_read},
-                        {'filter': 'wishlist', 'outline': 'primary', 'text': 'primary', 'label': 'Wishlist', 'value': stats.wishlist},
-                        {'filter': 'on_hold', 'outline': 'secondary', 'text': 'secondary', 'label': 'On Hold', 'value': stats.on_hold},
-                        {'filter': 'all', 'outline': 'dark', 'text': 'dark', 'label': 'Total Books', 'value': stats.total_books}
+                        {'filter': 'reading', 'outline': 'warning', 'text': 'warning', 'label': _('Currently Reading'), 'value': stats.currently_reading},
+                        {'filter': 'read', 'outline': 'success', 'text': 'success', 'label': _('Books Read'), 'value': stats.books_read},
+                        {'filter': 'plan_to_read', 'outline': 'info', 'text': 'info', 'label': _('Plan to Read'), 'value': stats.want_to_read},
+                        {'filter': 'wishlist', 'outline': 'primary', 'text': 'primary', 'label': _('Wishlist'), 'value': stats.wishlist},
+                        {'filter': 'on_hold', 'outline': 'secondary', 'text': 'secondary', 'label': _('On Hold'), 'value': stats.on_hold},
+                        {'filter': 'all', 'outline': 'dark', 'text': 'dark', 'label': _('Total Books'), 'value': stats.total_books}
                     ] %}
                     <div class="row align-items-center">
                         <div class="col-lg-10 col-md-9">
@@ -429,7 +429,7 @@
                                 <button class="btn btn-outline-primary w-100 mb-3" type="button"
                                         data-bs-toggle="collapse" data-bs-target="#mobileLibraryStats"
                                         aria-expanded="false" aria-controls="mobileLibraryStats">
-                                    Library Stats<i class="bi bi-chevron-down ms-2"></i>
+                                    {{ _('Library Stats') }}<i class="bi bi-chevron-down ms-2"></i>
                                 </button>
                                 <div class="collapse" id="mobileLibraryStats">
                                     <div class="row g-2 text-center">
@@ -447,7 +447,7 @@
                         </div>
                         <div class="col-lg-2 col-md-3 text-center">
                             <a href="{{ url_for('main.add_book') }}" class="btn btn-success btn-lg">
-                                <i class="bi bi-plus-circle me-1"></i>Add Books
+                                <i class="bi bi-plus-circle me-1"></i>{{ _('Add Books') }}
                             </a>
                         </div>
                     </div>
@@ -464,7 +464,7 @@
                     <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" 
                             data-bs-toggle="collapse" data-bs-target="#advancedFilters" 
                             aria-expanded="false" aria-controls="advancedFilters">
-                        <i class="bi bi-funnel me-2"></i>Advanced Filters
+                        <i class="bi bi-funnel me-2"></i>{{ _('Advanced Filters') }}
                         <i class="bi bi-chevron-down float-end"></i>
                     </button>
                 </div>
@@ -629,11 +629,11 @@
                 <!-- Pagination controls -->
         <div class="d-flex justify-content-between align-items-center mb-3">
                     <div class="text-muted small">
-            Page {{ page or 1 }} of {{ total_pages or 1 }} • Rows {{ rows or 1 }} • Per page {{ per_page or books|length }} • Total {{ (total_books or stats.total_books) if stats else total_books }}
+            {{ _('Page') }} {{ page or 1 }} {{ _('of') }} {{ total_pages or 1 }} • {{ _('Rows') }} {{ rows or 1 }} • {{ _('Per page') }} {{ per_page or books|length }} • {{ _('Total') }} {{ (total_books or stats.total_books) if stats else total_books }}
                     </div>
                     <div class="btn-group">
-            <a id="prevPageBtn" class="btn btn-outline-secondary btn-sm {% if not has_prev %}disabled{% endif %}" href="#" aria-disabled="{{ 'true' if not has_prev else 'false' }}">&laquo; Prev</a>
-            <a id="nextPageBtn" class="btn btn-outline-secondary btn-sm {% if not has_next %}disabled{% endif %}" href="#" aria-disabled="{{ 'true' if not has_next else 'false' }}">Next &raquo;</a>
+            <a id="prevPageBtn" class="btn btn-outline-secondary btn-sm {% if not has_prev %}disabled{% endif %}" href="#" aria-disabled="{{ 'true' if not has_prev else 'false' }}">&laquo; {{ _('Prev') }}</a>
+            <a id="nextPageBtn" class="btn btn-outline-secondary btn-sm {% if not has_next %}disabled{% endif %}" href="#" aria-disabled="{{ 'true' if not has_next else 'false' }}">{{ _('Next') }} &raquo;</a>
                     </div>
                 </div>
                 <!-- Selection toolbar (hidden by default) -->
@@ -773,7 +773,7 @@
                 <div id="no-books-message" class="text-center py-5" style="display: none;">
                     <div class="text-muted">
                         <i class="bi bi-book display-1"></i>
-                        <p class="mt-3" id="no-books-text">No books found matching your current filter.</p>
+                        <p class="mt-3" id="no-books-text">{{ _('No books found matching your current filter.') }}</p>
                         <button class="btn btn-outline-primary" onclick="clearStatusFilter()">
                             Show All Books
                         </button>
@@ -783,11 +783,11 @@
                 <!-- Pagination controls (bottom) -->
                 <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
                     <div class="text-muted small">
-                        Page {{ page or 1 }} of {{ total_pages or 1 }} • Rows {{ rows or 1 }} • Per page {{ per_page or books|length }} • Total {{ (total_books or stats.total_books) if stats else total_books }}
+                        {{ _('Page') }} {{ page or 1 }} {{ _('of') }} {{ total_pages or 1 }} • {{ _('Rows') }} {{ rows or 1 }} • {{ _('Per page') }} {{ per_page or books|length }} • {{ _('Total') }} {{ (total_books or stats.total_books) if stats else total_books }}
                     </div>
                     <div class="btn-group">
-                        <a id="prevPageBtnBottom" class="btn btn-outline-secondary btn-sm {% if not has_prev %}disabled{% endif %}" href="#" aria-disabled="{{ 'true' if not has_prev else 'false' }}">&laquo; Prev</a>
-                        <a id="nextPageBtnBottom" class="btn btn-outline-secondary btn-sm {% if not has_next %}disabled{% endif %}" href="#" aria-disabled="{{ 'true' if not has_next else 'false' }}">Next &raquo;</a>
+                        <a id="prevPageBtnBottom" class="btn btn-outline-secondary btn-sm {% if not has_prev %}disabled{% endif %}" href="#" aria-disabled="{{ 'true' if not has_prev else 'false' }}">&laquo; {{ _('Prev') }}</a>
+                        <a id="nextPageBtnBottom" class="btn btn-outline-secondary btn-sm {% if not has_next %}disabled{% endif %}" href="#" aria-disabled="{{ 'true' if not has_next else 'false' }}">{{ _('Next') }} &raquo;</a>
                     </div>
                 </div>
 
@@ -812,7 +812,7 @@
                             <h4 class="mt-3">You have no books on hold</h4>
                             <p class="mb-4">Books you've paused will appear here!</p>
                         {% else %}
-                            <h4 class="mt-3">No books found</h4>
+                            <h4 class="mt-3">{{ _('No books found') }}</h4>
                             <p class="mb-4">Try adjusting your filters or add some books to your library!</p>
                         {% endif %}
                         <a href="{{ url_for('main.add_book') }}" class="btn btn-primary btn-lg">

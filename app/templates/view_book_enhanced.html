@@ -12,14 +12,14 @@
         <div class="col">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{{ url_for('main.library') }}">Library</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.library') }}">{{ _('Library') }}</a></li>
                     <li class="breadcrumb-item active" aria-current="page">{{ book.title }}</li>
                 </ol>
             </nav>
         </div>
         <div class="col-auto">
             <a href="{{ url_for('main.library') }}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i>Back to Library
+                <i class="bi bi-arrow-left me-1"></i>{{ _('Back to Library') }}
             </a>
         </div>
     </div>
