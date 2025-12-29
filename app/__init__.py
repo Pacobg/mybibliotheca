@@ -460,6 +460,9 @@ def create_app():
         import os
         app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         translations_dir = os.path.join(app_root, 'translations')
+        
+        # Flask-Babel uses BABEL_TRANSLATION_DIRECTORIES config
+        # Default is 'translations' relative to app root, but let's be explicit
         app.config['BABEL_TRANSLATION_DIRECTORIES'] = translations_dir
         
         # Supported languages
@@ -468,10 +471,28 @@ def create_app():
             'bg': 'Български'
         }
         
-        # Verify translations directory exists
+        # Verify translations directory exists and test loading
         if os.path.exists(translations_dir):
             print(f"🌐 [BABEL] Translations directory found: {translations_dir}")
             app.logger.info(f"Flask-Babel initialized with translations: {translations_dir}")
+            
+            # Test if translations can be loaded
+            try:
+                from flask_babel import gettext
+                with app.app_context():
+                    # Force locale to bg for testing
+                    from flask_babel import force_locale
+                    force_locale('bg')
+                    test_translation = gettext('Library')
+                    print(f"🌐 [BABEL] Test translation 'Library' -> '{test_translation}' (locale: bg)")
+                    if test_translation == 'Library':
+                        print(f"⚠️  [BABEL] WARNING: Translation not applied! Check if .mo files are correct.")
+                    else:
+                        print(f"✅ [BABEL] Translations working! 'Library' translated to '{test_translation}'")
+            except Exception as e:
+                print(f"⚠️  [BABEL] Error testing translations: {e}")
+                import traceback
+                traceback.print_exc()
         else:
             print(f"⚠️  [BABEL] WARNING: Translations directory not found: {translations_dir}")
             app.logger.warning(f"Translations directory not found: {translations_dir}")
