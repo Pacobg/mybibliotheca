@@ -462,9 +462,9 @@ def create_app():
         translations_dir = os.path.join(app_root, 'translations')
         
         # Flask-Babel uses BABEL_TRANSLATION_DIRECTORIES config
-        # It can be absolute path or relative path from app root
-        # Use absolute path to be sure
-        app.config['BABEL_TRANSLATION_DIRECTORIES'] = translations_dir
+        # It expects a relative path from the Flask app root (where Flask(__name__) is called)
+        # Since Flask app root is the project root, we use 'translations'
+        app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
         
         # Also set default locale
         app.config['BABEL_DEFAULT_LOCALE'] = 'en'
@@ -473,12 +473,18 @@ def create_app():
         print(f"🌐 [BABEL] App root: {app_root}")
         print(f"🌐 [BABEL] Translations dir (absolute): {translations_dir}")
         print(f"🌐 [BABEL] Translations dir (config): {app.config['BABEL_TRANSLATION_DIRECTORIES']}")
+        print(f"🌐 [BABEL] Flask app root: {app.root_path}")
         
         # Verify .mo files exist
         bg_mo = os.path.join(translations_dir, 'bg', 'LC_MESSAGES', 'messages.mo')
         en_mo = os.path.join(translations_dir, 'en', 'LC_MESSAGES', 'messages.mo')
         print(f"🌐 [BABEL] BG .mo file exists: {os.path.exists(bg_mo)} ({bg_mo})")
         print(f"🌐 [BABEL] EN .mo file exists: {os.path.exists(en_mo)} ({en_mo})")
+        
+        # Check if translations dir is accessible from Flask app root
+        flask_translations_path = os.path.join(app.root_path, 'translations')
+        print(f"🌐 [BABEL] Translations from Flask root: {flask_translations_path}")
+        print(f"🌐 [BABEL] Translations from Flask root exists: {os.path.exists(flask_translations_path)}")
         
         # Supported languages
         app.config['LANGUAGES'] = {
