@@ -502,7 +502,15 @@ def create_app():
     def inject_gettext():
         """Make gettext function available in all templates."""
         if Babel is not None:
-            from flask_babel import gettext
+            from flask_babel import gettext, get_locale
+            # Debug: log current locale when template is rendered
+            try:
+                current_locale = get_locale()
+                if current_locale:
+                    print(f"🌐 [TEMPLATE] Current locale: {current_locale}")
+            except Exception as e:
+                print(f"🌐 [TEMPLATE] Error getting locale: {e}")
+            
             # gettext will automatically use the locale from get_locale() function
             # which is configured via Babel's locale_selector
             return dict(_=gettext)
