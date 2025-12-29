@@ -2735,9 +2735,12 @@ def library():
         return resp
 
     # ETag for HTML response too
+    # Include language in ETag so cached pages are invalidated when language changes
     from app.utils.simple_cache import get_user_library_version
+    from flask import session
     _version = get_user_library_version(str(current_user.id))
-    _html_etag = f"W/\"libhtml:{current_user.id}:{page}:{rows}:{cols}:{per_page}:{status_filter}:{category_filter}:{publisher_filter}:{language_filter}:{location_filter}:{media_type_filter}:{finished_after_raw}:{finished_before_raw}:{search_query}:{sort_option}:v{_version}\""
+    current_language = session.get('language', 'en')  # Include language in ETag
+    _html_etag = f"W/\"libhtml:{current_user.id}:{page}:{rows}:{cols}:{per_page}:{status_filter}:{category_filter}:{publisher_filter}:{language_filter}:{location_filter}:{media_type_filter}:{finished_after_raw}:{finished_before_raw}:{search_query}:{sort_option}:lang:{current_language}:v{_version}\""
     if request.headers.get('If-None-Match') == _html_etag:
         return ('', 304)
 
