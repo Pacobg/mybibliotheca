@@ -56,11 +56,30 @@ def set_language(language):
     referrer = request.referrer
     if referrer and referrer.startswith(request.host_url):
         # Only redirect to referrer if it's from the same host (security)
-        return redirect(referrer)
+        # Parse referrer to preserve query parameters
+        from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
+        parsed = urlparse(referrer)
+        # Keep the original query string
+        redirect_url = urlunparse(parsed)
+        print(f"🌐 [LANGUAGE] Redirecting to referrer: {redirect_url}")
+        return redirect(redirect_url)
     else:
         # Try to redirect to library if available, otherwise home
+        # Use book.library directly to avoid double redirect
         try:
-            return redirect(url_for('main.library'))
+            # Preserve any query parameters from current request
+            from urllib.parse import urlencode
+            target = url_for('book.library')
+            if request.args:
+                query_params = {k: v for k, v in request.args.items()}
+                if query_params:
+                    target = f"{target}?{urlencode(query_params, doseq=True)}"
+            print(f"🌐 [LANGUAGE] Redirecting to library: {target}")
+            return redirect(target)
         except Exception as e:
             logger.warning(f"Could not redirect to library: {e}")
-            return redirect('/')
+            try:
+                # Fallback to main.library
+                return redirect(url_for('main.library'))
+            except:
+                return redirect('/')
