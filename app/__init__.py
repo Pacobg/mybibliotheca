@@ -431,6 +431,22 @@ def create_app():
     # Initialize Flask-Babel for internationalization
     global babel
     if Babel is not None:
+        # Configure translation directories BEFORE initializing Babel
+        # Flask-Babel looks for translations in 'translations' directory by default
+        import os
+        app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        translations_dir = os.path.join(app_root, 'translations')
+        
+        # Flask-Babel uses BABEL_TRANSLATION_DIRECTORIES config
+        # Flask app root is /home/pacovw/mybibliotheca/app, but translations are in /home/pacovw/mybibliotheca/translations
+        # So we need to use absolute path
+        app.config['BABEL_TRANSLATION_DIRECTORIES'] = translations_dir
+        app.config['BABEL_DEFAULT_LOCALE'] = 'en'
+        app.config['BABEL_DEFAULT_TIMEZONE'] = 'UTC'
+        
+        print(f"🌐 [BABEL] Configuring translations BEFORE Babel init")
+        print(f"🌐 [BABEL] Translations dir (config): {app.config['BABEL_TRANSLATION_DIRECTORIES']}")
+        
         def get_locale():
             """Determine the best language based on user preference or browser."""
             try:
@@ -453,19 +469,6 @@ def create_app():
             return browser_lang
         
         babel = Babel(app, locale_selector=get_locale)
-        
-        # Configure translation directories
-        # Flask-Babel looks for translations in 'translations' directory by default
-        # It expects a relative path from the app root, or a semicolon-separated list
-        import os
-        app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        translations_dir = os.path.join(app_root, 'translations')
-        
-        # Flask-Babel uses BABEL_TRANSLATION_DIRECTORIES config
-        # Flask app root is /home/pacovw/mybibliotheca/app, but translations are in /home/pacovw/mybibliotheca/translations
-        # So we need to use absolute path or relative path that goes up one level
-        # Use absolute path to be safe
-        app.config['BABEL_TRANSLATION_DIRECTORIES'] = translations_dir
         
         # Also set default locale
         app.config['BABEL_DEFAULT_LOCALE'] = 'en'
