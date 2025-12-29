@@ -550,12 +550,27 @@ def create_app():
                 current_locale = get_locale()
                 if current_locale:
                     print(f"🌐 [TEMPLATE] Current locale: {current_locale}")
+                    
+                    # Test translation to verify it works
+                    test_translation = gettext('Library')
+                    if test_translation != 'Library':
+                        print(f"🌐 [TEMPLATE] Translation test: 'Library' -> '{test_translation}' ✅")
+                    else:
+                        print(f"⚠️  [TEMPLATE] Translation test: 'Library' not translated (locale: {current_locale})")
             except Exception as e:
                 print(f"🌐 [TEMPLATE] Error getting locale: {e}")
             
+            # Create a wrapper function that ensures locale is set correctly
+            def translate(text):
+                try:
+                    return gettext(text)
+                except Exception as e:
+                    print(f"⚠️  [TEMPLATE] Translation error for '{text}': {e}")
+                    return text
+            
             # gettext will automatically use the locale from get_locale() function
             # which is configured via Babel's locale_selector
-            return dict(_=gettext)
+            return dict(_=translate)
         else:
             # Fallback if Flask-Babel is not available
             def noop_gettext(text):
