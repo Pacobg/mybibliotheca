@@ -454,11 +454,28 @@ def create_app():
         
         babel = Babel(app, locale_selector=get_locale)
         
+        # Configure translation directories
+        # Flask-Babel looks for translations in 'translations' directory by default
+        # But we need to ensure the path is correct relative to the app root
+        import os
+        app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        translations_dir = os.path.join(app_root, 'translations')
+        app.config['BABEL_TRANSLATION_DIRECTORIES'] = translations_dir
+        
         # Supported languages
         app.config['LANGUAGES'] = {
             'en': 'English',
             'bg': 'Български'
         }
+        
+        # Verify translations directory exists
+        if os.path.exists(translations_dir):
+            print(f"🌐 [BABEL] Translations directory found: {translations_dir}")
+            app.logger.info(f"Flask-Babel initialized with translations: {translations_dir}")
+        else:
+            print(f"⚠️  [BABEL] WARNING: Translations directory not found: {translations_dir}")
+            app.logger.warning(f"Translations directory not found: {translations_dir}")
+        
         app.logger.info("Flask-Babel initialized")
     else:
         app.logger.warning("Flask-Babel not available - install Flask-Babel for i18n support")
@@ -485,16 +502,9 @@ def create_app():
     def inject_gettext():
         """Make gettext function available in all templates."""
         if Babel is not None:
-            from flask_babel import gettext, get_locale
-            # Force locale from session if available
-            try:
-                if 'language' in session and session['language']:
-                    from flask_babel import force_locale
-                    force_locale(session['language'])
-                    print(f"🌐 [TEMPLATE] Forcing locale to: {session['language']}")
-            except Exception as e:
-                print(f"🌐 [TEMPLATE] Error forcing locale: {e}")
-            
+            from flask_babel import gettext
+            # gettext will automatically use the locale from get_locale() function
+            # which is configured via Babel's locale_selector
             return dict(_=gettext)
         else:
             # Fallback if Flask-Babel is not available
