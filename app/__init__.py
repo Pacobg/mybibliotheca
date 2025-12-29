@@ -441,7 +441,7 @@ def create_app():
         # Flask app root is /home/pacovw/mybibliotheca/app, but translations are in /home/pacovw/mybibliotheca/translations
         # Use relative path '../translations' from Flask app root (app.root_path)
         app.config['BABEL_TRANSLATION_DIRECTORIES'] = '../translations'
-        app.config['BABEL_DEFAULT_LOCALE'] = 'en'
+        app.config['BABEL_DEFAULT_LOCALE'] = 'bg'
         app.config['BABEL_DEFAULT_TIMEZONE'] = 'UTC'
         
         print(f"🌐 [BABEL] Configuring translations BEFORE Babel init")
@@ -466,7 +466,7 @@ def create_app():
                 app.logger.warning(f"Error reading language from session: {e}")
             
             # 2. Check Accept-Language header from browser
-            browser_lang = request.accept_languages.best_match(['en', 'bg']) or 'en'
+            browser_lang = request.accept_languages.best_match(['bg', 'en']) or 'bg'
             print(f"🌐 [LOCALE] Using browser language: {browser_lang}")
             app.logger.debug(f"Using browser language: {browser_lang}")
             return browser_lang
