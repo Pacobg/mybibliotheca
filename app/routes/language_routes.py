@@ -28,6 +28,15 @@ def set_language(language):
     session.permanent = True  # Make session persistent
     session.modified = True  # Explicitly mark session as modified
     
+    # Force session save
+    try:
+        from flask import current_app
+        current_app.session_interface.save_session(current_app, session, None)
+    except Exception as e:
+        logger.warning(f"Could not force save session: {e}")
+    
+    print(f"🌐 [LANGUAGE] Language set to: {language}")
+    print(f"🌐 [LANGUAGE] Session language value: {session.get('language')}")
     logger.info(f"Language set to: {language}, session ID: {session.get('_id', 'unknown')}")
     
     # Redirect back to referrer or library

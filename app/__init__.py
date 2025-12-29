@@ -437,13 +437,18 @@ def create_app():
                 # 1. Check if user explicitly selected language (stored in session)
                 if 'language' in session and session['language']:
                     lang = session['language']
+                    print(f"🌐 [LOCALE] Using language from session: {lang}")
                     app.logger.debug(f"Using language from session: {lang}")
                     return lang
+                else:
+                    print(f"🌐 [LOCALE] No language in session. Session keys: {list(session.keys())}")
             except Exception as e:
+                print(f"🌐 [LOCALE] Error reading language from session: {e}")
                 app.logger.warning(f"Error reading language from session: {e}")
             
             # 2. Check Accept-Language header from browser
             browser_lang = request.accept_languages.best_match(['en', 'bg']) or 'en'
+            print(f"🌐 [LOCALE] Using browser language: {browser_lang}")
             app.logger.debug(f"Using browser language: {browser_lang}")
             return browser_lang
         
@@ -480,7 +485,16 @@ def create_app():
     def inject_gettext():
         """Make gettext function available in all templates."""
         if Babel is not None:
-            from flask_babel import gettext
+            from flask_babel import gettext, get_locale
+            # Force locale from session if available
+            try:
+                if 'language' in session and session['language']:
+                    from flask_babel import force_locale
+                    force_locale(session['language'])
+                    print(f"🌐 [TEMPLATE] Forcing locale to: {session['language']}")
+            except Exception as e:
+                print(f"🌐 [TEMPLATE] Error forcing locale: {e}")
+            
             return dict(_=gettext)
         else:
             # Fallback if Flask-Babel is not available
