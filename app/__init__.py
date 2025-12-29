@@ -463,12 +463,22 @@ def create_app():
         
         # Flask-Babel uses BABEL_TRANSLATION_DIRECTORIES config
         # It can be absolute path or relative path from app root
-        # Let's use relative path 'translations' which is the default
-        app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
+        # Use absolute path to be sure
+        app.config['BABEL_TRANSLATION_DIRECTORIES'] = translations_dir
+        
+        # Also set default locale
+        app.config['BABEL_DEFAULT_LOCALE'] = 'en'
+        app.config['BABEL_DEFAULT_TIMEZONE'] = 'UTC'
         
         print(f"🌐 [BABEL] App root: {app_root}")
         print(f"🌐 [BABEL] Translations dir (absolute): {translations_dir}")
         print(f"🌐 [BABEL] Translations dir (config): {app.config['BABEL_TRANSLATION_DIRECTORIES']}")
+        
+        # Verify .mo files exist
+        bg_mo = os.path.join(translations_dir, 'bg', 'LC_MESSAGES', 'messages.mo')
+        en_mo = os.path.join(translations_dir, 'en', 'LC_MESSAGES', 'messages.mo')
+        print(f"🌐 [BABEL] BG .mo file exists: {os.path.exists(bg_mo)} ({bg_mo})")
+        print(f"🌐 [BABEL] EN .mo file exists: {os.path.exists(en_mo)} ({en_mo})")
         
         # Supported languages
         app.config['LANGUAGES'] = {
