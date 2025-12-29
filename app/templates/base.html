@@ -1718,18 +1718,40 @@
           
           <div class="navbar-nav d-flex align-items-center flex-nowrap">
             {% if current_user.is_authenticated %}
-              <!-- User info section - compact layout -->
-              <div class="d-flex align-items-center gap-1 me-2">
-                <span class="navbar-text small text-nowrap">
-                  {{ _('Welcome') }}, <strong>{{ current_user.display_name if current_user.display_name else current_user.username }}</strong>
-                </span>
-                {% if current_user.is_admin %}
-                  <a href="{{ url_for('admin.dashboard') }}" class="badge bg-danger text-decoration-none small">{{ _('Admin') }}</a>
-                {% endif %}
-                <a class="nav-link nav-pill nav-ghost p-1 text-nowrap" href="{{ url_for('auth.logout') }}" title="{{ _('Logout') }}">
-                  <i class="bi bi-box-arrow-right"></i> <span class="d-none d-md-inline">{{ _('Logout') }}</span>
+              <!-- User dropdown menu -->
+              <li class="nav-item dropdown">
+                <a class="nav-link nav-pill nav-ghost dropdown-toggle d-flex align-items-center gap-1" 
+                   href="#" 
+                   id="userDropdown" 
+                   role="button" 
+                   data-bs-toggle="dropdown" 
+                   aria-expanded="false"
+                   title="{{ _('User menu') }}">
+                  <span class="small text-nowrap">
+                    {{ _('Welcome') }}, <strong>{{ current_user.display_name if current_user.display_name else current_user.username }}</strong>
+                  </span>
                 </a>
-              </div>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                  {% if current_user.is_admin %}
+                    <li>
+                      <a class="dropdown-item" href="{{ url_for('admin.dashboard') }}">
+                        <i class="bi bi-shield-check me-2"></i>{{ _('Admin') }}
+                      </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                  {% endif %}
+                  <li>
+                    <a class="dropdown-item" href="{{ url_for('auth.settings') }}">
+                      <i class="bi bi-person-gear me-2"></i>{{ _('User') }}
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                      <i class="bi bi-box-arrow-right me-2"></i>{{ _('Logout') }}
+                    </a>
+                  </li>
+                </ul>
+              </li>
             {% else %}
               <a class="nav-link nav-pill nav-ghost" href="{{ url_for('auth.login') }}">{{ _('Login') }}</a>
             {% endif %}
