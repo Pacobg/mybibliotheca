@@ -103,22 +103,22 @@ def inject_site_config():
             'default_minutes_per_log': None
         }
     
+    # Helper functions for terminology
+    # Note: These functions need to be called within request context to access translations
+    def _get_genre_term():
+        from flask_babel import gettext as _
+        return _('Genre') if terminology_preference == 'genre' else _('Category')
+    
+    def _get_genre_term_plural():
+        from flask_babel import gettext as _
+        return _('Genres') if terminology_preference == 'genre' else _('Categories')
+    
     return {
         'site_name': site_name,
         'server_timezone': server_timezone,
         'terminology_preference': terminology_preference,
-    'background_config': background_config,
-    'reading_log_defaults': reading_log_defaults,
-        # Helper functions for terminology
-        # Note: These functions need to be called within request context to access translations
-        def _get_genre_term():
-            from flask_babel import gettext as _
-            return _('Genre') if terminology_preference == 'genre' else _('Category')
-        
-        def _get_genre_term_plural():
-            from flask_babel import gettext as _
-            return _('Genres') if terminology_preference == 'genre' else _('Categories')
-        
+        'background_config': background_config,
+        'reading_log_defaults': reading_log_defaults,
         'get_terminology': lambda: terminology_preference,
         'get_genre_term': _get_genre_term,
         'get_genre_term_lower': lambda: 'genre' if terminology_preference == 'genre' else 'category',
