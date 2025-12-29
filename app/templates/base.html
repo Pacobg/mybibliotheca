@@ -1725,13 +1725,16 @@
             </li>
             
             {% if current_user.is_authenticated %}
-              <span class="navbar-text me-3">
-                {{ _('Welcome') }}, {{ current_user.display_name if current_user.display_name else current_user.username }}
-                {% if current_user.is_admin %}
-                  <span class="badge bg-danger ms-1">{{ _('Admin') }}</span>
-                {% endif %}
-              </span>
-              <a class="nav-link nav-pill nav-ghost" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> {{ _('Logout') }}</a>
+              <!-- User info section in separate container for better layout -->
+              <div class="d-flex align-items-center gap-2 ms-3">
+                <span class="navbar-text">
+                  {{ _('Welcome') }}, {{ current_user.display_name if current_user.display_name else current_user.username }}
+                  {% if current_user.is_admin %}
+                    <span class="badge bg-danger ms-1">{{ _('Admin') }}</span>
+                  {% endif %}
+                </span>
+                <a class="nav-link nav-pill nav-ghost" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> {{ _('Logout') }}</a>
+              </div>
             {% else %}
               <a class="nav-link nav-pill nav-ghost" href="{{ url_for('auth.login') }}">{{ _('Login') }}</a>
             {% endif %}
