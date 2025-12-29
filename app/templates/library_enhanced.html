@@ -732,24 +732,24 @@
                                     <div class="mb-2">
                                         {% set display_status = book.normalized_reading_status if book.normalized_reading_status is not none else (book.reading_status or '') %}
                                         {% if display_status in ['reading', 'currently_reading'] %}
-                                            <span class="badge bg-warning text-dark">📖 Reading</span>
+                                            <span class="badge bg-warning text-dark">📖 {{ _('Reading') }}</span>
                                         {% elif display_status == 'read' %}
-                                            <span class="badge bg-success">✅ Read</span>
+                                            <span class="badge bg-success">✅ {{ _('Read') }}</span>
                                         {% elif display_status == 'plan_to_read' %}
-                                            <span class="badge bg-info">📚 Plan to Read</span>
+                                            <span class="badge bg-info">📚 {{ _('Plan to Read') }}</span>
                                         {% elif display_status == 'on_hold' %}
-                                            <span class="badge bg-secondary">⏸️ On Hold</span>
+                                            <span class="badge bg-secondary">⏸️ {{ _('On Hold') }}</span>
                                         {% elif display_status == 'did_not_finish' %}
-                                            <span class="badge bg-danger">❌ DNF</span>
+                                            <span class="badge bg-danger">❌ {{ _('DNF') }}</span>
                                         {% endif %}
 
                                         {% set display_ownership = book.normalized_ownership_status if book.normalized_ownership_status else (book.ownership_status or '') %}
                                         {% if display_ownership == 'wishlist' %}
-                                            <span class="badge bg-primary">⭐ Wishlist</span>
+                                            <span class="badge bg-primary">⭐ {{ _('Wishlist') }}</span>
                                         {% elif display_ownership == 'borrowed' %}
-                                            <span class="badge bg-warning">📚 Borrowed</span>
+                                            <span class="badge bg-warning">📚 {{ _('Borrowed') }}</span>
                                         {% elif display_ownership == 'loaned' %}
-                                            <span class="badge bg-info">📤 Loaned</span>
+                                            <span class="badge bg-info">📤 {{ _('Loaned') }}</span>
                                         {% endif %}
                                     </div>
 
@@ -797,26 +797,26 @@
                     <div class="text-muted">
                         <i class="bi bi-book display-1"></i>
                         {% if current_status_filter == 'reading' %}
-                            <h4 class="mt-3">You're not currently reading any books</h4>
-                            <p class="mb-4">Start a new book from your library or add some books to read!</p>
+                            <h4 class="mt-3">{{ _("You're not currently reading any books") }}</h4>
+                            <p class="mb-4">{{ _("Start a new book from your library or add some books to read!") }}</p>
                         {% elif current_status_filter == 'read' %}
-                            <h4 class="mt-3">You haven't finished any books yet</h4>
-                            <p class="mb-4">Complete some books and they'll appear here!</p>
+                            <h4 class="mt-3">{{ _("You haven't finished any books yet") }}</h4>
+                            <p class="mb-4">{{ _("Complete some books and they'll appear here!") }}</p>
                         {% elif current_status_filter == 'plan_to_read' %}
-                            <h4 class="mt-3">You have no books planned to read</h4>
-                            <p class="mb-4">Add some books to your reading list!</p>
+                            <h4 class="mt-3">{{ _("You have no books planned to read") }}</h4>
+                            <p class="mb-4">{{ _("Add some books to your reading list!") }}</p>
                         {% elif current_status_filter == 'wishlist' %}
-                            <h4 class="mt-3">You have no books on your wishlist</h4>
-                            <p class="mb-4">Add books you want to acquire to your wishlist!</p>
+                            <h4 class="mt-3">{{ _("You have no books on your wishlist") }}</h4>
+                            <p class="mb-4">{{ _("Add books you want to acquire to your wishlist!") }}</p>
                         {% elif current_status_filter == 'on_hold' %}
-                            <h4 class="mt-3">You have no books on hold</h4>
-                            <p class="mb-4">Books you've paused will appear here!</p>
+                            <h4 class="mt-3">{{ _("You have no books on hold") }}</h4>
+                            <p class="mb-4">{{ _("Books you've paused will appear here!") }}</p>
                         {% else %}
                             <h4 class="mt-3">{{ _('No books found') }}</h4>
-                            <p class="mb-4">Try adjusting your filters or add some books to your library!</p>
+                            <p class="mb-4">{{ _("Try adjusting your filters or add some books to your library!") }}</p>
                         {% endif %}
                         <a href="{{ url_for('main.add_book') }}" class="btn btn-primary btn-lg">
-                            <i class="bi bi-plus-circle me-1"></i>Add Books
+                            <i class="bi bi-plus-circle me-1"></i>{{ _('Add Books') }}
                         </a>
                     </div>
                 </div>

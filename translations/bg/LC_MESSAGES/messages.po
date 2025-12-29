@@ -646,3 +646,54 @@ msgstr "Не са намерени книги"
 
 msgid "Back to Library"
 msgstr "Назад към библиотеката"
+
+msgid "Add Books"
+msgstr "Добави книги"
+
+msgid "You're not currently reading any books"
+msgstr "В момента не четете никакви книги"
+
+msgid "Start a new book from your library or add some books to read!"
+msgstr "Започнете нова книга от библиотеката си или добавете книги за четене!"
+
+msgid "You haven't finished any books yet"
+msgstr "Все още не сте завършили никакви книги"
+
+msgid "Complete some books and they'll appear here!"
+msgstr "Завършете някои книги и те ще се появят тук!"
+
+msgid "You have no books planned to read"
+msgstr "Нямате планирани книги за четене"
+
+msgid "Add some books to your reading list!"
+msgstr "Добавете книги към списъка си за четене!"
+
+msgid "You have no books on your wishlist"
+msgstr "Нямате книги в списъка си с желания"
+
+msgid "Add books you want to acquire to your wishlist!"
+msgstr "Добавете книги, които искате да придобиете, към списъка си с желания!"
+
+msgid "You have no books on hold"
+msgstr "Нямате книги в очакване"
+
+msgid "Books you've paused will appear here!"
+msgstr "Книгите, които сте спрели, ще се появят тук!"
+
+msgid "Try adjusting your filters or add some books to your library!"
+msgstr "Опитайте се да коригирате филтрите си или добавете книги към библиотеката си!"
+
+msgid "Reading"
+msgstr "Чета"
+
+msgid "Read"
+msgstr "Прочетена"
+
+msgid "DNF"
+msgstr "Не завършена"
+
+msgid "Borrowed"
+msgstr "Заета"
+
+msgid "Loaned"
+msgstr "Дадена назаем"
