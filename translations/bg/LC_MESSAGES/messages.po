@@ -719,6 +719,12 @@ msgstr "Дневник за четене"
 msgid "Welcome"
 msgstr "Добре дошли"
 
+msgid "User"
+msgstr "Потребител"
+
+msgid "User menu"
+msgstr "Меню на потребителя"
+
 msgid "Genres"
 msgstr "Категории"
 
