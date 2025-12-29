@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="{{ current_theme }}">
+<html lang="{{ session.get('language', 'en') }}" data-theme="{{ current_theme }}">
   <head>
     {% if not self._TemplateReference__context.get('csrf_meta_injected') %}
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -1696,6 +1696,33 @@
             <button id="theme-toggle" type="button" class="nav-link nav-pill nav-ghost" title="Toggle dark mode">
               <i class="bi bi-moon-fill" id="theme-icon"></i>
             </button>
+            
+            <!-- Language switcher -->
+            <li class="nav-item dropdown">
+              <a class="nav-link nav-pill nav-ghost dropdown-toggle" href="#" id="languageDropdown" role="button" 
+                 data-bs-toggle="dropdown" aria-expanded="false" title="Change language">
+                <i class="bi bi-translate"></i>
+                {% if session.get('language') == 'bg' %}
+                  Български
+                {% else %}
+                  English
+                {% endif %}
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+                <li>
+                  <a class="dropdown-item {{ 'active' if not session.get('language') or session.get('language') == 'en' }}" 
+                     href="{{ url_for('language.set_language', language='en') }}">
+                    <span class="me-2">🇬🇧</span> English
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item {{ 'active' if session.get('language') == 'bg' }}" 
+                     href="{{ url_for('language.set_language', language='bg') }}">
+                    <span class="me-2">🇧🇬</span> Български
+                  </a>
+                </li>
+              </ul>
+            </li>
             
             {% if current_user.is_authenticated %}
               <span class="navbar-text me-3">

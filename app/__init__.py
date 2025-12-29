@@ -19,6 +19,11 @@ try:
     from flask_compress import Compress  # type: ignore
 except Exception:
     Compress = None  # type: ignore
+try:
+    from flask_babel import Babel, lazy_gettext as _l
+except ImportError:
+    Babel = None  # type: ignore
+    _l = None  # type: ignore
 from config import Config
 
 logger = logging.getLogger(__name__)
@@ -26,6 +31,9 @@ logger = logging.getLogger(__name__)
 login_manager = LoginManager()
 csrf = CSRFProtect()
 sess = Session()
+
+# Initialize Babel (will be configured in create_app)
+babel = None  # type: ignore
 
 # Global flag to track template creation failures and prevent crash loops
 _template_creation_disabled = True  # Disabled by default to prevent crashes
@@ -419,6 +427,29 @@ def create_app():
     sess.init_app(app)  # Initialize Flask-Session
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'  # type: ignore
+    
+    # Initialize Flask-Babel for internationalization
+    global babel
+    if Babel is not None:
+        def get_locale():
+            """Determine the best language based on user preference or browser."""
+            # 1. Check if user explicitly selected language (stored in session)
+            if 'language' in session:
+                return session['language']
+            
+            # 2. Check Accept-Language header from browser
+            return request.accept_languages.best_match(['en', 'bg']) or 'en'
+        
+        babel = Babel(app, locale_selector=get_locale)
+        
+        # Supported languages
+        app.config['LANGUAGES'] = {
+            'en': 'English',
+            'bg': 'Български'
+        }
+        app.logger.info("Flask-Babel initialized")
+    else:
+        app.logger.warning("Flask-Babel not available - install Flask-Babel for i18n support")
 
     # Enable gzip/br compression if available
     try:
@@ -1123,6 +1154,15 @@ def create_app():
     from .routes import register_blueprints
     from .auth import auth
     from .admin import admin
+    
+    # Register language routes
+    try:
+        from .routes.language_routes import language_bp
+        app.register_blueprint(language_bp)
+        app.logger.info("Language routes registered")
+    except ImportError as e:
+        app.logger.warning(f"Could not import language blueprint: {e}")
+    
     try:
         from .location_routes import bp as locations_bp
         app.register_blueprint(locations_bp)
