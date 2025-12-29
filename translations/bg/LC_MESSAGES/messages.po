@@ -709,3 +709,27 @@ msgstr "Вашият дневник за четене"
 
 msgid "Total Books"
 msgstr "Общо книги"
+
+msgid "Genres"
+msgstr "Категории"
+
+msgid "Categories"
+msgstr "Категории"
+
+msgid "Genre"
+msgstr "Категория"
+
+msgid "Category"
+msgstr "Категория"
+
+msgid "Total Books Finished"
+msgstr "Общо завършени книги"
+
+msgid "Reading Logs"
+msgstr "Дневник за четене"
+
+msgid "Your Reading Logs"
+msgstr "Вашият дневник за четене"
+
+msgid "Total Books"
+msgstr "Общо книги"
