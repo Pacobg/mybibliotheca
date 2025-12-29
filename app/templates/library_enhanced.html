@@ -365,14 +365,18 @@
   }
 </style>
 
-<div class="container-fluid px-4 py-4">
-    <!-- Page Header with Search -->
-    <div class="mb-4">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <h1 class="h2 mb-0">
+<div class="container-fluid px-4 py-3">
+    <!-- Compact Header Section -->
+    <div class="library-header mb-3">
+        <!-- Title, Search, Actions in one row -->
+        <div class="library-title-section mb-3">
+            <!-- Title -->
+            <h1 class="library-title mb-0">
                 <i class="bi bi-book me-2"></i>{{ _('My Library') }}
             </h1>
-            <form method="GET" action="{{ url_for('main.library') }}" class="library-search-box">
+            
+            <!-- Inline Search -->
+            <form method="GET" action="{{ url_for('book.library') }}" class="library-search-inline">
                 <input type="hidden" name="status_filter" value="{{ current_status_filter or 'all' }}">
                 {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
                 {% if current_publisher %}<input type="hidden" name="publisher" value="{{ current_publisher }}">{% endif %}
@@ -380,78 +384,77 @@
                 {% if current_location %}<input type="hidden" name="location" value="{{ current_location }}">{% endif %}
                 {% if current_media_type %}<input type="hidden" name="media_type" value="{{ current_media_type }}">{% endif %}
                 {% if current_sort %}<input type="hidden" name="sort" value="{{ current_sort }}">{% endif %}
-                <input type="text" class="form-control" name="search" id="search-input" data-debounce-search="true" data-debounce-delay="300" data-min-query-length="2" 
-                       value="{{ current_search }}" 
-                       placeholder="{{ _('Search books by title, author, or description...') }}"
-                       aria-label="Search library">
+                <div class="input-group">
+                    <input type="text" 
+                           class="form-control" 
+                           name="search" 
+                           id="search-input"
+                           placeholder="{{ _('Search books by title, author, or description...') }}"
+                           value="{{ current_search }}"
+                           data-debounce-search="true" 
+                           data-debounce-delay="300" 
+                           data-min-query-length="2">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
             </form>
-            <div class="btn-group">
-                <a href="{{ url_for('stats.library_journey') }}" class="btn btn-outline-primary">
+            
+            <!-- Action Buttons -->
+            <div class="library-actions">
+                <a href="{{ url_for('stats.library_journey') }}" class="btn btn-outline-primary btn-sm">
                     <i class="bi bi-diagram-3 me-1"></i>{{ _('Journey Timeline') }}
                 </a>
-                <a href="{{ url_for('stats.index') }}" class="btn btn-outline-secondary">
+                <a href="{{ url_for('stats.index') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-graph-up me-1"></i>{{ _('Full Stats') }}
                 </a>
             </div>
         </div>
-    </div>
     <!-- Library pagination meta (for JS) -->
     <div id="lib-meta" data-page="{{ page or 1 }}" data-rows="{{ rows or 4 }}" data-total="{{ (total_books or stats.total_books) if stats else total_books }}" hidden></div>
 
-    <!-- Library Stats with Filters -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    {% set stat_buttons = [
-                        {'filter': 'reading', 'outline': 'warning', 'text': 'warning', 'label': _('Currently Reading'), 'value': stats.currently_reading},
-                        {'filter': 'read', 'outline': 'success', 'text': 'success', 'label': _('Books Read'), 'value': stats.books_read},
-                        {'filter': 'plan_to_read', 'outline': 'info', 'text': 'info', 'label': _('Plan to Read'), 'value': stats.want_to_read},
-                        {'filter': 'wishlist', 'outline': 'primary', 'text': 'primary', 'label': _('Wishlist'), 'value': stats.wishlist},
-                        {'filter': 'on_hold', 'outline': 'secondary', 'text': 'secondary', 'label': _('On Hold'), 'value': stats.on_hold},
-                        {'filter': 'all', 'outline': 'dark', 'text': 'dark', 'label': _('Total Books'), 'value': stats.total_books}
-                    ] %}
-                    <div class="row align-items-center">
-                        <div class="col-lg-10 col-md-9">
-                            <div class="d-none d-md-block">
-                                <div class="row text-center">
-                                    {% for btn in stat_buttons %}
-                                        <div class="col-lg-2 col-md-4 mb-3 mb-lg-0">
-                                            <button class="btn btn-outline-{{ btn.outline }} w-100 filter-btn" data-filter="{{ btn.filter }}">
-                                                <div class="h4 mb-0 text-{{ btn.text }}">{{ btn.value }}</div>
-                                                <small class="text-muted">{{ btn.label }}</small>
-                                            </button>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            <div class="d-md-none">
-                                <button class="btn btn-outline-primary w-100 mb-3" type="button"
-                                        data-bs-toggle="collapse" data-bs-target="#mobileLibraryStats"
-                                        aria-expanded="false" aria-controls="mobileLibraryStats">
-                                    {{ _('Library Stats') }}<i class="bi bi-chevron-down ms-2"></i>
-                                </button>
-                                <div class="collapse" id="mobileLibraryStats">
-                                    <div class="row g-2 text-center">
-                                        {% for btn in stat_buttons %}
-                                            <div class="col-6">
-                                                <button class="btn btn-outline-{{ btn.outline }} w-100 filter-btn" data-filter="{{ btn.filter }}">
-                                                    <div class="h5 mb-0 text-{{ btn.text }}">{{ btn.value }}</div>
-                                                    <small class="text-muted d-block">{{ btn.label }}</small>
-                                                </button>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-2 col-md-3 text-center">
-                            <a href="{{ url_for('main.add_book') }}" class="btn btn-success btn-lg">
-                                <i class="bi bi-plus-circle me-1"></i>{{ _('Add Books') }}
-                            </a>
-                        </div>
-                    </div>
-                </div>
+        <!-- Compact Statistics Cards -->
+        <div class="stats-row mb-3">
+            <!-- Currently Reading -->
+            <div class="stat-card filter-btn" data-filter="reading" style="border-left: 4px solid #ffc107; cursor: pointer;">
+                <div class="stat-number text-warning">{{ stats.currently_reading or 0 }}</div>
+                <div class="stat-label">{{ _('Currently Reading') }}</div>
+            </div>
+            
+            <!-- Read -->
+            <div class="stat-card filter-btn" data-filter="read" style="border-left: 4px solid #28a745; cursor: pointer;">
+                <div class="stat-number text-success">{{ stats.books_read or 0 }}</div>
+                <div class="stat-label">{{ _('Books Read') }}</div>
+            </div>
+            
+            <!-- Plan to Read -->
+            <div class="stat-card filter-btn" data-filter="plan_to_read" style="border-left: 4px solid #17a2b8; cursor: pointer;">
+                <div class="stat-number text-info">{{ stats.want_to_read or 0 }}</div>
+                <div class="stat-label">{{ _('Plan to Read') }}</div>
+            </div>
+            
+            <!-- Wishlist -->
+            <div class="stat-card filter-btn" data-filter="wishlist" style="border-left: 4px solid #007bff; cursor: pointer;">
+                <div class="stat-number text-primary">{{ stats.wishlist or 0 }}</div>
+                <div class="stat-label">{{ _('Wishlist') }}</div>
+            </div>
+            
+            <!-- On Hold -->
+            <div class="stat-card filter-btn" data-filter="on_hold" style="border-left: 4px solid #6c757d; cursor: pointer;">
+                <div class="stat-number text-secondary">{{ stats.on_hold or 0 }}</div>
+                <div class="stat-label">{{ _('On Hold') }}</div>
+            </div>
+            
+            <!-- Total -->
+            <div class="stat-card filter-btn" data-filter="all" style="border-left: 4px solid #343a40; cursor: pointer;">
+                <div class="stat-number text-dark">{{ stats.total_books or 0 }}</div>
+                <div class="stat-label">{{ _('Total Books') }}</div>
+            </div>
+            
+            <!-- Add Book Button -->
+            <div class="stat-card add-book-card" onclick="window.location.href='{{ url_for('main.add_book') }}'">
+                <i class="bi bi-plus-circle" style="font-size: 2rem;"></i>
+                <div class="stat-label">{{ _('Add Books') }}</div>
             </div>
         </div>
     </div>
