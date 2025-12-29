@@ -456,14 +456,19 @@ def create_app():
         
         # Configure translation directories
         # Flask-Babel looks for translations in 'translations' directory by default
-        # But we need to ensure the path is correct relative to the app root
+        # It expects a relative path from the app root, or a semicolon-separated list
         import os
         app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         translations_dir = os.path.join(app_root, 'translations')
         
         # Flask-Babel uses BABEL_TRANSLATION_DIRECTORIES config
-        # Default is 'translations' relative to app root, but let's be explicit
-        app.config['BABEL_TRANSLATION_DIRECTORIES'] = translations_dir
+        # It can be absolute path or relative path from app root
+        # Let's use relative path 'translations' which is the default
+        app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
+        
+        print(f"🌐 [BABEL] App root: {app_root}")
+        print(f"🌐 [BABEL] Translations dir (absolute): {translations_dir}")
+        print(f"🌐 [BABEL] Translations dir (config): {app.config['BABEL_TRANSLATION_DIRECTORIES']}")
         
         # Supported languages
         app.config['LANGUAGES'] = {
