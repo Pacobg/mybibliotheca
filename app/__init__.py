@@ -433,12 +433,19 @@ def create_app():
     if Babel is not None:
         def get_locale():
             """Determine the best language based on user preference or browser."""
-            # 1. Check if user explicitly selected language (stored in session)
-            if 'language' in session:
-                return session['language']
+            try:
+                # 1. Check if user explicitly selected language (stored in session)
+                if 'language' in session and session['language']:
+                    lang = session['language']
+                    app.logger.debug(f"Using language from session: {lang}")
+                    return lang
+            except Exception as e:
+                app.logger.warning(f"Error reading language from session: {e}")
             
             # 2. Check Accept-Language header from browser
-            return request.accept_languages.best_match(['en', 'bg']) or 'en'
+            browser_lang = request.accept_languages.best_match(['en', 'bg']) or 'en'
+            app.logger.debug(f"Using browser language: {browser_lang}")
+            return browser_lang
         
         babel = Babel(app, locale_selector=get_locale)
         
