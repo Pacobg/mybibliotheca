@@ -1692,6 +1692,23 @@
           </div>
           
           <div class="navbar-nav">
+            {% if current_user.is_authenticated %}
+              <!-- User info section at the top right - compact layout -->
+              <div class="d-flex align-items-center gap-1 me-2">
+                <span class="navbar-text small text-nowrap">
+                  {{ _('Welcome') }}, <strong>{{ current_user.display_name if current_user.display_name else current_user.username }}</strong>
+                </span>
+                {% if current_user.is_admin %}
+                  <a href="{{ url_for('admin.dashboard') }}" class="badge bg-danger text-decoration-none small">{{ _('Admin') }}</a>
+                {% endif %}
+                <a class="nav-link nav-pill nav-ghost p-1 text-nowrap" href="{{ url_for('auth.logout') }}" title="{{ _('Logout') }}">
+                  <i class="bi bi-box-arrow-right"></i> <span class="d-none d-md-inline">{{ _('Logout') }}</span>
+                </a>
+              </div>
+            {% else %}
+              <a class="nav-link nav-pill nav-ghost" href="{{ url_for('auth.login') }}">{{ _('Login') }}</a>
+            {% endif %}
+            
             <!-- Dark mode toggle -->
             <button id="theme-toggle" type="button" class="nav-link nav-pill nav-ghost" title="Toggle dark mode">
               <i class="bi bi-moon-fill" id="theme-icon"></i>
@@ -1723,21 +1740,6 @@
                 </li>
               </ul>
             </li>
-            
-            {% if current_user.is_authenticated %}
-              <!-- User info section in separate container for better layout -->
-              <div class="d-flex align-items-center gap-2 ms-3 ps-3 border-start border-secondary border-opacity-25">
-                <span class="navbar-text text-nowrap">
-                  {{ _('Welcome') }}, {{ current_user.display_name if current_user.display_name else current_user.username }}
-                  {% if current_user.is_admin %}
-                    <a href="{{ url_for('admin.dashboard') }}" class="badge bg-danger ms-1 text-decoration-none">{{ _('Admin') }}</a>
-                  {% endif %}
-                </span>
-                <a class="nav-link nav-pill nav-ghost text-nowrap" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> {{ _('Logout') }}</a>
-              </div>
-            {% else %}
-              <a class="nav-link nav-pill nav-ghost" href="{{ url_for('auth.login') }}">{{ _('Login') }}</a>
-            {% endif %}
           </div>
         </div>
       </div>
