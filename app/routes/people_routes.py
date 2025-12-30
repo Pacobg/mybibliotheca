@@ -2216,6 +2216,9 @@ def verify_person_name(person_id):
                 ('конан дойл', 'изгубеният свят'): 'Артър Конан Дойл',
                 ('conan doyle', 'hound of the baskervilles'): 'Артър Конан Дойл',
                 ('conan doyle', 'lost world'): 'Артър Конан Дойл',
+                ('дюма', 'граф монте кристо'): 'Александър Дюма',
+                ('dumas', 'count of monte cristo'): 'Александър Дюма',
+                ('alexandre', 'дюма'): 'Александър Дюма',  # For "Alexandre; Дюма" -> "Александър Дюма"
             }
             
             should_force_update = False
