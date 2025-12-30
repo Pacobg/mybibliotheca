@@ -2393,6 +2393,7 @@ def check_person_relationships(person_id):
                 MATCH (b:Book {id: $book_id})<-[r:AUTHORED]-(p:Person)
                 WHERE r.role IS NULL OR r.role = 'authored'
                 RETURN p.id as author_id, p.name as author_name, r.role as role
+                ORDER BY p.name
                 """
                 
                 try:
@@ -2405,6 +2406,17 @@ def check_person_relationships(person_id):
                     
                     from app.services.kuzu_service_facade import _convert_query_result_to_list
                     authors = _convert_query_result_to_list(result)
+                    
+                    # Get all authors for this book (for display purposes)
+                    all_authors_for_book = []
+                    for author in authors:
+                        author_name = author.get('author_name') or author.get('col_1') or ''
+                        author_id = author.get('author_id') or author.get('col_0') or ''
+                        if author_name:
+                            all_authors_for_book.append({
+                                'id': author_id,
+                                'name': author_name
+                            })
                     
                     # Check if this is a known correct author-book combination
                     # If so, don't flag it as an issue even if there are other authors
@@ -2459,15 +2471,55 @@ def check_person_relationships(person_id):
                                     'language': author_lang
                                 })
                         
-                        if matching_authors:
-                            issues.append({
-                                'book_id': book_id,
-                                'book_title': book_title,
-                                'issue': f'Multiple authors found, some match book language better',
-                                'current_author': person_name,
-                                'better_matches': matching_authors,
-                                'book_language': book_lang
-                            })
+                        # If there are multiple authors, always flag it as an issue
+                        # (even if current author is correct, we want to show all authors)
+                        if len(authors) > 1:
+                            # Determine which author is correct based on known combinations
+                            correct_author_id = None
+                            correct_author_name = None
+                            
+                            for author in authors:
+                                author_name = author.get('author_name') or author.get('col_1') or ''
+                                author_id = author.get('author_id') or author.get('col_0') or ''
+                                author_name_lower = author_name.lower()
+                                
+                                # Check if this is a known correct author
+                                is_correct = False
+                                for (author_key, book_key), _ in known_correct_combinations.items():
+                                    if author_key in author_name_lower and book_key in book_title_lower:
+                                        is_correct = True
+                                        correct_author_id = author_id
+                                        correct_author_name = author_name
+                                        break
+                                
+                                if is_correct:
+                                    break
+                            
+                            # If no known correct author found, use current author as correct
+                            if not correct_author_id:
+                                correct_author_id = person_id
+                                correct_author_name = person_name
+                            
+                            # Mark incorrect authors (all except the correct one)
+                            incorrect_authors = []
+                            for author in all_authors_for_book:
+                                if author['id'] != correct_author_id:
+                                    incorrect_authors.append(author)
+                            
+                            if incorrect_authors:
+                                issues.append({
+                                    'book_id': book_id,
+                                    'book_title': book_title,
+                                    'issue': f'Намерени са {len(authors)} автори. Само един е верен.',
+                                    'current_author': person_name,
+                                    'correct_author': {
+                                        'id': correct_author_id,
+                                        'name': correct_author_name
+                                    },
+                                    'all_authors': all_authors_for_book,
+                                    'incorrect_authors': incorrect_authors,
+                                    'book_language': book_lang
+                                })
                 except Exception as e:
                     current_app.logger.debug(f"Error checking book authors: {e}")
         
@@ -2494,15 +2546,24 @@ def check_person_relationships(person_id):
 def fix_person_relationships(person_id):
     """
     Fix incorrect author-book relationships by removing wrong connections.
+    Accepts either book_ids (removes person from those books) or author_ids (removes those authors from a book).
     """
     try:
         data = request.get_json(silent=True) or {}
         book_ids_to_remove = data.get('book_ids', [])
+        author_ids_to_remove = data.get('author_ids', [])  # New: remove specific authors from books
+        book_id_for_authors = data.get('book_id', None)  # Required if removing specific authors
         
-        if not book_ids_to_remove:
+        if not book_ids_to_remove and not author_ids_to_remove:
             return jsonify({
                 'status': 'error',
-                'message': 'No book IDs provided'
+                'message': 'No book IDs or author IDs provided'
+            }), 400
+        
+        if author_ids_to_remove and not book_id_for_authors:
+            return jsonify({
+                'status': 'error',
+                'message': 'book_id is required when removing specific authors'
             }), 400
         
         from app.infrastructure.kuzu_graph import safe_execute_kuzu_query
@@ -2510,29 +2571,60 @@ def fix_person_relationships(person_id):
         removed_count = 0
         errors = []
         
-        for book_id in book_ids_to_remove:
-            try:
-                # Remove AUTHORED relationship between person and book
-                query = """
-                MATCH (p:Person {id: $person_id})-[r:AUTHORED]->(b:Book {id: $book_id})
-                DELETE r
-                RETURN COUNT(r) as deleted
-                """
-                
-                result = safe_execute_kuzu_query(
-                    query,
-                    {"person_id": person_id, "book_id": book_id},
-                    user_id=str(current_user.id),
-                    operation="remove_author_relationship"
-                )
-                
-                removed_count += 1
-            except Exception as e:
-                errors.append({
-                    'book_id': book_id,
-                    'error': str(e)
-                })
-                current_app.logger.error(f"Error removing relationship for book {book_id}: {e}")
+        # Remove specific authors from a book
+        if author_ids_to_remove and book_id_for_authors:
+            for author_id in author_ids_to_remove:
+                try:
+                    # Remove AUTHORED relationship between specific author and book
+                    query = """
+                    MATCH (p:Person {id: $author_id})-[r:AUTHORED]->(b:Book {id: $book_id})
+                    WHERE r.role IS NULL OR r.role = 'authored'
+                    DELETE r
+                    RETURN COUNT(r) as deleted
+                    """
+                    
+                    result = safe_execute_kuzu_query(
+                        query,
+                        {"author_id": author_id, "book_id": book_id_for_authors},
+                        user_id=str(current_user.id),
+                        operation="remove_author_relationship"
+                    )
+                    
+                    removed_count += 1
+                    current_app.logger.info(f"Removed author {author_id} from book {book_id_for_authors}")
+                except Exception as e:
+                    errors.append({
+                        'author_id': author_id,
+                        'book_id': book_id_for_authors,
+                        'error': str(e)
+                    })
+                    current_app.logger.error(f"Error removing author {author_id} from book {book_id_for_authors}: {e}")
+        
+        # Remove person from books (old behavior)
+        if book_ids_to_remove:
+            for book_id in book_ids_to_remove:
+                try:
+                    # Remove AUTHORED relationship between person and book
+                    query = """
+                    MATCH (p:Person {id: $person_id})-[r:AUTHORED]->(b:Book {id: $book_id})
+                    DELETE r
+                    RETURN COUNT(r) as deleted
+                    """
+                    
+                    result = safe_execute_kuzu_query(
+                        query,
+                        {"person_id": person_id, "book_id": book_id},
+                        user_id=str(current_user.id),
+                        operation="remove_author_relationship"
+                    )
+                    
+                    removed_count += 1
+                except Exception as e:
+                    errors.append({
+                        'book_id': book_id,
+                        'error': str(e)
+                    })
+                    current_app.logger.error(f"Error removing relationship for book {book_id}: {e}")
         
         return jsonify({
             'status': 'success',

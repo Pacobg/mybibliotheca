@@ -584,57 +584,83 @@ async function checkPersonRelationships(personId) {
         
         if (data.status === 'success') {
             if (data.issues_found > 0) {
-                // Show issues
-                let issuesHtml = '<ul class="list-unstyled">';
-                data.issues.forEach(issue => {
-                    issuesHtml += `<li class="mb-2">
-                        <strong>${issue.book_title}</strong><br>
-                        <small class="text-muted">${issue.issue}</small>
-                        ${issue.better_matches ? '<br><small>По-добри съвпадения: ' + issue.better_matches.map(m => m.name).join(', ') + '</small>' : ''}
-                    </li>`;
+                // Show issues with author selection
+                let issuesHtml = '';
+                data.issues.forEach((issue, issueIndex) => {
+                    if (issue.all_authors && issue.all_authors.length > 1) {
+                        // Show all authors with checkboxes to select which to remove
+                        issuesHtml += `<div class="mb-3">
+                            <strong>${issue.book_title}</strong><br>
+                            <small class="text-muted">${issue.issue}</small>
+                            ${issue.correct_author ? `<br><small class="text-success"><strong>Правилен автор:</strong> ${issue.correct_author.name}</small>` : ''}
+                            <div class="mt-2">
+                                <small class="text-muted">Избери автори за премахване:</small>
+                                <div class="mt-1">`;
+                        
+                        issue.all_authors.forEach(author => {
+                            const isCorrect = issue.correct_author && author.id === issue.correct_author.id;
+                            const checkboxId = `author-${issueIndex}-${author.id}`;
+                            issuesHtml += `
+                                <div class="form-check">
+                                    <input class="form-check-input author-checkbox" type="checkbox" 
+                                           value="${author.id}" 
+                                           id="${checkboxId}"
+                                           data-book-id="${issue.book_id}"
+                                           ${isCorrect ? 'disabled' : 'checked'}>
+                                    <label class="form-check-label ${isCorrect ? 'text-success fw-bold' : ''}" for="${checkboxId}">
+                                        ${author.name}${isCorrect ? ' (правилен)' : ''}
+                                    </label>
+                                </div>`;
+                        });
+                        
+                        issuesHtml += `</div>
+                                <button type="button" class="btn btn-sm btn-danger mt-2 remove-authors-btn" 
+                                        data-book-id="${issue.book_id}">
+                                    Премахни избраните автори
+                                </button>
+                            </div>
+                        </div>`;
+                    } else {
+                        // Fallback for old format
+                        issuesHtml += `<li class="mb-2">
+                            <strong>${issue.book_title}</strong><br>
+                            <small class="text-muted">${issue.issue}</small>
+                            ${issue.better_matches ? '<br><small>По-добри съвпадения: ' + issue.better_matches.map(m => m.name).join(', ') + '</small>' : ''}
+                        </li>`;
+                    }
                 });
-                issuesHtml += '</ul>';
                 
-                const bookIds = data.issues.map(i => i.book_id).filter(id => id);
-                
-                // Store bookIds in data attribute to avoid escaping issues
                 const alertId = 'relationships-alert-' + Date.now();
                 const alert = document.createElement('div');
                 alert.className = 'alert alert-warning alert-dismissible fade show mt-3';
                 alert.id = alertId;
                 alert.setAttribute('data-person-id', personId);
-                alert.setAttribute('data-book-ids', JSON.stringify(bookIds));
                 alert.innerHTML = `
                     <strong>Намерени проблеми!</strong> Открити са ${data.issues_found} неправилни връзки.
-                    ${issuesHtml}
-                    <button type="button" class="btn btn-sm btn-danger mt-2 fix-relationships-btn">
-                        Премахни неправилните връзки
-                    </button>
+                    <div class="mt-2">${issuesHtml}</div>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 `;
                 document.querySelector('.card-body').insertBefore(alert, document.querySelector('.card-body').firstChild);
                 
-                // Add event listener to fix button using event delegation
-                const fixBtn = alert.querySelector('.fix-relationships-btn');
-                if (fixBtn) {
-                    fixBtn.addEventListener('click', function() {
-                        const personId = alert.getAttribute('data-person-id');
-                        const bookIdsJson = alert.getAttribute('data-book-ids');
-                        try {
-                            const bookIds = JSON.parse(bookIdsJson);
-                            fixRelationships(personId, bookIds);
-                        } catch (e) {
-                            console.error('Error parsing book IDs:', e);
-                            const errorAlert = document.createElement('div');
-                            errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-2';
-                            errorAlert.innerHTML = `
-                                <strong>Грешка!</strong> Грешка при обработка на данните. Моля, опитайте отново.
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            `;
-                            alert.appendChild(errorAlert);
+                // Add event listeners to remove buttons
+                alert.querySelectorAll('.remove-authors-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const bookId = this.getAttribute('data-book-id');
+                        const checkboxes = alert.querySelectorAll(`input[data-book-id="${bookId}"].author-checkbox:checked:not(:disabled)`);
+                        const authorIds = Array.from(checkboxes).map(cb => cb.value);
+                        
+                        if (authorIds.length === 0) {
+                            alert('Моля, избери поне един автор за премахване.');
+                            return;
                         }
+                        
+                        if (!confirm(`Сигурни ли сте, че искате да премахнете ${authorIds.length} автор(и) от тази книга?`)) {
+                            return;
+                        }
+                        
+                        fixAuthorRelationships(personId, bookId, authorIds);
                     });
-                }
+                });
             } else {
                 const alert = document.createElement('div');
                 alert.className = 'alert alert-success alert-dismissible fade show mt-3';
