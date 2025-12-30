@@ -1496,6 +1496,27 @@ def verify_person_name(person_id):
         else:
             original_name = getattr(person, 'name', '')
         
+        # Check if name is already corrupted (stored as JSON string)
+        if original_name and isinstance(original_name, str):
+            # Check if it looks like a JSON string
+            if original_name.strip().startswith('{') and ('normalized_name' in original_name or 'name' in original_name):
+                try:
+                    import json
+                    parsed = json.loads(original_name)
+                    if isinstance(parsed, dict):
+                        # Extract the actual name from JSON, or use empty string if null
+                        extracted_name = parsed.get('normalized_name') or parsed.get('name') or ''
+                        if extracted_name:
+                            original_name = extracted_name
+                        else:
+                            # If JSON has null, we need to find the original name from books or use a fallback
+                            # For now, set to empty so we can try to recover it
+                            original_name = ''
+                            current_app.logger.warning(f"Person {person_id} has corrupted name stored as JSON with null value")
+                except (json.JSONDecodeError, ValueError):
+                    # Not valid JSON, continue with original
+                    pass
+        
         # Get books by this person
         def safe_call_sync_method(method, *args, **kwargs):
             result = method(*args, **kwargs)
@@ -1509,6 +1530,27 @@ def verify_person_name(person_id):
             return result
         
         all_books_by_person = safe_call_sync_method(person_service.get_books_by_person_sync, person_id)
+        
+        # If original_name is empty after cleaning, try to recover from books
+        if not original_name and all_books_by_person:
+            # Try to get author name from the first book's authors
+            for book in all_books_by_person:
+                # Check if book has author information
+                book_authors = book.get('authors', []) if isinstance(book, dict) else []
+                if book_authors:
+                    # Try to find a name that matches this person
+                    for author in book_authors:
+                        if isinstance(author, dict) and author.get('id') == person_id:
+                            potential_name = author.get('name', '')
+                            if potential_name and not potential_name.strip().startswith('{'):
+                                original_name = potential_name
+                                break
+                    if original_name:
+                        break
+                # Also check book title or other metadata if needed
+                if not original_name:
+                    # As last resort, we'll let Perplexity try to find it based on books
+                    pass
         
         # Determine primary language
         primary_language = 'en'

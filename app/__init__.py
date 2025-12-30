@@ -683,6 +683,29 @@ def create_app():
         """Convert markdown text to HTML."""
         from app.template_filters.markdown_filters import render_markdown
         return render_markdown(text)
+    
+    # Person name cleaning filter (removes JSON strings that might be stored as names)
+    @app.template_filter('clean_person_name')
+    def clean_person_name_filter(name):
+        """Clean person name by removing JSON strings that might be stored incorrectly."""
+        import json
+        if not name or not isinstance(name, str):
+            return name or ''
+        
+        # Check if it looks like a JSON string
+        name = name.strip()
+        if name.startswith('{') and ('normalized_name' in name or 'name' in name):
+            try:
+                parsed = json.loads(name)
+                if isinstance(parsed, dict):
+                    # Extract the actual name from JSON
+                    extracted_name = parsed.get('normalized_name') or parsed.get('name') or ''
+                    return extracted_name if extracted_name else ''
+            except (json.JSONDecodeError, ValueError):
+                # Not valid JSON, return as-is
+                pass
+        
+        return name
 
     # CSRF error handler
     # Middleware to ensure all headers are properly encoded for Werkzeug dev server
