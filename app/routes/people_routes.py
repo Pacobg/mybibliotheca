@@ -1670,73 +1670,73 @@ def verify_person_name(person_id):
                     
                     # Better event loop handling - don't close loop until all async operations are done
                     try:
-                    # Try to get existing event loop
-                    try:
-                        loop = asyncio.get_event_loop()
-                        if loop.is_running():
-                            # If loop is running, we need a new one in a thread
-                            import concurrent.futures
-                            with concurrent.futures.ThreadPoolExecutor() as executor:
-                                def run_in_new_loop():
-                                    new_loop = asyncio.new_event_loop()
-                                    asyncio.set_event_loop(new_loop)
-                                    try:
-                                        result = new_loop.run_until_complete(
-                                            verify_author_name_with_perplexity(
-                                                name_to_verify,
-                                                primary_language,
-                                                perplexity_enricher,
-                                                book_titles
-                                            )
-                                        )
-                                        # Close Perplexity client before closing loop
-                                        if perplexity_enricher:
-                                            try:
-                                                new_loop.run_until_complete(perplexity_enricher.close())
-                                            except Exception:
-                                                pass
-                                        return result
-                                    finally:
-                                        new_loop.close()
-                                future = executor.submit(run_in_new_loop)
-                                verified_name = future.result() or normalized_name
-                        else:
-                            # Loop exists but not running
-                            verified_name = loop.run_until_complete(
-                                verify_author_name_with_perplexity(
-                                    name_to_verify,
-                                    primary_language,
-                                    perplexity_enricher,
-                                    book_titles
-                                )
-                            ) or normalized_name
-                            # Close Perplexity client
-                            if perplexity_enricher:
-                                try:
-                                    loop.run_until_complete(perplexity_enricher.close())
-                                except Exception:
-                                    pass
-                    except RuntimeError:
-                        # No event loop, create new one
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
+                        # Try to get existing event loop
                         try:
-                            verified_name = loop.run_until_complete(
-                                verify_author_name_with_perplexity(
-                                    name_to_verify,
-                                    primary_language,
-                                    perplexity_enricher,
-                                    book_titles
-                                )
-                            ) or normalized_name
-                            # Close Perplexity client before closing loop
-                            if perplexity_enricher:
-                                try:
-                                    loop.run_until_complete(perplexity_enricher.close())
-                                except Exception:
-                                    pass
-                        finally:
-                            loop.close()
+                            loop = asyncio.get_event_loop()
+                            if loop.is_running():
+                                # If loop is running, we need a new one in a thread
+                                import concurrent.futures
+                                with concurrent.futures.ThreadPoolExecutor() as executor:
+                                    def run_in_new_loop():
+                                        new_loop = asyncio.new_event_loop()
+                                        asyncio.set_event_loop(new_loop)
+                                        try:
+                                            result = new_loop.run_until_complete(
+                                                verify_author_name_with_perplexity(
+                                                    name_to_verify,
+                                                    primary_language,
+                                                    perplexity_enricher,
+                                                    book_titles
+                                                )
+                                            )
+                                            # Close Perplexity client before closing loop
+                                            if perplexity_enricher:
+                                                try:
+                                                    new_loop.run_until_complete(perplexity_enricher.close())
+                                                except Exception:
+                                                    pass
+                                            return result
+                                        finally:
+                                            new_loop.close()
+                                    future = executor.submit(run_in_new_loop)
+                                    verified_name = future.result() or normalized_name
+                            else:
+                                # Loop exists but not running
+                                verified_name = loop.run_until_complete(
+                                    verify_author_name_with_perplexity(
+                                        name_to_verify,
+                                        primary_language,
+                                        perplexity_enricher,
+                                        book_titles
+                                    )
+                                ) or normalized_name
+                                # Close Perplexity client
+                                if perplexity_enricher:
+                                    try:
+                                        loop.run_until_complete(perplexity_enricher.close())
+                                    except Exception:
+                                        pass
+                        except RuntimeError:
+                            # No event loop, create new one
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                            try:
+                                verified_name = loop.run_until_complete(
+                                    verify_author_name_with_perplexity(
+                                        name_to_verify,
+                                        primary_language,
+                                        perplexity_enricher,
+                                        book_titles
+                                    )
+                                ) or normalized_name
+                                # Close Perplexity client before closing loop
+                                if perplexity_enricher:
+                                    try:
+                                        loop.run_until_complete(perplexity_enricher.close())
+                                    except Exception:
+                                        pass
+                            finally:
+                                loop.close()
                     except Exception as e:
                         current_app.logger.error(f"Error verifying name with Perplexity: {e}", exc_info=True)
                         verified_name = normalized_name
