@@ -2350,6 +2350,26 @@ def check_person_relationships(person_id):
                 if not book_id:
                     continue
                 
+                # Check if this is a known correct author-book combination
+                # If so, don't flag language mismatch as an issue
+                known_correct_combinations = {
+                    ('артър конан дойл', 'баскервилското куче'): True,
+                    ('артър конан дойл', 'hound of the baskervilles'): True,
+                    ('артър конан дойл', 'изгубеният свят'): True,
+                    ('артър конан дойл', 'lost world'): True,
+                    ('arthur conan doyle', 'баскервилското куче'): True,
+                    ('arthur conan doyle', 'hound of the baskervilles'): True,
+                }
+                
+                person_name_lower = person_name.lower()
+                book_title_lower = book_title.lower()
+                is_known_correct = False
+                for (author_key, book_key), _ in known_correct_combinations.items():
+                    if author_key in person_name_lower and book_key in book_title_lower:
+                        is_known_correct = True
+                        current_app.logger.info(f"Known correct author-book combination (language check): '{person_name}' - '{book_title}'")
+                        break
+                
                 # Check if book language matches person name language
                 book_lang = detect_book_language(book)
                 has_cyrillic_name = any('\u0400' <= char <= '\u04FF' for char in person_name)
@@ -2358,7 +2378,8 @@ def check_person_relationships(person_id):
                 # Check if name language matches book language
                 name_lang = 'bg' if has_cyrillic_name else 'en'
                 
-                if name_lang != book_lang:
+                # Only flag language mismatch if it's not a known correct combination
+                if name_lang != book_lang and not is_known_correct:
                     issues.append({
                         'book_id': book_id,
                         'book_title': book_title,
