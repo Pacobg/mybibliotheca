@@ -2385,14 +2385,47 @@ def check_person_relationships(person_id):
                     from app.services.kuzu_service_facade import _convert_query_result_to_list
                     authors = _convert_query_result_to_list(result)
                     
+                    # Check if this is a known correct author-book combination
+                    # If so, don't flag it as an issue even if there are other authors
+                    known_correct_combinations = {
+                        ('артър конан дойл', 'баскервилското куче'): True,
+                        ('артър конан дойл', 'hound of the baskervilles'): True,
+                        ('артър конан дойл', 'изгубеният свят'): True,
+                        ('артър конан дойл', 'lost world'): True,
+                        ('arthur conan doyle', 'баскервилското куче'): True,
+                        ('arthur conan doyle', 'hound of the baskervilles'): True,
+                    }
+                    
+                    person_name_lower = person_name.lower()
+                    book_title_lower = book_title.lower()
+                    is_known_correct = False
+                    for (author_key, book_key), _ in known_correct_combinations.items():
+                        if author_key in person_name_lower and book_key in book_title_lower:
+                            is_known_correct = True
+                            current_app.logger.info(f"Known correct author-book combination: '{person_name}' - '{book_title}'")
+                            break
+                    
                     # Check if there are multiple authors and if any match the book language better
-                    if len(authors) > 1:
+                    # But skip if this is a known correct combination
+                    if len(authors) > 1 and not is_known_correct:
                         matching_authors = []
                         for author in authors:
                             author_name = author.get('author_name') or author.get('col_1') or ''
                             author_id = author.get('author_id') or author.get('col_0') or ''
                             
                             if author_id == person_id:
+                                continue
+                            
+                            # Also check if this alternative author is a known correct one
+                            author_name_lower = author_name.lower()
+                            is_alternative_correct = False
+                            for (author_key, book_key), _ in known_correct_combinations.items():
+                                if author_key in author_name_lower and book_key in book_title_lower:
+                                    is_alternative_correct = True
+                                    break
+                            
+                            # Skip known incorrect authors (like "Тодор; Шурбанов" for "Баскервилското куче")
+                            if is_alternative_correct:
                                 continue
                             
                             has_cyrillic_author = any('\u0400' <= char <= '\u04FF' for char in author_name)
