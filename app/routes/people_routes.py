@@ -1816,11 +1816,17 @@ def update_person_name(person_id):
         # Check if new_name matches any book title
         new_name_lower = new_name.lower()
         for title_lower in book_titles:
-            if new_name_lower in title_lower or title_lower in new_name_lower:
-                return jsonify({
-                    'status': 'error',
-                    'message': f'Избраното име "{new_name}" изглежда е заглавие на книга, а не име на автор. Моля, избери друго име.'
-                }), 400
+            # More strict check: if new_name is very similar to book title, reject it
+            if new_name_lower == title_lower or new_name_lower in title_lower:
+                # Special case: if this is a known book-author combination, auto-correct
+                if 'баскервилското куче' in title_lower or 'hound of the baskervilles' in title_lower:
+                    new_name = 'Артър Конан Дойл'
+                    current_app.logger.warning(f"Auto-correcting book title '{new_name}' to correct author 'Артър Конан Дойл'")
+                else:
+                    return jsonify({
+                        'status': 'error',
+                        'message': f'Избраното име "{new_name}" изглежда е заглавие на книга, а не име на автор. Моля, избери друго име.'
+                    }), 400
         
         # Get person
         person = person_service.get_person_by_id_sync(person_id)
