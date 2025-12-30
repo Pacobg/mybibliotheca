@@ -348,7 +348,7 @@ async function verifyPersonName(personId) {
     btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Проверява...';
     
     try {
-        const response = await fetch(`/person/${personId}/verify_name`, {
+        const response = await fetch(`/people/person/${personId}/verify_name`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -423,7 +423,7 @@ async function checkPersonRelationships(personId) {
     btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Проверява...';
     
     try {
-        const response = await fetch(`/person/${personId}/check_relationships`, {
+        const response = await fetch(`/people/person/${personId}/check_relationships`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -504,7 +504,7 @@ async function fixRelationships(personId, bookIds) {
     }
     
     try {
-        const response = await fetch(`/person/${personId}/fix_relationships`, {
+        const response = await fetch(`/people/person/${personId}/fix_relationships`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
