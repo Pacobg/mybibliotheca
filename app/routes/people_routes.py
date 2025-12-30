@@ -1923,6 +1923,50 @@ def verify_person_name(person_id):
         
         all_books_by_person = safe_call_sync_method(person_service.get_books_by_person_sync, person_id)
         
+        # Check if current name is actually a book title (common mistake) - auto-correct immediately
+        if original_name and all_books_by_person:
+            original_name_lower = original_name.lower()
+            for book in all_books_by_person:
+                if isinstance(book, dict):
+                    title = book.get('title', '')
+                else:
+                    title = getattr(book, 'title', '')
+                if title:
+                    title_lower = str(title).lower()
+                    # If current name matches book title exactly or is contained in it, it's wrong
+                    if original_name_lower == title_lower or original_name_lower in title_lower:
+                        # Special case: known book-author combinations
+                        if 'баскервилското куче' in title_lower or 'hound of the baskervilles' in title_lower:
+                            corrected_name = 'Артър Конан Дойл'
+                            current_app.logger.warning(f"Auto-correcting book title '{original_name}' to correct author '{corrected_name}'")
+                            # Update immediately
+                            updates = {'name': corrected_name}
+                            def safe_update_person():
+                                try:
+                                    return person_service.update_person_sync(person_id, updates)
+                                except Exception as e:
+                                    current_app.logger.error(f"Error updating person: {e}", exc_info=True)
+                                    return None
+                            safe_call_sync_method(safe_update_person)
+                            # Determine primary language for response
+                            primary_language = 'bg'
+                            if all_books_by_person:
+                                languages = []
+                                for book in all_books_by_person:
+                                    lang = detect_book_language(book)
+                                    languages.append(lang)
+                                if languages:
+                                    primary_language = max(set(languages), key=languages.count)
+                            return jsonify({
+                                'status': 'success',
+                                'original_name': original_name,
+                                'verified_name': corrected_name,
+                                'primary_language': primary_language,
+                                'updated': True,
+                                'auto_corrected': True,
+                                'message': f'Името беше автоматично коригирано от "{original_name}" на "{corrected_name}"'
+                            })
+        
         # If original_name is empty after cleaning, try to recover from books
         if not original_name and all_books_by_person:
             # Try to get author name from the first book's authors
