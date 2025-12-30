@@ -339,6 +339,13 @@
 </style>
 
 <script>
+// Get CSRF token helper function
+function getCSRFToken() {
+    return window.csrfToken || 
+           document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+           '';
+}
+
 async function verifyPersonName(personId) {
     const btn = document.getElementById('verifyNameBtn');
     const originalText = btn.innerHTML;
@@ -348,11 +355,13 @@ async function verifyPersonName(personId) {
     btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Проверява...';
     
     try {
+        const csrfToken = getCSRFToken();
         const response = await fetch(`/people/person/${personId}/verify_name`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-CSRFToken': csrfToken
             },
             credentials: 'same-origin'
         });
@@ -423,11 +432,13 @@ async function checkPersonRelationships(personId) {
     btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Проверява...';
     
     try {
+        const csrfToken = getCSRFToken();
         const response = await fetch(`/people/person/${personId}/check_relationships`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-CSRFToken': csrfToken
             },
             credentials: 'same-origin'
         });
@@ -504,11 +515,13 @@ async function fixRelationships(personId, bookIds) {
     }
     
     try {
+        const csrfToken = getCSRFToken();
         const response = await fetch(`/people/person/${personId}/fix_relationships`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-CSRFToken': csrfToken
             },
             credentials: 'same-origin',
             body: JSON.stringify({ book_ids: bookIds })
