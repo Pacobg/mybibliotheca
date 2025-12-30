@@ -413,5 +413,139 @@ async function verifyPersonName(personId) {
         btn.innerHTML = originalText;
     }
 }
+
+async function checkPersonRelationships(personId) {
+    const btn = document.getElementById('checkRelationshipsBtn');
+    const originalText = btn.innerHTML;
+    
+    // Disable button and show loading
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Проверява...';
+    
+    try {
+        const response = await fetch(`/person/${personId}/check_relationships`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        });
+        
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`HTTP ${response.status}: ${text.substring(0, 100)}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            throw new Error(`Expected JSON but got ${contentType}. Response: ${text.substring(0, 200)}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            if (data.issues_found > 0) {
+                // Show issues
+                let issuesHtml = '<ul class="list-unstyled">';
+                data.issues.forEach(issue => {
+                    issuesHtml += `<li class="mb-2">
+                        <strong>${issue.book_title}</strong><br>
+                        <small class="text-muted">${issue.issue}</small>
+                        ${issue.better_matches ? '<br><small>По-добри съвпадения: ' + issue.better_matches.map(m => m.name).join(', ') + '</small>' : ''}
+                    </li>`;
+                });
+                issuesHtml += '</ul>';
+                
+                const bookIds = data.issues.map(i => i.book_id).filter(id => id);
+                
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-warning alert-dismissible fade show mt-3';
+                alert.innerHTML = `
+                    <strong>Намерени проблеми!</strong> Открити са ${data.issues_found} неправилни връзки.
+                    ${issuesHtml}
+                    <button type="button" class="btn btn-sm btn-danger mt-2" onclick="fixRelationships('${personId}', ${JSON.stringify(bookIds)})">
+                        Премахни неправилните връзки
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.card-body').insertBefore(alert, document.querySelector('.card-body').firstChild);
+            } else {
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success alert-dismissible fade show mt-3';
+                alert.innerHTML = `
+                    <strong>Отлично!</strong> Не са намерени проблеми с връзките.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.card-body').insertBefore(alert, document.querySelector('.card-body').firstChild);
+            }
+        } else {
+            throw new Error(data.message || 'Грешка при проверка');
+        }
+    } catch (error) {
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-danger alert-dismissible fade show mt-3';
+        alert.innerHTML = `
+            <strong>Грешка!</strong> ${error.message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.querySelector('.card-body').insertBefore(alert, document.querySelector('.card-body').firstChild);
+    } finally {
+        // Restore button
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+async function fixRelationships(personId, bookIds) {
+    if (!confirm(`Сигурни ли сте, че искате да премахнете връзките с ${bookIds.length} книги?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/person/${personId}/fix_relationships`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ book_ids: bookIds })
+        });
+        
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`HTTP ${response.status}: ${text.substring(0, 100)}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show mt-3';
+            alert.innerHTML = `
+                <strong>Успех!</strong> Премахнати са ${data.removed_count} неправилни връзки.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.card-body').insertBefore(alert, document.querySelector('.card-body').firstChild);
+            
+            // Reload page after 1 second
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            throw new Error(data.message || 'Грешка при поправка');
+        }
+    } catch (error) {
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-danger alert-dismissible fade show mt-3';
+        alert.innerHTML = `
+            <strong>Грешка!</strong> ${error.message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.querySelector('.card-body').insertBefore(alert, document.querySelector('.card-body').firstChild);
+    }
+}
 </script>
 {% endblock %}
