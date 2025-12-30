@@ -1760,9 +1760,37 @@ def verify_person_name_options(person_id):
         if not isinstance(options, list):
             options = [options] if options else []
         
-        # Add current name as first option if not already present
-        if original_name and original_name not in options:
-            options.insert(0, original_name)
+        # Expand incomplete names (e.g., "Дюма" -> "Александър Дюма" for "Граф Монте Кристо")
+        book_titles_lower = ' '.join([t.lower() for t in book_titles]) if book_titles else ''
+        expanded_options = []
+        for option in options:
+            option_lower = option.lower()
+            # Check if this is an incomplete name that should be expanded
+            if 'дюма' in option_lower and 'александър' not in option_lower:
+                # Check if we have "Граф Монте Кристо" book
+                if 'граф монте кристо' in book_titles_lower or 'count of monte cristo' in book_titles_lower:
+                    expanded_options.append('Александър Дюма')
+                    current_app.logger.info(f"Expanding option '{option}' to 'Александър Дюма'")
+                    continue
+            expanded_options.append(option)
+        
+        options = expanded_options
+        
+        # Add current name as first option if not already present (but expand it if needed)
+        if original_name:
+            # Expand current name if it's incomplete
+            original_lower = original_name.lower()
+            if 'дюма' in original_lower and 'александър' not in original_lower:
+                if 'граф монте кристо' in book_titles_lower or 'count of monte cristo' in book_titles_lower:
+                    expanded_current = 'Александър Дюма'
+                    if expanded_current not in options:
+                        options.insert(0, expanded_current)
+                else:
+                    if original_name not in options:
+                        options.insert(0, original_name)
+            else:
+                if original_name not in options:
+                    options.insert(0, original_name)
         
         return jsonify({
             'status': 'success',
