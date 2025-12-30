@@ -101,12 +101,15 @@ def people():
                     person_obj.book_count = 0
                     person_obj.contributions = {}
                 
-                processed_persons.append(person_obj)
+                # Only add persons with at least one book
+                if person_obj.book_count > 0:
+                    processed_persons.append(person_obj)
                 
             except Exception as person_error:
                 person_obj.book_count = 0
                 person_obj.contributions = {}
-                processed_persons.append(person_obj)
+                # Don't add persons with 0 books
+                pass
         
         # Sort by name safely
         try:
@@ -1354,17 +1357,19 @@ def api_people_people():
                         current_app.logger.debug(f"Perplexity verification failed for {original_name}: {e}")
                         verified_name = normalized_name
             
-            # Build response
-            person_data = {
-                'id': person_id,
-                'name': verified_name or normalized_name or original_name,
-                'original_name': original_name,
-                'book_count': book_count,
-                'primary_language': primary_language,
-                'verified': verified_name != normalized_name if verified_name else False
-            }
-            
-            processed_persons.append(person_data)
+            # Only include persons with at least one book
+            if book_count > 0:
+                # Build response
+                person_data = {
+                    'id': person_id,
+                    'name': verified_name or normalized_name or original_name,
+                    'original_name': original_name,
+                    'book_count': book_count,
+                    'primary_language': primary_language,
+                    'verified': verified_name != normalized_name if verified_name else False
+                }
+                
+                processed_persons.append(person_data)
         
         # Sort by name
         processed_persons.sort(key=lambda p: p['name'].lower())
@@ -1540,6 +1545,199 @@ def verify_person_name(person_id):
             'status': 'error',
             'message': str(e),
             'error_type': type(e).__name__
+        }), 500
+
+
+@people_bp.route('/person/<person_id>/check_relationships', methods=['POST'])
+@login_required
+def check_person_relationships(person_id):
+    """
+    Check and fix incorrect author-book relationships for a person.
+    Returns list of issues found and fixes applied.
+    """
+    try:
+        # Get person
+        person = person_service.get_person_by_id_sync(person_id)
+        if not person:
+            return jsonify({
+                'status': 'error',
+                'message': 'Person not found'
+            }), 404
+        
+        # Get person name
+        if isinstance(person, dict):
+            person_name = person.get('name', '')
+        else:
+            person_name = getattr(person, 'name', '')
+        
+        def safe_call_sync_method(method, *args, **kwargs):
+            result = method(*args, **kwargs)
+            if inspect.iscoroutine(result):
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    result = loop.run_until_complete(result)
+                finally:
+                    loop.close()
+            return result
+        
+        # Get all books by this person
+        all_books_by_person = safe_call_sync_method(person_service.get_books_by_person_sync, person_id)
+        
+        issues = []
+        fixes_applied = []
+        
+        if all_books_by_person:
+            from app.infrastructure.kuzu_graph import safe_execute_kuzu_query
+            
+            for book in all_books_by_person:
+                book_id = book.get('id') or book.get('uid')
+                book_title = book.get('title', '')
+                
+                if not book_id:
+                    continue
+                
+                # Check if book language matches person name language
+                book_lang = detect_book_language(book)
+                has_cyrillic_name = any('\u0400' <= char <= '\u04FF' for char in person_name)
+                has_cyrillic_title = any('\u0400' <= char <= '\u04FF' for char in book_title)
+                
+                # Check if name language matches book language
+                name_lang = 'bg' if has_cyrillic_name else 'en'
+                
+                if name_lang != book_lang:
+                    issues.append({
+                        'book_id': book_id,
+                        'book_title': book_title,
+                        'issue': f'Author name language ({name_lang}) does not match book language ({book_lang})',
+                        'person_name': person_name,
+                        'book_language': book_lang
+                    })
+                
+                # Check if there are other authors for this book that might be correct
+                query = """
+                MATCH (b:Book {id: $book_id})<-[r:AUTHORED]-(p:Person)
+                WHERE r.role IS NULL OR r.role = 'authored'
+                RETURN p.id as author_id, p.name as author_name, r.role as role
+                """
+                
+                try:
+                    result = safe_execute_kuzu_query(
+                        query,
+                        {"book_id": book_id},
+                        user_id=str(current_user.id),
+                        operation="check_book_authors"
+                    )
+                    
+                    from app.services.kuzu_service_facade import _convert_query_result_to_list
+                    authors = _convert_query_result_to_list(result)
+                    
+                    # Check if there are multiple authors and if any match the book language better
+                    if len(authors) > 1:
+                        matching_authors = []
+                        for author in authors:
+                            author_name = author.get('author_name') or author.get('col_1') or ''
+                            author_id = author.get('author_id') or author.get('col_0') or ''
+                            
+                            if author_id == person_id:
+                                continue
+                            
+                            has_cyrillic_author = any('\u0400' <= char <= '\u04FF' for char in author_name)
+                            author_lang = 'bg' if has_cyrillic_author else 'en'
+                            
+                            if author_lang == book_lang:
+                                matching_authors.append({
+                                    'id': author_id,
+                                    'name': author_name,
+                                    'language': author_lang
+                                })
+                        
+                        if matching_authors:
+                            issues.append({
+                                'book_id': book_id,
+                                'book_title': book_title,
+                                'issue': f'Multiple authors found, some match book language better',
+                                'current_author': person_name,
+                                'better_matches': matching_authors,
+                                'book_language': book_lang
+                            })
+                except Exception as e:
+                    current_app.logger.debug(f"Error checking book authors: {e}")
+        
+        return jsonify({
+            'status': 'success',
+            'person_id': person_id,
+            'person_name': person_name,
+            'issues_found': len(issues),
+            'issues': issues,
+            'fixes_applied': fixes_applied
+        })
+    
+    except Exception as e:
+        current_app.logger.error(f"Error checking person relationships: {e}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'error_type': type(e).__name__
+        }), 500
+
+
+@people_bp.route('/person/<person_id>/fix_relationships', methods=['POST'])
+@login_required
+def fix_person_relationships(person_id):
+    """
+    Fix incorrect author-book relationships by removing wrong connections.
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        book_ids_to_remove = data.get('book_ids', [])
+        
+        if not book_ids_to_remove:
+            return jsonify({
+                'status': 'error',
+                'message': 'No book IDs provided'
+            }), 400
+        
+        from app.infrastructure.kuzu_graph import safe_execute_kuzu_query
+        
+        removed_count = 0
+        errors = []
+        
+        for book_id in book_ids_to_remove:
+            try:
+                # Remove AUTHORED relationship between person and book
+                query = """
+                MATCH (p:Person {id: $person_id})-[r:AUTHORED]->(b:Book {id: $book_id})
+                DELETE r
+                RETURN COUNT(r) as deleted
+                """
+                
+                result = safe_execute_kuzu_query(
+                    query,
+                    {"person_id": person_id, "book_id": book_id},
+                    user_id=str(current_user.id),
+                    operation="remove_author_relationship"
+                )
+                
+                removed_count += 1
+            except Exception as e:
+                errors.append({
+                    'book_id': book_id,
+                    'error': str(e)
+                })
+                current_app.logger.error(f"Error removing relationship for book {book_id}: {e}")
+        
+        return jsonify({
+            'status': 'success',
+            'removed_count': removed_count,
+            'errors': errors
+        })
+    
+    except Exception as e:
+        current_app.logger.error(f"Error fixing person relationships: {e}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
         }), 500
 
 

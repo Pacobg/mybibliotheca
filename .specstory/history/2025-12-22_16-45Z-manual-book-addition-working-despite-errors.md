@@ -9154,8 +9154,6 @@ _**Agent (model composer-1, mode Agent)**_
 
 
 
-
-
 ---
 
 <tool-use data-tool-type="read" data-tool-name="read_file">
@@ -9209,7 +9207,6 @@ Line |
 
 
 ---
-
 
 Print statements-ите са в кода, но не се виждат в логовете. Добавям print statement по-рано в route-а, за да видим дали стига до там:
 
@@ -9285,7 +9282,6 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 
 ---
-
 
 Не виждам print statements-ите в логовете. Възможно е да не се изпълняват или да не се показват. Проверявам дали има exception преди да стигне до тях. Добавям print statement в самото начало на функцията:
 
@@ -9377,7 +9373,6 @@ To https://github.com/Pacobg/mybibliotheca.git
 
 
 ---
-
 
 Добавих print statements в самото начало на функцията с `sys.stdout.flush()` за да се показват веднага. Промените са push-нати.
 

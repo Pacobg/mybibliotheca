@@ -157,6 +157,13 @@
                                         <i class="bi bi-check-circle"></i> Провери име
                                     </button>
                                     
+                                    <!-- Check Relationships Button -->
+                                    <button type="button" class="btn btn-sm btn-outline-warning me-2" id="checkRelationshipsBtn"
+                                            onclick="checkPersonRelationships('{{ person.id }}')"
+                                            title="Провери за неправилни връзки между автора и книгите">
+                                        <i class="bi bi-exclamation-triangle"></i> Провери връзки
+                                    </button>
+                                    
                                     <!-- Refresh Metadata Button -->
                                     <form method="post" action="{{ url_for('people.refresh_person_metadata', person_id=person.id) }}" class="d-inline">
                                         <button type="submit" class="btn btn-sm btn-outline-info me-2" 
