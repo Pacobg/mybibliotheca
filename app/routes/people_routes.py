@@ -2251,7 +2251,7 @@ def verify_person_name(person_id):
             
             should_force_update = False
             
-            # Special case: if name contains both English and Bulgarian parts (e.g., "Alexandre; Дюма")
+            # Special case: if name contains both English and Bulgarian parts (e.g., "Alexandre; Дюма", "Andy; Грифитс")
             # and Perplexity returned something similar, try to construct full Bulgarian name
             has_english = any(ord(c) < 128 and c.isalpha() for c in original_name)
             has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in original_name)
@@ -2259,6 +2259,8 @@ def verify_person_name(person_id):
             if has_english and has_cyrillic:
                 # Check if verified name is just the Bulgarian part (e.g., "Дюма" instead of "Александър Дюма")
                 cyrillic_parts = [p for p in re.split(r'[;,]\s*', original_name) if any('\u0400' <= char <= '\u04FF' for char in p)]
+                english_parts = [p for p in re.split(r'[;,]\s*', original_name) if not any('\u0400' <= char <= '\u04FF' for char in p)]
+                
                 if cyrillic_parts and verified_name.lower() == cyrillic_parts[0].lower():
                     # Perplexity returned only the Bulgarian part, try to find full name
                     # Check for known patterns
@@ -2266,6 +2268,30 @@ def verify_person_name(person_id):
                         final_name = 'Александър Дюма'
                         should_force_update = True
                         current_app.logger.info(f"Expanding '{verified_name}' to full name '{final_name}' based on original '{original_name}'")
+                    elif 'грифитс' in verified_lower or 'griffiths' in original_name.lower():
+                        # Convert "Andy; Грифитс" to "Анди Грифитс"
+                        final_name = 'Анди Грифитс'
+                        should_force_update = True
+                        current_app.logger.info(f"Expanding '{verified_name}' to full name '{final_name}' based on original '{original_name}'")
+                elif english_parts and cyrillic_parts:
+                    # We have both English and Bulgarian parts, construct full Bulgarian name
+                    # Example: "Andy; Грифитс" -> "Анди Грифитс"
+                    english_part = english_parts[0].strip()
+                    cyrillic_part = cyrillic_parts[0].strip()
+                    
+                    # Known translations
+                    name_translations = {
+                        'andy': 'Анди',
+                        'alexandre': 'Александър',
+                        'alexander': 'Александър',
+                    }
+                    
+                    english_lower = english_part.lower()
+                    if english_lower in name_translations:
+                        bulgarian_first_name = name_translations[english_lower]
+                        final_name = f"{bulgarian_first_name} {cyrillic_part}"
+                        should_force_update = True
+                        current_app.logger.info(f"Constructing full Bulgarian name '{final_name}' from '{original_name}'")
             
             # Check known corrections
             if not should_force_update:
