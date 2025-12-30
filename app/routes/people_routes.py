@@ -1172,6 +1172,31 @@ RESPOND ONLY WITH THE NORMALIZED NAME or "null":
         # Extract normalized name
         normalized = content.strip()
         
+        # Try to parse as JSON first (in case Perplexity returns JSON)
+        try:
+            import json
+            parsed = json.loads(normalized)
+            if isinstance(parsed, dict):
+                # Extract normalized_name from JSON if present
+                if 'normalized_name' in parsed:
+                    normalized = parsed['normalized_name']
+                elif 'name' in parsed:
+                    normalized = parsed['name']
+                else:
+                    # If it's a dict but no name field, return None
+                    return None
+            elif isinstance(parsed, str):
+                normalized = parsed
+            else:
+                return None
+        except (json.JSONDecodeError, ValueError):
+            # Not JSON, continue with string processing
+            pass
+        
+        # Ensure normalized is a string
+        if not isinstance(normalized, str):
+            return None
+        
         # Remove quotes if present
         if normalized.startswith('"') and normalized.endswith('"'):
             normalized = normalized[1:-1]
@@ -1639,6 +1664,30 @@ def verify_person_name(person_id):
         # Update person name if different
         # Use safe sync method wrapper to avoid event loop issues
         final_name = verified_name or normalized_name or original_name
+        
+        # Ensure final_name is a clean string (not JSON or None)
+        if final_name:
+            # Check if it's a JSON string and try to parse it
+            if isinstance(final_name, str) and final_name.strip().startswith('{'):
+                try:
+                    import json
+                    parsed = json.loads(final_name)
+                    if isinstance(parsed, dict):
+                        final_name = parsed.get('normalized_name') or parsed.get('name') or normalized_name or original_name
+                except (json.JSONDecodeError, ValueError):
+                    pass
+            
+            # Ensure it's a string
+            if not isinstance(final_name, str):
+                final_name = str(final_name) if final_name else normalized_name or original_name
+            
+            # Clean up: remove any remaining JSON-like content
+            final_name = final_name.strip()
+            if final_name.lower() in ['null', 'none', '']:
+                final_name = normalized_name or original_name
+        else:
+            final_name = normalized_name or original_name
+        
         if final_name != original_name:
             updates = {'name': final_name}
             # Use safe sync wrapper to avoid event loop conflicts
