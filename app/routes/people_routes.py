@@ -11,7 +11,7 @@ import traceback
 import inspect
 import asyncio
 import re
-from typing import Optional, Dict
+from typing import Optional, Dict, Union, List
 
 from app.domain.models import Person
 from app.services import book_service, person_service
@@ -1108,8 +1108,9 @@ async def verify_author_name_with_perplexity(
     author_name: str, 
     book_language: str,
     perplexity_enricher,
-    book_titles: Optional[list] = None
-) -> Optional[str]:
+    book_titles: Optional[list] = None,
+    return_options: bool = False
+) -> Optional[Union[str, List[str]]]:
     """
     Verify and normalize author name using Perplexity AI.
     Uses book titles as context to find the correct author.
@@ -1142,7 +1143,27 @@ async def verify_author_name_with_perplexity(
         if book_language == 'bg':
             # Don't mention the current author name at all - only ask about the book titles
             # This forces Perplexity to search from scratch
-            query = f"""
+            if return_options:
+                query = f"""
+ТЪРСИ В ИНТЕРНЕТ и намери ВСИЧКИ ВЪЗМОЖНИ автори на следните книги:
+
+{titles_context}
+
+ИНСТРУКЦИИ:
+1. ТЪРСИ в интернет заглавията на книгите на български
+2. НАМЕРИ ВСИЧКИ ВЪЗМОЖНИ автори на тези книги (основен автор и други автори ако има)
+3. Върни списък с българските имена на авторите, разделени с нов ред
+4. Ако не можеш да намериш автори, върни "null"
+
+ВАЖНО:
+- За "Баскервилското куче" авторът е "Артър Конан Дойл"
+- За "Изгубеният свят" авторът е "Артър Конан Дойл"
+- Включи ВСИЧКИ намерени автори, дори ако има няколко
+
+ОТГОВОРИ С СПИСЪК ОТ ИМЕНА (по едно на ред) или "null":
+"""
+            else:
+                query = f"""
 ТЪРСИ В ИНТЕРНЕТ и намери кой е авторът на следните книги:
 
 {titles_context}
@@ -1277,6 +1298,27 @@ RESPOND ONLY WITH THE AUTHOR NAME (e.g., "Arthur Conan Doyle") or "null":
         
         if normalized:
             current_app.logger.info(f"Perplexity verified author '{author_name}' -> '{normalized}'")
+            
+            # If return_options is True, try to extract multiple authors
+            if return_options:
+                # Split by newlines or commas to get multiple options
+                options = []
+                lines = normalized.split('\n')
+                for line in lines:
+                    line = line.strip()
+                    if line and line.lower() not in ['null', 'none', '']:
+                        # Remove list markers (1., 2., -, etc.)
+                        line = re.sub(r'^[\d\.\-\*]+\s*', '', line)
+                        line = line.strip()
+                        if line and len(line.split()) >= 2:  # At least 2 words
+                            options.append(line)
+                
+                if options:
+                    current_app.logger.info(f"Perplexity returned {len(options)} author options: {options}")
+                    return options
+                else:
+                    # If we couldn't parse multiple options, return single name as list
+                    return [normalized] if normalized else None
         else:
             current_app.logger.warning(f"Perplexity returned empty/null for author '{author_name}' with books: {book_titles}")
         
@@ -1557,6 +1599,148 @@ def api_people_people():
             'status': 'error',
             'message': str(e)
         }), 500
+
+@people_bp.route('/person/<person_id>/verify_name_options', methods=['POST'])
+@login_required
+def verify_person_name_options(person_id):
+    """
+    Get multiple author name options from Perplexity for user selection.
+    Always returns JSON.
+    """
+    try:
+        # Get person
+        person = person_service.get_person_by_id_sync(person_id)
+        if not person:
+            return jsonify({
+                'status': 'error',
+                'message': 'Person not found'
+            }), 404
+        
+        # Get person name
+        if isinstance(person, dict):
+            original_name = person.get('name', '')
+        else:
+            original_name = getattr(person, 'name', '')
+        
+        # Get books by this person
+        all_books_by_person = person_service.get_books_by_person_sync(person_id)
+        
+        # Extract book titles
+        book_titles = []
+        if all_books_by_person:
+            for book in all_books_by_person:
+                if isinstance(book, dict):
+                    title = book.get('title', '')
+                else:
+                    title = getattr(book, 'title', '')
+                if title:
+                    book_titles.append(str(title))
+        
+        # Determine primary language
+        primary_language = 'en'
+        if all_books_by_person:
+            languages = []
+            for book in all_books_by_person:
+                lang = detect_book_language(book)
+                languages.append(lang)
+            if languages:
+                primary_language = max(set(languages), key=languages.count)
+        
+        # Initialize Perplexity
+        options = []
+        try:
+            import os
+            perplexity_key = os.getenv('PERPLEXITY_API_KEY')
+            if not perplexity_key:
+                try:
+                    from app.admin import load_ai_config
+                    ai_config = load_ai_config()
+                    perplexity_key = ai_config.get('PERPLEXITY_API_KEY', '')
+                except Exception:
+                    pass
+            
+            if perplexity_key:
+                from app.services.metadata_providers.perplexity import PerplexityEnricher
+                perplexity_model = os.getenv('PERPLEXITY_MODEL', 'sonar-pro')
+                perplexity_enricher = PerplexityEnricher(api_key=perplexity_key, model=perplexity_model)
+                
+                # Call Perplexity with return_options=True
+                import asyncio
+                try:
+                    loop = asyncio.get_event_loop()
+                    if loop.is_running():
+                        import concurrent.futures
+                        with concurrent.futures.ThreadPoolExecutor() as executor:
+                            def run_in_new_loop():
+                                new_loop = asyncio.new_event_loop()
+                                asyncio.set_event_loop(new_loop)
+                                try:
+                                    result = new_loop.run_until_complete(
+                                        verify_author_name_with_perplexity(
+                                            original_name,
+                                            primary_language,
+                                            perplexity_enricher,
+                                            book_titles,
+                                            return_options=True
+                                        )
+                                    )
+                                    new_loop.run_until_complete(perplexity_enricher.close())
+                                    return result
+                                finally:
+                                    new_loop.close()
+                            future = executor.submit(run_in_new_loop)
+                            options = future.result() or []
+                    else:
+                        options = loop.run_until_complete(
+                            verify_author_name_with_perplexity(
+                                original_name,
+                                primary_language,
+                                perplexity_enricher,
+                                book_titles,
+                                return_options=True
+                            )
+                        ) or []
+                        loop.run_until_complete(perplexity_enricher.close())
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    try:
+                        options = loop.run_until_complete(
+                            verify_author_name_with_perplexity(
+                                original_name,
+                                primary_language,
+                                perplexity_enricher,
+                                book_titles,
+                                return_options=True
+                            )
+                        ) or []
+                        loop.run_until_complete(perplexity_enricher.close())
+                    finally:
+                        loop.close()
+        except Exception as e:
+            current_app.logger.error(f"Error getting author options: {e}", exc_info=True)
+        
+        # Ensure options is a list
+        if not isinstance(options, list):
+            options = [options] if options else []
+        
+        # Add current name as first option if not already present
+        if original_name and original_name not in options:
+            options.insert(0, original_name)
+        
+        return jsonify({
+            'status': 'success',
+            'options': options,
+            'book_titles': book_titles
+        })
+    
+    except Exception as e:
+        current_app.logger.error(f"Error getting author options: {e}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
 
 @people_bp.route('/person/<person_id>/verify_name', methods=['POST'])
 @login_required
