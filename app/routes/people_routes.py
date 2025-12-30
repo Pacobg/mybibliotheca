@@ -11,6 +11,7 @@ import traceback
 import inspect
 import asyncio
 import re
+from typing import Optional, Dict
 
 from app.domain.models import Person
 from app.services import book_service, person_service
@@ -1098,6 +1099,289 @@ def api_search_persons():
     except Exception as e:
         current_app.logger.error(f"Error searching persons: {e}")
         return jsonify([])
+
+
+async def verify_author_name_with_perplexity(
+    author_name: str, 
+    book_language: str,
+    perplexity_enricher
+) -> Optional[str]:
+    """
+    Verify and normalize author name using Perplexity AI.
+    
+    Args:
+        author_name: Current author name (may be messy with multiple variants)
+        book_language: 'bg' for Bulgarian, 'en' for English
+        perplexity_enricher: PerplexityEnricher instance
+        
+    Returns:
+        Normalized author name or None if verification failed
+    """
+    if not perplexity_enricher or not author_name:
+        return None
+    
+    try:
+        # Build query based on language
+        if book_language == 'bg':
+            query = f"""
+Провери и нормализирай името на автора. Търся БЪЛГАРСКОТО име на автора.
+
+ТЕКУЩО ИМЕ: {author_name}
+
+ВАЖНО:
+- Ако името съдържа няколко варианта (разделени с ; или ,), избери ПРАВИЛНОТО българско име
+- Ако има и българско и английско име, използвай БЪЛГАРСКОТО
+- Нормализирай името в правилен формат: "Име Фамилия" (не "Фамилия, Име")
+- Премахни излишни символи и интервали
+- Ако името е неправилно или не можеш да го провериш, върни null
+
+ОТГОВОРИ САМО С НОРМАЛИЗИРАНОТО ИМЕ или "null":
+"""
+        else:
+            query = f"""
+Verify and normalize the author name. I'm looking for the ENGLISH name of the author.
+
+CURRENT NAME: {author_name}
+
+IMPORTANT:
+- If the name contains multiple variants (separated by ; or ,), choose the CORRECT English name
+- Normalize the name to proper format: "First Last" (not "Last, First")
+- Remove extra symbols and spaces
+- If the name is incorrect or cannot be verified, return null
+
+RESPOND ONLY WITH THE NORMALIZED NAME or "null":
+"""
+        
+        # Call Perplexity
+        response = await perplexity_enricher._search(query)
+        
+        if not response:
+            return None
+        
+        content = response['choices'][0]['message']['content'].strip()
+        
+        # Extract normalized name
+        normalized = content.strip()
+        
+        # Remove quotes if present
+        if normalized.startswith('"') and normalized.endswith('"'):
+            normalized = normalized[1:-1]
+        if normalized.startswith("'") and normalized.endswith("'"):
+            normalized = normalized[1:-1]
+        
+        # Check for null
+        if normalized.lower() in ['null', 'none', '']:
+            return None
+        
+        # Clean up the name
+        normalized = re.sub(r'\s+', ' ', normalized).strip()
+        
+        return normalized if normalized else None
+        
+    except Exception as e:
+        current_app.logger.error(f"Error verifying author name with Perplexity: {e}")
+        return None
+
+
+def detect_book_language(book: Dict) -> str:
+    """
+    Detect book language based on title and language field.
+    
+    Args:
+        book: Book dictionary (from KuzuDB query result)
+        
+    Returns:
+        'bg' for Bulgarian, 'en' for English (default)
+    """
+    # Check explicit language field first
+    language = book.get('language', '')
+    if isinstance(language, str):
+        language = language.lower()
+        if language == 'bg':
+            return 'bg'
+        if language == 'en':
+            return 'en'
+    
+    # Check title for Cyrillic characters
+    title = book.get('title', '') or ''
+    if isinstance(title, str):
+        has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in title)
+        if has_cyrillic:
+            return 'bg'
+    
+    # Default to English
+    return 'en'
+
+
+@people_bp.route('/people/people')
+@login_required
+def api_people_people():
+    """
+    API endpoint for getting all people with verified and normalized names.
+    Uses Perplexity to verify author names based on book language.
+    """
+    try:
+        # Helper function to handle async methods
+        def safe_call_sync_method(method, *args, **kwargs):
+            """Safely call a sync method that might return a coroutine."""
+            result = method(*args, **kwargs)
+            if inspect.iscoroutine(result):
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    result = loop.run_until_complete(result)
+                finally:
+                    loop.close()
+            return result
+        
+        # Get all persons
+        all_persons = safe_call_sync_method(book_service.list_all_persons_sync, str(current_user.id))
+        
+        if not isinstance(all_persons, list):
+            all_persons = []
+        
+        # Initialize Perplexity enricher if available
+        perplexity_enricher = None
+        try:
+            import os
+            perplexity_key = os.getenv('PERPLEXITY_API_KEY')
+            if not perplexity_key:
+                try:
+                    from app.admin import load_ai_config
+                    ai_config = load_ai_config()
+                    perplexity_key = ai_config.get('PERPLEXITY_API_KEY', '')
+                except Exception:
+                    pass
+            
+            if perplexity_key:
+                from app.services.metadata_providers.perplexity import PerplexityEnricher
+                perplexity_model = os.getenv('PERPLEXITY_MODEL', 'sonar-pro')
+                perplexity_enricher = PerplexityEnricher(api_key=perplexity_key, model=perplexity_model)
+        except Exception as e:
+            current_app.logger.warning(f"Perplexity not available: {e}")
+        
+        # Process each person
+        processed_persons = []
+        
+        for person in all_persons:
+            # Convert to dict if needed
+            if isinstance(person, dict):
+                person_dict = person
+            else:
+                person_dict = {
+                    'id': getattr(person, 'id', None),
+                    'name': getattr(person, 'name', ''),
+                }
+            
+            person_id = person_dict.get('id')
+            original_name = person_dict.get('name', '') or ''
+            
+            if not person_id:
+                continue
+            
+            # Get books by this person
+            all_books_by_person = safe_call_sync_method(person_service.get_books_by_person_sync, person_id)
+            
+            book_count = len(all_books_by_person) if all_books_by_person else 0
+            
+            # Determine primary language based on books
+            primary_language = 'en'  # default
+            if all_books_by_person:
+                languages = []
+                for book in all_books_by_person:
+                    lang = detect_book_language(book)
+                    languages.append(lang)
+                
+                # Use most common language
+                if languages:
+                    primary_language = max(set(languages), key=languages.count)
+            
+            # Normalize author name based on detected language
+            normalized_name = original_name
+            
+            # If name contains multiple variants (separated by ; or ,), try to extract correct one
+            if ';' in original_name or ',' in original_name:
+                parts = re.split(r'[;,]\s*', original_name)
+                parts = [p.strip() for p in parts if p.strip()]
+                
+                if primary_language == 'bg':
+                    # Prefer Bulgarian (Cyrillic) name
+                    cyrillic_parts = [p for p in parts if any('\u0400' <= char <= '\u04FF' for char in p)]
+                    if cyrillic_parts:
+                        normalized_name = cyrillic_parts[0]
+                    elif parts:
+                        normalized_name = parts[0]
+                else:
+                    # Prefer English (non-Cyrillic) name
+                    non_cyrillic_parts = [p for p in parts if not any('\u0400' <= char <= '\u04FF' for char in p)]
+                    if non_cyrillic_parts:
+                        normalized_name = non_cyrillic_parts[0]
+                    elif parts:
+                        normalized_name = parts[0]
+            
+            # Verify with Perplexity if available (only if name seems problematic)
+            verified_name = normalized_name
+            if perplexity_enricher and original_name:
+                # Only verify if name has multiple parts or seems messy
+                if (';' in original_name or ',' in original_name or 
+                    len(original_name.split()) > 4 or
+                    any(char in original_name for char in [';', ',', '|'])):
+                    try:
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        try:
+                            verified_name = loop.run_until_complete(
+                                verify_author_name_with_perplexity(
+                                    normalized_name,
+                                    primary_language,
+                                    perplexity_enricher
+                                )
+                            ) or normalized_name
+                        finally:
+                            loop.close()
+                    except Exception as e:
+                        current_app.logger.debug(f"Perplexity verification failed for {original_name}: {e}")
+                        verified_name = normalized_name
+            
+            # Build response
+            person_data = {
+                'id': person_id,
+                'name': verified_name or normalized_name or original_name,
+                'original_name': original_name,
+                'book_count': book_count,
+                'primary_language': primary_language,
+                'verified': verified_name != normalized_name if verified_name else False
+            }
+            
+            processed_persons.append(person_data)
+        
+        # Sort by name
+        processed_persons.sort(key=lambda p: p['name'].lower())
+        
+        # Close Perplexity client if opened
+        if perplexity_enricher:
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    loop.run_until_complete(perplexity_enricher.close())
+                finally:
+                    loop.close()
+            except Exception:
+                pass
+        
+        return jsonify({
+            'status': 'success',
+            'count': len(processed_persons),
+            'people': processed_persons
+        })
+    
+    except Exception as e:
+        current_app.logger.error(f"Error in /people/people API: {e}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
 
 @people_bp.route('/person/merge', methods=['GET', 'POST'])
 @login_required
