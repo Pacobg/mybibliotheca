@@ -2222,13 +2222,32 @@ def verify_person_name(person_id):
             }
             
             should_force_update = False
-            for (author_key, book_key), correct_name in known_corrections.items():
-                if author_key in verified_lower and book_key in book_titles_lower:
-                    # Perplexity found the correct author for this book
-                    final_name = correct_name
-                    should_force_update = True
-                    current_app.logger.info(f"Force updating to known correct author: '{correct_name}' for books: {book_titles}")
-                    break
+            
+            # Special case: if name contains both English and Bulgarian parts (e.g., "Alexandre; Дюма")
+            # and Perplexity returned something similar, try to construct full Bulgarian name
+            has_english = any(ord(c) < 128 and c.isalpha() for c in original_name)
+            has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in original_name)
+            
+            if has_english and has_cyrillic:
+                # Check if verified name is just the Bulgarian part (e.g., "Дюма" instead of "Александър Дюма")
+                cyrillic_parts = [p for p in re.split(r'[;,]\s*', original_name) if any('\u0400' <= char <= '\u04FF' for char in p)]
+                if cyrillic_parts and verified_name.lower() == cyrillic_parts[0].lower():
+                    # Perplexity returned only the Bulgarian part, try to find full name
+                    # Check for known patterns
+                    if 'дюма' in verified_lower or 'dumas' in original_name.lower():
+                        final_name = 'Александър Дюма'
+                        should_force_update = True
+                        current_app.logger.info(f"Expanding '{verified_name}' to full name '{final_name}' based on original '{original_name}'")
+            
+            # Check known corrections
+            if not should_force_update:
+                for (author_key, book_key), correct_name in known_corrections.items():
+                    if author_key in verified_lower and book_key in book_titles_lower:
+                        # Perplexity found the correct author for this book
+                        final_name = correct_name
+                        should_force_update = True
+                        current_app.logger.info(f"Force updating to known correct author: '{correct_name}' for books: {book_titles}")
+                        break
             
             if not should_force_update:
                 final_name = verified_name
