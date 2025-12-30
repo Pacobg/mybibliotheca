@@ -1742,6 +1742,66 @@ def verify_person_name_options(person_id):
         }), 500
 
 
+@people_bp.route('/person/<person_id>/update_name', methods=['POST'])
+@login_required
+def update_person_name(person_id):
+    """
+    Update person name directly (used when user selects from options).
+    Always returns JSON.
+    """
+    try:
+        data = request.get_json()
+        if not data or 'name' not in data:
+            return jsonify({
+                'status': 'error',
+                'message': 'Name is required'
+            }), 400
+        
+        new_name = data['name'].strip()
+        if not new_name:
+            return jsonify({
+                'status': 'error',
+                'message': 'Name cannot be empty'
+            }), 400
+        
+        # Get person
+        person = person_service.get_person_by_id_sync(person_id)
+        if not person:
+            return jsonify({
+                'status': 'error',
+                'message': 'Person not found'
+            }), 404
+        
+        # Update name
+        updates = {'name': new_name}
+        def safe_update_person():
+            try:
+                return person_service.update_person_sync(person_id, updates)
+            except Exception as e:
+                current_app.logger.error(f"Error updating person: {e}", exc_info=True)
+                return None
+        
+        updated_person = safe_call_sync_method(safe_update_person)
+        if updated_person:
+            return jsonify({
+                'status': 'success',
+                'name': new_name,
+                'updated': True
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': 'Failed to update person name'
+            }), 500
+    
+    except Exception as e:
+        current_app.logger.error(f"Error updating person name: {e}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
 @people_bp.route('/person/<person_id>/verify_name', methods=['POST'])
 @login_required
 def verify_person_name(person_id):

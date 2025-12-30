@@ -358,6 +358,33 @@ async function verifyPersonName(personId) {
     
     try {
         const csrfToken = getCSRFToken();
+        
+        // First, get options from Perplexity
+        const optionsResponse = await fetch(`/people/person/${personId}/verify_name_options`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            credentials: 'same-origin'
+        });
+        
+        if (!optionsResponse.ok) {
+            throw new Error(`HTTP ${optionsResponse.status}`);
+        }
+        
+        const optionsData = await optionsResponse.json();
+        
+        if (optionsData.status === 'success' && optionsData.options && optionsData.options.length > 1) {
+            // Show dialog for selection
+            showAuthorSelectionDialog(personId, optionsData.options, optionsData.book_titles || []);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            return;
+        }
+        
+        // If only one option or no options, proceed with normal verification
         const response = await fetch(`/people/person/${personId}/verify_name`, {
             method: 'POST',
             headers: {
@@ -428,6 +455,97 @@ async function verifyPersonName(personId) {
         // Restore button
         btn.disabled = false;
         btn.innerHTML = originalText;
+    }
+}
+
+function showAuthorSelectionDialog(personId, options, bookTitles) {
+    // Create modal dialog
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.setAttribute('tabindex', '-1');
+    modal.setAttribute('aria-labelledby', 'authorSelectionModalLabel');
+    modal.setAttribute('aria-hidden', 'true');
+    
+    const bookTitlesText = bookTitles.length > 0 ? `<p class="text-muted"><small>Книги: ${bookTitles.join(', ')}</small></p>` : '';
+    
+    modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="authorSelectionModalLabel">Избери правилния автор</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Намерени са няколко възможни автори. Моля, избери правилния:</p>
+                    ${bookTitlesText}
+                    <div class="list-group mt-3">
+                        ${options.map((option, index) => `
+                            <button type="button" class="list-group-item list-group-item-action ${index === 0 ? 'active' : ''}" 
+                                    data-author-name="${option}" onclick="selectAuthor('${personId}', '${option.replace(/'/g, "\\'")}')">
+                                ${option}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отказ</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    // Remove modal from DOM when hidden
+    modal.addEventListener('hidden.bs.modal', () => {
+        modal.remove();
+    });
+}
+
+async function selectAuthor(personId, authorName) {
+    try {
+        const csrfToken = getCSRFToken();
+        const response = await fetch(`/people/person/${personId}/update_name`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ name: authorName })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.querySelector('.modal'));
+            if (modal) modal.hide();
+            
+            // Show success message and reload
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show mt-3';
+            alert.innerHTML = `
+                <strong>Успех!</strong> Името е обновено на "${authorName}".
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.card-body').insertBefore(alert, document.querySelector('.card-body').firstChild);
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            throw new Error(data.message || 'Грешка при обновяване');
+        }
+    } catch (error) {
+        alert(`Грешка: ${error.message}`);
     }
 }
 
