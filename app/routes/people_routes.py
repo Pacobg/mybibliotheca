@@ -1189,9 +1189,11 @@ RESPOND ONLY WITH THE NORMALIZED ENGLISH NAME or "null":
         response = await perplexity_enricher._search(query)
         
         if not response:
+            current_app.logger.warning(f"Perplexity returned empty response for author '{author_name}' with books: {book_titles}")
             return None
         
         content = response['choices'][0]['message']['content'].strip()
+        current_app.logger.info(f"Perplexity response for author '{author_name}' with books {book_titles}: '{content}'")
         
         # Extract normalized name
         normalized = content.strip()
@@ -1233,6 +1235,11 @@ RESPOND ONLY WITH THE NORMALIZED ENGLISH NAME or "null":
         
         # Clean up the name
         normalized = re.sub(r'\s+', ' ', normalized).strip()
+        
+        if normalized:
+            current_app.logger.info(f"Perplexity verified author '{author_name}' -> '{normalized}'")
+        else:
+            current_app.logger.warning(f"Perplexity returned empty/null for author '{author_name}' with books: {book_titles}")
         
         return normalized if normalized else None
         
@@ -1777,7 +1784,21 @@ def verify_person_name(person_id):
         
         # Update person name if different
         # Use safe sync method wrapper to avoid event loop issues
-        final_name = verified_name or normalized_name or original_name
+        # Log what we got from Perplexity
+        if verified_name:
+            current_app.logger.info(f"Perplexity verified name for person {person_id}: '{original_name}' -> '{verified_name}'")
+        elif verified_name is None and book_titles:
+            # Perplexity was called but returned None - this might indicate the name is incorrect
+            current_app.logger.warning(f"Perplexity returned None for person {person_id} ('{original_name}') with books: {book_titles}")
+        
+        # Only use verified_name if it's actually different and not None/empty
+        # If verified_name is None, it means Perplexity couldn't verify or found nothing
+        # In that case, we should NOT update the name (keep it as is)
+        if verified_name and verified_name.strip() and verified_name.lower() not in ['null', 'none', '']:
+            final_name = verified_name
+        else:
+            # Perplexity didn't return a valid name, keep the current name
+            final_name = normalized_name or original_name
         
         # Ensure final_name is a clean string (not JSON or None)
         if final_name:
@@ -1819,15 +1840,25 @@ def verify_person_name(person_id):
                     'original_name': original_name,
                     'verified_name': final_name,
                     'primary_language': primary_language,
-                    'updated': True
+                    'updated': True,
+                    'perplexity_result': verified_name if verified_name else None
                 })
+        
+        # Name didn't change - check if Perplexity was called and what it returned
+        message = 'Name is already correct'
+        if verified_name is None and book_titles:
+            message = 'Perplexity could not verify the name. The current name may be incorrect.'
+        elif verified_name and verified_name.strip() == (normalized_name or original_name):
+            message = 'Perplexity returned the same name as current.'
         
         return jsonify({
             'status': 'success',
             'original_name': original_name,
             'verified_name': final_name,
             'primary_language': primary_language,
-            'updated': False
+            'updated': False,
+            'message': message,
+            'perplexity_result': verified_name if verified_name else None
         })
     
     except Exception as e:
