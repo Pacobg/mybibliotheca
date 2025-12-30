@@ -2024,9 +2024,15 @@ def verify_person_name(person_id):
             if primary_language == 'bg':
                 # Prefer Bulgarian (Cyrillic) name
                 cyrillic_parts = [p for p in parts if any('\u0400' <= char <= '\u04FF' for char in p)]
-                if cyrillic_parts:
-                    # If we have both English and Bulgarian parts, use Bulgarian as base
-                    # Perplexity will find the full Bulgarian name
+                english_parts = [p for p in parts if not any('\u0400' <= char <= '\u04FF' for char in p)]
+                
+                if cyrillic_parts and english_parts:
+                    # If we have both English and Bulgarian parts (e.g., "Alexandre; Дюма")
+                    # Use the original name as-is for Perplexity to find the full Bulgarian name
+                    # Perplexity will convert "Alexandre; Дюма" to "Александър Дюма"
+                    normalized_name = original_name  # Keep full name for Perplexity
+                elif cyrillic_parts:
+                    # Only Cyrillic parts - use first one
                     normalized_name = cyrillic_parts[0]
                 elif parts:
                     # No Cyrillic parts, but book is Bulgarian - will verify with Perplexity
