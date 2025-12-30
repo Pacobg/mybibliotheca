@@ -688,6 +688,57 @@ async function checkPersonRelationships(personId) {
     }
 }
 
+async function fixAuthorRelationships(personId, bookId, authorIds) {
+    try {
+        const csrfToken = getCSRFToken();
+        const response = await fetch(`/people/person/${personId}/fix_relationships`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ 
+                book_id: bookId,
+                author_ids: authorIds 
+            })
+        });
+        
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`HTTP ${response.status}: ${text.substring(0, 100)}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            // Show success message and reload
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show mt-3';
+            alert.innerHTML = `
+                <strong>Успех!</strong> Премахнати са ${data.removed_count} автор(и).
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.card-body').insertBefore(alert, document.querySelector('.card-body').firstChild);
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            throw new Error(data.message || 'Грешка при премахване');
+        }
+    } catch (error) {
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-danger alert-dismissible fade show mt-3';
+        alert.innerHTML = `
+            <strong>Грешка!</strong> ${error.message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.querySelector('.card-body').insertBefore(alert, document.querySelector('.card-body').firstChild);
+    }
+}
+
 async function fixRelationships(personId, bookIds) {
     if (!confirm(`Сигурни ли сте, че искате да премахнете връзките с ${bookIds.length} книги?`)) {
         return;
