@@ -471,24 +471,42 @@ async function checkPersonRelationships(personId) {
                 
                 const bookIds = data.issues.map(i => i.book_id).filter(id => id);
                 
+                // Store bookIds in data attribute to avoid escaping issues
+                const alertId = 'relationships-alert-' + Date.now();
                 const alert = document.createElement('div');
                 alert.className = 'alert alert-warning alert-dismissible fade show mt-3';
-                alert.id = 'relationships-alert-' + Date.now();
+                alert.id = alertId;
+                alert.setAttribute('data-person-id', personId);
+                alert.setAttribute('data-book-ids', JSON.stringify(bookIds));
                 alert.innerHTML = `
                     <strong>Намерени проблеми!</strong> Открити са ${data.issues_found} неправилни връзки.
                     ${issuesHtml}
-                    <button type="button" class="btn btn-sm btn-danger mt-2" id="fixRelationshipsBtn-${personId}">
+                    <button type="button" class="btn btn-sm btn-danger mt-2 fix-relationships-btn">
                         Премахни неправилните връзки
                     </button>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 `;
                 document.querySelector('.card-body').insertBefore(alert, document.querySelector('.card-body').firstChild);
                 
-                // Add event listener to fix button
-                const fixBtn = document.getElementById(`fixRelationshipsBtn-${personId}`);
+                // Add event listener to fix button using event delegation
+                const fixBtn = alert.querySelector('.fix-relationships-btn');
                 if (fixBtn) {
                     fixBtn.addEventListener('click', function() {
-                        fixRelationships(personId, bookIds);
+                        const personId = alert.getAttribute('data-person-id');
+                        const bookIdsJson = alert.getAttribute('data-book-ids');
+                        try {
+                            const bookIds = JSON.parse(bookIdsJson);
+                            fixRelationships(personId, bookIds);
+                        } catch (e) {
+                            console.error('Error parsing book IDs:', e);
+                            const errorAlert = document.createElement('div');
+                            errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-2';
+                            errorAlert.innerHTML = `
+                                <strong>Грешка!</strong> Грешка при обработка на данните. Моля, опитайте отново.
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            `;
+                            alert.appendChild(errorAlert);
+                        }
                     });
                 }
             } else {
