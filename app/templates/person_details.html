@@ -473,15 +473,24 @@ async function checkPersonRelationships(personId) {
                 
                 const alert = document.createElement('div');
                 alert.className = 'alert alert-warning alert-dismissible fade show mt-3';
+                alert.id = 'relationships-alert-' + Date.now();
                 alert.innerHTML = `
                     <strong>Намерени проблеми!</strong> Открити са ${data.issues_found} неправилни връзки.
                     ${issuesHtml}
-                    <button type="button" class="btn btn-sm btn-danger mt-2" onclick="fixRelationships('${personId}', ${JSON.stringify(bookIds)})">
+                    <button type="button" class="btn btn-sm btn-danger mt-2" id="fixRelationshipsBtn-${personId}">
                         Премахни неправилните връзки
                     </button>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 `;
                 document.querySelector('.card-body').insertBefore(alert, document.querySelector('.card-body').firstChild);
+                
+                // Add event listener to fix button
+                const fixBtn = document.getElementById(`fixRelationshipsBtn-${personId}`);
+                if (fixBtn) {
+                    fixBtn.addEventListener('click', function() {
+                        fixRelationships(personId, bookIds);
+                    });
+                }
             } else {
                 const alert = document.createElement('div');
                 alert.className = 'alert alert-success alert-dismissible fade show mt-3';
