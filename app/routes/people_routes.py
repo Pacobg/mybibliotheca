@@ -1140,27 +1140,29 @@ async def verify_author_name_with_perplexity(
         
         # Build query based on language
         if book_language == 'bg':
+            # Make the query more explicit and direct
             query = f"""
-Търси и намери БЪЛГАРСКОТО име на автора на базата на заглавията на книгите.
+ТЪРСИ В ИНТЕРНЕТ: Кой е авторът на следните книги?
 
 {titles_context}
 
-ТЕКУЩО ИМЕ (може да е грешно): {author_name if author_name else "неизвестно"}
-
 ВАЖНО:
-1. ПЪРВО провери в интернет заглавията на книгите на български
-2. НАМЕРИ кой е РЕАЛНИЯТ автор на тези книги
-3. Върни ПЪЛНОТО българско име на автора в правилен формат: "Име Фамилия"
-4. Ако текущото име е грешно (например "Вълчев" вместо "Артър Конан Дойл"), игнорирай го и върни правилното име
-5. Ако името съдържа няколко варианта (разделени с ; или ,), избери ПРАВИЛНОТО българско име на базата на книгите
-6. Ако не можеш да намериш автора или името е неправилно, върни null
+1. Текущото име "{author_name if author_name else "неизвестно"}" МОЖЕ ДА Е ГРЕШНО - игнорирай го!
+2. ТЪРСИ в интернет заглавията на книгите на български
+3. НАМЕРИ РЕАЛНИЯ автор на тези книги
+4. Върни ПЪЛНОТО българско име на автора в правилен формат: "Име Фамилия"
 
-ПРИМЕРИ:
-- Заглавие: "Баскервилското куче" -> Автор: "Артър Конан Дойл" (НЕ "Вълчев")
-- Заглавие: "Книга за другите" -> Автор: търси в интернет кой е авторът
-- "Arthur; Хейли" + заглавие на български -> "Артър Хейли"
+СПЕЦИАЛНИ ПРИМЕРИ:
+- Ако видиш "Баскервилското куче" -> авторът е "Артър Конан Дойл" (НЕ "Вълчев", НЕ "Тодор", НЕ "Шурбанов")
+- Ако видиш "Изгубеният свят" -> авторът е "Артър Конан Дойл"
+- Ако видиш "Sherlock Holmes" -> авторът е "Артър Конан Дойл"
 
-ОТГОВОРИ САМО С НОРМАЛИЗИРАНОТО БЪЛГАРСКО ИМЕ или "null":
+ИНСТРУКЦИИ:
+- Търси в интернет заглавията на книгите
+- Намери кой е РЕАЛНИЯТ автор
+- Върни само българското име на автора или "null" ако не можеш да намериш
+
+ОТГОВОРИ САМО С ИМЕТО НА АВТОРА (например "Артър Конан Дойл") или "null":
 """
         else:
             query = f"""
@@ -1845,11 +1847,13 @@ def verify_person_name(person_id):
                 })
         
         # Name didn't change - check if Perplexity was called and what it returned
-        message = 'Name is already correct'
+        message = 'Името не беше променено.'
         if verified_name is None and book_titles:
-            message = 'Perplexity could not verify the name. The current name may be incorrect.'
+            message = 'Perplexity не успя да намери автора. Текущото име може да е неправилно.'
         elif verified_name and verified_name.strip() == (normalized_name or original_name):
-            message = 'Perplexity returned the same name as current.'
+            message = 'Perplexity върна същото име като текущото.'
+        elif not verified_name and not book_titles:
+            message = 'Няма книги за верификация.'
         
         return jsonify({
             'status': 'success',
@@ -1858,7 +1862,8 @@ def verify_person_name(person_id):
             'primary_language': primary_language,
             'updated': False,
             'message': message,
-            'perplexity_result': verified_name if verified_name else None
+            'perplexity_result': verified_name if verified_name else None,
+            'name_might_be_incorrect': verified_name is None and bool(book_titles)
         })
     
     except Exception as e:

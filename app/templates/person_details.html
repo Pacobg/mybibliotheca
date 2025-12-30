@@ -347,7 +347,9 @@ function getCSRFToken() {
 }
 
 async function verifyPersonName(personId) {
-    const btn = document.getElementById('verifyNameBtn');
+    const btn = document.querySelector(`button[onclick="verifyPersonName('${personId}')"]`) || document.getElementById('verifyNameBtn');
+    if (!btn) return;
+    
     const originalText = btn.innerHTML;
     
     // Disable button and show loading
@@ -396,11 +398,17 @@ async function verifyPersonName(personId) {
                     window.location.reload();
                 }, 1000);
             } else {
-                // Show info message
+                // Show info message - check if Perplexity couldn't find the author
+                const alertType = data.name_might_be_incorrect ? 'alert-warning' : 'alert-info';
+                const alertTitle = data.name_might_be_incorrect ? 'Внимание!' : 'Информация:';
+                const message = data.message || (data.name_might_be_incorrect 
+                    ? `Perplexity не успя да намери автора. Текущото име "${data.verified_name}" може да е неправилно.` 
+                    : `Името "${data.verified_name}" е вече правилно.`);
+                
                 const alert = document.createElement('div');
-                alert.className = 'alert alert-info alert-dismissible fade show mt-3';
+                alert.className = `alert ${alertType} alert-dismissible fade show mt-3`;
                 alert.innerHTML = `
-                    <strong>Информация:</strong> Името "${data.verified_name}" е вече правилно.
+                    <strong>${alertTitle}</strong> ${message}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 `;
                 document.querySelector('.card-body').insertBefore(alert, document.querySelector('.card-body').firstChild);
