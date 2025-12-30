@@ -1648,11 +1648,7 @@ def verify_person_name(person_id):
                 perplexity_model = os.getenv('PERPLEXITY_MODEL', 'sonar-pro')
                 perplexity_enricher = PerplexityEnricher(api_key=perplexity_key, model=perplexity_model)
                 
-                # Verify with Perplexity
-                # Use the original name with all parts for better Perplexity verification
-                name_to_verify = original_name if (';' in original_name or ',' in original_name) else normalized_name
-                
-                # Extract book titles for context
+                # Extract book titles for context (always do this if we have books)
                 book_titles = []
                 if all_books_by_person:
                     for book in all_books_by_person:
@@ -1663,8 +1659,17 @@ def verify_person_name(person_id):
                         if title:
                             book_titles.append(str(title))
                 
-                # Better event loop handling - don't close loop until all async operations are done
-                try:
+                # Always verify if we have book titles - this helps catch incorrect author names
+                # (e.g., "Вълчев" instead of "Артър Конан Дойл" for "Баскервилското куче")
+                should_verify = bool(book_titles) or original_name  # Verify if we have books or a name
+                
+                if should_verify:
+                    # Verify with Perplexity
+                    # Use the original name with all parts for better Perplexity verification
+                    name_to_verify = original_name if (';' in original_name or ',' in original_name) else normalized_name
+                    
+                    # Better event loop handling - don't close loop until all async operations are done
+                    try:
                     # Try to get existing event loop
                     try:
                         loop = asyncio.get_event_loop()
@@ -1732,13 +1737,28 @@ def verify_person_name(person_id):
                                     pass
                         finally:
                             loop.close()
-                except Exception as e:
-                    current_app.logger.error(f"Error verifying name with Perplexity: {e}", exc_info=True)
-                    verified_name = normalized_name
-                    # Try to close Perplexity client even on error
+                    except Exception as e:
+                        current_app.logger.error(f"Error verifying name with Perplexity: {e}", exc_info=True)
+                        verified_name = normalized_name
+                        # Try to close Perplexity client even on error
+                        if perplexity_enricher:
+                            try:
+                                # Use a simple approach to close
+                                import concurrent.futures
+                                with concurrent.futures.ThreadPoolExecutor() as executor:
+                                    def close_client():
+                                        new_loop = asyncio.new_event_loop()
+                                        asyncio.set_event_loop(new_loop)
+                                        try:
+                                            new_loop.run_until_complete(perplexity_enricher.close())
+                                        finally:
+                                            new_loop.close()
+                                    executor.submit(close_client).result(timeout=2)
+                            except Exception:
+                                pass
+                    # Close Perplexity client after verification
                     if perplexity_enricher:
                         try:
-                            # Use a simple approach to close
                             import concurrent.futures
                             with concurrent.futures.ThreadPoolExecutor() as executor:
                                 def close_client():
