@@ -2255,12 +2255,23 @@ def verify_person_name(person_id):
             # Perplexity didn't return a valid name
             # But check if we have books that should have a specific author
             book_titles_lower = ' '.join([t.lower() for t in book_titles]) if book_titles else ''
+            current_name_lower = (normalized_name or original_name).lower()
+            
+            # Check for known book-author combinations
             if 'баскервилското куче' in book_titles_lower or 'hound of the baskervilles' in book_titles_lower:
                 # This book is known to be by Arthur Conan Doyle
-                if 'вълчев' in (normalized_name or original_name).lower():
+                if 'вълчев' in current_name_lower:
                     # Current name is wrong, use correct one
                     final_name = 'Артър Конан Дойл'
                     current_app.logger.warning(f"Correcting known wrong author name '{original_name}' to 'Артър Конан Дойл' for book: {book_titles}")
+                else:
+                    final_name = normalized_name or original_name
+            elif 'граф монте кристо' in book_titles_lower or 'count of monte cristo' in book_titles_lower:
+                # This book is known to be by Alexandre Dumas
+                if 'дюма' in current_name_lower and 'александър' not in current_name_lower:
+                    # Current name is incomplete (just "Дюма"), expand to full name
+                    final_name = 'Александър Дюма'
+                    current_app.logger.info(f"Expanding incomplete name '{original_name}' to 'Александър Дюма' for book: {book_titles}")
                 else:
                     final_name = normalized_name or original_name
             else:
