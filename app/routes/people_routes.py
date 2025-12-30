@@ -2278,6 +2278,33 @@ def verify_person_name(person_id):
             # Perplexity was called but returned None - this might indicate the name is incorrect
             current_app.logger.warning(f"Perplexity returned None for person {person_id} ('{original_name}') with books: {book_titles}")
         
+        # Check if original name is a mixed English-Bulgarian name that should be normalized
+        # even if Perplexity returns the same name
+        if (';' in original_name or ',' in original_name) and primary_language == 'bg':
+            parts = re.split(r'[;,]\s*', original_name)
+            english_parts = [p for p in parts if not any('\u0400' <= char <= '\u04FF' for char in p)]
+            cyrillic_parts = [p for p in parts if any('\u0400' <= char <= '\u04FF' for char in p)]
+            
+            if english_parts and cyrillic_parts:
+                english_part = english_parts[0].strip()
+                cyrillic_part = cyrillic_parts[0].strip()
+                
+                name_translations = {
+                    'andy': 'Анди',
+                    'alexandre': 'Александър',
+                    'alexander': 'Александър',
+                }
+                
+                english_lower = english_part.lower()
+                if english_lower in name_translations:
+                    bulgarian_first_name = name_translations[english_lower]
+                    normalized_mixed_name = f"{bulgarian_first_name} {cyrillic_part}"
+                    
+                    # If Perplexity returned the same name or None, use the normalized version
+                    if not verified_name or verified_name.strip() == original_name.strip():
+                        verified_name = normalized_mixed_name
+                        current_app.logger.info(f"Auto-normalizing mixed name '{original_name}' to '{normalized_mixed_name}'")
+        
         # Only use verified_name if it's actually different and not None/empty
         # If verified_name is None, it means Perplexity couldn't verify or found nothing
         # In that case, we should NOT update the name (keep it as is)
