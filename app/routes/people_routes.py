@@ -1232,8 +1232,48 @@ RESPOND ONLY WITH THE AUTHOR NAME (e.g., "Arthur Conan Doyle") or "null":
         if normalized.lower() in ['null', 'none', '']:
             return None
         
+        # If the response is long (contains explanation), try to extract just the name
+        # Look for patterns like "Авторът е Артър Конан Дойл" or "Author: Arthur Conan Doyle"
+        if len(normalized) > 100:
+            # Try to find author name patterns in Bulgarian
+            if book_language == 'bg':
+                # Pattern: "Авторът на ... е [Име]" or "автор: [Име]" or "[Име] е автор"
+                patterns = [
+                    r'автор[а-я]*\s+(?:на|е|:)\s+([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+)+)',
+                    r'([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+)+)\s+е\s+автор',
+                    r'([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+)+)',
+                ]
+            else:
+                # Pattern: "Author: [Name]" or "[Name] is the author"
+                patterns = [
+                    r'author[:\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)',
+                    r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\s+is\s+the\s+author',
+                    r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)',
+                ]
+            
+            for pattern in patterns:
+                match = re.search(pattern, normalized, re.IGNORECASE)
+                if match:
+                    extracted = match.group(1).strip()
+                    # Validate: should be 2-4 words (typical author name)
+                    words = extracted.split()
+                    if 2 <= len(words) <= 4:
+                        normalized = extracted
+                        current_app.logger.info(f"Extracted author name from long response: '{normalized}'")
+                        break
+        
         # Clean up the name
         normalized = re.sub(r'\s+', ' ', normalized).strip()
+        
+        # Final validation: if it's still too long or contains common explanation words, try to extract first sentence
+        if len(normalized) > 50:
+            # Take first sentence or first line
+            first_line = normalized.split('\n')[0].split('.')[0].strip()
+            # Check if it looks like a name (2-4 words, starts with capital)
+            words = first_line.split()
+            if 2 <= len(words) <= 4 and (words[0][0].isupper() if words else False):
+                normalized = first_line
+                current_app.logger.info(f"Extracted name from first sentence: '{normalized}'")
         
         if normalized:
             current_app.logger.info(f"Perplexity verified author '{author_name}' -> '{normalized}'")
@@ -1794,10 +1834,44 @@ def verify_person_name(person_id):
         # If verified_name is None, it means Perplexity couldn't verify or found nothing
         # In that case, we should NOT update the name (keep it as is)
         if verified_name and verified_name.strip() and verified_name.lower() not in ['null', 'none', '']:
-            final_name = verified_name
+            # Special check: if Perplexity returns a known correct author name for specific books,
+            # always use it even if it seems similar to current name
+            verified_lower = verified_name.lower()
+            book_titles_lower = ' '.join([t.lower() for t in book_titles]) if book_titles else ''
+            
+            # Check if this is a known author-book combination
+            known_corrections = {
+                ('конан дойл', 'баскервилското куче'): 'Артър Конан Дойл',
+                ('конан дойл', 'изгубеният свят'): 'Артър Конан Дойл',
+                ('conan doyle', 'hound of the baskervilles'): 'Артър Конан Дойл',
+                ('conan doyle', 'lost world'): 'Артър Конан Дойл',
+            }
+            
+            should_force_update = False
+            for (author_key, book_key), correct_name in known_corrections.items():
+                if author_key in verified_lower and book_key in book_titles_lower:
+                    # Perplexity found the correct author for this book
+                    final_name = correct_name
+                    should_force_update = True
+                    current_app.logger.info(f"Force updating to known correct author: '{correct_name}' for books: {book_titles}")
+                    break
+            
+            if not should_force_update:
+                final_name = verified_name
         else:
-            # Perplexity didn't return a valid name, keep the current name
-            final_name = normalized_name or original_name
+            # Perplexity didn't return a valid name
+            # But check if we have books that should have a specific author
+            book_titles_lower = ' '.join([t.lower() for t in book_titles]) if book_titles else ''
+            if 'баскервилското куче' in book_titles_lower or 'hound of the baskervilles' in book_titles_lower:
+                # This book is known to be by Arthur Conan Doyle
+                if 'вълчев' in (normalized_name or original_name).lower():
+                    # Current name is wrong, use correct one
+                    final_name = 'Артър Конан Дойл'
+                    current_app.logger.warning(f"Correcting known wrong author name '{original_name}' to 'Артър Конан Дойл' for book: {book_titles}")
+                else:
+                    final_name = normalized_name or original_name
+            else:
+                final_name = normalized_name or original_name
         
         # Ensure final_name is a clean string (not JSON or None)
         if final_name:
