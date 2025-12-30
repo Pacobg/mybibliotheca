@@ -2583,7 +2583,43 @@ def check_person_relationships(person_id):
                                 if is_correct:
                                     break
                             
-                            # If no known correct author found, use current author as correct
+                            # If no known correct author found, prefer full Bulgarian name over partial English name
+                            if not correct_author_id:
+                                # Detect book language
+                                book_lang = detect_book_language(book)
+                                
+                                # If book is Bulgarian, prefer full Bulgarian author name
+                                if book_lang == 'bg':
+                                    for author in authors:
+                                        author_name = author.get('author_name') or author.get('col_1') or ''
+                                        author_id = author.get('author_id') or author.get('col_0') or ''
+                                        
+                                        # Check if this is a full Bulgarian name (has Cyrillic and at least 2 words)
+                                        has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in author_name)
+                                        word_count = len(author_name.split())
+                                        
+                                        if has_cyrillic and word_count >= 2:
+                                            # This looks like a full Bulgarian name (e.g., "Агата Кристи")
+                                            correct_author_id = author_id
+                                            correct_author_name = author_name
+                                            current_app.logger.info(f"Preferring full Bulgarian name '{author_name}' over partial names for book '{book_title}'")
+                                            break
+                                
+                                # If still no correct author found, prefer full name over partial name
+                                if not correct_author_id:
+                                    for author in authors:
+                                        author_name = author.get('author_name') or author.get('col_1') or ''
+                                        author_id = author.get('author_id') or author.get('col_0') or ''
+                                        word_count = len(author_name.split())
+                                        
+                                        # Prefer names with 2+ words (full names) over single-word names
+                                        if word_count >= 2:
+                                            correct_author_id = author_id
+                                            correct_author_name = author_name
+                                            current_app.logger.info(f"Preferring full name '{author_name}' ({word_count} words) over partial names for book '{book_title}'")
+                                            break
+                            
+                            # If still no correct author found, use current author as correct
                             if not correct_author_id:
                                 correct_author_id = person_id
                                 correct_author_name = person_name
