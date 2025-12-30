@@ -1107,58 +1107,82 @@ def api_search_persons():
 async def verify_author_name_with_perplexity(
     author_name: str, 
     book_language: str,
-    perplexity_enricher
+    perplexity_enricher,
+    book_titles: Optional[list] = None
 ) -> Optional[str]:
     """
     Verify and normalize author name using Perplexity AI.
+    Uses book titles as context to find the correct author.
     
     Args:
         author_name: Current author name (may be messy with multiple variants)
         book_language: 'bg' for Bulgarian, 'en' for English
         perplexity_enricher: PerplexityEnricher instance
+        book_titles: List of book titles to use as context for finding the author
         
     Returns:
         Normalized author name or None if verification failed
     """
-    if not perplexity_enricher or not author_name:
+    if not perplexity_enricher:
+        return None
+    
+    # If no author name and no book titles, can't verify
+    if not author_name and not book_titles:
         return None
     
     try:
+        # Build book titles context
+        titles_context = ""
+        if book_titles:
+            titles_list = [t for t in book_titles if t and isinstance(t, str)]
+            if titles_list:
+                titles_context = "\n\nЗАГЛАВИЯ НА КНИГИТЕ:\n" + "\n".join([f"- {title}" for title in titles_list[:5]])  # Limit to 5 titles
+        
         # Build query based on language
         if book_language == 'bg':
             query = f"""
-Провери и нормализирай името на автора. Търся БЪЛГАРСКОТО име на автора.
+Търси и намери БЪЛГАРСКОТО име на автора на базата на заглавията на книгите.
 
-ТЕКУЩО ИМЕ: {author_name}
+{titles_context}
+
+ТЕКУЩО ИМЕ (може да е грешно): {author_name if author_name else "неизвестно"}
 
 ВАЖНО:
-- Ако името съдържа няколко варианта (разделени с ; или ,), намери ПРАВИЛНОТО българско име
-- Ако има и английско и българско име (например "Arthur; Хейли"), намери пълното българско име (например "Артър Хейли")
-- Нормализирай името в правилен формат: "Име Фамилия" (не "Фамилия, Име")
-- Ако видиш само фамилия на български (например "Хейли"), намери пълното име с първо име (например "Артър Хейли")
-- Премахни излишни символи и интервали
-- Ако името е неправилно или не можеш да го провериш, върни null
+1. ПЪРВО провери в интернет заглавията на книгите на български
+2. НАМЕРИ кой е РЕАЛНИЯТ автор на тези книги
+3. Върни ПЪЛНОТО българско име на автора в правилен формат: "Име Фамилия"
+4. Ако текущото име е грешно (например "Вълчев" вместо "Артър Конан Дойл"), игнорирай го и върни правилното име
+5. Ако името съдържа няколко варианта (разделени с ; или ,), избери ПРАВИЛНОТО българско име на базата на книгите
+6. Ако не можеш да намериш автора или името е неправилно, върни null
 
 ПРИМЕРИ:
-- "Arthur; Хейли" -> "Артър Хейли"
-- "Agatha; Кристи" -> "Агата Кристи"
-- "Adrian; Чайковски" -> "Ейдриън Чайковски"
+- Заглавие: "Баскервилското куче" -> Автор: "Артър Конан Дойл" (НЕ "Вълчев")
+- Заглавие: "Книга за другите" -> Автор: търси в интернет кой е авторът
+- "Arthur; Хейли" + заглавие на български -> "Артър Хейли"
 
-ОТГОВОРИ САМО С НОРМАЛИЗИРАНОТО ИМЕ или "null":
+ОТГОВОРИ САМО С НОРМАЛИЗИРАНОТО БЪЛГАРСКО ИМЕ или "null":
 """
         else:
             query = f"""
-Verify and normalize the author name. I'm looking for the ENGLISH name of the author.
+Find and verify the ENGLISH name of the author based on the book titles.
 
-CURRENT NAME: {author_name}
+{titles_context}
+
+CURRENT NAME (may be incorrect): {author_name if author_name else "unknown"}
 
 IMPORTANT:
-- If the name contains multiple variants (separated by ; or ,), choose the CORRECT English name
-- Normalize the name to proper format: "First Last" (not "Last, First")
-- Remove extra symbols and spaces
-- If the name is incorrect or cannot be verified, return null
+1. FIRST check online the book titles in English
+2. FIND who is the REAL author of these books
+3. Return the FULL English author name in proper format: "First Last"
+4. If the current name is incorrect, ignore it and return the correct name based on the books
+5. If the name contains multiple variants (separated by ; or ,), choose the CORRECT English name based on the books
+6. If you cannot find the author or the name is incorrect, return null
 
-RESPOND ONLY WITH THE NORMALIZED NAME or "null":
+EXAMPLES:
+- Title: "The Hound of the Baskervilles" -> Author: "Arthur Conan Doyle"
+- "Arthur; Хейли" + English title -> "Arthur Hailey"
+
+RESPOND ONLY WITH THE NORMALIZED ENGLISH NAME or "null":
 """
         
         # Call Perplexity
@@ -1384,6 +1408,17 @@ def api_people_people():
                         # This helps Perplexity find the correct Bulgarian name
                         name_to_verify = original_name if (';' in original_name or ',' in original_name) else normalized_name
                         
+                        # Extract book titles for context
+                        book_titles = []
+                        if all_books_by_person:
+                            for book in all_books_by_person:
+                                if isinstance(book, dict):
+                                    title = book.get('title', '')
+                                else:
+                                    title = getattr(book, 'title', '')
+                                if title:
+                                    book_titles.append(str(title))
+                        
                         # Better event loop handling
                         try:
                             loop = asyncio.get_event_loop()
@@ -1399,7 +1434,8 @@ def api_people_people():
                                                 verify_author_name_with_perplexity(
                                                     name_to_verify,
                                                     primary_language,
-                                                    perplexity_enricher
+                                                    perplexity_enricher,
+                                                    book_titles
                                                 )
                                             )
                                         finally:
@@ -1411,7 +1447,8 @@ def api_people_people():
                                     verify_author_name_with_perplexity(
                                         name_to_verify,
                                         primary_language,
-                                        perplexity_enricher
+                                        perplexity_enricher,
+                                        book_titles
                                     )
                                 ) or normalized_name
                         except RuntimeError:
@@ -1423,7 +1460,8 @@ def api_people_people():
                                     verify_author_name_with_perplexity(
                                         name_to_verify,
                                         primary_language,
-                                        perplexity_enricher
+                                        perplexity_enricher,
+                                        book_titles
                                     )
                                 ) or normalized_name
                             finally:
@@ -1614,6 +1652,17 @@ def verify_person_name(person_id):
                 # Use the original name with all parts for better Perplexity verification
                 name_to_verify = original_name if (';' in original_name or ',' in original_name) else normalized_name
                 
+                # Extract book titles for context
+                book_titles = []
+                if all_books_by_person:
+                    for book in all_books_by_person:
+                        if isinstance(book, dict):
+                            title = book.get('title', '')
+                        else:
+                            title = getattr(book, 'title', '')
+                        if title:
+                            book_titles.append(str(title))
+                
                 # Better event loop handling - don't close loop until all async operations are done
                 try:
                     # Try to get existing event loop
@@ -1631,7 +1680,8 @@ def verify_person_name(person_id):
                                             verify_author_name_with_perplexity(
                                                 name_to_verify,
                                                 primary_language,
-                                                perplexity_enricher
+                                                perplexity_enricher,
+                                                book_titles
                                             )
                                         )
                                         # Close Perplexity client before closing loop
@@ -1651,7 +1701,8 @@ def verify_person_name(person_id):
                                 verify_author_name_with_perplexity(
                                     name_to_verify,
                                     primary_language,
-                                    perplexity_enricher
+                                    perplexity_enricher,
+                                    book_titles
                                 )
                             ) or normalized_name
                             # Close Perplexity client
@@ -1669,7 +1720,8 @@ def verify_person_name(person_id):
                                 verify_author_name_with_perplexity(
                                     name_to_verify,
                                     primary_language,
-                                    perplexity_enricher
+                                    perplexity_enricher,
+                                    book_titles
                                 )
                             ) or normalized_name
                             # Close Perplexity client before closing loop
