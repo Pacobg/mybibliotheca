@@ -1299,6 +1299,18 @@ RESPOND ONLY WITH THE AUTHOR NAME (e.g., "Arthur Conan Doyle") or "null":
         if normalized:
             current_app.logger.info(f"Perplexity verified author '{author_name}' -> '{normalized}'")
             
+            # Validate that the extracted name is not a book title
+            # Check if it matches any of the book titles (case-insensitive)
+            if book_titles:
+                normalized_lower = normalized.lower()
+                for title in book_titles:
+                    if title and isinstance(title, str):
+                        title_lower = title.lower()
+                        # Check if normalized name is similar to book title
+                        if normalized_lower in title_lower or title_lower in normalized_lower:
+                            current_app.logger.warning(f"Extracted name '{normalized}' appears to be a book title, not an author name. Rejecting.")
+                            return None
+            
             # If return_options is True, try to extract multiple authors
             if return_options:
                 # Split by newlines or commas to get multiple options
@@ -1311,14 +1323,38 @@ RESPOND ONLY WITH THE AUTHOR NAME (e.g., "Arthur Conan Doyle") or "null":
                         line = re.sub(r'^[\d\.\-\*]+\s*', '', line)
                         line = line.strip()
                         if line and len(line.split()) >= 2:  # At least 2 words
-                            options.append(line)
+                            # Validate it's not a book title
+                            is_book_title = False
+                            if book_titles:
+                                line_lower = line.lower()
+                                for title in book_titles:
+                                    if title and isinstance(title, str):
+                                        title_lower = title.lower()
+                                        if line_lower in title_lower or title_lower in line_lower:
+                                            is_book_title = True
+                                            break
+                            if not is_book_title:
+                                options.append(line)
                 
                 if options:
                     current_app.logger.info(f"Perplexity returned {len(options)} author options: {options}")
                     return options
                 else:
-                    # If we couldn't parse multiple options, return single name as list
-                    return [normalized] if normalized else None
+                    # If we couldn't parse multiple options, return single name as list if valid
+                    if normalized and len(normalized.split()) >= 2:
+                        # Double-check it's not a book title
+                        is_book_title = False
+                        if book_titles:
+                            normalized_lower = normalized.lower()
+                            for title in book_titles:
+                                if title and isinstance(title, str):
+                                    title_lower = title.lower()
+                                    if normalized_lower in title_lower or title_lower in normalized_lower:
+                                        is_book_title = True
+                                        break
+                        if not is_book_title:
+                            return [normalized]
+                    return None
         else:
             current_app.logger.warning(f"Perplexity returned empty/null for author '{author_name}' with books: {book_titles}")
         
@@ -1763,6 +1799,28 @@ def update_person_name(person_id):
                 'status': 'error',
                 'message': 'Name cannot be empty'
             }), 400
+        
+        # Validate that the name is not a book title
+        # Get person's books to check
+        all_books_by_person = person_service.get_books_by_person_sync(person_id)
+        book_titles = []
+        if all_books_by_person:
+            for book in all_books_by_person:
+                if isinstance(book, dict):
+                    title = book.get('title', '')
+                else:
+                    title = getattr(book, 'title', '')
+                if title:
+                    book_titles.append(str(title).lower())
+        
+        # Check if new_name matches any book title
+        new_name_lower = new_name.lower()
+        for title_lower in book_titles:
+            if new_name_lower in title_lower or title_lower in new_name_lower:
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Избраното име "{new_name}" изглежда е заглавие на книга, а не име на автор. Моля, избери друго име.'
+                }), 400
         
         # Get person
         person = person_service.get_person_by_id_sync(person_id)
