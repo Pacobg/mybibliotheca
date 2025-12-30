@@ -1761,6 +1761,7 @@ def verify_person_name_options(person_id):
             options = [options] if options else []
         
         # Expand incomplete names (e.g., "Дюма" -> "Александър Дюма" for "Граф Монте Кристо")
+        # Also handle mixed English-Bulgarian names (e.g., "Andy; Грифитс" -> "Анди Грифитс")
         book_titles_lower = ' '.join([t.lower() for t in book_titles]) if book_titles else ''
         expanded_options = []
         for option in options:
@@ -1772,22 +1773,70 @@ def verify_person_name_options(person_id):
                     expanded_options.append('Александър Дюма')
                     current_app.logger.info(f"Expanding option '{option}' to 'Александър Дюма'")
                     continue
+            # Check for mixed English-Bulgarian names
+            if ';' in option or ',' in option:
+                parts = re.split(r'[;,]\s*', option)
+                english_parts = [p for p in parts if not any('\u0400' <= char <= '\u04FF' for char in p)]
+                cyrillic_parts = [p for p in parts if any('\u0400' <= char <= '\u04FF' for char in p)]
+                
+                if english_parts and cyrillic_parts:
+                    # Construct full Bulgarian name
+                    english_part = english_parts[0].strip()
+                    cyrillic_part = cyrillic_parts[0].strip()
+                    
+                    name_translations = {
+                        'andy': 'Анди',
+                        'alexandre': 'Александър',
+                        'alexander': 'Александър',
+                    }
+                    
+                    english_lower = english_part.lower()
+                    if english_lower in name_translations:
+                        bulgarian_first_name = name_translations[english_lower]
+                        expanded_name = f"{bulgarian_first_name} {cyrillic_part}"
+                        expanded_options.append(expanded_name)
+                        current_app.logger.info(f"Expanding mixed name '{option}' to '{expanded_name}'")
+                        continue
+            
             expanded_options.append(option)
         
         options = expanded_options
         
         # Add current name as first option if not already present (but expand it if needed)
         if original_name:
-            # Expand current name if it's incomplete
+            # Expand current name if it's incomplete or mixed
             original_lower = original_name.lower()
+            expanded_current = None
+            
+            # Check for incomplete names
             if 'дюма' in original_lower and 'александър' not in original_lower:
                 if 'граф монте кристо' in book_titles_lower or 'count of monte cristo' in book_titles_lower:
                     expanded_current = 'Александър Дюма'
-                    if expanded_current not in options:
-                        options.insert(0, expanded_current)
-                else:
-                    if original_name not in options:
-                        options.insert(0, original_name)
+            
+            # Check for mixed English-Bulgarian names
+            if not expanded_current and (';' in original_name or ',' in original_name):
+                parts = re.split(r'[;,]\s*', original_name)
+                english_parts = [p for p in parts if not any('\u0400' <= char <= '\u04FF' for char in p)]
+                cyrillic_parts = [p for p in parts if any('\u0400' <= char <= '\u04FF' for char in p)]
+                
+                if english_parts and cyrillic_parts:
+                    english_part = english_parts[0].strip()
+                    cyrillic_part = cyrillic_parts[0].strip()
+                    
+                    name_translations = {
+                        'andy': 'Анди',
+                        'alexandre': 'Александър',
+                        'alexander': 'Александър',
+                    }
+                    
+                    english_lower = english_part.lower()
+                    if english_lower in name_translations:
+                        bulgarian_first_name = name_translations[english_lower]
+                        expanded_current = f"{bulgarian_first_name} {cyrillic_part}"
+            
+            if expanded_current:
+                if expanded_current not in options:
+                    options.insert(0, expanded_current)
             else:
                 if original_name not in options:
                     options.insert(0, original_name)
