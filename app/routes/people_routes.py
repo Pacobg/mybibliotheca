@@ -1838,6 +1838,19 @@ def update_person_name(person_id):
         
         # Update name
         updates = {'name': new_name}
+        
+        # Helper function to safely call sync methods
+        def safe_call_sync_method_local(method, *args, **kwargs):
+            result = method(*args, **kwargs)
+            if inspect.iscoroutine(result):
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    result = loop.run_until_complete(result)
+                finally:
+                    loop.close()
+            return result
+        
         def safe_update_person():
             try:
                 return person_service.update_person_sync(person_id, updates)
@@ -1845,7 +1858,7 @@ def update_person_name(person_id):
                 current_app.logger.error(f"Error updating person: {e}", exc_info=True)
                 return None
         
-        updated_person = safe_call_sync_method(safe_update_person)
+        updated_person = safe_call_sync_method_local(safe_update_person)
         if updated_person:
             return jsonify({
                 'status': 'success',
