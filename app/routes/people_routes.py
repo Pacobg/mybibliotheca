@@ -1140,54 +1140,50 @@ async def verify_author_name_with_perplexity(
         
         # Build query based on language
         if book_language == 'bg':
-            # Make the query more explicit and direct
+            # Don't mention the current author name at all - only ask about the book titles
+            # This forces Perplexity to search from scratch
             query = f"""
-ТЪРСИ В ИНТЕРНЕТ: Кой е авторът на следните книги?
+ТЪРСИ В ИНТЕРНЕТ и намери кой е авторът на следните книги:
 
 {titles_context}
 
-ВАЖНО:
-1. Текущото име "{author_name if author_name else "неизвестно"}" МОЖЕ ДА Е ГРЕШНО - игнорирай го!
-2. ТЪРСИ в интернет заглавията на книгите на български
-3. НАМЕРИ РЕАЛНИЯ автор на тези книги
-4. Върни ПЪЛНОТО българско име на автора в правилен формат: "Име Фамилия"
-
-СПЕЦИАЛНИ ПРИМЕРИ:
-- Ако видиш "Баскервилското куче" -> авторът е "Артър Конан Дойл" (НЕ "Вълчев", НЕ "Тодор", НЕ "Шурбанов")
-- Ако видиш "Изгубеният свят" -> авторът е "Артър Конан Дойл"
-- Ако видиш "Sherlock Holmes" -> авторът е "Артър Конан Дойл"
-
 ИНСТРУКЦИИ:
-- Търси в интернет заглавията на книгите
-- Намери кой е РЕАЛНИЯТ автор
-- Върни само българското име на автора или "null" ако не можеш да намериш
+1. ТЪРСИ в интернет заглавията на книгите на български
+2. НАМЕРИ кой е РЕАЛНИЯТ автор на тези книги
+3. Върни ПЪЛНОТО българско име на автора в правилен формат: "Име Фамилия"
+4. Ако не можеш да намериш автора, върни "null"
+
+ВАЖНО:
+- НЕ използвай никакво друго име освен това което намериш в интернет
+- За "Баскервилското куче" авторът е "Артър Конан Дойл"
+- За "Изгубеният свят" авторът е "Артър Конан Дойл"
+- За "Sherlock Holmes" авторът е "Артър Конан Дойл"
 
 ОТГОВОРИ САМО С ИМЕТО НА АВТОРА (например "Артър Конан Дойл") или "null":
 """
         else:
+            # Don't mention the current author name - only ask about the book titles
             query = f"""
-Find and verify the ENGLISH name of the author based on the book titles.
+Search the internet and find who is the author of the following books:
 
 {titles_context}
 
-CURRENT NAME (may be incorrect): {author_name if author_name else "unknown"}
-
-IMPORTANT:
-1. FIRST check online the book titles in English
+INSTRUCTIONS:
+1. SEARCH online for the book titles in English
 2. FIND who is the REAL author of these books
 3. Return the FULL English author name in proper format: "First Last"
-4. If the current name is incorrect, ignore it and return the correct name based on the books
-5. If the name contains multiple variants (separated by ; or ,), choose the CORRECT English name based on the books
-6. If you cannot find the author or the name is incorrect, return null
+4. If you cannot find the author, return "null"
 
-EXAMPLES:
-- Title: "The Hound of the Baskervilles" -> Author: "Arthur Conan Doyle"
-- "Arthur; Хейли" + English title -> "Arthur Hailey"
+IMPORTANT:
+- DO NOT use any other name except what you find online
+- For "The Hound of the Baskervilles" the author is "Arthur Conan Doyle"
+- For "The Lost World" the author is "Arthur Conan Doyle"
 
-RESPOND ONLY WITH THE NORMALIZED ENGLISH NAME or "null":
+RESPOND ONLY WITH THE AUTHOR NAME (e.g., "Arthur Conan Doyle") or "null":
 """
         
         # Call Perplexity
+        current_app.logger.info(f"Calling Perplexity with query (first 300 chars): {query[:300]}...")
         response = await perplexity_enricher._search(query)
         
         if not response:
@@ -1195,7 +1191,8 @@ RESPOND ONLY WITH THE NORMALIZED ENGLISH NAME or "null":
             return None
         
         content = response['choices'][0]['message']['content'].strip()
-        current_app.logger.info(f"Perplexity response for author '{author_name}' with books {book_titles}: '{content}'")
+        current_app.logger.info(f"Perplexity FULL response for author '{author_name}' with books {book_titles}: '{content}'")
+        current_app.logger.info(f"Perplexity response length: {len(content)} characters")
         
         # Extract normalized name
         normalized = content.strip()
