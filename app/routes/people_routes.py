@@ -1279,7 +1279,7 @@ def api_people_people():
             if not person_id:
                 continue
             
-            # Get books by this person
+            # Get books by this person (only authored books, not translated/edited)
             all_books_by_person = safe_call_sync_method(person_service.get_books_by_person_sync, person_id)
             
             book_count = len(all_books_by_person) if all_books_by_person else 0
@@ -1295,6 +1295,10 @@ def api_people_people():
                 # Use most common language
                 if languages:
                     primary_language = max(set(languages), key=languages.count)
+                else:
+                    # If no books, try to detect from name
+                    has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in original_name)
+                    primary_language = 'bg' if has_cyrillic else 'en'
             
             # Normalize author name based on detected language
             normalized_name = original_name
@@ -1319,13 +1323,20 @@ def api_people_people():
                     elif parts:
                         normalized_name = parts[0]
             
-            # Verify with Perplexity if available (only if name seems problematic)
+            # Verify with Perplexity if available (always verify problematic names)
             verified_name = normalized_name
             if perplexity_enricher and original_name:
-                # Only verify if name has multiple parts or seems messy
-                if (';' in original_name or ',' in original_name or 
+                # Verify if name has multiple parts, seems messy, or doesn't match language
+                should_verify = (
+                    ';' in original_name or ',' in original_name or 
                     len(original_name.split()) > 4 or
-                    any(char in original_name for char in [';', ',', '|'])):
+                    any(char in original_name for char in [';', ',', '|']) or
+                    # Verify if name language doesn't match book language
+                    (primary_language == 'bg' and not any('\u0400' <= char <= '\u04FF' for char in normalized_name)) or
+                    (primary_language == 'en' and any('\u0400' <= char <= '\u04FF' for char in normalized_name))
+                )
+                
+                if should_verify:
                     try:
                         loop = asyncio.new_event_loop()
                         asyncio.set_event_loop(loop)
@@ -1382,6 +1393,142 @@ def api_people_people():
             'status': 'error',
             'message': str(e)
         }), 500
+
+@people_bp.route('/person/<person_id>/verify_name', methods=['POST'])
+@login_required
+def verify_person_name(person_id):
+    """
+    Verify and normalize a person's name using Perplexity based on their books' language.
+    """
+    try:
+        # Get person
+        person = person_service.get_person_by_id_sync(person_id)
+        if not person:
+            return jsonify({
+                'status': 'error',
+                'message': 'Person not found'
+            }), 404
+        
+        # Get person name
+        if isinstance(person, dict):
+            original_name = person.get('name', '')
+        else:
+            original_name = getattr(person, 'name', '')
+        
+        # Get books by this person
+        def safe_call_sync_method(method, *args, **kwargs):
+            result = method(*args, **kwargs)
+            if inspect.iscoroutine(result):
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    result = loop.run_until_complete(result)
+                finally:
+                    loop.close()
+            return result
+        
+        all_books_by_person = safe_call_sync_method(person_service.get_books_by_person_sync, person_id)
+        
+        # Determine primary language
+        primary_language = 'en'
+        if all_books_by_person:
+            languages = []
+            for book in all_books_by_person:
+                lang = detect_book_language(book)
+                languages.append(lang)
+            if languages:
+                primary_language = max(set(languages), key=languages.count)
+        else:
+            # Detect from name if no books
+            has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in original_name)
+            primary_language = 'bg' if has_cyrillic else 'en'
+        
+        # Normalize name
+        normalized_name = original_name
+        if ';' in original_name or ',' in original_name:
+            parts = re.split(r'[;,]\s*', original_name)
+            parts = [p.strip() for p in parts if p.strip()]
+            
+            if primary_language == 'bg':
+                cyrillic_parts = [p for p in parts if any('\u0400' <= char <= '\u04FF' for char in p)]
+                if cyrillic_parts:
+                    normalized_name = cyrillic_parts[0]
+                elif parts:
+                    normalized_name = parts[0]
+            else:
+                non_cyrillic_parts = [p for p in parts if not any('\u0400' <= char <= '\u04FF' for char in p)]
+                if non_cyrillic_parts:
+                    normalized_name = non_cyrillic_parts[0]
+                elif parts:
+                    normalized_name = parts[0]
+        
+        # Initialize Perplexity
+        perplexity_enricher = None
+        verified_name = normalized_name
+        
+        try:
+            import os
+            perplexity_key = os.getenv('PERPLEXITY_API_KEY')
+            if not perplexity_key:
+                try:
+                    from app.admin import load_ai_config
+                    ai_config = load_ai_config()
+                    perplexity_key = ai_config.get('PERPLEXITY_API_KEY', '')
+                except Exception:
+                    pass
+            
+            if perplexity_key:
+                from app.services.metadata_providers.perplexity import PerplexityEnricher
+                perplexity_model = os.getenv('PERPLEXITY_MODEL', 'sonar-pro')
+                perplexity_enricher = PerplexityEnricher(api_key=perplexity_key, model=perplexity_model)
+                
+                # Verify with Perplexity
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    verified_name = loop.run_until_complete(
+                        verify_author_name_with_perplexity(
+                            normalized_name,
+                            primary_language,
+                            perplexity_enricher
+                        )
+                    ) or normalized_name
+                finally:
+                    loop.close()
+                    if perplexity_enricher:
+                        loop.run_until_complete(perplexity_enricher.close())
+        except Exception as e:
+            current_app.logger.error(f"Error verifying name with Perplexity: {e}")
+        
+        # Update person name if different
+        final_name = verified_name or normalized_name or original_name
+        if final_name != original_name:
+            updates = {'name': final_name}
+            updated_person = person_service.update_person_sync(person_id, updates)
+            if updated_person:
+                return jsonify({
+                    'status': 'success',
+                    'original_name': original_name,
+                    'verified_name': final_name,
+                    'primary_language': primary_language,
+                    'updated': True
+                })
+        
+        return jsonify({
+            'status': 'success',
+            'original_name': original_name,
+            'verified_name': final_name,
+            'primary_language': primary_language,
+            'updated': False
+        })
+    
+    except Exception as e:
+        current_app.logger.error(f"Error verifying person name: {e}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
 
 @people_bp.route('/person/merge', methods=['GET', 'POST'])
 @login_required

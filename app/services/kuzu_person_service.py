@@ -286,10 +286,11 @@ class KuzuPersonService:
             return None
     
     async def get_books_by_person(self, person_id: str) -> List[Dict[str, Any]]:
-        """Get all books associated with a person (as author, illustrator, etc.)."""
+        """Get all books associated with a person as AUTHOR only (excludes translators, editors, etc.)."""
         try:
             query = """
             MATCH (p:Person {id: $person_id})-[r:AUTHORED]->(b:Book)
+            WHERE r.role IS NULL OR r.role = 'authored'
             RETURN b, COALESCE(r.role, 'authored') as relationship_type
             ORDER BY b.title ASC
             """

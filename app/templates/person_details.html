@@ -150,6 +150,13 @@
                                         <i class="bi bi-pencil"></i> Edit
                                     </a>
                                     
+                                    <!-- Verify Name Button -->
+                                    <button type="button" class="btn btn-sm btn-outline-success me-2" id="verifyNameBtn"
+                                            onclick="verifyPersonName('{{ person.id }}')"
+                                            title="Провери и нормализирай името според езика на книгите">
+                                        <i class="bi bi-check-circle"></i> Провери име
+                                    </button>
+                                    
                                     <!-- Refresh Metadata Button -->
                                     <form method="post" action="{{ url_for('people.refresh_person_metadata', person_id=person.id) }}" class="d-inline">
                                         <button type="submit" class="btn btn-sm btn-outline-info me-2" 
@@ -323,4 +330,68 @@
     border-radius: 8px;
 }
 </style>
+
+<script>
+async function verifyPersonName(personId) {
+    const btn = document.getElementById('verifyNameBtn');
+    const originalText = btn.innerHTML;
+    
+    // Disable button and show loading
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Проверява...';
+    
+    try {
+        const response = await fetch(`/person/${personId}/verify_name`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin'
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            if (data.updated) {
+                // Show success message
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success alert-dismissible fade show mt-3';
+                alert.innerHTML = `
+                    <strong>Успех!</strong> Името е обновено от "${data.original_name}" на "${data.verified_name}".
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.card-body').insertBefore(alert, document.querySelector('.card-body').firstChild);
+                
+                // Reload page after 1 second
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                // Show info message
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-info alert-dismissible fade show mt-3';
+                alert.innerHTML = `
+                    <strong>Информация:</strong> Името "${data.verified_name}" е вече правилно.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.card-body').insertBefore(alert, document.querySelector('.card-body').firstChild);
+            }
+        } else {
+            throw new Error(data.message || 'Грешка при проверка');
+        }
+    } catch (error) {
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-danger alert-dismissible fade show mt-3';
+        alert.innerHTML = `
+            <strong>Грешка!</strong> ${error.message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.querySelector('.card-body').insertBefore(alert, document.querySelector('.card-body').firstChild);
+    } finally {
+        // Restore button
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+</script>
 {% endblock %}

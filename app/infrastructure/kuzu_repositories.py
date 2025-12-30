@@ -1580,11 +1580,14 @@ class KuzuBookRepository:
             return None
     
     async def get_all_persons(self) -> List[Dict[str, Any]]:
-        """Get all persons in the database with book counts."""
+        """Get all persons in the database with book counts.
+        Only includes persons who are authors (role='authored'), excludes translators and other contributors.
+        """
         try:
             query = """
             MATCH (p:Person)
-            OPTIONAL MATCH (p)-[:AUTHORED]->(b:Book)
+            OPTIONAL MATCH (p)-[r:AUTHORED]->(b:Book)
+            WHERE r.role IS NULL OR r.role = 'authored'
             RETURN p, COUNT(DISTINCT b) as book_count
             ORDER BY p.name ASC
             """
