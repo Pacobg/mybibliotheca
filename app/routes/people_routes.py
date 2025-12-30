@@ -1132,11 +1132,17 @@ async def verify_author_name_with_perplexity(
 ТЕКУЩО ИМЕ: {author_name}
 
 ВАЖНО:
-- Ако името съдържа няколко варианта (разделени с ; или ,), избери ПРАВИЛНОТО българско име
-- Ако има и българско и английско име, използвай БЪЛГАРСКОТО
+- Ако името съдържа няколко варианта (разделени с ; или ,), намери ПРАВИЛНОТО българско име
+- Ако има и английско и българско име (например "Arthur; Хейли"), намери пълното българско име (например "Артър Хейли")
 - Нормализирай името в правилен формат: "Име Фамилия" (не "Фамилия, Име")
+- Ако видиш само фамилия на български (например "Хейли"), намери пълното име с първо име (например "Артър Хейли")
 - Премахни излишни символи и интервали
 - Ако името е неправилно или не можеш да го провериш, върни null
+
+ПРИМЕРИ:
+- "Arthur; Хейли" -> "Артър Хейли"
+- "Agatha; Кристи" -> "Агата Кристи"
+- "Adrian; Чайковски" -> "Ейдриън Чайковски"
 
 ОТГОВОРИ САМО С НОРМАЛИЗИРАНОТО ИМЕ или "null":
 """
@@ -1315,8 +1321,16 @@ def api_people_people():
                     # Prefer Bulgarian (Cyrillic) name
                     cyrillic_parts = [p for p in parts if any('\u0400' <= char <= '\u04FF' for char in p)]
                     if cyrillic_parts:
-                        normalized_name = cyrillic_parts[0]
+                        # If we have both English and Bulgarian parts, try to combine them properly
+                        # e.g., "Arthur; Хейли" -> "Артър Хейли"
+                        english_parts = [p for p in parts if not any('\u0400' <= char <= '\u04FF' for char in p)]
+                        if english_parts and cyrillic_parts:
+                            # We have both - will use Perplexity to get proper Bulgarian name
+                            normalized_name = cyrillic_parts[0]  # Use Cyrillic part as base
+                        else:
+                            normalized_name = cyrillic_parts[0]
                     elif parts:
+                        # No Cyrillic parts, but book is Bulgarian - will verify with Perplexity
                         normalized_name = parts[0]
                 else:
                     # Prefer English (non-Cyrillic) name
@@ -1329,7 +1343,7 @@ def api_people_people():
             # Verify with Perplexity if available (always verify problematic names)
             verified_name = normalized_name
             if perplexity_enricher and original_name:
-                # Verify if name has multiple parts, seems messy, or doesn't match language
+                # Always verify if name has multiple parts or doesn't match language
                 should_verify = (
                     ';' in original_name or ',' in original_name or 
                     len(original_name.split()) > 4 or
@@ -1341,20 +1355,56 @@ def api_people_people():
                 
                 if should_verify:
                     try:
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
+                        # Use the original name with all parts for better Perplexity verification
+                        # This helps Perplexity find the correct Bulgarian name
+                        name_to_verify = original_name if (';' in original_name or ',' in original_name) else normalized_name
+                        
+                        # Better event loop handling
                         try:
-                            verified_name = loop.run_until_complete(
-                                verify_author_name_with_perplexity(
-                                    normalized_name,
-                                    primary_language,
-                                    perplexity_enricher
-                                )
-                            ) or normalized_name
-                        finally:
-                            loop.close()
+                            loop = asyncio.get_event_loop()
+                            if loop.is_running():
+                                # If loop is running, we need a new one in a thread
+                                import concurrent.futures
+                                with concurrent.futures.ThreadPoolExecutor() as executor:
+                                    def run_in_new_loop():
+                                        new_loop = asyncio.new_event_loop()
+                                        asyncio.set_event_loop(new_loop)
+                                        try:
+                                            return new_loop.run_until_complete(
+                                                verify_author_name_with_perplexity(
+                                                    name_to_verify,
+                                                    primary_language,
+                                                    perplexity_enricher
+                                                )
+                                            )
+                                        finally:
+                                            new_loop.close()
+                                    future = executor.submit(run_in_new_loop)
+                                    verified_name = future.result() or normalized_name
+                            else:
+                                verified_name = loop.run_until_complete(
+                                    verify_author_name_with_perplexity(
+                                        name_to_verify,
+                                        primary_language,
+                                        perplexity_enricher
+                                    )
+                                ) or normalized_name
+                        except RuntimeError:
+                            # No event loop, create new one
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                            try:
+                                verified_name = loop.run_until_complete(
+                                    verify_author_name_with_perplexity(
+                                        name_to_verify,
+                                        primary_language,
+                                        perplexity_enricher
+                                    )
+                                ) or normalized_name
+                            finally:
+                                loop.close()
                     except Exception as e:
-                        current_app.logger.debug(f"Perplexity verification failed for {original_name}: {e}")
+                        current_app.logger.error(f"Perplexity verification failed for {original_name}: {e}", exc_info=True)
                         verified_name = normalized_name
             
             # Only include persons with at least one book
@@ -1456,12 +1506,17 @@ def verify_person_name(person_id):
             parts = [p.strip() for p in parts if p.strip()]
             
             if primary_language == 'bg':
+                # Prefer Bulgarian (Cyrillic) name
                 cyrillic_parts = [p for p in parts if any('\u0400' <= char <= '\u04FF' for char in p)]
                 if cyrillic_parts:
+                    # If we have both English and Bulgarian parts, use Bulgarian as base
+                    # Perplexity will find the full Bulgarian name
                     normalized_name = cyrillic_parts[0]
                 elif parts:
+                    # No Cyrillic parts, but book is Bulgarian - will verify with Perplexity
                     normalized_name = parts[0]
             else:
+                # Prefer English (non-Cyrillic) name
                 non_cyrillic_parts = [p for p in parts if not any('\u0400' <= char <= '\u04FF' for char in p)]
                 if non_cyrillic_parts:
                     normalized_name = non_cyrillic_parts[0]
