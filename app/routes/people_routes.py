@@ -2439,6 +2439,14 @@ def check_person_relationships(person_id):
                     ('артър конан дойл', 'lost world'): True,
                     ('arthur conan doyle', 'баскервилското куче'): True,
                     ('arthur conan doyle', 'hound of the baskervilles'): True,
+                    ('агата кристи', 'направление неизвестно'): True,
+                    ('агата кристи', 'последното алиби'): True,
+                    ('агата кристи', 'убийство в ориент експрес'): True,
+                    ('агата кристи', 'murder on the orient express'): True,
+                    ('agatha christie', 'направление неизвестно'): True,
+                    ('agatha christie', 'последното алиби'): True,
+                    ('agatha christie', 'убийство в ориент експрес'): True,
+                    ('agatha christie', 'murder on the orient express'): True,
                 }
                 
                 person_name_lower = person_name.lower()
