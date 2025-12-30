@@ -1399,6 +1399,7 @@ def api_people_people():
 def verify_person_name(person_id):
     """
     Verify and normalize a person's name using Perplexity based on their books' language.
+    Always returns JSON, even on errors.
     """
     try:
         # Get person
@@ -1483,22 +1484,30 @@ def verify_person_name(person_id):
                 perplexity_enricher = PerplexityEnricher(api_key=perplexity_key, model=perplexity_model)
                 
                 # Verify with Perplexity
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
                 try:
-                    verified_name = loop.run_until_complete(
-                        verify_author_name_with_perplexity(
-                            normalized_name,
-                            primary_language,
-                            perplexity_enricher
-                        )
-                    ) or normalized_name
-                finally:
-                    loop.close()
-                    if perplexity_enricher:
-                        loop.run_until_complete(perplexity_enricher.close())
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    try:
+                        verified_name = loop.run_until_complete(
+                            verify_author_name_with_perplexity(
+                                normalized_name,
+                                primary_language,
+                                perplexity_enricher
+                            )
+                        ) or normalized_name
+                    finally:
+                        if perplexity_enricher:
+                            try:
+                                loop.run_until_complete(perplexity_enricher.close())
+                            except Exception:
+                                pass
+                        loop.close()
+                except Exception as e:
+                    current_app.logger.error(f"Error verifying name with Perplexity: {e}")
+                    verified_name = normalized_name
         except Exception as e:
-            current_app.logger.error(f"Error verifying name with Perplexity: {e}")
+            current_app.logger.error(f"Error initializing Perplexity: {e}")
+            verified_name = normalized_name
         
         # Update person name if different
         final_name = verified_name or normalized_name or original_name
@@ -1524,9 +1533,13 @@ def verify_person_name(person_id):
     
     except Exception as e:
         current_app.logger.error(f"Error verifying person name: {e}", exc_info=True)
+        import traceback
+        error_details = traceback.format_exc()
+        current_app.logger.debug(f"Full traceback: {error_details}")
         return jsonify({
             'status': 'error',
-            'message': str(e)
+            'message': str(e),
+            'error_type': type(e).__name__
         }), 500
 
 
